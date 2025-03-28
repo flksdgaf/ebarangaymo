@@ -1,0 +1,16 @@
+.carousel-indicators [data-bs-target] {
+    width: 16px;  /* Custom width */
+    height: 16px;  /* Custom height */
+    border-radius: 8px;  /* Makes them slightly rounded */
+    background-color: #ffffff;  /* White background */
+    border: 2px solid #2A9245;  /* Custom border */
+    opacity: 1;  /* Ensures visibility */
+    transition: transform 0.3s ease-in-out, background-color 0.3s;
+}
+
+/* Active indicator with a gradient */
+.carousel-indicators .active {
+    background: linear-gradient(135deg, #2A9245, #61AD41);  /* Green gradient */
+    transform: scale(1.2);  /* Makes active indicator slightly bigger */
+    border-color: white;
+}

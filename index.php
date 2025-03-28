@@ -37,7 +37,7 @@ include 'includes/header.php';
     </div>
 </div>
 
-<!-- <div class="container-fluid px-0">
+<div class="container-fluid px-0">
     <div class="about-container text-center">
         <h2 class="about gradient-text">ABOUT US</h2>
         <p class="w-50 mx-auto text-center">
@@ -73,7 +73,7 @@ include 'includes/header.php';
     </div>
 </div>
 
-<div class="container-fluid px-0">
+<!-- <div class="container-fluid px-0">
     <div class="services-container text-center">
         <h2 class="services gradient-text">SERVICES</h2>
     </div>

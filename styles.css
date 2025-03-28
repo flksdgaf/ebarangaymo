@@ -1,16 +1,66 @@
-.carousel-indicators [data-bs-target] {
-    width: 16px;  /* Custom width */
-    height: 16px;  /* Custom height */
-    border-radius: 8px;  /* Makes them slightly rounded */
-    background-color: #ffffff;  /* White background */
-    border: 2px solid #2A9245;  /* Custom border */
-    opacity: 1;  /* Ensures visibility */
-    transition: transform 0.3s ease-in-out, background-color 0.3s;
+* {
+    font-family: 'Poppins', sans-serif;
 }
 
-/* Active indicator with a gradient */
-.carousel-indicators .active {
-    background: linear-gradient(135deg, #2A9245, #61AD41);  /* Green gradient */
-    transform: scale(1.2);  /* Makes active indicator slightly bigger */
-    border-color: white;
+.navbar-nav .nav-link {
+    font-size: 15px; 
+    font-weight: 500;
+    color: #000000;
+    transition: color 0.3s ease-in-out;
+}
+
+.dropdown-menu .dropdown-item {
+    font-size: 15px;
+}
+
+.navbar-nav .nav-link:hover {
+    color: #2A9245;
+}
+
+.navbar-nav .nav-link.active {
+    font-weight: 700;
+    color: #2A9245 !important;
+}
+
+.about-container h2 {
+    font-size: 25px; 
+    font-weight: 700;
+    color: #000000;
+}
+
+.gradient-text {
+    background: linear-gradient(to bottom, #2A9245, #0D2C15);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-block;
+}
+
+.about-container p {
+    font-size: 15px; 
+    font-weight: 400;
+    color: #000000;
+}
+
+.about-container {
+    background: #FFFFFF;
+    padding: 50px 20px;
+    border-radius: 12px;
+}
+
+.card-custom {
+    background: #FFFFFF;
+    border-radius: 100px 12px 12px 12px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+    padding: 40px;
+    text-align: center;
+    width: 268px; 
+    height: 250px; 
+}
+
+.card-custom h5 {
+    font-weight: bold;
+}
+.card-custom p {
+    font-size: 14px;
+    color: #333;
 }

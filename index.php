@@ -86,11 +86,10 @@ include 'includes/header.php';
 <!-- SERVICE SECTION -->
 <div class="container-fluid mt-5 services-container">
     <h1 class="text-center gradient-text">SERVICES</h1>
-
     <div class="container mt-5">
         <div class="row row-cols-1 row-cols-md-2 g-3">
             <div class="col d-flex">
-                <a href="#" class="service-card green-light w-100">
+                <a href="#" class="service-card mid-green w-100">
                     <i class="fas fa-id-card icon"></i>
                     <div>
                         <h4>Barangay ID</h4>
@@ -98,9 +97,8 @@ include 'includes/header.php';
                     </div>
                 </a>
             </div>
-
             <div class="col d-flex">
-                <a href="#" class="service-card green-light w-100">
+                <a href="#" class="service-card light-green w-100">
                     <i class="fas fa-file-alt icon"></i>
                     <div>
                         <h4>Barangay Clearance</h4>
@@ -108,9 +106,8 @@ include 'includes/header.php';
                     </div>
                 </a>
             </div>
-
             <div class="col d-flex">
-                <a href="#" class="service-card green-dark w-100">
+                <a href="#" class="service-card dark-green w-100">
                     <i class="fas fa-certificate icon"></i>
                     <div>
                         <h4>Certification</h4>
@@ -118,9 +115,8 @@ include 'includes/header.php';
                     </div>
                 </a>
             </div>
-
             <div class="col d-flex">
-                <a href="#" class="service-card green-light w-100">
+                <a href="#" class="service-card mid-green w-100">
                     <i class="fas fa-store icon"></i>
                     <div>
                         <h4>Business Permit</h4>
@@ -128,9 +124,8 @@ include 'includes/header.php';
                     </div>
                 </a>
             </div>
-
             <div class="col d-flex">
-                <a href="#" class="service-card green-light w-100">
+                <a href="#" class="service-card light-green w-100">
                     <i class="fas fa-balance-scale icon"></i>
                     <div>
                         <h4>Katarungang Pambarangay</h4>
@@ -138,9 +133,8 @@ include 'includes/header.php';
                     </div>
                 </a>
             </div>
-
             <div class="col d-flex">
-                <a href="#" class="service-card green-dark w-100">
+                <a href="#" class="service-card dark-green w-100">
                     <i class="fas fa-leaf icon"></i>
                     <div>
                         <h4>Environmental Services</h4>
@@ -148,14 +142,21 @@ include 'includes/header.php';
                     </div>
                 </a>
             </div>
-            
         </div>
+        <a href="#" class="view-more">View More Services</a>
     </div>
 </div>
 
 <!-- NEWS AND UPDATES SECTION -->
-<div class="container-fluid px-0">
-
+<div class="container-fluid px-0 mt-5">
+    <div class="row">
+        <div class="col-5">
+            NEWS AND UPDATES
+        </div>
+        <div class="col-7">
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Itaque porro reprehenderit perspiciatis. Omnis at non, quaerat a deleniti sequi ut enim dignissimos modi nesciunt aliquid temporibus maiores, autem eligendi? Autem?
+        </div>
+    </div>
 </div>
 
 <!-- <?php include 'includes/footer.php'; ?> -->

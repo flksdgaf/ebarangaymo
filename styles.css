@@ -26,6 +26,11 @@
   color: white ; 
 }
 
+body {
+    padding-top: 62px;
+}
+
+
 .carousel-inner img {
   height: 640px;
   object-fit: contain ;
@@ -89,11 +94,11 @@
 
 .card-custom {
     background: #FFFFFF;
-    border-radius: 100px 12px 12px 12px;
+    border-radius: 75px 12px 12px 12px;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
     padding: 40px;
     text-align: center;
-    width: 268px; 
+    width: 300px; 
     min-height: 250px;
     display: flex;
     flex-direction: column;
@@ -113,6 +118,12 @@
     color: #000000;
 }
 
+
+.services-container .row {
+    --bs-gutter-x: -200px;
+}
+
+
 .services-container h1 {
     font-size: 25px; 
     font-weight: 700;
@@ -130,6 +141,16 @@
     max-width: 500px;
     margin: 0 auto; 
     text-decoration: none;
+}
+
+.service-card h4 {
+    font-size: 20px; 
+    font-weight: 600;
+}
+
+.service-card p {
+    font-size: 15px; 
+    font-weight: 400;
 }
 
 .mid-green { background-color: #2A9245;}
@@ -156,3 +177,36 @@
     text-decoration: underline;
 }
 
+.scrollable-content {
+    overflow-x: auto;
+    white-space: nowrap;
+    gap: 15px;
+    padding: 10px 0;
+}
+
+.scrollable-content::-webkit-scrollbar {
+    height: 5px;
+}
+
+.scrollable-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.scrollable-content::-webkit-scrollbar-thumb {
+    background: #2A9245;
+    border-radius: 10px;
+}
+
+.news-card {
+    min-width: 250px;
+    text-align: center;
+    background: #fff;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.news-card img {
+    width: 100%;
+    border-radius: 8px;
+}

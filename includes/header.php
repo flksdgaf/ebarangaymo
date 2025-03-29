@@ -17,7 +17,7 @@
 
 <!-- NAVIGATION SECTION -->
 <header>
-    <div class="container-fluid bg-body-tertiary">
+    <div class="container-fluid bg-body-tertiary fixed-top">
         <nav class="navbar navbar-expand-lg">
             <div class="container">
                 <a class="navbar-brand" href="#">

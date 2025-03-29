@@ -46,7 +46,7 @@ include 'includes/header.php';
     </div>
 </div>
 
-<!-- ABOUT SECTION -->
+<!-- ABOUT US SECTION -->
 <div class="container-fluid px-0">
     <div class="about-container text-center">
         <h1 class="gradient-text mt-2">ABOUT US</h1>
@@ -148,13 +148,29 @@ include 'includes/header.php';
 </div>
 
 <!-- NEWS AND UPDATES SECTION -->
-<div class="container-fluid px-0 mt-5">
-    <div class="row">
-        <div class="col-5">
-            NEWS AND UPDATES
+<div class="container-fluid px-4 mt-5">
+    <div class="row align-items-center">
+        <!-- Title Section -->
+        <div class="col-md-5">
+            <h2 class="fw-bold text-success">NEWS AND UPDATES</h2>
         </div>
-        <div class="col-7">
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Itaque porro reprehenderit perspiciatis. Omnis at non, quaerat a deleniti sequi ut enim dignissimos modi nesciunt aliquid temporibus maiores, autem eligendi? Autem?
+
+        <!-- Scrollable Content Section -->
+        <div class="col-md-7">
+            <div class="scrollable-content d-flex flex-row">
+                <div class="news-card">
+                    <img src="images/carousel.png" alt="News Image">
+                    <p>Breaking News 1: Lorem ipsum dolor sit amet.</p>
+                </div>
+                <div class="news-card">
+                    <img src="images/carousel.png" alt="News Image">
+                    <p>Breaking News 2: Lorem ipsum dolor sit amet.</p>
+                </div>
+                <div class="news-card">
+                    <img src="images/carousel.png" alt="News Image">
+                    <p>Breaking News 3: Lorem ipsum dolor sit amet.</p>
+                </div>
+            </div>
         </div>
     </div>
 </div>

@@ -4,106 +4,10 @@ include 'functions/dbconn.php';
 include 'includes/header.php'; 
 ?>
 
-<!-- NAVIGATION SECTION -->
-<header>
-    <div class="container-fluid bg-body-tertiary">
-        <nav class="navbar navbar-expand-lg">
-            <div class="container">
-                <a class="navbar-brand" href="#">
-                    <img src="images/seal.png" alt="Republic Seal of the Philippines" width="36" height="36">
-                </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li class="nav-item me-3">
-                            <a class="nav-link" aria-current="page" href="#">
-                                Home
-                            </a>
-                        </li>
-                        <li class="nav-item dropdown me-3">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                About
-                            </a>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#">Officials</a></li>
-                                <li><a class="dropdown-item" href="#">Mission, Vision and Values</a></li>
-                                <li><a class="dropdown-item" href="#">Citizens Charter</a></li>
-                                <li><a class="dropdown-item" href="#">Map</a></li>
-                            </ul>
-                        </li>
-                        <li class="nav-item dropdown me-3">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                Services
-                            </a>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#">Barangay ID</a></li>
-                                <li><a class="dropdown-item" href="#">Barangay Clearance</a></li>
-                                <li><a class="dropdown-item" href="#">Certification</a></li>
-                                <li><a class="dropdown-item" href="#">Business Permit</a></li>
-                                <li><a class="dropdown-item" href="#">Katarungang Pambarangay</a></li>
-                                <li><a class="dropdown-item" href="#">Environmental Services</a></li>
-                            </ul>
-                           </li>
-                            <li class="nav-item me-3">
-                            <a class="nav-link" href="#">
-                                Transparency Seal
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                Contact Us
-                            </a>
-                        </li>
-                    </ul> 
-                    <form class="d-inline me-5" role="search">
-                        <input class="form-control custom-input me-2" type="search" placeholder="Search" aria-label="Search">
-                    </form>
-                </div>
-            </div> 
-        </nav>
-    </div>
-</header>
-
 <!-- BANNER SECTION -->
 <div class="container-fluid px-0">
     <img src="images/banner.png" alt="Banner" class="img-fluid w-auto">    
 </div>
-
-<!-- CAROUSEL SECTION -->
-<!-- <div class="container-fluid px-0">
-    <div id="carouselExampleIndicators" class="carousel slide">
-        <div class="carousel-indicators">
-            <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
-            <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="1" aria-label="Slide 2"></button>
-            <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="2" aria-label="Slide 3"></button>
-        </div>
-        
-        <div class="carousel-inner">
-            <div class="carousel-item active">
-                <img src="images/carousel.png" class="d-block w-100" alt="...">
-            </div>
-            <div class="carousel-item">
-                <img src="images/carousel.png" class="d-block w-100" alt="...">
-            </div>
-            <div class="carousel-item">
-                <img src="images/carousel.png" class="d-block w-100" alt="...">
-            </div>
-        </div>
-        
-        <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
-            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Previous</span>
-        </button>
-        
-        <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
-            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Next</span>
-        </button>
-    </div>
-</div> -->
-
 
 <!-- CAROUSEL SECTION -->
 <div class="carousel-wrapper">
@@ -179,75 +83,80 @@ include 'includes/header.php';
     </div>
 </div>
 
-<!-- SERVICES SECTION -->
-<div class="container-fluid px-0 mt-5">
-    <div class="services-container text-center">
-        <h1 class="gradient-text">SERVICES</h1>
+<!-- SERVICE SECTION -->
+<div class="container-fluid mt-5 services-container">
+    <h1 class="text-center gradient-text">SERVICES</h1>
 
-        <div class="container text-center">
-            <div class="row mt-5">
-                <div class="col">
-                    <div class="p-5">
-                        <h3>Barangay ID</h3>
-                        <p>
-                            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris...
-                        </p>
+    <div class="container mt-5">
+        <div class="row row-cols-1 row-cols-md-2 g-3">
+            <div class="col d-flex">
+                <a href="#" class="service-card green-light w-100">
+                    <i class="fas fa-id-card icon"></i>
+                    <div>
+                        <h4>Barangay ID</h4>
+                        <p>An official identification card issued by the barangay.</p>
                     </div>
-                </div>
-                <div class="col">
-                    <div class="p-5">
-                        <h3>Barangay Clearance</h3>
-                        <p>
-                            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris...
-                        </p>
-                    </div> 
-                </div>
-            </div> 
-            <div class="row mt-5">
-                <div class="col">
-                    <div class="p-5">
-                        <h3>Certification</h3>  
-                        <p>
-                            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris...
-                        </p>
-                    </div> 
-                </div>
-                <div class="col">
-                    <div class="p-5">
-                        <h3>Business Permit</h3>
-                        <p>
-                            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris...
-                        </p>
-                    </div> 
-                </div>
+                </a>
             </div>
-            <div class="row mt-5">
-                <div class="col">
-                    <div class="p-5">
-                        <h3>Katarungang Pambarangay</h3>
-                        <p>
-                            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris...
-                        </p>
-                    </div> 
-                </div>
-                <div class="col">
-                    <div class="p-5">
-                        <h3>Environmental Services</h3>
-                        <p>
-                            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris...
-                        </p>
-                    </div> 
-                </div>
+
+            <div class="col d-flex">
+                <a href="#" class="service-card green-light w-100">
+                    <i class="fas fa-file-alt icon"></i>
+                    <div>
+                        <h4>Barangay Clearance</h4>
+                        <p>Certifies a resident has no pending issues.</p>
+                    </div>
+                </a>
             </div>
+
+            <div class="col d-flex">
+                <a href="#" class="service-card green-dark w-100">
+                    <i class="fas fa-certificate icon"></i>
+                    <div>
+                        <h4>Certification</h4>
+                        <p>Confirms a resident's identity, residency, or status.</p>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col d-flex">
+                <a href="#" class="service-card green-light w-100">
+                    <i class="fas fa-store icon"></i>
+                    <div>
+                        <h4>Business Permit</h4>
+                        <p>Authorization to operate within the barangay.</p>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col d-flex">
+                <a href="#" class="service-card green-light w-100">
+                    <i class="fas fa-balance-scale icon"></i>
+                    <div>
+                        <h4>Katarungang Pambarangay</h4>
+                        <p>Barangay justice system for settling disputes.</p>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col d-flex">
+                <a href="#" class="service-card green-dark w-100">
+                    <i class="fas fa-leaf icon"></i>
+                    <div>
+                        <h4>Environmental Services</h4>
+                        <p>Programs for cleanliness and waste management.</p>
+                    </div>
+                </a>
+            </div>
+            
         </div>
     </div>
 </div>
 
 <!-- NEWS AND UPDATES SECTION -->
 <div class="container-fluid px-0">
-    
-</div>
 
+</div>
 
 <!-- <?php include 'includes/footer.php'; ?> -->
 <script src="js/carousel.js"></script>

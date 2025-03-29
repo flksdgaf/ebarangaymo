@@ -10,6 +10,69 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/e30afd7a6b.js" crossorigin="anonymous"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
+
+<!-- NAVIGATION SECTION -->
+<header>
+    <div class="container-fluid bg-body-tertiary">
+        <nav class="navbar navbar-expand-lg">
+            <div class="container">
+                <a class="navbar-brand" href="#">
+                    <img src="images/seal.png" alt="Republic Seal of the Philippines" width="36" height="36">
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item me-3">
+                            <a class="nav-link" aria-current="page" href="#">
+                                Home
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown me-3">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                About
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">Officials</a></li>
+                                <li><a class="dropdown-item" href="#">Mission, Vision and Values</a></li>
+                                <li><a class="dropdown-item" href="#">Citizens Charter</a></li>
+                                <li><a class="dropdown-item" href="#">Map</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item dropdown me-3">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Services
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">Barangay ID</a></li>
+                                <li><a class="dropdown-item" href="#">Barangay Clearance</a></li>
+                                <li><a class="dropdown-item" href="#">Certification</a></li>
+                                <li><a class="dropdown-item" href="#">Business Permit</a></li>
+                                <li><a class="dropdown-item" href="#">Katarungang Pambarangay</a></li>
+                                <li><a class="dropdown-item" href="#">Environmental Services</a></li>
+                            </ul>
+                           </li>
+                            <li class="nav-item me-3">
+                            <a class="nav-link" href="#">
+                                Transparency Seal
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                Contact Us
+                            </a>
+                        </li>
+                    </ul> 
+                    <form class="d-inline me-5" role="search">
+                        <input class="form-control custom-input me-2" type="search" placeholder="Search" aria-label="Search">
+                    </form>
+                </div>
+            </div> 
+        </nav>
+    </div>
+</header>

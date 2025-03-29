@@ -9,17 +9,59 @@
     transition: color 0.3s ease-in-out;
 }
 
-.dropdown-menu .dropdown-item {
-    font-size: 15px;
-}
-
 .navbar-nav .nav-link:hover {
     color: #2A9245;
 }
 
-.navbar-nav .nav-link.active {
-    font-weight: 700;
-    color: #2A9245 !important;
+.dropdown-item {
+    font-size: 15px;
+}
+
+.dropdown-item:hover {
+  color: #2A9245;
+}
+
+.dropdown-item:active {
+  background-color: #2A9245 ; 
+  color: white ; 
+}
+
+.carousel-inner img {
+  height: 640px;
+  object-fit: contain ;
+}
+
+.carousel-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.carousel-blur-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  filter: blur(15px);
+  transition: background-image 0.5s ease-in-out;
+  z-index: 1;
+  transform: scale(1.1);
+
+}
+
+.carousel-container {
+  position: relative;
+  z-index: 2;
+}
+
+.carousel-control-prev, 
+.carousel-control-next {
+    top: 60%;
+    transform: translateY(-75%);
 }
 
 .gradient-text {
@@ -54,7 +96,15 @@
     padding: 40px;
     text-align: center;
     width: 268px; 
-    height: 250px; 
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.row {
+  display: flex;
+  align-items: stretch;
 }
 
 .card-custom h5 {
@@ -65,8 +115,19 @@
     color: #333;
 }
 
+
+
+
+
+
+
+
+
+
+
 .services-container h1 {
     font-size: 25px; 
     font-weight: 700;
     color: #000000;
 }
+

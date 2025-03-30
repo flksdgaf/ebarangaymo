@@ -1,4 +1,3 @@
-
 <?php 
 session_start();
 include 'functions/dbconn.php'; 

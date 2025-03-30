@@ -34,7 +34,7 @@ if (!isset($page)) {
                 </button>
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <?php if ($page == 'index') { ?>
+                        <?php if ($page == 'user_homepage') { ?>
                             <li class="nav-item me-3">
                                 <a class="nav-link active" href="#">Home</a>
                             </li>
@@ -68,7 +68,7 @@ if (!isset($page)) {
                             <li class="nav-item">
                                 <a class="nav-link" href="#">Contact Us</a>
                             </li>
-                        <?php } elseif ($page == 'landing_page') { ?>
+                        <?php } elseif ($page == 'index') { ?>
                             <li class="nav-item me-3">
                                 <a class="nav-link active" href="#">Home</a>
                             </li>
@@ -83,7 +83,7 @@ if (!isset($page)) {
                     <form class="d-inline me-3" role="search">
                         <input class="form-control custom-input me-2" type="search" placeholder="Search" aria-label="Search">
                     </form>
-                    <?php if ($page == 'landing_page') { ?>
+                    <?php if ($page == 'index') { ?>
                         <a class="btn custom-signin-btn" href="#">Sign In</a>
                     <?php } ?>
                 </div>

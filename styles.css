@@ -210,3 +210,27 @@ body {
     width: 100%;
     border-radius: 8px;
 }
+
+
+
+
+
+.agency-footer {
+    background-color: #2A9245; /* Change to any color */
+    color: white;
+    padding: 10px;
+}
+
+.agency-footer .icon {
+    font-size: 25px;
+}
+
+.standard-footer {
+    background-color: #EFEFEF; /* Change to any color */
+    color: black;
+}
+
+.standard-footer .seal {
+    width: 280px;
+    height: 280px;
+}

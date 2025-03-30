@@ -1,0 +1,44 @@
+/* Full height layout */
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+/* Split Container */
+.split-container {
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+}
+
+/* Left Section (Sign In) */
+.left {
+    background: url('images/bg_hover.png') center/cover no-repeat;
+    transition: all 0.5s ease-in-out;
+}
+
+/* Right Section (Sign Up) */
+.right {
+    background: url('images/bg_nothover.png') center/cover no-repeat;
+    transition: all 0.5s ease-in-out;
+}
+
+/* Hover Effect - Expanding Side */
+.split-container:hover .split {
+    width: 50%;
+}
+
+.split-container:hover .split:hover {
+    width: 70%;
+}
+
+.split-container:hover .split:not(:hover) {
+    width: 30%;
+}
+
+/* Button Styling */
+.btn {
+    margin-top: 20px;
+    padding: 10px 25px;
+    font-size: 16px;
+}

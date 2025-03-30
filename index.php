@@ -1,6 +1,7 @@
 <?php 
 session_start();
 include 'functions/dbconn.php'; 
+$page = 'index';
 include 'includes/header.php'; 
 ?>
 
@@ -175,6 +176,8 @@ include 'includes/header.php';
     </div>
 </div>
 
-<?php include 'includes/footer.php'; ?> 
+<?php 
+    include 'includes/footer.php'; 
+?> 
 
 <script src="js/carousel.js"></script>

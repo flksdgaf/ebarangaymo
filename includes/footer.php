@@ -33,7 +33,7 @@
         <div class="container">
             <div class="row">
                 <div class="col">
-                    <img src="images/seal.png" alt="Republic Seal of the Philippines" class="seal">
+                    <img src="images/republicseal.png" alt="Republic Seal of the Philippines" class="seal">
                 </div>
                 <div class="col d-flex align-items-center">
                     <h5>All content is public domain unless otherwise stated.</h5>

@@ -77,16 +77,19 @@ if (!isset($page)) {
                                 <a class="nav-link" href="#">About</a>
                             </li>
                             <li class="nav-item me-3">
-                                <a class="nav-link" href="#">Contact Us</a>
+                                <a class="nav-link" href="#">Services</a>
                             </li>
                         <?php } ?>
                     </ul>
+                    <?php if ($page == 'index') { ?>
+                        <a class="btn custom-signin-btn" href="signinup.php">Get Started</a>
+                    <?php } ?>
+
+                    <?php if ($page == 'user_homepage') { ?>
                     <form class="d-inline me-3" role="search">
                         <input class="form-control custom-input me-2" type="search" placeholder="Search" aria-label="Search">
                     </form>
-                    <?php if ($page == 'index') { ?>
-                        <a class="btn custom-signin-btn" href="signinup.php">Sign In</a>
-                    <?php } ?>
+                    <?php } ?>     
                 </div>
             </div>
         </nav>

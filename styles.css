@@ -2,70 +2,7 @@
     font-family: 'Poppins', sans-serif;
 }
 
-/* INDEX CSS */
-.index .navbar-nav .nav-link:hover {
-    color: #0F357E;
-}
-
-.custom-signin-btn {
-    background-color: #0F357E;
-    color: white;
-}
-
-.banner-title h1 {
-    color: #FFFFFF;
-    font-size: 35px;
-    font-weight: 700;
-}
-
-.banner-title p {
-    color: #0F357E;
-    font-size: 15px;
-    font-weight: 400;
-    font-style: italic;
-}
-
-.index-main p {
-    color: #0F357E;
-    font-size: 15px;
-    font-weight: 400;
-}
-
-.about-container h1 {
-    font-size: 30px; 
-    font-weight: 700;
-}
-
-.about-container {
-    background: #FFFFFF;
-    padding: 50px 20px;
-    border-radius: 12px;
-}
-
-.sign-up-container h1 {
-    font-size: 30px; 
-    font-weight: 700;
-}
-
-.sign-up-container p {
-    font-size: 15px; 
-    font-weight: 500;
-    color: #0F357E;
-}
-
-.sign-up-container {
-    background: #FFFFFF;
-    padding: 50px 20px;
-    border-radius: 12px;
-}
-
-.index .gradient-text {
-    background: linear-gradient(to top, #0F357E, #74B4DA);
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-}   
-
-/* USER HOMEPAGE CSS */
+/* INDEX PAGE CSS */
 .navbar-nav .nav-link {
     font-size: 15px; 
     font-weight: 500;
@@ -77,17 +14,17 @@
     color: #2A9245;
 }
 
-.dropdown-item {
+.custom-signin-btn {
+    background-color: #2A9245;
+    color: white;
+    font-weight: 500;
     font-size: 15px;
 }
 
-.dropdown-item:hover {
-  color: #2A9245;
-}
-
-.dropdown-item:active {
-  background-color: #2A9245 ; 
-  color: white ; 
+.custom-signin-btn:hover {
+    background-color: #ffffff;
+    border-color: #2A9245;
+    color: #2A9245;
 }
 
 body {
@@ -95,35 +32,35 @@ body {
 }
 
 .carousel-inner img {
-  height: 640px;
-  object-fit: contain;
+    height: 640px;
+    object-fit: contain;
 }
-
+  
 .carousel-wrapper {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
 }
-
+  
 .carousel-blur-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-size: cover;
-  background-position: center;
-  filter: blur(15px);
-  transition: background-image 0.5s ease-in-out;
-  z-index: 1;
-  transform: scale(1.1);
-
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    filter: blur(15px);
+    transition: background-image 0.5s ease-in-out;
+    z-index: 1;
+    transform: scale(1.1);
+  
 }
 
 .carousel-container {
-  position: relative;
-  z-index: 2;
+    position: relative;
+    z-index: 2;
 }
 
 .carousel-control-prev, 
@@ -136,17 +73,6 @@ body {
     background: linear-gradient(to bottom, #2A9245, #0D2C15);
     background-clip: text;
     -webkit-text-fill-color: transparent;
-}
-
-.about-container h1 {
-    font-size: 25px; 
-    font-weight: 700;
-}
-
-.about-container p {
-    font-size: 15px; 
-    font-weight: 400;
-    color: #000000;
 }
 
 .about-container {
@@ -168,7 +94,7 @@ body {
     justify-content: center;
 }
 
-.row {
+.about-container .row {
   display: flex;
   align-items: stretch;
 }
@@ -176,11 +102,11 @@ body {
 .card-custom h5 {
     font-weight: 700;
 }
+
 .card-custom p {
     font-size: 14px;
     color: #000000;
 }
-
 
 .services-container .row {
     --bs-gutter-x: -200px;
@@ -240,9 +166,14 @@ body {
     text-decoration: underline;
 }
 
+.new-updates-container h1 {
+    font-size: 25px; 
+    font-weight: 700;
+}
+
 .scrollable-content {
     overflow-x: auto;
-    white-space: nowrap;
+    white-space: wrap;
     gap: 15px;
     padding: 10px 0;
 }
@@ -274,8 +205,49 @@ body {
     border-radius: 8px;
 }
 
+.about-text {
+    background: linear-gradient(135deg, #0D2C15, #2A9245);
+    padding: 30px;
+    border-radius: 10px;
+}
+
+.about-image-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.about-image-container img {
+    margin-right: -95px;
+}
+
+.instruction-container h1 {
+    font-size: 30px; 
+    font-weight: 700;
+}
+
+.instruction-container .steps {
+    font-size: 15px; 
+    font-weight: 500;
+    color: #13411F;
+}
+
+.instruction-container h4 {
+    font-size: 20px; 
+    font-weight: 600;
+    color: #13411F;
+}
+
+.underline {
+    width: 20%; 
+    border: 2px solid #13411F; 
+    margin: 0 auto 10px;
+    opacity: 1;
+}
+
 .agency-footer {
-    background-color: #2A9245; /* Change to any color */
+    background-color: #2A9245; 
     color: white;
     padding: 10px;
 }
@@ -285,11 +257,23 @@ body {
 }
 
 .standard-footer {
-    background-color: #EFEFEF; /* Change to any color */
     color: black;
 }
 
 .standard-footer .seal {
     width: 280px;
     height: 280px;
+}
+
+.dropdown-item {
+    font-size: 15px;
+}
+
+.dropdown-item:hover {
+  color: #2A9245;
+}
+
+.dropdown-item:active {
+  background-color: #2A9245 ; 
+  color: white ; 
 }

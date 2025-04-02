@@ -7,7 +7,7 @@ include 'includes/header.php';
 
 <!-- BANNER SECTION -->
 <div class="container-fluid px-0">
-    <img src="images/banner.png" alt="Banner" class="img-fluid w-auto">    
+    <img src="images/userbanner.png" alt="Banner" class="img-fluid w-auto">    
 </div>
 
 <!-- CAROUSEL SECTION -->

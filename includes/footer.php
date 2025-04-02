@@ -1,10 +1,10 @@
 <footer>
     <div class="agency-footer"> 
-        <div class="container-fluid px-0 mt-3 mb-2">
+        <div class="container mt-3 mb-2">
             <div class="row">
                 <div class="col ps-5"> <!-- Increased left padding for more space -->
-                    <img src="images/maganglogo.png" alt="Magang Logo" width="100" height="100" class="ms-5">
-                    <img src="images/goodgovernancelogo.png" alt="Good Governance Logo" width="100" height="100">
+                    <img src="images/index_images/BarangayMagangLogo.png" alt="Magang Logo" width="100" height="100" class="ms-5">
+                    <img src="images/index_images/GoodGovernanceLogo.png" alt="Good Governance Logo" width="100" height="100">
                 </div>
                 <div class="col">
                     <h5>Brgy. Magang,<br>Daet, Camarines Norte,<br>Philippines<br>
@@ -29,7 +29,7 @@
         </div>
     </div>
     
-    <div class="container-fluid px-0 standard-footer">
+    <div class="container standard-footer">
         <div class="container">
             <div class="row">
                 <div class="col">

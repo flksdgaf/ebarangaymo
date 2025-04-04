@@ -17,10 +17,35 @@ html, body {
     transition: all 0.5s ease-in-out;
 }
 
+.left a {
+    color: white;
+    border-color: #61AD41;
+    font-weight: bold;
+    border-radius: 100px;
+    border-width: 3px;
+    padding: 10px 50px;
+}
+
 /* Right Section (Sign Up) */
 .right {
     background: url('images/bg_nothover.png') center/cover no-repeat;
     transition: all 0.5s ease-in-out;
+}
+
+.right h1 {
+    background: linear-gradient(to bottom, #2A9245, #0D2C15);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.right a {
+    background: linear-gradient(to right, #0D2C15, #2A9245);
+    color: white;
+    border: none;
+    font-weight: bold;
+    border-radius: 100px;
+    padding: 10px 50px;
 }
 
 /* Hover Effect - Expanding Side */

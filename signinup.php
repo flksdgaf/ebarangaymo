@@ -22,7 +22,7 @@ include 'includes/header.php';
         <div class="col-md-6 split right d-flex flex-column align-items-center justify-content-center text-dark" id="right-side">
             <h1 class="fw-bold">CREATE ACCOUNT</h1>
             <p>Provide your personal details and start your journey with us.</p>
-            <a href="register.php" class="btn btn-primary">SIGN UP</a>
+            <a href="signup.php" class="btn btn-primary">SIGN UP</a>
         </div>
     </div>
 </div>

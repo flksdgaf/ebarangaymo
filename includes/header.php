@@ -71,7 +71,7 @@ if (!isset($page)) {
                             </li>
                         <?php } elseif ($page == 'index' || $page == 'signinup') { ?>
                             <li class="nav-item me-3">
-                                <a class="nav-link active" href="#">Home</a>
+                                <a class="nav-link active" href="index.php">Home</a>
                             </li>
                             <li class="nav-item me-3">
                                 <a class="nav-link" href="#">About</a>

@@ -1,0 +1,174 @@
+/* Background Image */
+body {
+    background: url('images/bg_nothover.png') no-repeat center center fixed;
+    background-size: cover;
+}
+
+/* Form Container */
+.form-container {
+    max-width: 600px;
+    width: 100%;
+}
+
+/* Gradient Header */
+h1 {
+    background: linear-gradient(to bottom, #2A9245, #0D2C15);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Subheader */
+h5 {
+    font-size: 15px;
+    margin-bottom: 40px;
+}
+
+/* Input Styling */
+.custom-input {
+    background-color: #d3d3d3 !important;
+    color: white !important;
+    border: none;
+}
+
+/* Placeholder */
+.custom-input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Navigation Dots */
+.dot {
+    height: 10px;
+    width: 10px;
+    background-color: #61AD41;
+    border-radius: 50%;
+    display: inline-block;
+    margin: 5px;
+    transition: 0.3s;
+    margin-top: 40px;
+}
+
+.active-dot {
+    width: 14px;
+    height: 14px;
+    background-color: #13411F;
+}
+
+/* Buttons */
+.btn {
+    border-radius: 30px;
+    padding: 10px 30px;
+    font-size: 16px;
+    font-weight: bold;
+    margin: 0 10px;
+}
+
+/* Cancel Button */
+.cancel-btn {
+    color: #13411F;
+    border-color: #61AD41;
+    font-weight: bold;
+    border-radius: 100px;
+    border-width: 3px;
+    width: 190px;
+}
+
+/* Next Button */
+.next-btn {
+    background: linear-gradient(to right, #0D2C15, #2A9245);
+    color: white;
+    border: none;
+    font-weight: bold;
+    border-radius: 100px;
+    width: 190px;
+}
+
+/* Hide Steps by Default */
+.step {
+    display: none;
+}
+
+.active-step {
+    display: block;
+}
+
+/* Password validation rules */
+.password-rules {
+    margin-left: 33.333%; /* Aligns with the password field */
+}
+
+.rule {
+    align-items: center;
+    color: red;
+    font-size: 12px;
+    transition: 0.3s;
+}
+
+.rule::before {
+    content: "❌";
+    margin-right: 5px;
+    color: red;
+}
+
+.rule.valid {
+    color: green;
+}
+
+.rule.valid::before {
+    content: "✔";
+    color: green;
+}
+
+.text-danger {
+    margin-left: 33.333%; /* Aligns with the password field */
+    font-size: 13px;
+    margin-top: 10px;
+}
+
+.text-success {
+    margin-left: 33.333%; /* Aligns with the password field */
+    font-size: 13px;
+    margin-top: 10px;
+}
+
+/* Position the password toggle icon inside the input field */
+.position-relative {
+    position: relative;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 16px;
+    color: #666;
+}
+
+.toggle-password:hover {
+    color: #333;
+}
+
+.summary-container span {
+    text-decoration: underline;
+}
+
+/* Style for input field */
+.password-field {
+    padding-right: 35px; /* Ensure text doesn't overlap with the icon */
+}
+
+@media screen and (max-width: 767px) {
+    .password-rules {
+        margin-left: 0px; /* Aligns with the password field */
+    }
+
+    .text-danger {
+        margin-left: 0px; /* Aligns with the password field */
+    }
+    
+    .text-success {
+        margin-left: 0px; /* Aligns with the password field */
+    }
+}

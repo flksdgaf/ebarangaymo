@@ -15,3 +15,9 @@ document.addEventListener("DOMContentLoaded", function () {
     // Set the initial background
     updateBlurredBackground();
 });
+
+[...document.querySelectorAll('*')].forEach(el => {
+    if (el.scrollWidth > document.documentElement.clientWidth) {
+        console.log(el);
+    }
+});

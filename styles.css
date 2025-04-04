@@ -71,11 +71,12 @@ body {
 
 .gradient-text {
     background: linear-gradient(to bottom, #2A9245, #0D2C15);
+    -webkit-background-clip: text;
     background-clip: text;
-    -webkit-text-fill-color: transparent;
+
 }
 
-.about-container {
+.mission-vision-values {
     background: #FFFFFF;
     padding: 50px 20px;
     border-radius: 12px;
@@ -252,6 +253,14 @@ body {
     padding: 10px;
 }
 
+.agency-footer h5 {
+    font-size: 15px;    
+}
+
+.quick-link {
+    font-size: 15px;    
+}
+
 .agency-footer .icon {
     font-size: 25px;
 }
@@ -277,3 +286,4 @@ body {
   background-color: #2A9245 ; 
   color: white ; 
 }
+

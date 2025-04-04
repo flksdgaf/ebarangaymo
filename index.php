@@ -67,9 +67,9 @@ include 'includes/header.php';
     </div>
 </div>
 
-<!-- ABOUT US SECTION -->
+<!-- MISSION VISION VALUES SECTION -->
 <div class="container-fluid px-0">
-    <div class="about-container text-center">
+    <div class="mission-vision-values text-center">
         <div class="row g-4 mt-4 justify-content-center text-center">
             <div class="col-lg-3 col-md-5 col-sm-6 d-flex justify-content-center">
                 <div class="card-custom p-4">
@@ -192,7 +192,7 @@ include 'includes/header.php';
 </div>
 
 <!-- ABOUT SECTION -->
-<div class="container-fluid px-5 py-5">
+<div class="container-fluid px-0">
     <div class="row align-items-center">
         <!-- About Text -->
         <div class="col-md-6">
@@ -210,8 +210,7 @@ include 'includes/header.php';
         <!-- About Image -->
         <div class="col-md-6 text-center">
             <div class="about-image-container">
-                <img src="images/index_images/aboutimage.png" alt="eBarangay Mo Platform" 
-                    class="img-fluid">
+                <img src="images/index_images/AboutImage.png" alt="eBarangay Mo Platform" class="img-fluid">
             </div>
         </div>
     </div>
@@ -225,7 +224,7 @@ include 'includes/header.php';
     <div class="row text-center mt-4">
         <!-- Step 1 -->
         <div class="col-md-3">
-            <img src="images/step1.png" alt="Visit the Website" class="img-fluid mx-auto d-block w-75">
+            <img src="images/index_images/Step1.png" alt="Visit the Website" class="img-fluid mx-auto d-block w-75">
             <h4 class="mt-3 fw-bold">Visit the Website</h4>
             <hr class="underline">
             <p>Go to the eBarangay Mo website and click <strong>Sign Up</strong>.</p>
@@ -233,7 +232,7 @@ include 'includes/header.php';
 
         <!-- Step 2 -->
         <div class="col-md-3">
-            <img src="images/step2.png" alt="Register an Account" class="img-fluid mx-auto d-block w-75">
+            <img src="images/index_images/Step2.png" alt="Register an Account" class="img-fluid mx-auto d-block w-75">
             <h4 class="mt-3 fw-bold">Register an Account</h4>
             <hr class="underline">
             <p>Fill out the registration form with your required personal information.</p>
@@ -241,7 +240,7 @@ include 'includes/header.php';
 
         <!-- Step 3 -->
         <div class="col-md-3">
-            <img src="images/step3.png" alt="Wait for Verification" class="img-fluid mx-auto d-block w-75">
+            <img src="images/index_images/Step3.png" alt="Wait for Verification" class="img-fluid mx-auto d-block w-75">
             <h4 class="mt-3 fw-bold">Wait for Verification</h4>
             <hr class="underline">
             <p>Wait for the notification in verifying the account you created.</p>
@@ -249,7 +248,7 @@ include 'includes/header.php';
 
         <!-- Step 4 -->
         <div class="col-md-3">
-            <img src="images/step4.png" alt="Avail Barangay Services" class="img-fluid mx-auto d-block w-75">
+            <img src="images/index_images/Step4.png" alt="Avail Barangay Services" class="img-fluid mx-auto d-block w-75">
             <h4 class="mt-3 fw-bold">Avail Barangay Services</h4>
             <hr class="underline">
             <p>Once your account is verified, you can now submit a request for your desired service.</p>

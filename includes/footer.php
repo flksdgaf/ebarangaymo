@@ -15,10 +15,10 @@
                 <div class="col">
                     <h5>Quick Links</h5>
                     <ul class="list-unstyled">
-                        <li><a href="#" class="text-decoration-none text-light">Downloads</a></li>
-                        <li><a href="#" class="text-decoration-none text-light">Archives</a></li>
-                        <li><a href="#" class="text-decoration-none text-light">FAQs</a></li>
-                        <li><a href="#" class="text-decoration-none text-light">Site Map</a></li>
+                        <li><a href="#" class="text-decoration-none text-light quick-link">Downloads</a></li>
+                        <li><a href="#" class="text-decoration-none text-light quick-link">Archives</a></li>
+                        <li><a href="#" class="text-decoration-none text-light quick-link">FAQs</a></li>
+                        <li><a href="#" class="text-decoration-none text-light quick-link">Site Map</a></li>
                     </ul>
                 </div>
                 <div class="col">

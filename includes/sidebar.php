@@ -1,33 +1,92 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - eBarangay Mo</title>
-    <link rel="stylesheet" href="sidebar.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</head>
-<body>
-<div class="d-flex">
-        <nav class="sidebar d-flex flex-column p-3">
-            <h3 class="text-center">eBarangay Mo</h3>
-            <ul class="nav flex-column">
-                <li class="nav-item"><a href="#" class="nav-link active">Dashboard</a></li>
-                <li class="nav-item"><a href="#" class="nav-link">Request</a></li>
-                <li class="nav-item"><a href="#" class="nav-link">Blotter Record</a></li>
-                <li class="nav-item"><a href="#" class="nav-link">Residents</a></li>
-                <li class="nav-item"><a href="#" class="nav-link">eBarangay Mo Website</a></li>
-                <li class="nav-item"><a href="#" class="nav-link">Users</a></li>
-            </ul>
-            <div class="mt-auto text-center">
-                <button class="btn btn-danger w-100">Sign Out</button>
-            </div>
-        </nav>
+<aside id="sidebar">
+    <div class="d-flex">
+        <button class="toggle-btn" type="button">
+            <i class="lni lni-grid-alt"></i>
+        </button>
+        <div class="sidebar-logo">
+            <a href="#">eBarangay Mo</a>
+        </div>
     </div>
-</body>
-</html>
+    <ul class="sidebar-nav">
+        <li class="sidebar-item">
+            <a href="#" class="sidebar-link">
+                <i class="lni lni-user"></i>
+                <span>Dashboard</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
+            <a href="#" class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse"
+                data-bs-target="#auth" aria-expanded="false" aria-controls="auth">
+                <i class="lni lni-protection"></i>
+                <span>Request</span>
+            </a>
+            <ul id="auth" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link">Barangay ID</a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link">Barangay Clearance</a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link">Certificate</a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link">Business Permit</a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link">Katarungang Pambarangay</a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link">Environmental Services</a>
+                </li>
+            </ul>
+        </li>
+        <li class="sidebar-item">
+            <a href="#" class="sidebar-link">
+                <i class="lni lni-agenda"></i>
+                <span>Blotter Record</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
+            <a href="#" class="sidebar-link">
+                <i class="lni lni-popup"></i>
+                <span>Residents</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
+            <a href="#" class="sidebar-link collapsed has-dropdown" data-bs-toggle="collapse"
+                data-bs-target="#multi" aria-expanded="false" aria-controls="multi">
+                <i class="lni lni-layout"></i>
+                <span>eBarangay Mo Website</span>
+            </a>
+            <ul id="multi" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link collapsed" data-bs-toggle="collapse"
+                        data-bs-target="#multi-two" aria-expanded="false" aria-controls="multi-two">
+                        Two Links
+                    </a>
+                    <ul id="multi-two" class="sidebar-dropdown list-unstyled collapse">
+                        <li class="sidebar-item">
+                            <a href="#" class="sidebar-link">Link 1</a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="#" class="sidebar-link">Link 2</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li class="sidebar-item">
+            <a href="#" class="sidebar-link">
+                <i class="lni lni-cog"></i>
+                <span>Users</span>
+            </a>
+        </li>
+    </ul>
+    <div class="sidebar-footer">
+        <a href="#" class="sidebar-link">
+            <i class="lni lni-exit"></i>
+            <span>Logout</span>
+        </a>
+    </div>
+</aside>

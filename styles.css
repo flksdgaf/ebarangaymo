@@ -33,61 +33,6 @@ body {
 
 /* BANNER CSS */
 
-
-.banner-image {
-    width: 100%;
-    height: auto;
-}
-
-.position-absolute {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-
-.text-content {
-    transition: transform 0.5s ease, font-size 0.5s ease;  /* Smooth shrinking */
-}
-
-.logo {
-    max-width: 100px;
-    height: auto;
-    transition: transform 0.5s ease;  /* Smooth shrinking */
-}
-
-/* Media Query to handle smaller screen sizes */
-@media (max-width: 768px) {
-    .green-background {
-        padding: 120px 0; /* Increase padding for smaller screens */
-    }
-
-    .text-content {
-        transform: scale(0.8);  /* Gradual shrinking */
-        font-size: 0.9em; /* Slightly smaller text */
-    }
-
-    .logo {
-        transform: scale(0.8);  /* Shrink logos */
-    }
-}
-
-@media (max-width: 480px) {
-    .green-background {
-        padding: 140px 0; /* Even larger green background on smaller devices */
-    }
-
-    .text-content {
-        transform: scale(0.7); /* Further shrinking */
-        font-size: 0.8em;
-    }
-
-    .logo {
-        transform: scale(0.7);  /* Further shrink logos */
-    }
-}
-
-
 .carousel-inner img {
     height: 640px;
     object-fit: contain;
@@ -130,7 +75,7 @@ body {
     background: linear-gradient(to bottom, #2A9245, #0D2C15);
     -webkit-background-clip: text;
     background-clip: text;
-
+    -webkit-text-fill-color: transparent;
 }
 
 .mission-vision-values {
@@ -224,6 +169,10 @@ body {
     text-decoration: underline;
 }
 
+.new-updates-container .row {
+    margin: 0 70px;
+}
+
 .new-updates-container h1 {
     font-size: 25px; 
     font-weight: 700;
@@ -276,10 +225,6 @@ body {
     align-items: center;
 }
 
-.about-image-container img {
-    margin-right: -95px;
-}
-
 .instruction-container h1 {
     font-size: 30px; 
     font-weight: 700;
@@ -307,7 +252,7 @@ body {
 .agency-footer {
     background-color: #2A9245; 
     color: white;
-    padding: 10px;
+    padding: 20px 10px;
 }
 
 .agency-footer h5 {
@@ -331,7 +276,7 @@ body {
     height: 280px;
 }
 
-.dropdown-item {
+/* .dropdown-item {
     font-size: 15px;
 }
 
@@ -342,5 +287,5 @@ body {
 .dropdown-item:active {
   background-color: #2A9245 ; 
   color: white ; 
-}
+} */
 

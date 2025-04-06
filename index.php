@@ -6,29 +6,72 @@ include 'includes/header.php';
 ?>
 
 <!-- BANNER SECTION -->
-<div class="container-fluid px-0 position-relative">
-    <img src="images/index_images/Banner.png" alt="Banner" class="img-fluid">  
+<!-- <div class="container-fluid px-0 position-relative"> -->
+  <!-- Background image -->
+  <!-- <img src="images/index_images/Banner.png" alt="Banner" class="img-fluid w-100"> -->
 
-    <div class="position-absolute top-50 start-50 translate-middle text-center text-white w-100">
+  <!-- Content overlay -->
+  <!-- <div class="position-absolute top-50 start-50 translate-middle w-100 text-white text-center">
+    <div class="container">
+      <div class="row align-items-center justify-content-center d-none d-md-flex"> -->
+        <!-- Left logo -->
+        <!-- <div class="col-md-3 text-end">
+          <img src="images/index_images/GoodGovernanceLogo.png" alt="Left Logo" class="img-fluid" style="max-width: 100px;">
+        </div> -->
+        <!-- Text block -->
+        <!-- <div class="col-md-3 text-center">
+          <h6 class="mb-1">Republic of the Philippines</h6>
+          <hr class="mx-auto" style="width: 80%; border-top: 2px solid white; opacity: 1; margin: 0;">
+          <h1 class="fw-semibold">eBarangay Mo</h1>
+          <p class="mb-0">BARANGAY SERVICES PORTAL OF <br> DAET, CAMARINES NORTE</p>
+        </div> -->
+        <!-- Right logo -->
+        <!-- <div class="col-md-3 text-start">
+          <img src="images/index_images/BarangayMagangLogo.png" alt="Right Logo" class="img-fluid" style="max-width: 100px;">
+        </div>
+      </div> -->
+
+      <!-- MOBILE VERSION -->
+      <!-- <div class="d-flex d-md-none flex-column align-items-center">
+        <div class="d-flex justify-content-center gap-3 mb-3">
+          <img src="images/index_images/GoodGovernanceLogo.png" alt="Left Logo" class="img-fluid" style="max-width: 80px;">
+          <img src="images/index_images/BarangayMagangLogo.png" alt="Right Logo" class="img-fluid" style="max-width: 80px;">
+        </div>
+        <div class="text-center">
+          <h6 class="mb-1 small">Republic of the Philippines</h6>
+          <hr class="mx-auto" style="width: 60%; border-top: 2px solid white; opacity: 1; margin: 0;">
+          <h3 class="fw-semibold my-2">eBarangay Mo</h3>
+          <p class="mb-0 small">BARANGAY SERVICES PORTAL OF <br> DAET, CAMARINES NORTE</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> -->
+
+<!-- BANNER SECTION -->
+<!-- <div class="container-fluid px-0 position-relative">
+    <img src="images/index_images/Banner.png" alt="Banner" class="img-fluid">   -->
+
+    <!-- <div class="position-absolute top-50 start-50 translate-middle text-center text-white w-100">
         <div class="container">
-            <div class="d-flex align-items-center justify-content-center gap-3">
+            <div class="d-flex align-items-center justify-content-center gap-3"> -->
                 <!-- Left Logo -->
-                <img src="images/index_images/GoodGovernanceLogo.png" alt="Left Logo" class="img-fluid" style="max-width: 100px; height: auto;">
+                <!-- <img src="images/index_images/GoodGovernanceLogo.png" alt="Left Logo" class="img-fluid" style="max-width: 100px; height: auto;"> -->
 
                 <!-- Centered Text -->
-                <div>
+                <!-- <div>
                     <h6 class="mb-1">Republic of the Philippines</h6>
                     <hr class="mx-auto" style="width: 80%; border-top: 2px solid white; opacity: 1; margin: 0;">
                     <h1 style="font-weight: 600;">eBarangay Mo</h1>
                     <p class="mb-0">BARANGAY SERVICES PORTAL OF <br> DAET, CAMARINES NORTE</p>
-                </div>
+                </div> -->
 
                 <!-- Right Logo -->
-                <img src="images/index_images/BarangayMagangLogo.png" alt="Right Logo" class="img-fluid" style="max-width: 100px; height: auto;">
+                <!-- <img src="images/index_images/BarangayMagangLogo.png" alt="Right Logo" class="img-fluid" style="max-width: 100px; height: auto;">
             </div>
         </div>
     </div>
-</div>
+</div> -->
 
 <!-- CAROUSEL SECTION -->
 <!-- <div class="carousel-wrapper">
@@ -165,7 +208,7 @@ include 'includes/header.php';
 
 <!-- NEWS AND UPDATES SECTION -->
 <!-- <div class="container-fluid px-4 mt-5 mb-5 new-updates-container">
-    <div class="row align-items-center ms-5 me-5"> -->
+    <div class="row align-items-center"> -->
         <!-- Title Section -->
         <!-- <div class="col-md-5">
             <h1 class="gradient-text">NEWS AND UPDATES</h1>
@@ -192,7 +235,7 @@ include 'includes/header.php';
 </div> -->
 
 <!-- ABOUT SECTION -->
-<!-- <div class="container-fluid px-0">
+<!-- <div class="container-fluid">
     <div class="row align-items-center"> -->
         <!-- About Text -->
         <!-- <div class="col-md-6">

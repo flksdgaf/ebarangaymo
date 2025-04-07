@@ -6,31 +6,6 @@ include 'includes/header.php';
 ?>
 
 <!-- BANNER SECTION -->
-<!-- <div class="container-fluid px-0 position-relative">
-    <img src="images/index_images/Banner.png" alt="Banner" class="img-fluid">   -->
-
-    <!-- <div class="position-absolute top-50 start-50 translate-middle text-center text-white w-100">
-        <div class="container">
-            <div class="d-flex align-items-center justify-content-center gap-3"> -->
-                <!-- Left Logo -->
-                <!-- <img src="images/index_images/GoodGovernanceLogo.png" alt="Left Logo" class="img-fluid" style="max-width: 100px; height: auto;"> -->
-
-                <!-- Centered Text -->
-                <!-- <div>
-                    <h6 class="mb-1">Republic of the Philippines</h6>
-                    <hr class="mx-auto" style="width: 80%; border-top: 2px solid white; opacity: 1; margin: 0;">
-                    <h1 style="font-weight: 600;">eBarangay Mo</h1>
-                    <p class="mb-0">BARANGAY SERVICES PORTAL OF <br> DAET, CAMARINES NORTE</p>
-                </div> -->
-
-                <!-- Right Logo -->
-                <!-- <img src="images/index_images/BarangayMagangLogo.png" alt="Right Logo" class="img-fluid" style="max-width: 100px; height: auto;">
-            </div>
-        </div>
-    </div>
-</div> -->
-
-<!-- BANNER SECTION -->
 <div class="container-fluid px-0 position-relative">
   <!-- Background image -->
   <img src="images/index_images/Banner.png" alt="Banner" class="img-fluid w-100 banner-image">

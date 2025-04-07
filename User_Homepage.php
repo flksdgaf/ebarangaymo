@@ -7,7 +7,7 @@ include 'includes/header.php';
 
 <!-- BANNER SECTION -->
 <div class="container-fluid px-0">
-    <img src="images/userbanner.png" alt="Banner" class="img-fluid w-auto">    
+    <img src="images/index_images/Banner.png" alt="Banner" class="img-fluid w-auto">    
 </div>
 
 <!-- CAROUSEL SECTION -->
@@ -24,13 +24,13 @@ include 'includes/header.php';
 
             <div class="carousel-inner">
                 <div class="carousel-item active">
-                    <img src="images/carousel.png" class="d-block w-100 carousel-image" alt="...">
+                    <img src="images/index_images/carousel.png" class="d-block w-100 carousel-image" alt="...">
                 </div>
                 <div class="carousel-item">
-                    <img src="images/carousel.png" class="d-block w-100 carousel-image" alt="...">
+                    <img src="images/index_images/carousel.png" class="d-block w-100 carousel-image" alt="...">
                 </div>
                 <div class="carousel-item">
-                    <img src="images/carousel.png" class="d-block w-100 carousel-image" alt="...">
+                    <img src="images/index_images/carousel.png" class="d-block w-100 carousel-image" alt="...">
                 </div>
             </div>
 

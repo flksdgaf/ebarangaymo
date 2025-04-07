@@ -66,8 +66,11 @@ if (!isset($page)) {
                             <li class="nav-item me-3">
                                 <a class="nav-link" href="#">Transparency Seal</a>
                             </li>
-                            <li class="nav-item">
+                            <li class="nav-item me-3">
                                 <a class="nav-link" href="#">Contact Us</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">Track My Requests</a>
                             </li>
                         <?php } elseif ($page == 'index' || $page == 'signinup') { ?>
                             <li class="nav-item me-3">

@@ -32,6 +32,56 @@ body {
 }
 
 /* BANNER CSS */
+/* Banner image - no change for desktop */
+.banner-image {
+    width: 100%;
+    height: auto;
+  }
+  
+/* Overlay shared style */
+.banner-overlay {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    padding: 20px;
+}
+
+/* MOBILE FIX */
+@media (max-width: 768px) {
+    .banner-image {
+        min-height: 400px; /* Add this line to force space */
+        object-fit: cover;
+    }
+
+    .banner-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 15px 10px;
+    }
+
+    .banner-overlay h3 {
+        font-size: 1.4rem;
+    }
+
+    .banner-overlay p {
+        font-size: 0.9rem;
+    }
+
+    .banner-overlay .img-fluid {
+        max-width: 65px;
+    }
+
+    .d-md-flex {
+        display: none !important;
+    }
+
+    .d-md-none {
+        display: flex !important;
+    }
+}
 
 .carousel-inner img {
     height: 640px;
@@ -111,11 +161,7 @@ body {
     color: #000000;
 }
 
-.services-container .row {
-    --bs-gutter-x: -200px;
-}
-
-
+/* KEEP: original structure */
 .services-container h1 {
     font-size: 25px; 
     font-weight: 700;
@@ -133,30 +179,59 @@ body {
     max-width: 500px;
     margin: 0 auto; 
     text-decoration: none;
+    gap: 15px; /* spacing between icon and text */
+    flex-shrink: 0;
+    flex-grow: 1;
+}
+
+/* Set max width for text so icon and text don’t squish */
+.service-card > .icon {
+    flex: 0 0 auto; /* fixed size */
+    font-size: 50px;
+}
+
+.service-card > div {
+    flex: 1 1 0;
+    min-width: 0;
 }
 
 .service-card h4 {
-    font-size: 20px; 
+    font-size: 18px; 
     font-weight: 600;
+    margin-bottom: 5px;
 }
 
 .service-card p {
-    font-size: 15px; 
+    font-size: 14px; 
     font-weight: 400;
+    margin: 0;
 }
 
-.mid-green { background-color: #2A9245;}
-.light-green { background-color: #61AD41;}
-.dark-green { background-color: #13411F;}
+/* Responsive tweaks */
+@media (max-width: 576px) {
+    .service-card {
+        padding: 15px;
+    }
 
-.icon {
-    font-size: 60px;
-    margin-right: 15px;
+    .service-card .icon {
+        font-size: 40px;
+    }
+
+    .service-card h4 {
+        font-size: 16px;
+    }
+
+    .service-card p {
+        font-size: 13px;
+    }
 }
 
-.green-light { background-color: #6cbf6c; }
-.green-dark { background-color: #265e26; }
+/* Backgrounds */
+.mid-green { background-color: #2A9245; }
+.light-green { background-color: #61AD41; }
+.dark-green { background-color: #13411F; }
 
+/* View more styling */
 .view-more {
     display: block;
     text-align: center;
@@ -169,19 +244,45 @@ body {
     text-decoration: underline;
 }
 
-.new-updates-container .row {
-    margin: 0 70px;
+.services-container .row {
+    --bs-gutter-x: 1rem;
+}
+
+/* Container spacing */
+.new-updates-container {
+    padding: 0 15px;
 }
 
 .new-updates-container h1 {
-    font-size: 25px; 
+    font-size: 28px;
     font-weight: 700;
+    margin-bottom: 20px;
+}
+
+/* Title alignment */
+@media (max-width: 767.98px) {
+    .new-updates-container h1 {
+        text-align: center;
+    }
+}
+
+/* Responsive spacing for desktop views */
+@media (min-width: 768px) {
+    .new-updates-container .row {
+        margin: 0 40px;
+    }
+}
+
+@media (min-width: 992px) {
+    .new-updates-container .row {
+        margin: 0 70px;
+    }
 }
 
 .scrollable-content {
     overflow-x: auto;
-    white-space: wrap;
-    gap: 15px;
+    display: flex;
+    gap: 20px;
     padding: 10px 0;
 }
 
@@ -199,18 +300,31 @@ body {
 }
 
 .news-card {
-    min-width: 250px;
-    text-align: center;
+    flex: 0 0 auto;
+    width: 280px;
     background: #fff;
-    padding: 10px;
-    border-radius: 10px;
+    padding: 15px;
+    border-radius: 12px;
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
 }
 
 .news-card img {
     width: 100%;
-    border-radius: 8px;
+    height: auto;
+    border-radius: 10px;
 }
+
+@media (min-width: 992px) {
+    .news-card {
+        width: 320px;
+    }
+
+    .news-card p {
+        font-size: 1rem;
+    }
+}
+
 
 .about-text {
     background: linear-gradient(135deg, #0D2C15, #2A9245);

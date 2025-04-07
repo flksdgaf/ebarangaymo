@@ -6,49 +6,6 @@ include 'includes/header.php';
 ?>
 
 <!-- BANNER SECTION -->
-<!-- <div class="container-fluid px-0 position-relative"> -->
-  <!-- Background image -->
-  <!-- <img src="images/index_images/Banner.png" alt="Banner" class="img-fluid w-100"> -->
-
-  <!-- Content overlay -->
-  <!-- <div class="position-absolute top-50 start-50 translate-middle w-100 text-white text-center">
-    <div class="container">
-      <div class="row align-items-center justify-content-center d-none d-md-flex"> -->
-        <!-- Left logo -->
-        <!-- <div class="col-md-3 text-end">
-          <img src="images/index_images/GoodGovernanceLogo.png" alt="Left Logo" class="img-fluid" style="max-width: 100px;">
-        </div> -->
-        <!-- Text block -->
-        <!-- <div class="col-md-3 text-center">
-          <h6 class="mb-1">Republic of the Philippines</h6>
-          <hr class="mx-auto" style="width: 80%; border-top: 2px solid white; opacity: 1; margin: 0;">
-          <h1 class="fw-semibold">eBarangay Mo</h1>
-          <p class="mb-0">BARANGAY SERVICES PORTAL OF <br> DAET, CAMARINES NORTE</p>
-        </div> -->
-        <!-- Right logo -->
-        <!-- <div class="col-md-3 text-start">
-          <img src="images/index_images/BarangayMagangLogo.png" alt="Right Logo" class="img-fluid" style="max-width: 100px;">
-        </div>
-      </div> -->
-
-      <!-- MOBILE VERSION -->
-      <!-- <div class="d-flex d-md-none flex-column align-items-center">
-        <div class="d-flex justify-content-center gap-3 mb-3">
-          <img src="images/index_images/GoodGovernanceLogo.png" alt="Left Logo" class="img-fluid" style="max-width: 80px;">
-          <img src="images/index_images/BarangayMagangLogo.png" alt="Right Logo" class="img-fluid" style="max-width: 80px;">
-        </div>
-        <div class="text-center">
-          <h6 class="mb-1 small">Republic of the Philippines</h6>
-          <hr class="mx-auto" style="width: 60%; border-top: 2px solid white; opacity: 1; margin: 0;">
-          <h3 class="fw-semibold my-2">eBarangay Mo</h3>
-          <p class="mb-0 small">BARANGAY SERVICES PORTAL OF <br> DAET, CAMARINES NORTE</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</div> -->
-
-<!-- BANNER SECTION -->
 <!-- <div class="container-fluid px-0 position-relative">
     <img src="images/index_images/Banner.png" alt="Banner" class="img-fluid">   -->
 
@@ -73,8 +30,50 @@ include 'includes/header.php';
     </div>
 </div> -->
 
+<!-- BANNER SECTION -->
+<div class="container-fluid px-0 position-relative">
+  <!-- Background image -->
+  <img src="images/index_images/Banner.png" alt="Banner" class="img-fluid w-100 banner-image">
+
+  <!-- Content overlay -->
+  <div class="position-absolute banner-overlay text-white text-center">
+    <div class="container">
+      <!-- DESKTOP VIEW -->
+      <div class="row align-items-center justify-content-center d-none d-md-flex">
+        <div class="col-md-3 text-end">
+          <img src="images/index_images/GoodGovernanceLogo.png" alt="Left Logo" class="img-fluid" style="max-width: 100px;">
+        </div>
+        <div class="col-md-3 text-center">
+          <h6 class="mb-1">Republic of the Philippines</h6>
+          <hr class="mx-auto" style="width: 80%; border-top: 2px solid white; opacity: 1; margin: 0;">
+          <h1 class="fw-semibold">eBarangay Mo</h1>
+          <p class="mb-0">BARANGAY SERVICES PORTAL OF <br> DAET, CAMARINES NORTE</p>
+        </div>
+        <div class="col-md-3 text-start">
+          <img src="images/index_images/BarangayMagangLogo.png" alt="Right Logo" class="img-fluid" style="max-width: 100px;">
+        </div>
+      </div>
+
+      <!-- MOBILE VIEW -->
+      <div class="d-flex d-md-none flex-column align-items-center">
+        <div class="d-flex justify-content-center gap-3 mb-3">
+          <img src="images/index_images/GoodGovernanceLogo.png" alt="Left Logo" class="img-fluid">
+          <img src="images/index_images/BarangayMagangLogo.png" alt="Right Logo" class="img-fluid">
+        </div>
+        <div class="text-center">
+          <h6 class="mb-1 small">Republic of the Philippines</h6>
+          <hr class="mx-auto" style="width: 60%; border-top: 2px solid white; opacity: 1; margin: 0;">
+          <h3 class="fw-semibold my-2">eBarangay Mo</h3>
+          <p class="mb-0 small">BARANGAY SERVICES PORTAL OF <br> DAET, CAMARINES NORTE</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 <!-- CAROUSEL SECTION -->
-<!-- <div class="carousel-wrapper">
+<div class="carousel-wrapper">
     <div class="carousel-blur-bg"></div> 
 
     <div class="carousel-container">
@@ -108,10 +107,10 @@ include 'includes/header.php';
             </button>
         </div>
     </div>
-</div> -->
+</div>
 
 <!-- MISSION VISION VALUES SECTION -->
-<!-- <div class="container-fluid px-0">
+<div class="container-fluid px-0">
     <div class="mission-vision-values text-center">
         <div class="row g-4 mt-4 justify-content-center text-center">
             <div class="col-lg-3 col-md-5 col-sm-6 d-flex justify-content-center">
@@ -140,10 +139,10 @@ include 'includes/header.php';
             </div>
         </div>
     </div>
-</div> -->
+</div>
 
 <!-- SERVICE SECTION -->
-<!-- <div class="container-fluid mt-5 services-container">
+<div class="container-fluid mt-5 services-container">
     <h1 class="text-center gradient-text">SERVICES</h1>
     <div class="container mt-5">
         <div class="row row-cols-1 row-cols-md-2 g-3">
@@ -204,18 +203,18 @@ include 'includes/header.php';
         </div>
         <a href="#" class="view-more">View More Services</a>
     </div>
-</div> -->
+</div>
 
 <!-- NEWS AND UPDATES SECTION -->
-<!-- <div class="container-fluid px-4 mt-5 mb-5 new-updates-container">
-    <div class="row align-items-center"> -->
+<div class="container-fluid px-4 mt-5 mb-5 new-updates-container">
+    <div class="row align-items-center">
         <!-- Title Section -->
-        <!-- <div class="col-md-5">
+        <div class="col-md-5">
             <h1 class="gradient-text">NEWS AND UPDATES</h1>
-        </div> -->
+        </div>
 
         <!-- Scrollable Content Section -->
-        <!-- <div class="col-md-7">
+        <div class="col-md-7">
             <div class="scrollable-content d-flex flex-row">
                 <div class="news-card">
                     <img src="images/index_images/carousel.png" alt="News Image">
@@ -232,13 +231,13 @@ include 'includes/header.php';
             </div>
         </div>
     </div>
-</div> -->
+</div>
 
 <!-- ABOUT SECTION -->
-<!-- <div class="container-fluid">
-    <div class="row align-items-center"> -->
+<div class="container-fluid">
+    <div class="row align-items-center">
         <!-- About Text -->
-        <!-- <div class="col-md-6">
+        <div class="col-md-6">
             <div class="p-4 text-white rounded about-text">
                 <h1 class="fw-bold">ABOUT</h1>
                 <p class="mt-3">
@@ -248,60 +247,60 @@ include 'includes/header.php';
                     and user-friendly online transactions.
                 </p>
             </div>
-        </div> -->
+        </div>
         
         <!-- About Image -->
-        <!-- <div class="col-md-6 text-center">
+        <div class="col-md-6 text-center">
             <div class="about-image-container">
                 <img src="images/index_images/AboutImage.png" alt="eBarangay Mo Platform" class="img-fluid">
             </div>
         </div>
     </div>
-</div> -->
+</div>
 
 <!-- INSTRUCTION SECTION -->
-<!-- <div class="container text-center py-5 instruction-container">
+<div class="container text-center py-5 instruction-container">
     <h1 class="gradient-text">SIGN UP NOW</h1>
     <p class="steps">Follow these four simple steps:</p>
 
-    <div class="row text-center mt-4"> -->
+    <div class="row text-center mt-4">
         <!-- Step 1 -->
-        <!-- <div class="col-md-3">
+        <div class="col-md-3">
             <img src="images/index_images/Step1.png" alt="Visit the Website" class="img-fluid mx-auto d-block w-75">
             <h4 class="mt-3 fw-bold">Visit the Website</h4>
             <hr class="underline">
             <p>Go to the eBarangay Mo website and click <strong>Sign Up</strong>.</p>
-        </div> -->
+        </div>
 
         <!-- Step 2 -->
-        <!-- <div class="col-md-3">
+        <div class="col-md-3">
             <img src="images/index_images/Step2.png" alt="Register an Account" class="img-fluid mx-auto d-block w-75">
             <h4 class="mt-3 fw-bold">Register an Account</h4>
             <hr class="underline">
             <p>Fill out the registration form with your required personal information.</p>
-        </div> -->
+        </div>
 
         <!-- Step 3 -->
-        <!-- <div class="col-md-3">
+        <div class="col-md-3">
             <img src="images/index_images/Step3.png" alt="Wait for Verification" class="img-fluid mx-auto d-block w-75">
             <h4 class="mt-3 fw-bold">Wait for Verification</h4>
             <hr class="underline">
             <p>Wait for the notification in verifying the account you created.</p>
-        </div> -->
+        </div>
 
         <!-- Step 4 -->
-        <!-- <div class="col-md-3">
+        <div class="col-md-3">
             <img src="images/index_images/Step4.png" alt="Avail Barangay Services" class="img-fluid mx-auto d-block w-75">
             <h4 class="mt-3 fw-bold">Avail Barangay Services</h4>
             <hr class="underline">
             <p>Once your account is verified, you can now submit a request for your desired service.</p>
         </div>
     </div>
-</div> -->
+</div>
 
 
 <script src="js/carousel.js"></script>
 
 <?php 
-    // include 'includes/footer.php'; 
+    include 'includes/footer.php'; 
 ?> 

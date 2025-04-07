@@ -50,7 +50,7 @@ body {
 /* MOBILE FIX */
 @media (max-width: 768px) {
     .banner-image {
-        min-height: 250px; /* 120px  */
+        min-height: 120px; /* Add this line to force space */
         object-fit: cover;
     }
 

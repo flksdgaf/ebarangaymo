@@ -1,0 +1,9 @@
+.barangay-id {
+    background-color: #2A9245; /* Light gray background */
+    padding: 50px 20px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.barangay-id-title {
+    font-weight: 100;
+}

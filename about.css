@@ -1,0 +1,9 @@
+* {
+    font-family: 'Poppins', sans-serif;
+}
+
+.img-size {
+    width: 100%;      /* 100% width of parent column */
+    height: 200px;    /* Fixed height */
+    object-fit: cover;  /* Ensures images maintain aspect ratio */
+  }

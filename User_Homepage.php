@@ -1,13 +1,48 @@
 <?php 
-session_start();
 include 'functions/dbconn.php'; 
 $page = 'user_homepage';
 include 'includes/header.php'; 
 ?>
 
 <!-- BANNER SECTION -->
-<div class="container-fluid px-0">
-    <img src="images/index_images/Banner.png" alt="Banner" class="img-fluid w-auto">    
+<div class="container-fluid px-0 position-relative">
+  <!-- Background image -->
+  <img src="images/landing_banner.png" alt="Banner" class="img-fluid w-100 banner-image">
+
+  <!-- Content overlay -->
+  <div class="position-absolute banner-overlay text-white text-center">
+    <div class="container">
+      <!-- DESKTOP VIEW -->
+      <div class="row align-items-center justify-content-center d-none d-md-flex">
+        <div class="col-md-3 text-end">
+          <img src="images/good_governance_logo.png" alt="Left Logo" class="img-fluid" style="max-width: 100px;">
+        </div>
+        <div class="col-md-3 text-center">
+          <h6 class="mb-1">Republic of the Philippines</h6>
+          <hr class="mx-auto" style="width: 80%; border-top: 2px solid white; opacity: 1; margin: 0;">
+          <h1 class="fw-semibold">eBarangay Mo</h1>
+          <p class="mb-0">BARANGAY SERVICES PORTAL OF <br> DAET, CAMARINES NORTE</p>
+        </div>
+        <div class="col-md-3 text-start">
+          <img src="images/magang_logo.png" alt="Right Logo" class="img-fluid" style="max-width: 100px;">
+        </div>
+      </div>
+
+      <!-- MOBILE VIEW -->
+      <div class="d-flex d-md-none flex-column align-items-center">
+        <div class="d-flex justify-content-center gap-3 mb-3">
+          <img src="images/good_governance_logo.png" alt="Left Logo" class="img-fluid">
+          <img src="images/magang_logo.png" alt="Right Logo" class="img-fluid">
+        </div>
+        <div class="text-center">
+          <h6 class="mb-1 small">Republic of the Philippines</h6>
+          <hr class="mx-auto" style="width: 60%; border-top: 2px solid white; opacity: 1; margin: 0;">
+          <h3 class="fw-semibold my-2">eBarangay Mo</h3>
+          <p class="mb-0 small">BARANGAY SERVICES PORTAL OF <br> DAET, CAMARINES NORTE</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- CAROUSEL SECTION -->
@@ -24,13 +59,13 @@ include 'includes/header.php';
 
             <div class="carousel-inner">
                 <div class="carousel-item active">
-                    <img src="images/index_images/carousel.png" class="d-block w-100 carousel-image" alt="...">
+                    <img src="images/carousel.png" class="d-block w-100 carousel-image" alt="...">
                 </div>
                 <div class="carousel-item">
-                    <img src="images/index_images/carousel.png" class="d-block w-100 carousel-image" alt="...">
+                    <img src="images/carousel.png" class="d-block w-100 carousel-image" alt="...">
                 </div>
                 <div class="carousel-item">
-                    <img src="images/index_images/carousel.png" class="d-block w-100 carousel-image" alt="...">
+                    <img src="images/carousel.png" class="d-block w-100 carousel-image" alt="...">
                 </div>
             </div>
 
@@ -50,7 +85,7 @@ include 'includes/header.php';
 <!-- ABOUT US SECTION -->
 <div class="container-fluid px-0">
     <div class="about-container text-center">
-        <h1 class="gradient-text mt-2">ABOUT US</h1>
+        <h1 class="gradient-text mt-5">ABOUT US</h1>
         <p class="w-50 mx-auto text-center mt-3">
             Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
         </p>

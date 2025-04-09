@@ -147,6 +147,11 @@ body {
     justify-content: center;
 }
 
+.about-container h1 {
+    font-size: 25px; 
+    font-weight: 700;
+}
+
 .about-container .row {
   display: flex;
   align-items: stretch;
@@ -161,7 +166,6 @@ body {
     color: #000000;
 }
 
-/* KEEP: original structure */
 .services-container h1 {
     font-size: 25px; 
     font-weight: 700;

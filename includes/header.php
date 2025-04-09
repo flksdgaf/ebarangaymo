@@ -30,7 +30,7 @@ if (!isset($page)) {
         <nav class="navbar navbar-expand-lg">
             <div class="container">
                 <a class="navbar-brand" href="#">
-                    <img src="images/republicseal.png" alt="Republic Seal of the Philippines" width="36" height="36">
+                    <img src="images/republic_seal.png" alt="Republic Seal of the Philippines" width="36" height="36">
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -39,14 +39,14 @@ if (!isset($page)) {
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                         <?php if ($page == 'user_homepage') { ?>
                             <li class="nav-item me-3">
-                                <a class="nav-link active" href="#">Home</a>
+                                <a class="nav-link active" href="#home">Home</a>
                             </li>
                             <li class="nav-item dropdown me-3">
                                 <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                                     About
                                 </a>
                                 <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="#">Officials</a></li>
+                                    <li><a class="dropdown-item" href="#officials">Officials</a></li>
                                     <li><a class="dropdown-item" href="#">Mission, Vision and Values</a></li>
                                     <li><a class="dropdown-item" href="#">Citizens Charter</a></li>
                                     <li><a class="dropdown-item" href="#">Map</a></li>

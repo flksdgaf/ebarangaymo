@@ -1,5 +1,4 @@
 <?php 
-session_start();
 include 'functions/dbconn.php'; 
 $page = 'index';
 include 'includes/header.php'; 
@@ -8,7 +7,7 @@ include 'includes/header.php';
 <!-- BANNER SECTION -->
 <div class="container-fluid px-0 position-relative">
   <!-- Background image -->
-  <img src="images/index_images/Banner.png" alt="Banner" class="img-fluid w-100 banner-image">
+  <img src="images/landing_banner.png" alt="Banner" class="img-fluid w-100 banner-image">
 
   <!-- Content overlay -->
   <div class="position-absolute banner-overlay text-white text-center">
@@ -16,7 +15,7 @@ include 'includes/header.php';
       <!-- DESKTOP VIEW -->
       <div class="row align-items-center justify-content-center d-none d-md-flex">
         <div class="col-md-3 text-end">
-          <img src="images/index_images/GoodGovernanceLogo.png" alt="Left Logo" class="img-fluid" style="max-width: 100px;">
+          <img src="images/good_governance_logo.png" alt="Left Logo" class="img-fluid" style="max-width: 100px;">
         </div>
         <div class="col-md-3 text-center">
           <h6 class="mb-1">Republic of the Philippines</h6>
@@ -25,15 +24,15 @@ include 'includes/header.php';
           <p class="mb-0">BARANGAY SERVICES PORTAL OF <br> DAET, CAMARINES NORTE</p>
         </div>
         <div class="col-md-3 text-start">
-          <img src="images/index_images/BarangayMagangLogo.png" alt="Right Logo" class="img-fluid" style="max-width: 100px;">
+          <img src="images/magang_logo.png" alt="Right Logo" class="img-fluid" style="max-width: 100px;">
         </div>
       </div>
 
       <!-- MOBILE VIEW -->
       <div class="d-flex d-md-none flex-column align-items-center">
         <div class="d-flex justify-content-center gap-3 mb-3">
-          <img src="images/index_images/GoodGovernanceLogo.png" alt="Left Logo" class="img-fluid">
-          <img src="images/index_images/BarangayMagangLogo.png" alt="Right Logo" class="img-fluid">
+          <img src="images/good_governance_logo.png" alt="Left Logo" class="img-fluid">
+          <img src="images/magang_logo.png" alt="Right Logo" class="img-fluid">
         </div>
         <div class="text-center">
           <h6 class="mb-1 small">Republic of the Philippines</h6>
@@ -61,13 +60,13 @@ include 'includes/header.php';
 
             <div class="carousel-inner">
                 <div class="carousel-item active">
-                    <img src="images/index_images/carousel.png" class="d-block w-100 carousel-image" alt="...">
+                    <img src="images/carousel.png" class="d-block w-100 carousel-image" alt="...">
                 </div>
                 <div class="carousel-item">
-                    <img src="images/index_images/carousel.png" class="d-block w-100 carousel-image" alt="...">
+                    <img src="images/carousel.png" class="d-block w-100 carousel-image" alt="...">
                 </div>
                 <div class="carousel-item">
-                    <img src="images/index_images/carousel.png" class="d-block w-100 carousel-image" alt="...">
+                    <img src="images/carousel.png" class="d-block w-100 carousel-image" alt="...">
                 </div>
             </div>
 
@@ -192,15 +191,15 @@ include 'includes/header.php';
         <div class="col-md-7">
             <div class="scrollable-content d-flex flex-row">
                 <div class="news-card">
-                    <img src="images/index_images/carousel.png" alt="News Image">
+                    <img src="images/carousel.png" alt="News Image">
                     <p>Breaking News 1: Lorem ipsum dolor sit amet.</p>
                 </div>
                 <div class="news-card">
-                    <img src="images/index_images/carousel.png" alt="News Image">
+                    <img src="images/carousel.png" alt="News Image">
                     <p>Breaking News 2: Lorem ipsum dolor sit amet.</p>
                 </div>
                 <div class="news-card">
-                    <img src="images/index_images/carousel.png" alt="News Image">
+                    <img src="images/carousel.png" alt="News Image">
                     <p>Breaking News 3: Lorem ipsum dolor sit amet.</p>
                 </div>
             </div>
@@ -227,7 +226,7 @@ include 'includes/header.php';
         <!-- About Image -->
         <div class="col-md-6 text-center">
             <div class="about-image-container">
-                <img src="images/index_images/AboutImage.png" alt="eBarangay Mo Platform" class="img-fluid">
+                <img src="images/about_image.png" alt="eBarangay Mo Platform" class="img-fluid">
             </div>
         </div>
     </div>
@@ -241,7 +240,7 @@ include 'includes/header.php';
     <div class="row text-center mt-4">
         <!-- Step 1 -->
         <div class="col-md-3">
-            <img src="images/index_images/Step1.png" alt="Visit the Website" class="img-fluid mx-auto d-block w-75">
+            <img src="images/step_1.png" alt="Visit the Website" class="img-fluid mx-auto d-block w-75">
             <h4 class="mt-3 fw-bold">Visit the Website</h4>
             <hr class="underline">
             <p>Go to the eBarangay Mo website and click <strong>Sign Up</strong>.</p>
@@ -249,7 +248,7 @@ include 'includes/header.php';
 
         <!-- Step 2 -->
         <div class="col-md-3">
-            <img src="images/index_images/Step2.png" alt="Register an Account" class="img-fluid mx-auto d-block w-75">
+            <img src="images/step_2.png" alt="Register an Account" class="img-fluid mx-auto d-block w-75">
             <h4 class="mt-3 fw-bold">Register an Account</h4>
             <hr class="underline">
             <p>Fill out the registration form with your required personal information.</p>
@@ -257,7 +256,7 @@ include 'includes/header.php';
 
         <!-- Step 3 -->
         <div class="col-md-3">
-            <img src="images/index_images/Step3.png" alt="Wait for Verification" class="img-fluid mx-auto d-block w-75">
+            <img src="images/step_3.png" alt="Wait for Verification" class="img-fluid mx-auto d-block w-75">
             <h4 class="mt-3 fw-bold">Wait for Verification</h4>
             <hr class="underline">
             <p>Wait for the notification in verifying the account you created.</p>
@@ -265,7 +264,7 @@ include 'includes/header.php';
 
         <!-- Step 4 -->
         <div class="col-md-3">
-            <img src="images/index_images/Step4.png" alt="Avail Barangay Services" class="img-fluid mx-auto d-block w-75">
+            <img src="images/step_4.png" alt="Avail Barangay Services" class="img-fluid mx-auto d-block w-75">
             <h4 class="mt-3 fw-bold">Avail Barangay Services</h4>
             <hr class="underline">
             <p>Once your account is verified, you can now submit a request for your desired service.</p>

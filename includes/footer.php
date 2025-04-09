@@ -5,8 +5,8 @@
                 
                 <!-- Logos -->
                 <div class="col-12 col-md-3 mb-3 d-flex justify-content-center align-items-center gap-3 footer-logos">
-                    <img src="images/index_images/BarangayMagangLogo.png" alt="Magang Logo" width="110" height="110">
-                    <img src="images/index_images/GoodGovernanceLogo.png" alt="Good Governance Logo" width="110" height="110">
+                    <img src="images/magang_logo.png" alt="Magang Logo" width="110" height="110">
+                    <img src="images/good_governance_logo.png" alt="Good Governance Logo" width="110" height="110">
                 </div>
 
                 <!-- Contact Info -->
@@ -43,7 +43,7 @@
         <div class="row">
             <!-- Republic Seal -->
             <div class="col-12 col-md-4 text-center mb-5">
-                <img src="images/republicseal.png" alt="Republic Seal of the Philippines" class="seal">
+                <img src="images/republic_seal.png" alt="Republic Seal of the Philippines" class="seal">
             </div>
 
             <!-- Public Content Text -->

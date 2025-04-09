@@ -4,7 +4,7 @@
     background-color: #ffffff;
     min-height: 100vh;
     padding: 30px;
-    transition: margin-left 0.3s ease;
+    transition: 0.3s ease;
   }
   
   .content-wrapper {

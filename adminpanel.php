@@ -16,13 +16,26 @@ $page = 'admin';
     <div class="container">
         <?php include 'includes/sidebar.php'; ?>
 
+        <!-- Top Bar -->
+        <!-- <div class="top-bar">
+            <div class="logo-section">
+                <img src="images/republic_seal.png" alt="Logo" class="logo">
+                <h1>eBarangay Mo</h1>
+            </div>
+            <div class="admin-profile-section">
+                <div class="admin-img-container">
+                    <img src="images/admin-profile.jpg" alt="Admin" class="admin-img">
+                </div>
+                <span class="admin-name">Admin Name</span>
+            </div>
+        </div> -->
+
         <div class="main-content">
-            <div class="content-wrapper">
-                <h1>Hello</h1>
-                <!-- Add more content here -->
+            <div id="content-wrapper">
+                <!-- Content will be loaded here via JS -->
+                <h1>Welcome to the Admin Panel</h1>
             </div>
         </div>
-
     </div>
     <script src="js/script.js"></script>
 </body>

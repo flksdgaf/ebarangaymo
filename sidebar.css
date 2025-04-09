@@ -238,3 +238,35 @@
     }
 }
   
+/* Hide hamburger when sidebar is expanded (mobile only) */
+@media (max-width: 768px) {
+    #sidebar.expand ~ .toggle-btn {
+        display: none;
+    }
+}
+
+/* Custom Scrollbar for Sidebar */
+#sidebar::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  #sidebar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  #sidebar::-webkit-scrollbar-thumb {
+    background-color: #C4C4C4; /* Soft green thumb */
+    border-radius: 10px;
+    border: 2px solid #13411F; /* Background color of the sidebar for blending */
+  }
+  
+  #sidebar::-webkit-scrollbar-thumb:hover {
+    background-color: #C4C4C4; /* Brighter on hover */
+  }
+  
+  /* Firefox Support */
+  #sidebar {
+    scrollbar-width: thin;
+    scrollbar-color: #C4C4C4 transparent;
+  }
+  

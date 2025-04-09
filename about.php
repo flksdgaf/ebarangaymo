@@ -36,15 +36,15 @@ include 'includes/header.php';
 
     <!-- Image Grid -->
     <div class="col-lg-6">
-      <div class="row g-3">
-        <div class="col-6">
+      <div class="row g-2">
+        <div class="info-image col-6">
           <img src="images/info_image.png" alt="Event 1" class="img-fluid rounded-4 shadow img-size">
         </div>
-        <div class="col-6">
+        <div class="info-image2 col-6 ml-2">
           <img src="images/info_image2.png" alt="Event 2" class="img-fluid rounded-4 shadow img-size">
         </div>
-        <div class="col-12">
-          <img src="images/info_image3.png" alt="Event 3" class="img-fluid rounded-4 shadow img-size">
+        <div class="info-image4 col-12">
+          <img src="images/info_image4.png" alt="Event 3" class="img-fluid rounded-4 shadow img-size">
         </div>
       </div>
     </div>
@@ -63,7 +63,7 @@ include 'includes/header.php';
 </div>
 
 <!-- MISSION VISION VALUES SECTION -->
-<div class="container-fluid px-0">
+<!-- <div class="container-fluid px-0">
     <div class="mission-vision-values text-center">
         <div class="row g-4 mt-4 justify-content-center text-center">
             <div class="col-lg-3 col-md-5 col-sm-6 d-flex justify-content-center">
@@ -92,19 +92,54 @@ include 'includes/header.php';
             </div>
         </div>
     </div>
+</div> -->
+
+<!-- MISSION VISION SECTION -->
+<div class="container custom-padding">
+    <div class="row justify-content-center align-items-stretch g-4 text-center">
+        <!-- Mission Card -->
+        <div class="col-lg-5 col-md-6 d-flex">
+            <div class="card-custom mission-shape w-100 d-flex flex-column justify-content-center">
+                <h4 class="section-title mb-3">MISSION</h4>
+                <p class="mb-0">
+                    "We members of of Sangguniang Barangay will continue to strive more to effectively deliver basic services needed by the people, promote peace and order, protect the interest, promote social and economic development in pursuit of peaceful reliant towards a develop and progressive community within a just VARI social order."
+                </p>
+            </div>
+        </div>
+
+        <!-- Vision Card -->
+        <div class="col-lg-5 col-md-6 d-flex">
+            <div class="card-custom vision-shape w-100 d-flex flex-column justify-content-center">
+                <h4 class="section-title mb-3">VISION</h4>
+                <p class="mb-0">
+                    "Barangay Magang is one of the most widely competitive community in Daet with well-developed, self-reliant, vigorously, God fearing and empowered people, economically adequate with expensive infrastructure facilities an and ecologically balance environment governed by effective and service centered leaders ready to implement the Good Governance and Ethical Leadership."
+                </p>
+            </div>
+        </div>
+    </div>
 </div>
 
-<div class="container">
+
+
+<div class="container mb-5">
     <div>
         <h2 class="text-uppercase fw-bold gradient-text">Citizens Charter</h2>
         <p>The Citizen's Charter  outlines the commitment of the barangay Magang to provide efficient, transparent, and accountable public service. It serves as a guide for residents on the available services, step-by-step procedures, requirements, processing time, and contact information. This charter reflects our dedication to upholding the rights of every constituent and ensuring quality service delivery.</p>
     </div>
+
+    <div>
+        <img src="images/citizens_charter.png" alt="Barangay Magang Citizens Charter" class="w-100">
+    </div>
 </div>
 
-<div class="container">
+<div class="container mb-5">
     <div>
         <h2 class="text-uppercase fw-bold gradient-text">Barangay Map</h2>
         <p>This map serves as a visual guide for residents, visitors, and service planning within the community.</p>
+    </div>
+
+    <div>
+        <img src="images/barangay_map.png" alt="Barangay Magang Spot Map" class="w-100">
     </div>
 </div>
 

@@ -1,9 +1,83 @@
-.barangay-id {
-    background-color: #2A9245; /* Light gray background */
-    padding: 50px 20px;
+* {
     font-family: 'Poppins', sans-serif;
 }
 
-.barangay-id-title {
-    font-weight: 100;
+.barangay-id {
+    background-color: #2A9245;
+    padding: 50px 20px;
+}
+
+.barangay-id-icon {
+    width: 70px;        /* Adjust the size as needed */
+    height: 70px;
+    margin-bottom: 10px;
+    object-fit: contain;
+}
+
+.barangay-clearance {
+    background-color: #61AD41;
+}
+
+.barangay-clearance-icon {
+    width: 70px;        /* Adjust the size as needed */
+    height: 70px;
+    margin-bottom: 10px;
+    object-fit: contain;
+}
+
+.certification {
+    background-color: #13411F;
+}
+
+.certification-icon {
+    width: 70px;        /* Adjust the size as needed */
+    height: 70px;
+    margin-bottom: 10px;
+    object-fit: contain;
+}
+
+.business-permit {
+    background-color: #2A9245;
+    padding: 50px 20px;
+}
+
+.business-permit-icon {
+    width: 70px;        /* Adjust the size as needed */
+    height: 70px;
+    margin-bottom: 10px;
+    object-fit: contain;
+}
+
+.katarungang-pambarangay {
+    background-color: #61AD41;
+}
+
+.katarungang-pambarangay-icon {
+    width: 70px;        /* Adjust the size as needed */
+    height: 70px;
+    margin-bottom: 10px;
+    object-fit: contain;
+}
+
+.environmental-services {
+    background-color: #13411F;
+}
+
+.environmental-services-icon {
+    width: 70px;        /* Adjust the size as needed */
+    height: 70px;
+    margin-bottom: 10px;
+    object-fit: contain;
+}
+
+.cash-incentives {
+    background-color: #2A9245;
+    padding: 50px 20px;
+}
+
+.cash-incentives-icon {
+    width: 70px;        /* Adjust the size as needed */
+    height: 70px;
+    margin-bottom: 10px;
+    object-fit: contain;
 }

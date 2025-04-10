@@ -1,0 +1,50 @@
+/* Background settings */
+body, html {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background: url('images/bg_hover.png') no-repeat center center fixed;
+    background-size: cover;
+    position: relative;
+    overflow: hidden;
+}
+
+.overlay-image {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    height: 100%;
+    width: 70%;
+    z-index: 1;
+}
+
+.content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 30px;
+    border-radius: 15px;
+    margin-top: 20px;
+}
+
+h1 {
+    font-size: 50px;
+    font-weight: bold;
+    color: #13411F;
+}
+
+p {
+    font-size: 15px;
+    margin-bottom: 100px;
+    color: black;
+}
+
+.btn-home {
+    color: #13411F;
+    border-color: #61AD41;
+    font-weight: bold;
+    border-radius: 100px;
+    border-width: 3px;
+    width: 190px;
+}

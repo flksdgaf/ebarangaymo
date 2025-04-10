@@ -57,8 +57,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    
-
     // New function to validate the active step
     function validateActiveStep() {
         let valid = true;
@@ -75,7 +73,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const email = document.getElementById("email").value.trim();
 
             // Regex rules
-            const nameRegex = /^[A-Za-z]+$/; // letters only
+            const nameRegex = /^[A-Za-z ]+$/; // letters and space
             const suffixRegex = /^[A-Za-z\.]+$/; // letters and period
             const contactRegex = /^09\d{9}$/; // must start with "09" and followed by 9 digits, total 11 characters
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // basic email validation
@@ -173,21 +171,24 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        // Move to the next step if everything is valid
-        if (currentStep < steps.length - 1) {
+        // If on the final review step (Step 5)
+        if (currentStep === 4) {
+            // Show the confirmation modal
+            let confirmModal = new bootstrap.Modal(document.getElementById("confirmationModal"));
+            confirmModal.show();
+        } else {
+            // Navigate to the next step normally
             steps[currentStep].classList.remove("active-step");
             dots[currentStep].classList.remove("active-dot");
             currentStep++;
             steps[currentStep].classList.add("active-step");
             dots[currentStep].classList.add("active-dot");
 
-            // If we are moving to step 5 (review step), populate the summary fields
             if (currentStep === 4) {
                 populateSummary();
             }
-
             updateNavigation();
-        }
+        }   
     });
 
     // Back/Cancel button event
@@ -231,6 +232,20 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         // Future steps can be handled here
     }
+
+    // When Confirm is clicked in the confirmation modal, trigger form submission.
+    const confirmSubmitBtn = document.getElementById("confirmSubmitBtn");
+    confirmSubmitBtn.addEventListener("click", function () {
+        // Hide the confirmation modal
+        let confirmModalEl = document.getElementById("confirmationModal");
+        let confirmModal = bootstrap.Modal.getInstance(confirmModalEl);
+        if (confirmModal) {
+            confirmModal.hide();
+        }
+
+        document.getElementById("registrationForm").submit();
+    });
+
 });
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -337,5 +352,30 @@ function populateSummary() {
     document.getElementById("summaryAddress").textContent = address;
 }
 
+function submitRegistration() {
+    const form = document.getElementById("registrationForm");
+    const formData = new FormData(form);
+
+    fetch("new_acc_signup.php", {
+        method: "POST",
+        body: formData
+    })
+    .then(response => response.text())
+    .then(text => {
+        console.log("Response text:", text);
+        return JSON.parse(text);
+    })
+    .then(data => {
+        if (data.success) {
+            alert("Registration successful!");
+            window.location.href = "signinup.php";
+        } else {
+            alert("Registration failed: " + data.error);
+        }
+    })
+    .catch(error => {
+        console.error("Error:", error);
+    });
+}
 
 

@@ -1,0 +1,65 @@
+body, html {
+    height: 100%;
+    margin: 0;
+    background: url('images/bg_nothover.png') no-repeat center center fixed;
+    background-size: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Arial, sans-serif;
+}
+/* Login container styling */
+.login-container {
+    background: rgba(255, 255, 255, 0.1); /* transparent white background */
+    padding: 2rem;
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 600px;
+    text-align: center;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+    /* Create gradient border */
+    border: 5px solid;
+    border-image-slice: 100;
+    border-image-source: linear-gradient(45deg, #0D2C15, #2A9245);
+
+}
+
+/* Gradient Header */
+h1 {
+    background: linear-gradient(to bottom, #2A9245, #0D2C15);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: bold;
+}
+
+/* Subheader */
+h5 {
+    font-size: 15px;
+    margin-bottom: 50px;
+}
+
+label {
+    padding-top: 5px;
+}
+
+/* Input Styling */
+.custom-input {
+    background-color: #d3d3d3 !important;
+    color: white !important;
+    border: none;
+}
+
+/* Gradient background for the button */
+.btn-gradient {
+    background: linear-gradient(to right, #0D2C15, #2A9245);
+    border: none;
+    color: #fff;
+    margin-top: 50px;
+}
+/* Optional: input focus state */
+.form-control:focus {
+    box-shadow: none;
+    border-color: #ee0979;
+}

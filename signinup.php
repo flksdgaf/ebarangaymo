@@ -15,7 +15,7 @@ include 'includes/header.php';
         <div class="col-md-6 split left d-flex flex-column align-items-center justify-content-center text-white" id="left-side">
             <h1 class="fw-bold">HAVE AN ACCOUNT?</h1>
             <p>Keep connected with us and sign in with your existing account.</p>
-            <a href="login.php" class="btn btn-outline-light">SIGN IN</a>
+            <a href="signin.php" class="btn btn-outline-light">SIGN IN</a>
         </div>
 
         <!-- Sign Up Section -->

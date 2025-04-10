@@ -3,7 +3,7 @@
 $host = "localhost";
 $user = "root";
 $pass = "";
-$dbname = "ebarangaymo_db";
+$dbname = "magang_ebarangaymo_db";
 
 // Create connection
 $conn = new mysqli($host, $user, $pass, $dbname);

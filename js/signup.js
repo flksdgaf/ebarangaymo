@@ -319,6 +319,7 @@ function populateSummary() {
     const lastName    = document.getElementById("lastname").value;
     const suffix      = document.getElementById("suffix").value;
     const birthdate   = document.getElementById("birthdate").value;
+    const gender      = document.getElementById("gender").value;
     const contact     = document.getElementById("contact").value;
     const email       = document.getElementById("email").value;
     
@@ -347,6 +348,7 @@ function populateSummary() {
     // --- Populate Summary Fields in Step 5 ---
     document.getElementById("summaryFullName").textContent = fullName;
     document.getElementById("summaryBirthdate").textContent = birthdate;
+    document.getElementById("summaryGender").textContent = gender;
     document.getElementById("summaryContact").textContent = contact;
     document.getElementById("summaryEmail").textContent = email;
     document.getElementById("summaryAddress").textContent = address;

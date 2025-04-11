@@ -1,8 +1,8 @@
 /* Background Image */
-/* body {
+body {
     background: url('images/bg_nothover.png') no-repeat center center fixed;
     background-size: cover;
-} */
+}
 
 /* Form Container */
 .form-container {
@@ -22,6 +22,10 @@ h1 {
 h5 {
     font-size: 15px;
     margin-bottom: 40px;
+}
+
+label {
+    padding-top: 5px;
 }
 
 /* Input Styling */

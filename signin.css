@@ -51,6 +51,20 @@ label {
     border: none;
 }
 
+.toggle-password {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 16px;
+    color: #666;
+}
+
+.toggle-password:hover {
+    color: #333;
+}
+
 /* Gradient background for the button */
 .btn-gradient {
     background: linear-gradient(to right, #0D2C15, #2A9245);

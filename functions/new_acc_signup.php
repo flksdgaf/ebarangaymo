@@ -1,5 +1,4 @@
 <?php
-// new_acc_signup.php
 
 // Database configuration (replace with your actual credentials)
 $servername   = "localhost";
@@ -44,6 +43,7 @@ $full_address = "$block, $purok, $barangay, $municipality, $province, $zip";
 
 // Other fields (make sure your form uses matching name attributes)
 $birthdate = $_POST['birthdate'] ?? '';
+$gender    = $_POST['gender'] ?? '';
 $contact   = $_POST['contact'] ?? '';
 $email     = $_POST['email'] ?? ''; // if you need email separately; otherwise, adjust as needed.
 $validID   = $_POST['validID'] ?? '';
@@ -74,14 +74,14 @@ if (isset($_FILES['frontID']) && isset($_FILES['backID'])) {
     // Move the uploaded files to your designated folders
     if (move_uploaded_file($frontFile["tmp_name"], $frontTarget) && move_uploaded_file($backFile["tmp_name"], $backTarget)) {
         // Prepare and execute the insertion query using a prepared statement
-        $stmt = $conn->prepare("INSERT INTO new_acc_requests (full_name, birthdate, contact, full_address, validID, frontID, backID, username, password)
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("INSERT INTO new_acc_requests (full_name, birthdate, gender, contact, full_address, validID, frontID, backID, username, password)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         if (!$stmt) {
             die("Prepare failed: (" . $conn->errno . ") " . $conn->error);
         }
         
         // Bind parameters
-        $stmt->bind_param("sssssssss", $full_name, $birthdate, $contact, $full_address, $validID, $frontFileName, $backFileName, $username, $password);
+        $stmt->bind_param("ssssssssss", $full_name, $birthdate, $gender, $contact, $full_address, $validID, $frontFileName, $backFileName, $username, $password);
         
         if ($stmt->execute()) {
             // Record inserted successfully.

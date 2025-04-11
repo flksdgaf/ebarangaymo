@@ -1,7 +1,38 @@
 <?php 
 include 'functions/dbconn.php'; 
 $page = 'user_homepage';
-include 'includes/header.php'; 
+include 'includes/user_header.php'; 
+
+// Ensure the user is logged in and is not an admin (constituent)
+if (!isset($_SESSION['auth']) || $_SESSION['auth'] !== true) {
+    header("Location: index.php");
+    exit();
+}
+
+// Retrieve the user's account id from session
+$userId = $_SESSION['loggedInUser'];
+
+// Query the user_profiles table to get the user's name and profile picture
+$query = "SELECT full_name FROM user_profiles WHERE account_id = ? LIMIT 1";
+$stmt = $conn->prepare($query);
+$stmt->bind_param("i", $userId);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$userName = "User";       // fallback if not found
+
+if ($result && $result->num_rows === 1) {
+    $row = $result->fetch_assoc();
+    $userName = $row['full_name'];
+}
+$stmt->close();
+
+// Only show the welcome modal if the user is not an admin
+if (isset($_SESSION['loggedInUserRole']) && strtolower($_SESSION['loggedInUserRole']) !== 'admin') {
+    $showWelcomeModal = true;
+} else {
+    $showWelcomeModal = false;
+}
 ?>
 
 <!-- BANNER SECTION -->
@@ -211,8 +242,37 @@ include 'includes/header.php';
     </div>
 </div>
 
+<!-- Greeting Modal -->
+<div class="modal fade" id="welcomeModal" tabindex="-1" aria-labelledby="welcomeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+        <div class="modal-header">
+        <h5 class="modal-title" id="welcomeModalLabel">Welcome!</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+        Welcome to eBarangay Mo, <?php echo htmlspecialchars($userName); ?>!
+        </div>
+        <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Continue</button>
+        </div>
+    </div>
+    </div>
+</div>
+
+
 <?php 
     include 'includes/footer.php'; 
 ?> 
 
 <script src="js/carousel.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<?php if($showWelcomeModal): ?>
+<script>
+    // Trigger the welcome modal as soon as the page loads.
+    document.addEventListener("DOMContentLoaded", function(){
+        var welcomeModal = new bootstrap.Modal(document.getElementById('welcomeModal'));
+        welcomeModal.show();
+    });
+</script>
+<?php endif; ?>

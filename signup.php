@@ -40,6 +40,17 @@ include 'includes/header.php';
                     <div class="col-md-8"><input type="date" id="birthdate" name="birthdate" class="form-control custom-input" required></div>
                 </div>
                 <div class="row mb-3">
+                    <label class="col-md-4 text-start fw-bold">Gender</label>
+                    <div class="col-md-8">
+                        <select id="gender" name="gender" class="form-control custom-input" required>
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Prefer not to say">Prefer not to say</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mb-3">
                     <label class="col-md-4 text-start fw-bold">Contact Number</label>
                     <div class="col-md-8"><input type="text" id="contact" name="contact" class="form-control custom-input" placeholder="09xxxxxxxxx" required></div>
                 </div>
@@ -173,6 +184,7 @@ include 'includes/header.php';
                 <div class="summary-container p-3">
                     <p><strong>Full Name:</strong> <span id="summaryFullName"></span></p>
                     <p><strong>Birthdate:</strong> <span id="summaryBirthdate"></span></p>
+                    <p><strong>Gender:</strong> <span id="summaryGender"></span></p>
                     <p><strong>Contact Number:</strong> <span id="summaryContact"></span></p>
                     <p><strong>Email:</strong> <span id="summaryEmail"></span></p>
                     <p><strong>Address:</strong> <span id="summaryAddress"></span></p>

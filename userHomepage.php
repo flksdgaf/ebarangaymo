@@ -10,29 +10,8 @@ if (!isset($_SESSION['auth']) || $_SESSION['auth'] !== true) {
 }
 
 // Retrieve the user's account id from session
-$userId = $_SESSION['loggedInUser'];
+$userId = $_SESSION['loggedInUserID'];
 
-// Query the user_profiles table to get the user's name and profile picture
-$query = "SELECT full_name FROM user_profiles WHERE account_id = ? LIMIT 1";
-$stmt = $conn->prepare($query);
-$stmt->bind_param("i", $userId);
-$stmt->execute();
-$result = $stmt->get_result();
-
-$userName = "User";       // fallback if not found
-
-if ($result && $result->num_rows === 1) {
-    $row = $result->fetch_assoc();
-    $userName = $row['full_name'];
-}
-$stmt->close();
-
-// Only show the welcome modal if the user is not an admin
-if (isset($_SESSION['loggedInUserRole']) && strtolower($_SESSION['loggedInUserRole']) !== 'admin') {
-    $showWelcomeModal = true;
-} else {
-    $showWelcomeModal = false;
-}
 ?>
 
 <!-- BANNER SECTION -->
@@ -43,6 +22,7 @@ if (isset($_SESSION['loggedInUserRole']) && strtolower($_SESSION['loggedInUserRo
   <!-- Content overlay -->
   <div class="position-absolute banner-overlay text-white text-center">
     <div class="container">
+
       <!-- DESKTOP VIEW -->
       <div class="row align-items-center justify-content-center d-none d-md-flex">
         <div class="col-md-3 text-end">
@@ -109,43 +89,6 @@ if (isset($_SESSION['loggedInUserRole']) && strtolower($_SESSION['loggedInUserRo
                 <span class="carousel-control-next-icon" aria-hidden="true"></span>
                 <span class="visually-hidden">Next</span>
             </button>
-        </div>
-    </div>
-</div>
-
-<!-- ABOUT US SECTION -->
-<div class="container-fluid px-0">
-    <div class="about-container text-center">
-        <h1 class="gradient-text mt-5">ABOUT US</h1>
-        <p class="w-50 mx-auto text-center mt-3">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-        </p>
-
-        <div class="row g-4 mt-4 justify-content-center text-center">
-            <div class="col-lg-3 col-md-5 col-sm-6 d-flex justify-content-center">
-                <div class="card-custom p-4">
-                    <h5 class="gradient-text">Mission</h5>
-                    <p>
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris...
-                    </p>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-5 col-sm-6 d-flex justify-content-center">
-                <div class="card-custom p-4">
-                    <h5 class="gradient-text">Vision</h5>
-                    <p>
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris...
-                    </p>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-5 col-sm-6 d-flex justify-content-center">
-                <div class="card-custom p-4">
-                    <h5 class="gradient-text">Values</h5>
-                    <p>
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris...
-                    </p>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -219,7 +162,7 @@ if (isset($_SESSION['loggedInUserRole']) && strtolower($_SESSION['loggedInUserRo
     <div class="row align-items-center">
         <!-- Title Section -->
         <div class="col-md-5">
-            <h2 class="fw-bold text-success">NEWS AND UPDATES</h2>
+            <h2 class="fw-bold text-success mx-40">NEWS AND UPDATES</h2>
         </div>
 
         <!-- Scrollable Content Section -->
@@ -242,37 +185,10 @@ if (isset($_SESSION['loggedInUserRole']) && strtolower($_SESSION['loggedInUserRo
     </div>
 </div>
 
-<!-- Greeting Modal -->
-<div class="modal fade" id="welcomeModal" tabindex="-1" aria-labelledby="welcomeModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-        <div class="modal-header">
-        <h5 class="modal-title" id="welcomeModalLabel">Welcome!</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-        Welcome to eBarangay Mo, <?php echo htmlspecialchars($userName); ?>!
-        </div>
-        <div class="modal-footer">
-        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Continue</button>
-        </div>
-    </div>
-    </div>
-</div>
-
 
 <?php 
     include 'includes/footer.php'; 
 ?> 
 
 <script src="js/carousel.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<?php if($showWelcomeModal): ?>
-<script>
-    // Trigger the welcome modal as soon as the page loads.
-    document.addEventListener("DOMContentLoaded", function(){
-        var welcomeModal = new bootstrap.Modal(document.getElementById('welcomeModal'));
-        welcomeModal.show();
-    });
-</script>
-<?php endif; ?>
+

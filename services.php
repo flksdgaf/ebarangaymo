@@ -1,9 +1,8 @@
 <?php 
-// session_start();
-// include 'functions/dbconn.php'; 
-$page = 'user_homepage';
-include 'includes/header.php'; 
+include 'includes/user_header.php'; 
 ?>
+
+<link rel="stylesheet" href="services.css">
 
 <!-- BANNER SECTION -->
 <div class="container-fluid px-0">

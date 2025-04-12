@@ -394,7 +394,7 @@ body {
     height: 280px;
 }
 
-/* .dropdown-item {
+.dropdown-item {
     font-size: 15px;
 }
 
@@ -405,5 +405,25 @@ body {
 .dropdown-item:active {
   background-color: #2A9245 ; 
   color: white ; 
-} */
+}
+
+.dropdown-menu-show {
+    display: block;
+  }
+
+.nav-item.dropdown:hover .dropdown-menu {
+display: block;
+margin-top: 0; /* Optional: Adjust if you experience a gap */
+opacity: 1;    /* Optional: Ensures it’s fully visible */
+transition: opacity 0.3s ease;
+}
+
+.nav-item.dropdown:hover .dropdown-menu.dropdown-menu-end {
+    display: block;
+    right: 0;
+    left: auto;
+    margin-top: 0; /* Optional: Adjust if you experience a gap */
+    opacity: 1;    /* Optional: Ensures it’s fully visible */
+    transition: opacity 0.3s ease;
+    }
 

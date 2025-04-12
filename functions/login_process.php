@@ -28,7 +28,7 @@ if(isset($_POST['username']) && isset($_POST['password'])) {
                 // Set session variables
                 $_SESSION['auth'] = true;
                 $_SESSION['loggedInUserRole'] = $row['role'];
-                $_SESSION['loggedInUser'] = $row['account_id']; // assuming 'id' is the account id
+                $_SESSION['loggedInUserID'] = $row['account_id']; // assuming 'id' is the account id
 
                 // Redirect based on role (adjust according to your application)
                 if($row['role'] === 'admin') {

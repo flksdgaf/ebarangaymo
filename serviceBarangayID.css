@@ -1,0 +1,125 @@
+.progress-container {
+    position: relative;
+    margin: 50px auto;
+    width: 80%;
+}
+
+.progress-line {
+    position: absolute;
+    top: 37px;
+    left: 10px;
+    right: 10px;
+    height: 8px;
+    background-color: #61AD41;
+    z-index: -1;
+    opacity: 80%;
+}
+
+.progress-fill {
+    position: absolute;
+    top: 37px;
+    left: 10px;
+    right: 10px;
+    height: 8px;
+    background-color: #13411F;
+    width: 0%;
+    z-index: -1;
+    transition: width 0.5s ease-in-out;
+    opacity: 100%;
+}
+
+.stepss {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    z-index: 2;
+}
+
+.steps {
+    text-align: center;
+    width: 60px;
+}
+
+.circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #61AD41;
+    font-size: 40px;
+    font-weight: bold;
+    color: #ffffff;
+    margin: auto;
+    transition: background-color 0.3s ease-in-out;
+}
+
+.circle.active {
+    background: linear-gradient(to bottom, #2A9245, #0D2C15);
+    color: #fff;
+}
+
+.circle.completed {
+    background: linear-gradient(to bottom, #2A9245, #0D2C15);
+    color: #fff;
+}
+
+.step-label {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+    margin-left: 23px;
+    font-size: 18px;
+    white-space: nowrap;
+    transition: all 200ms ease;
+    transition-delay: .4s;
+    color: #61AD41;
+    font-weight: 700;
+}
+
+.step-label.active {
+    color: #0D2C15;
+}
+
+.step-label.completed {
+    color: #0D2C15;
+}
+
+label {
+    padding-top: 5px;
+}
+
+.back-btn {
+    color: #13411F;
+    border-color: #61AD41;
+    font-weight: bold;
+    border-radius: 100px;
+    border-width: 3px;
+    width: 190px;
+}
+
+.next-btn {
+    background: linear-gradient(to right, #0D2C15, #2A9245);
+    color: white;
+    border: none;
+    font-weight: bold;
+    font-size: 20px;
+    border-radius: 100px;
+    padding: 10px 50px;
+    width: 190px;
+}
+
+.summary-container {
+    /* Centers container horizontally while keeping text left aligned */
+    margin: 0 auto;
+    text-align: left;
+}
+
+.step {
+    display: none;
+}
+
+.active-step {
+    display: block;
+}

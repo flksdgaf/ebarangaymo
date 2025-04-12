@@ -1,1 +1,0 @@
-<h1>ebarangay_website</h1>

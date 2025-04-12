@@ -87,27 +87,19 @@ include 'includes/header.php';
 <div class="container-fluid px-0">
     <div class="mission-vision-values text-center">
         <div class="row g-4 mt-4 justify-content-center text-center">
-            <div class="col-lg-3 col-md-5 col-sm-6 d-flex justify-content-center">
+            <div class="col-lg-5 col-md-6 col-sm-10 d-flex justify-content-center">
                 <div class="card-custom p-4">
-                    <h5 class="gradient-text">Mission</h5>
+                    <h5 class="gradient-text text-uppercase">Mission</h5>
                     <p>
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris...
+                        "We members of Sangguniang Barangay will continue to strive more to effectively deliver basic services needed by the people, promote peace and order, protect the interest, promote social and economic development in pursuit of peaceful reliant towards a develop and progressive community within a just VARI social order."
                     </p>
                 </div>
             </div>
-            <div class="col-lg-3 col-md-5 col-sm-6 d-flex justify-content-center">
+            <div class="col-lg-5 col-md-6 col-sm-10 d-flex justify-content-center">
                 <div class="card-custom p-4">
-                    <h5 class="gradient-text">Vision</h5>
+                    <h5 class="gradient-text text-uppercase">Vision</h5>
                     <p>
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris...
-                    </p>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-5 col-sm-6 d-flex justify-content-center">
-                <div class="card-custom p-4">
-                    <h5 class="gradient-text">Values</h5>
-                    <p>
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris...
+                    "Barangay Magang is one of the most widely competitive community in Daet with well-developed, self-reliant, vigorously, God fearing and empowered people, economically adequate with expensive infrastructure facilities an and ecologically balance environment governed by effective and service centered leaders ready to implement the Good Governance and Ethical Leadership."
                     </p>
                 </div>
             </div>
@@ -115,8 +107,9 @@ include 'includes/header.php';
     </div>
 </div>
 
+
 <!-- SERVICE SECTION -->
-<div class="container-fluid mt-5 services-container">
+<div class="container-fluid mt-5 mb-5 services-container">
     <h1 class="text-center gradient-text">SERVICES</h1>
     <div class="container mt-5">
         <div class="row row-cols-1 row-cols-md-2 g-3">
@@ -188,19 +181,22 @@ include 'includes/header.php';
         </div>
 
         <!-- Scrollable Content Section -->
-        <div class="col-md-7">
+        <div class="col-md-7 news-scrollable">
             <div class="scrollable-content d-flex flex-row">
                 <div class="news-card">
-                    <img src="images/carousel.png" alt="News Image">
-                    <p>Breaking News 1: Lorem ipsum dolor sit amet.</p>
+                    <img src="images/news_1.png" alt="News Image">
+                    <p>February 12, 2025</p>
+                    <p>Camarines Norte Sets Highest Number of SGLGB Passers</p>
                 </div>
                 <div class="news-card">
-                    <img src="images/carousel.png" alt="News Image">
-                    <p>Breaking News 2: Lorem ipsum dolor sit amet.</p>
+                    <img src="images/news_2.png" alt="News Image">
+                    <p">February 15, 2025</p>
+                    <p>Barangay Magang Wins in Search for Child Friendly Barangay 2024</p>
                 </div>
                 <div class="news-card">
-                    <img src="images/carousel.png" alt="News Image">
-                    <p>Breaking News 3: Lorem ipsum dolor sit amet.</p>
+                    <img src="images/news_3.png" alt="News Image">
+                    <p">February 20, 2025</p>
+                    <p>Philsys On-going Registration</p>
                 </div>
             </div>
         </div>

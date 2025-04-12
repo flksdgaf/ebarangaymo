@@ -1,6 +1,6 @@
 <!-- Sidebar -->
 <aside id="sidebar" class="hidden">
-  <div class="top">
+  <div class="sidebar-top">
     <div class="logo">
       <img src="images/good_governance_logo.png" alt="Good Governance Logo" style="width: 50px;">
       <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 50px;">
@@ -13,57 +13,57 @@
     </div>
   </div>
 
+  <?php $current = isset($_GET['page']) ? $_GET['page'] : 'adminDashboard'; ?>
+
   <div class="sidebar">
-    <a href="#" class="nav-link" data-page="dashboard.php">
+    <a href="adminpanel.php?page=adminDashboard" class="sidebar-nav-link <?php echo ($current === 'adminDashboard') ? 'sidebar-active' : ''; ?>">
       <span class="material-symbols-outlined">dashboard</span>
       <h3>Dashboard</h3>
     </a>
 
-    <div class="dropdown">
-        <button class="dropdown-toggle" class="nav-link" data-page="request.php">
-          <span class="material-symbols-outlined">description</span>
-          <h3>Request</h3>
-          <span class="material-symbols-outlined arrow">expand_more</span>
-        </button>
-
-        <div class="dropdown-menu">
-          <a href="#" class="nav-link" data-page="#">Barangay ID</a>
-          <a href="#" class="nav-link" data-page="#">Barangay Clearance</a>
-          <a href="#" class="nav-link" data-page="#">Certificate</a>
-          <a href="#" class="nav-link" data-page="#">Business Permit</a>
-          <a href="#" class="nav-link" data-page="#">Katarungang Pambarangay</a>
-          <a href="#" class="nav-link" data-page="#">Environmental Services</a>
-        </div>
-    </div>
+    <a href="adminpanel.php?page=adminRequest" class="sidebar-nav-link <?php echo ($current === 'adminRequest') ? 'sidebar-active' : ''; ?>">
+    <span class="material-symbols-outlined">description</span>
+      <h3>Request</h3>
+    </a>
     
-    <a href="#" class="nav-link" data-page="blotter_record.php">
+    <a href="adminpanel.php?page=adminBlotter" class="sidebar-nav-link <?php echo ($current === 'adminBlotter') ? 'sidebar-active' : ''; ?>">
         <span class="material-symbols-outlined">edit_document</span>
         <h3>Blotter Record</h3>
     </a>
-    <a href="#" class="nav-link" data-page="residents.php">
+
+    <a href="adminpanel.php?page=adminResidents" class="sidebar-nav-link <?php echo ($current === 'adminResidents') ? 'sidebar-active' : ''; ?>">
         <span class="material-symbols-outlined">folder_shared</span>
         <h3>Residents</h3>
     </a>
-    <a href="#" class="nav-link" data-page="ebarangay_website.php">
+
+    <a href="adminpanel.php?page=adminWebsite" class="sidebar-nav-link <?php echo ($current === 'adminWebsite') ? 'sidebar-active' : ''; ?>">
         <span class="material-symbols-outlined">web</span>
         <h3>eBarangay Mo - Website</h3>
     </a>
-    <a href="#" class="nav-link" data-page="users.php">
+
+    <a href="adminpanel.php?page=adminUsers" class="sidebar-nav-link <?php echo ($current === 'adminUsers') ? 'sidebar-active' : ''; ?>">
         <span class="material-symbols-outlined">group</span>
         <h3>Users</h3>
     </a>
-    <a href="#" class="nav-link" data-page="transaction_history.php">
+
+    <a href="adminpanel.php?page=adminTransaction" class="sidebar-nav-link <?php echo ($current === 'adminTransaction') ? 'sidebar-active' : ''; ?>">
         <span class="material-symbols-outlined">receipt_long</span>
         <h3>Transaction History</h3>
     </a>
 
-    <a href="#" class="nav-link" data-page="logs.php">
+    <a href="adminpanel.php?page=adminLogs" class="sidebar-nav-link <?php echo ($current === 'adminLogs') ? 'sidebar-active' : ''; ?>">
     <span class="material-symbols-outlined">badge</span>
         <h3>Logs</h3>
     </a>
-    <a href="#" class="nav-link" data-page="settings.php">
+
+    <a href="adminpanel.php?page=adminAccount" class="sidebar-nav-link <?php echo ($current === 'adminAccount') ? 'sidebar-active' : ''; ?>">
+    <span class="material-symbols-outlined">verified</span>
+        <h3>Account Verifications</h3>
+    </a>
+
+    <a href="adminpanel.php?page=adminSettings" class="sidebar-nav-link <?php echo ($current === 'adminSettings') ? 'sidebar-active' : ''; ?>">
     <span class="material-symbols-outlined">settings</span>
-        <h3>Settings</h3>
+        <h3>Admin Settings</h3>
     </a>
   </div>
 

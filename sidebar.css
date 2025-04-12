@@ -32,6 +32,10 @@
   perspective: 1000;
 }
 
+.sidebar .sidebar-nav-link .sidebar-active {
+  background-color: #ffffff;
+  color: #13411F;
+}
   
 /* Collapsed by default on mobile */
 @media (max-width: 768px) {
@@ -44,17 +48,17 @@
 }
 
 /* Top section: logos & heading */
-#sidebar .top .logo {
+#sidebar .sidebar-top .logo {
     text-align: center; 
 }
 
-#sidebar .top h2 {
+#sidebar .sidebar-top h2 {
     font-size: 22px;
     margin: 10px 0 5px;
     color: #ffffff;
 }
 
-#sidebar .top p {
+#sidebar .sidebar-top p {
     font-size: 10px;
     color: #98C93C;
 }

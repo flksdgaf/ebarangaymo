@@ -95,16 +95,11 @@ $stmt->close();
                     </li>
                 </ul>
 
-                <!-- Search bar 
-                <form class="d-inline me-3 ms-auto mb-2 mb-lg-0" role="search">
-                    <input class="form-control custom-input me-2" type="search" placeholder="Search" aria-label="Search">
-                </form> -->
-
                 <!-- Right side: Profile picture and name dropdown -->
                 <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center profile-dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="color: #13411F;">
-                            <img src="<?php echo htmlspecialchars($profilePic); ?>" class="rounded-circle" width="38" height="38" style="object-fit: cover; margin-right: 8px; border: 2px solid #13411F;">
+                            <img src="<?php echo htmlspecialchars($profilePic); ?>" class="rounded-circle" width="30" height="30" style="object-fit: cover; margin-right: 8px; border: 2px solid #13411F;">
                             <span style="margin-right: 3px;"><?php echo htmlspecialchars($fullName); ?></span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">

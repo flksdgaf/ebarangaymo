@@ -1,276 +1,130 @@
-/* Base Reset */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Poppins', sans-serif;
-  }
-  
-  /* Sidebar Container */
+/* SIDEBAR CSS */
 #sidebar {
-  width: 260px;
-  height: 100vh;
   background-color: #13411F;
   color: white;
   position: fixed;
   left: 0;
   top: 0;
+  width: 300px;
+  height: 100vh;
   padding: 20px 15px;
   display: flex;
   flex-direction: column;
-  z-index: 1000;
-  flex-direction: column;
-  justify-content: space-between;
-
-  /* Smooth and GPU-accelerated transition */
   transform: translateX(0);
   transition: transform 0.3s ease-in-out;
-
-  /* Hardware-acceleration performance boosts */
-  will-change: transform;
-  backface-visibility: hidden;
-  perspective: 1000;
+  overflow-y: auto;
+  z-index: 1000;
+  /* will-change: transform; */
+  /* backface-visibility: hidden; */
+  /* perspective: 1000; */
+  /* scrollbar-width: thick; */
+  /* scrollbar-color: #C4C4C4 transparent; */
 }
 
-.sidebar .sidebar-nav-link .sidebar-active {
-  background-color: #ffffff;
-  color: #13411F;
-}
-  
-/* Collapsed by default on mobile */
-@media (max-width: 768px) {
-    #sidebar {
-        transform: translateX(-100%);
-    }
-    #sidebar.expand {
-        transform: translateX(0);
-    }
+#sidebar::-webkit-scrollbar {
+  width: 8px;
 }
 
-/* Top section: logos & heading */
-#sidebar .sidebar-top .logo {
-    text-align: center; 
+#sidebar::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-#sidebar .sidebar-top h2 {
-    font-size: 22px;
-    margin: 10px 0 5px;
-    color: #ffffff;
+#sidebar::-webkit-scrollbar-thumb {
+  background-color: #C4C4C4;
+  border-radius: 10px;
+  border: 2px solid #13411F;
 }
 
-#sidebar .sidebar-top p {
-    font-size: 10px;
-    color: #98C93C;
+#sidebar::-webkit-scrollbar-thumb:hover {
+  background-color: #C4C4C4;
 }
 
-/* Close button */
 #close-btn {
-    display: none;
-    position: absolute;
-    top: 20px;
-    right: 15px;
-    font-size: 24px;
-    cursor: pointer;
+  display: none;
+  position: absolute;
+  top: 20px;
+  right: 15px;
+  font-size: 24px;
+  cursor: pointer;
+  color: white;
 }
 
-@media (max-width: 768px) {
-    #close-btn {
-        display: block;
-    }
-}
-
-/* Navigation Links */
 .sidebar {
-    margin-top: 30px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    flex: 1;
-    overflow-y: auto;
+  flex: 1;
 }
 
 .sidebar a {
-    display: flex;
-    align-items: center;
-    padding: 10px 15px;
-    text-decoration: none;
-    color: #ffffff;
-    border-radius: 10px;
-    transition: 0.3s ease;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: #ffffff;
+  border-radius: 10px;
+  transition: 0.3s ease;
 }
 
 .sidebar a:hover {
-    background-color: #ffffff;
-    color: #13411F;
+  background-color: #ffffff;
+  color: #13411F;
 }
 
-.sidebar a span {
-    margin-right: 15px; 
+.sidebar a.active {
+  background-color: #ffffff;
+  color: #13411F;
 }
 
-.sidebar a h3 {
-    font-size: 16px;
+.sidebar h1 {
+  font-size: 25px;
+  font-weight: 600;
+  color: #ffffff;
 }
 
-/* Dropdown Container */
-.dropdown {
-    display: flex;
-    flex-direction: column;
-    position: relative;
+.sidebar h2 {
+  font-size: 12px;
+  font-weight: 400;
+  color: #98C93C;
 }
 
-.dropdown-toggle {
-    display: flex;
-    align-items: center;
-    background: none;
-    border: none;
-    color: #ffffff;
-    padding: 10px 15px;
-    text-align: left;
-    border-radius: 10px;
-    width: 100%;
-    cursor: pointer;
-    transition: 0.3s ease;
-}
-
-.dropdown-toggle:hover {
-    background-color: #ffffff;
-    color: #13411F;
-}
-
-.dropdown-toggle span {
-    margin-right: 15px;
-}
-
-.dropdown-toggle .arrow {
-    margin-left: auto;
-    transition: transform 0.3s ease;
-}
-
-/* Dropdown Menu */
-.dropdown-menu {
-    display: none;
-    flex-direction: column;
-    padding-left: 35px;
-    margin-top: 5px;
-}
-
-.dropdown-menu a {
-    text-decoration: none;
-    color: #ffffff;
-    font-size: 14px;
-    padding: 6px 10px;
-    border-radius: 8px;
-    transition: 0.2s ease;
-}
-
-.dropdown-menu a:hover {
-    background-color: #ffffff;
-    color: #13411F;
-}
-
-/* Sticky logout at the bottom */
-.logout-btn {
-    padding: 20px 0;
-    display: flex;
-    justify-content: center;
-  }
-  
-  .logout-btn a {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 20px;
-    width: 80%;
-    background-color: #EFEFEF;
-    color: #13411F;
-    border-radius: 10px;
-    text-decoration: none;
-    transition: 0.3s ease;
-  }
-  
-  .logout-btn a:hover {
-    background-color: #379237;
-    color: white;
-  }
-  
-  .logout-btn a span {
-    margin-right: 10px;
-  }
-
-  @media (max-width: 768px) {
-    .logout-btn {
-      padding-bottom: 40px; /* Increased from default */
-    }
-  
-    .logout-btn a {
-      width: 90%;
-      font-size: 14px;
-      padding: 10px;
-    }
-  
-    .logout-btn a span {
-      font-size: 20px;
-      margin-right: 8px;
-    }
-  }
-  
-  @media (max-width: 420px) {
-    .logout-btn {
-      padding-bottom: 60px; /* Pushes it up even more */
-    }
-  }
-
-/* Toggle Button (hamburger menu) */
-.toggle-btn {
-    display: none;
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    font-size: 28px;
-    background-color: #d4f1d7;
-    color: #10451d;
-    padding: 6px 10px;
-    border-radius: 8px;
-    cursor: pointer;
-    z-index: 1100;
+.custom-hr {
+  border: none;
+  height: 2px;
+  background-color: #ffffff33;
+  margin: 1rem 0 0.5rem 0;
 }
 
 @media (max-width: 768px) {
-    .toggle-btn {
-        display: block;
-    }
-}
-  
-/* Hide hamburger when sidebar is expanded (mobile only) */
-@media (max-width: 768px) {
-    #sidebar.expand ~ .toggle-btn {
-        display: none;
-    }
-}
-
-/* Custom Scrollbar for Sidebar */
-#sidebar::-webkit-scrollbar {
-    width: 8px;
-  }
-  
-  #sidebar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  
-  #sidebar::-webkit-scrollbar-thumb {
-    background-color: #C4C4C4; /* Soft green thumb */
-    border-radius: 10px;
-    border: 2px solid #13411F; /* Background color of the sidebar for blending */
-  }
-  
-  #sidebar::-webkit-scrollbar-thumb:hover {
-    background-color: #C4C4C4; /* Brighter on hover */
-  }
-  
-  /* Firefox Support */
   #sidebar {
-    scrollbar-width: thin;
-    scrollbar-color: #C4C4C4 transparent;
+    transform: translateX(-100%);
   }
-  
+  #sidebar.expand {
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 768px) {
+  #close-btn {
+    display: block;
+  }
+}
+
+/* .toggle-btn {
+  display: none;
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  font-size: 28px;
+  background-color: #d4f1d7;
+  color: #10451d;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  z-index: 1100;
+} */
+
+/* @media (max-width: 768px) {
+  .toggle-btn {
+    display: block;
+  }
+  #sidebar.expand ~ .toggle-btn {
+    display: none;
+  }
+}  */

@@ -1,79 +1,88 @@
-<!-- Sidebar -->
-<aside id="sidebar" class="hidden">
-  <div class="sidebar-top">
-    <div class="logo">
-      <img src="images/good_governance_logo.png" alt="Good Governance Logo" style="width: 50px;">
-      <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 50px;">
-      <h2>eBarangay Mo</h2>
-      <p>BARANGAY SERVICES PORTAL OF BRGY. MAGANG, DAET, CAMARINES NORTE</p>
+<!-- Sidebar (Bootstrap-based) -->
+<nav id="sidebar" class="sidebar">
+    <div class="text-center mb-4 mt-3">
+        <div class="d-flex justify-content-center align-items-center gap-2">
+            <img src="images/good_governance_logo.png" alt="Good Governance Logo" style="width: 50px;">
+            <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 50px;">
+        </div>
+        <h1 class="mt-3 mb-1">eBarangay Mo</h1>
+        <h2 class="text-uppercase">Barangay Services Portal of  Brgy. Magang, Daet, Camarines Norte</h2>
+        <hr class="custom-hr">
+
+        <button class="btn btn-sm" id="close-btn">
+            <h3 class="material-symbols-outlined">close</h3>
+        </button> 
     </div>
-    
-    <div class="close" id="close-btn" style="cursor: pointer;">
-      <span class="material-symbols-outlined">close</span>
-    </div>
-  </div>
 
-  <?php $current = isset($_GET['page']) ? $_GET['page'] : 'adminDashboard'; ?>
+    <?php
+    $currentPage = $_GET['page'] ?? 'adminDashboard';
+    ?>
 
-  <div class="sidebar">
-    <a href="adminpanel.php?page=adminDashboard" class="sidebar-nav-link <?php echo ($current === 'adminDashboard') ? 'sidebar-active' : ''; ?>">
-      <span class="material-symbols-outlined">dashboard</span>
-      <h3>Dashboard</h3>
-    </a>
+    <ul class="nav flex-column gap-2">
+        <li>
+            <a href="adminpanel.php?page=adminDashboard" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminDashboard') ? 'active' : '' ?>">
+            <span class="material-symbols-outlined me-2">dashboard</span>
+            Dashboard
+            </a>
+        </li>
+        <li>
+            <a href="adminpanel.php?page=adminRequest" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminRequest') ? 'active' : '' ?>">
+            <span class="material-symbols-outlined me-2">description</span>
+            Request
+            </a>
+        </li>
+        <li>
+            <a href="adminpanel.php?page=adminBlotter" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminBlotter') ? 'active' : '' ?>">
+            <span class="material-symbols-outlined me-2">edit_document</span>
+            Blotter Record
+            </a>
+        </li>
+        <li>
+            <a href="adminpanel.php?page=adminResidents" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminResidents') ? 'active' : '' ?>">
+            <span class="material-symbols-outlined me-2">folder_shared</span>
+            Residents
+            </a>
+        </li>
+        <li>
+            <a href="adminpanel.php?page=adminWebsite" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminWebsite') ? 'active' : '' ?>">
+            <span class="material-symbols-outlined me-2">web</span>
+            eBarangay Mo - Website
+            </a>
+        </li>
+        <li>
+            <a href="adminpanel.php?page=adminUsers" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminUsers') ? 'active' : '' ?>">
+            <span class="material-symbols-outlined me-2">group</span>
+            Users
+            </a>
+        </li>
+        <li>
+            <a href="adminpanel.php?page=adminTransactions" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminTransactions') ? 'active' : '' ?>">
+            <span class="material-symbols-outlined me-2">receipt_long</span>
+            Transaction History
+            </a>
+        </li>
+        <li>
+            <a href="adminpanel.php?page=adminLogs" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminLogs') ? 'active' : '' ?>">
+            <span class="material-symbols-outlined me-2">badge</span>
+            Logs
+            </a>
+        </li>
+        <li>
+            <a href="adminpanel.php?page=adminVerifications" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminVerifications') ? 'active' : '' ?>">
+            <span class="material-symbols-outlined me-2">verified</span>
+            Account Verifications
+            </a>
+        </li>
+        <li>
+            <a href="adminpanel.php?page=adminSettings" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminSettings') ? 'active' : '' ?>">
+            <span class="material-symbols-outlined me-2">settings</span>
+            Admin Settings
+            </a>
+        </li>
+    </ul>
+</nav>
 
-    <a href="adminpanel.php?page=adminRequest" class="sidebar-nav-link <?php echo ($current === 'adminRequest') ? 'sidebar-active' : ''; ?>">
-    <span class="material-symbols-outlined">description</span>
-      <h3>Request</h3>
-    </a>
-    
-    <a href="adminpanel.php?page=adminBlotter" class="sidebar-nav-link <?php echo ($current === 'adminBlotter') ? 'sidebar-active' : ''; ?>">
-        <span class="material-symbols-outlined">edit_document</span>
-        <h3>Blotter Record</h3>
-    </a>
-
-    <a href="adminpanel.php?page=adminResidents" class="sidebar-nav-link <?php echo ($current === 'adminResidents') ? 'sidebar-active' : ''; ?>">
-        <span class="material-symbols-outlined">folder_shared</span>
-        <h3>Residents</h3>
-    </a>
-
-    <a href="adminpanel.php?page=adminWebsite" class="sidebar-nav-link <?php echo ($current === 'adminWebsite') ? 'sidebar-active' : ''; ?>">
-        <span class="material-symbols-outlined">web</span>
-        <h3>eBarangay Mo - Website</h3>
-    </a>
-
-    <a href="adminpanel.php?page=adminUsers" class="sidebar-nav-link <?php echo ($current === 'adminUsers') ? 'sidebar-active' : ''; ?>">
-        <span class="material-symbols-outlined">group</span>
-        <h3>Users</h3>
-    </a>
-
-    <a href="adminpanel.php?page=adminTransaction" class="sidebar-nav-link <?php echo ($current === 'adminTransaction') ? 'sidebar-active' : ''; ?>">
-        <span class="material-symbols-outlined">receipt_long</span>
-        <h3>Transaction History</h3>
-    </a>
-
-    <a href="adminpanel.php?page=adminLogs" class="sidebar-nav-link <?php echo ($current === 'adminLogs') ? 'sidebar-active' : ''; ?>">
-    <span class="material-symbols-outlined">badge</span>
-        <h3>Logs</h3>
-    </a>
-
-    <a href="adminpanel.php?page=adminAccount" class="sidebar-nav-link <?php echo ($current === 'adminAccount') ? 'sidebar-active' : ''; ?>">
-    <span class="material-symbols-outlined">verified</span>
-        <h3>Account Verifications</h3>
-    </a>
-
-    <a href="adminpanel.php?page=adminSettings" class="sidebar-nav-link <?php echo ($current === 'adminSettings') ? 'sidebar-active' : ''; ?>">
-    <span class="material-symbols-outlined">settings</span>
-        <h3>Admin Settings</h3>
-    </a>
-  </div>
-
-  <div class="logout-btn">
-    <a href="#">
-      <span class="material-symbols-outlined">logout</span>
-      <h3>Sign out</h3>
-    </a>
-  </div>
-</aside>
-
-<!-- Toggle Button (Hamburger) -->
-<span class="material-symbols-outlined toggle-btn" id="hamburger-btn" style="cursor: pointer;">menu</span>
+<!-- Hamburger Button -->
+<button id="hamburger-btn" class="btn position-fixed top-0 start-0 m-2 d-md-none">
+    <span class="material-symbols-outlined">menu</span>
+</button>

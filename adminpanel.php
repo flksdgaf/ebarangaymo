@@ -1,77 +1,32 @@
-<?php 
-$page = isset($_GET['page']) ? $_GET['page'] : 'adminDashboard'; 
+<?php include 'functions/dbconn.php'; ?>
+<?php include 'includes/admin_header.php'; ?>
+<?php include 'includes/sidebar.php'; ?>
 
-$valid_pages = [
-    'adminDashboard',
-    'adminRequest',
-    'adminBlotter',
-    'adminResidents',
-    'adminWebsite',
-    'adminUsers',
-    'adminTransaction',
-    'adminLogs',
-    'adminAccount',
-    'adminSettings'
-];
+<div class="main-content">
+    <?php
+        // Default to 'dashboard' if no page is set
+        $page = $_GET['page'] ?? 'adminDashboard';
 
-if (!in_array($page, $valid_pages)) {
-    $page = 'adminDashboard'; 
-}
+        // List of allowed pages for security
+        $allowed_pages = ['adminDashboard','adminRequest', 'adminBlotter', 'adminResidents', 'adminWebsite', 'adminUsers', 'adminTransactions', 'adminLogs', 'adminVerifications', 'adminSettings'];
 
-include 'functions/dbconn.php';
-?>
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - eBarangayMo</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="sidebar.css">
-    <link rel="stylesheet" href="adminpanel.css">
-    <link rel="stylesheet" href="forms.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://kit.fontawesome.com/e30afd7a6b.js" crossorigin="anonymous"></script>
-</head>
-<body>
-    <?php 
-    $current = isset($_GET['page']) ? $_GET['page'] : 'adminDashboard';
-    include 'includes/sidebar.php'; 
+        // Check if the requested page is allowed
+        if (in_array($page, $allowed_pages)) {
+            $page_file = "{$page}.php";
+            
+            // Check if the file exists
+            if (file_exists($page_file)) {
+                include $page_file;
+            } else {
+                echo "<div class='alert alert-danger'>Page file not found: $page_file</div>";
+            }
+        } else {
+            echo "<div class='alert alert-warning'>Invalid page requested.</div>";
+        }
     ?>
-    
-    <div class="container-main">
-        <div class="main-content">
-            <div class="topbar">
-                <div class="topbar-left">
-                    <div class="admin-logo">
-                        <img src="images/good_governance_logo.png" alt="Good Governance Logo">
-                        <img src="images/magang_logo.png" alt="Barangay Magang Logo">
-                    </div>
-                    <h4 class="brand-name">eBarangay Mo</h4>
-                </div>
 
-                <div class="topbar-right">
-                    <img src="images/magang_logo.png" alt="Admin Profile" class="profile-pic">
-                    
-                    <button class="username-btn">
-                        <span class="username">Admin1</span>
-                        <span class="material-symbols-outlined arrow">expand_more</span>
-                    </button>
+</div>
 
-                    <div class="dropdown-menu-admin">
-                        <a href="#" class="admin-nav-link" data-page="#">My Profile</a>
-                    </div>
-                </div>
-            </div>
-                
-            <div id="content-wrapper">
-                <?php include "$page.php"; ?>
-            </div>
-        </div>
-    </div>
-
-    <script src="js/script.js"></script>
+<script src="js/adminpanel.js"></script>
 </body>
 </html>

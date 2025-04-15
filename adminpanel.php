@@ -1,5 +1,5 @@
 <?php include 'functions/dbconn.php'; ?>
-<?php include 'includes/admin_header.php'; ?>
+<?php include 'includes/account_header.php'; ?>
 <?php include 'includes/adminSidebar.php'; ?>
 
 <div class="main-content">

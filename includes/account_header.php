@@ -1,3 +1,37 @@
+<?php
+if (!isset($page)) {
+    $page = 'default'; // Default page
+}
+require 'functions/dbconn.php';
+session_start();
+
+// Ensure the user is authenticated.
+if (!isset($_SESSION['auth']) || $_SESSION['auth'] !== true) {
+    header("Location: index.php");
+    exit();
+}
+
+// Get the user's account id from session.
+$userId = $_SESSION['loggedInUserID'];
+
+// Query user_profiles to retrieve the profile picture.
+$query = "SELECT full_name, profilePic FROM user_profiles WHERE account_id = ? LIMIT 1";
+$stmt = $conn->prepare($query);
+$stmt->bind_param("i", $userId);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$profilePic = "profilePictures/default_profile_pic.png"; // Default image if no record is found.
+$fullName = "User"; // Default name if no record is found.
+
+if ($result && $result->num_rows === 1) {
+    $row = $result->fetch_assoc();
+    $profilePic = "profilePictures/" . $row['profilePic'];
+    $fullName = $row['full_name'];
+}
+$stmt->close();
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -33,15 +67,18 @@
             </div>
             <div class="d-none d-md-block flex-grow-1"></div>
             <div class="dropdown">
+                <img src="<?php echo htmlspecialchars($profilePic); ?>" class="rounded-circle" width="40" height="40" style="object-fit: cover; margin-right: 8px; border: 2px solid #13411F;">
                 <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="adminDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     <!-- Text for large screens -->
-                    <span class="d-none d-md-inline">Barangay Captain</span>
+                    <span class="d-none d-md-inline"><?php echo htmlspecialchars($fullName); ?> - <?php echo htmlspecialchars($_SESSION['loggedInUserRole']); ?></span>
                     <!-- Icon for smaller screens -->
                     <span class="d-md-none icon"><i class="fas fa-user"></i></span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
-                    <li><a class="dropdown-item" href="#">Profile</a></li>
-                    <li><a class="dropdown-item text-danger" href="#">Logout</a></li>
+                    <li><a class="dropdown-item" href="profile.php">My Profile</a></li>
+                    <li><a class="dropdown-item" href="settings.php">Settings</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="functions/logout.php">Logout</a></li>
                 </ul>
             </div>
         </div>

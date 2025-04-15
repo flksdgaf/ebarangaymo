@@ -26,7 +26,7 @@
             </a>
         </li>
         <li>
-            <a href="userpanel.php?page=userRequest" class="nav-link d-flex align-items-center <?= ($currentPage === 'userDashboard') ? 'active' : '' ?>">
+            <a href="userpanel.php?page=userRequest" class="nav-link d-flex align-items-center <?= ($currentPage === 'userRequest') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">description</span>
             Request
             </a>

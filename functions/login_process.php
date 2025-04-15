@@ -2,6 +2,7 @@
 // functions/login_process.php
 session_start();
 include 'dbconn.php';
+$admin_roles = ['Barangay Captain', 'Barangay Secretary', 'Barangay Kagawad', 'Barangay Bookkeeper'];
 
 if(isset($_POST['username']) && isset($_POST['password'])) {
     // Sanitize and validate the input
@@ -31,10 +32,10 @@ if(isset($_POST['username']) && isset($_POST['password'])) {
                 $_SESSION['loggedInUserID'] = $row['account_id']; // assuming 'id' is the account id
 
                 // Redirect based on role (adjust according to your application)
-                if($row['role'] === 'admin') {
+                if (in_array($row['role'], $admin_roles)) {
                     header("Location: ../adminpanel.php");
-                } elseif($row['role'] === 'constituent') {
-                    header("Location: ../userHomepage.php");
+                } elseif($row['role'] === 'Resident') {
+                    header("Location: ../userpanel.php");
                 }
                 exit();
             } else {

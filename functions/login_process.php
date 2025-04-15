@@ -32,7 +32,9 @@ if(isset($_POST['username']) && isset($_POST['password'])) {
                 $_SESSION['loggedInUserID'] = $row['account_id']; // assuming 'id' is the account id
 
                 // Redirect based on role (adjust according to your application)
-                if (in_array($row['role'], $admin_roles)) {
+                if ($row['role'] === 'SuperAdmin') {
+                    header("Location: ../superAdminPanel.php");
+                } elseif (in_array($row['role'], $admin_roles)) {
                     header("Location: ../adminPanel.php");
                 } elseif($row['role'] === 'Resident') {
                     header("Location: ../userPanel.php");

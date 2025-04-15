@@ -5,10 +5,10 @@
 <div class="main-content">
     <?php
         // Default to 'dashboard' if no page is set
-        $page = $_GET['page'] ?? 'userDashboard';
+        $page = $_GET['page'] ?? 'superAdminDashboard';
 
         // List of allowed pages for security
-        $allowed_pages = ['superadminDashboard','superadminRequest', 'superadminBlotter', 'superadminResidents', 'superadminWebsite', 'superadminUsers', 'superadminTransactions', 'superadminLogs', 'superadminVerifications', 'superadminSettings'];
+        $allowed_pages = ['superAdminDashboard','superAdminRequest', 'superAdminBlotter', 'superAdminResidents', 'superAdminWebsite', 'superAdminUsers', 'superAdminTransactions', 'superAdminLogs', 'superAdminVerifications', 'superAdminSettings'];
 
         // Check if the requested page is allowed
         if (in_array($page, $allowed_pages)) {

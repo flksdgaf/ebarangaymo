@@ -1,14 +1,14 @@
 <?php include 'functions/dbconn.php'; ?>
 <?php include 'includes/admin_header.php'; ?>
-<?php include 'includes/adminSidebar.php'; ?>
+<?php include 'includes/userSidebar.php'; ?>
 
 <div class="main-content">
     <?php
         // Default to 'dashboard' if no page is set
-        $page = $_GET['page'] ?? 'adminDashboard';
+        $page = $_GET['page'] ?? 'userDashboard';
 
         // List of allowed pages for security
-        $allowed_pages = ['adminDashboard','adminRequest', 'adminBlotter', 'adminResidents', 'adminWebsite', 'adminUsers', 'adminTransactions', 'adminLogs', 'adminVerifications', 'adminSettings'];
+        $allowed_pages = ['userDashboard','userRequest'];
 
         // Check if the requested page is allowed
         if (in_array($page, $allowed_pages)) {

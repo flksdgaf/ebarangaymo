@@ -40,7 +40,7 @@ $stmt->close();
     <title>Admin Panel - eBarangayMo</title>
     <!-- CUSTOM CSS -->
     <link rel="stylesheet" href="adminPanel.css">
-    <link rel="stylesheet" href="sidebar.css">
+    <link rel="stylesheet" href="includes/sidebar.css">
     <!-- GOOGLE FONTS -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
     <link rel="preconnect" href="https://fonts.googleapis.com">

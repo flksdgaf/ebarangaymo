@@ -20,51 +20,63 @@
 
     <ul class="nav flex-column gap-2">
         <li>
-            <a href="adminpanel.php?page=adminDashboard" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminDashboard') ? 'active' : '' ?>">
+            <a href="superadminpanel.php?page=superadminDashboard" class="nav-link d-flex align-items-center <?= ($currentPage === 'superadminDashboard') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">dashboard</span>
             Dashboard
             </a>
         </li>
         <li>
-            <a href="adminpanel.php?page=adminRequest" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminRequest') ? 'active' : '' ?>">
+            <a href="superadminpanel.php?page=superadminRequest" class="nav-link d-flex align-items-center <?= ($currentPage === 'superadminRequest') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">description</span>
             Request
             </a>
         </li>
         <li>
-            <a href="adminpanel.php?page=adminBlotter" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminBlotter') ? 'active' : '' ?>">
+            <a href="superadminpanel.php?page=superadminBlotter" class="nav-link d-flex align-items-center <?= ($currentPage === 'superadminBlotter') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">edit_document</span>
             Blotter Record
             </a>
         </li>
         <li>
-            <a href="adminpanel.php?page=adminResidents" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminResidents') ? 'active' : '' ?>">
+            <a href="superadminpanel.php?page=superadminResidents" class="nav-link d-flex align-items-center <?= ($currentPage === 'superadminResidents') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">folder_shared</span>
             Residents
             </a>
         </li>
         <li>
-            <a href="adminpanel.php?page=adminWebsite" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminWebsite') ? 'active' : '' ?>">
+            <a href="superadminpanel.php?page=superadminWebsite" class="nav-link d-flex align-items-center <?= ($currentPage === 'superadminWebsite') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">web</span>
             eBarangay Mo - Website
             </a>
         </li>
         <li>
-            <a href="adminpanel.php?page=adminUsers" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminUsers') ? 'active' : '' ?>">
+            <a href="superadminpanel.php?page=superadminUsers" class="nav-link d-flex align-items-center <?= ($currentPage === 'superadminUsers') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">group</span>
             Users
             </a>
         </li>
         <li>
-            <a href="adminpanel.php?page=adminTransactions" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminTransactions') ? 'active' : '' ?>">
+            <a href="superadminpanel.php?page=superadminTransactions" class="nav-link d-flex align-items-center <?= ($currentPage === 'superadminTransactions') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">receipt_long</span>
             Transaction History
             </a>
         </li>
         <li>
-            <a href="adminpanel.php?page=adminVerifications" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminVerifications') ? 'active' : '' ?>">
+            <a href="superadminpanel.php?page=superadminLogs" class="nav-link d-flex align-items-center <?= ($currentPage === 'superadminLogs') ? 'active' : '' ?>">
+            <span class="material-symbols-outlined me-2">badge</span>
+            Logs
+            </a>
+        </li>
+        <li>
+            <a href="superadminpanel.php?page=superadminVerifications" class="nav-link d-flex align-items-center <?= ($currentPage === 'superadminVerifications') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">verified</span>
             Account Verifications
+            </a>
+        </li>
+        <li>
+            <a href="superadminpanel.php?page=superadminSettings" class="nav-link d-flex align-items-center <?= ($currentPage === 'superadminSettings') ? 'active' : '' ?>">
+            <span class="material-symbols-outlined me-2">settings</span>
+            Admin Settings
             </a>
         </li>
     </ul>

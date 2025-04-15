@@ -33,9 +33,9 @@ if(isset($_POST['username']) && isset($_POST['password'])) {
 
                 // Redirect based on role (adjust according to your application)
                 if (in_array($row['role'], $admin_roles)) {
-                    header("Location: ../adminpanel.php");
+                    header("Location: ../adminPanel.php");
                 } elseif($row['role'] === 'Resident') {
-                    header("Location: ../userpanel.php");
+                    header("Location: ../userPanel.php");
                 }
                 exit();
             } else {

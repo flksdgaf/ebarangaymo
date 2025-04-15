@@ -52,7 +52,7 @@
 
                     <!-- Transparency Seal -->                
                     <li class="nav-item me-3">
-                        <a class="nav-link" href="transparency_seal.php">Transparency Seal</a>
+                        <a class="nav-link" href="transparencyseal.php">Transparency Seal</a>
                     </li>
                 </ul>
 

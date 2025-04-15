@@ -39,7 +39,7 @@ $stmt->close();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - eBarangayMo</title>
     <!-- CUSTOM CSS -->
-    <link rel="stylesheet" href="adminpanel.css">
+    <link rel="stylesheet" href="adminPanel.css">
     <link rel="stylesheet" href="sidebar.css">
     <!-- GOOGLE FONTS -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />

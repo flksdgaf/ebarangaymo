@@ -27,6 +27,6 @@
 
 </div>
 
-<script src="js/adminpanel.js"></script>
+<script src="js/adminPanel.js"></script>
 </body>
 </html>

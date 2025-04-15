@@ -1,5 +1,6 @@
 <?php 
-include 'includes/user_header.php'; 
+$page = 'index';
+include 'includes/header.php'; 
 ?>
 
 <link rel="stylesheet" href="about.css">

@@ -7,55 +7,55 @@ document.addEventListener("DOMContentLoaded", function () {
     const nextBtn = document.querySelector(".next-btn");
 
     // Dropdown elements
-    const provinceSelect = document.getElementById("province");
-    const municipalitySelect = document.getElementById("municipality");
-    const barangaySelect = document.getElementById("barangay");
+    // const provinceSelect = document.getElementById("province");
+    // const municipalitySelect = document.getElementById("municipality");
+    // const barangaySelect = document.getElementById("barangay");
 
     // Data for municipalities and barangays
-    const locationData = {
-        "Camarines Norte": {
-            "Daet": ["Barangay I", "Barangay II", "Barangay III", "Barangay IV", "Barangay V", "Barangay VI", "Barangay VII", "Barangay VIII", "Alawihao", "Awitan", "Bagasbas", "Bibirao", "Borabod", "Calasgasan", "Camambugan", "Cobangbang", "Dogongan", "Gahonon", "Gubat", "Lag-on", "Magang", "Mambalite", "Mancruz", "Pamorangon", "San Isidro"],
-        },
-    };
+    // const locationData = {
+    //     "Camarines Norte": {
+    //         "Daet": ["Barangay I", "Barangay II", "Barangay III", "Barangay IV", "Barangay V", "Barangay VI", "Barangay VII", "Barangay VIII", "Alawihao", "Awitan", "Bagasbas", "Bibirao", "Borabod", "Calasgasan", "Camambugan", "Cobangbang", "Dogongan", "Gahonon", "Gubat", "Lag-on", "Magang", "Mambalite", "Mancruz", "Pamorangon", "San Isidro"],
+    //     },
+    // };
 
     // Province selection event
-    provinceSelect.addEventListener("change", function () {
-        const selectedProvince = this.value;
-        municipalitySelect.innerHTML = '<option value="">Select Municipality</option>';
-        barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
-        barangaySelect.disabled = true;
+    // provinceSelect.addEventListener("change", function () {
+    //     const selectedProvince = this.value;
+    //     municipalitySelect.innerHTML = '<option value="">Select Municipality</option>';
+    //     barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
+    //     barangaySelect.disabled = true;
 
-        if (selectedProvince) {
-            municipalitySelect.disabled = false;
-            for (const municipality in locationData[selectedProvince]) {
-                let option = document.createElement("option");
-                option.value = municipality;
-                option.textContent = municipality;
-                municipalitySelect.appendChild(option);
-            }
-        } else {
-            municipalitySelect.disabled = true;
-        }
-    });
+    //     if (selectedProvince) {
+    //         municipalitySelect.disabled = false;
+    //         for (const municipality in locationData[selectedProvince]) {
+    //             let option = document.createElement("option");
+    //             option.value = municipality;
+    //             option.textContent = municipality;
+    //             municipalitySelect.appendChild(option);
+    //         }
+    //     } else {
+    //         municipalitySelect.disabled = true;
+    //     }
+    // });
 
     // Municipality selection event
-    municipalitySelect.addEventListener("change", function () {
-        const selectedProvince = provinceSelect.value;
-        const selectedMunicipality = this.value;
-        barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
+    // municipalitySelect.addEventListener("change", function () {
+    //     const selectedProvince = provinceSelect.value;
+    //     const selectedMunicipality = this.value;
+    //     barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
 
-        if (selectedMunicipality) {
-            barangaySelect.disabled = false;
-            locationData[selectedProvince][selectedMunicipality].forEach(barangay => {
-                let option = document.createElement("option");
-                option.value = barangay;
-                option.textContent = barangay;
-                barangaySelect.appendChild(option);
-            });
-        } else {
-            barangaySelect.disabled = true;
-        }
-    });
+    //     if (selectedMunicipality) {
+    //         barangaySelect.disabled = false;
+    //         locationData[selectedProvince][selectedMunicipality].forEach(barangay => {
+    //             let option = document.createElement("option");
+    //             option.value = barangay;
+    //             option.textContent = barangay;
+    //             barangaySelect.appendChild(option);
+    //         });
+    //     } else {
+    //         barangaySelect.disabled = true;
+    //     }
+    // });
 
     // New function to validate the active step
     function validateActiveStep() {
@@ -319,7 +319,7 @@ function populateSummary() {
     const lastName    = document.getElementById("lastname").value;
     const suffix      = document.getElementById("suffix").value;
     const birthdate   = document.getElementById("birthdate").value;
-    const gender      = document.getElementById("gender").value;
+    const sex      = document.getElementById("sex").value;
     const contact     = document.getElementById("contact").value;
     const email       = document.getElementById("email").value;
     
@@ -339,16 +339,17 @@ function populateSummary() {
     const municipality = document.getElementById("municipality").value;
     const barangay     = document.getElementById("barangay").value;
     const purok        = document.getElementById("purok").value;
+    const subdivision  = document.getElementById("subdivision").value;
     const block        = document.getElementById("block").value;
     const zip          = document.getElementById("zip").value; 
     
     // Concatenate the address details
-    const address = `${block}, ${purok}, ${barangay}, ${municipality}, ${province} ${zip}`;
+    const address = `${block}, ${subdivision}, ${purok}, ${barangay}, ${municipality}, ${province} ${zip}`;
     
     // --- Populate Summary Fields in Step 5 ---
     document.getElementById("summaryFullName").textContent = fullName;
     document.getElementById("summaryBirthdate").textContent = birthdate;
-    document.getElementById("summaryGender").textContent = gender;
+    document.getElementById("summarySex").textContent = sex;
     document.getElementById("summaryContact").textContent = contact;
     document.getElementById("summaryEmail").textContent = email;
     document.getElementById("summaryAddress").textContent = address;

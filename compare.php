@@ -32,7 +32,7 @@
         <li>
         <a href="userpanel.php?page=userServices"
             class="nav-link <?= $isServicesActive ? 'active' : '' ?>">
-            <span class="material-symbols-outlined me-2">description</span> Request a Service
+            <span class="material-symbols-outlined me-2">description</span> Services
         </a>
         </li>
         <li>

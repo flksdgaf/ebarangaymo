@@ -46,16 +46,20 @@
                     </li>
                     
                     <!-- Services Dropdown -->
-                    <li class="nav-item dropdown me-3">
+                    <!-- <li class="nav-item dropdown me-3">
                         <a class="nav-link dropdown-toggle" href="services.php" id="servicesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Services</a>
                             <ul class="dropdown-menu" aria-labelledby="servicesDropdown">
-                                <li><a class="dropdown-item" href="#">Barangay ID</a></li>
+                                <li><a class="dropdown-item" href="serviceBarangayID.php">Barangay ID</a></li>
                                 <li><a class="dropdown-item" href="#">Barangay Clearance</a></li>
                                 <li><a class="dropdown-item" href="#">Certification</a></li>
                                 <li><a class="dropdown-item" href="#">Business Permit</a></li>
                                 <li><a class="dropdown-item" href="#">Katarungang Pambarangay</a></li>
                                 <li><a class="dropdown-item" href="#">Environmental Services</a></li>
                             </ul>
+                    </li> -->
+
+                    <li class="nav-item me-3">
+                        <a class="nav-link" href="services.php">Services</a>
                     </li>
 
                     <!-- Transparency Seal -->                

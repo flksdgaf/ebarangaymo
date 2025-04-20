@@ -1,7 +1,8 @@
 .progress-container {
     position: relative;
-    margin: 50px auto;
+    margin: auto;
     width: 80%;
+    padding-top: 50px ;
 }
 
 .progress-line {

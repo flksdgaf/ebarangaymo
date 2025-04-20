@@ -107,69 +107,239 @@ include 'includes/header.php';
     </div>
 </div>
 
-
 <!-- SERVICE SECTION -->
 <div class="container-fluid mt-5 mb-5 services-container">
-    <h1 class="text-center gradient-text">SERVICES</h1>
-    <div class="container mt-5">
-        <div class="row row-cols-1 row-cols-md-2 g-3">
-            <div class="col d-flex">
-                <a href="#" class="service-card mid-green w-100">
-                    <i class="fas fa-id-card icon"></i>
-                    <div>
-                        <h4>Barangay ID</h4>
-                        <p>An official identification card issued by the barangay.</p>
-                    </div>
-                </a>
-            </div>
-            <div class="col d-flex">
-                <a href="#" class="service-card light-green w-100">
-                    <i class="fas fa-file-alt icon"></i>
-                    <div>
-                        <h4>Barangay Clearance</h4>
-                        <p>Certifies a resident has no pending issues.</p>
-                    </div>
-                </a>
-            </div>
-            <div class="col d-flex">
-                <a href="#" class="service-card dark-green w-100">
-                    <i class="fas fa-certificate icon"></i>
-                    <div>
-                        <h4>Certification</h4>
-                        <p>Confirms a resident's identity, residency, or status.</p>
-                    </div>
-                </a>
-            </div>
-            <div class="col d-flex">
-                <a href="#" class="service-card mid-green w-100">
-                    <i class="fas fa-store icon"></i>
-                    <div>
-                        <h4>Business Permit</h4>
-                        <p>Authorization to operate within the barangay.</p>
-                    </div>
-                </a>
-            </div>
-            <div class="col d-flex">
-                <a href="#" class="service-card light-green w-100">
-                    <i class="fas fa-balance-scale icon"></i>
-                    <div>
-                        <h4>Katarungang Pambarangay</h4>
-                        <p>Barangay justice system for settling disputes.</p>
-                    </div>
-                </a>
-            </div>
-            <div class="col d-flex">
-                <a href="#" class="service-card dark-green w-100">
-                    <i class="fas fa-leaf icon"></i>
-                    <div>
-                        <h4>Environmental Services</h4>
-                        <p>Programs for cleanliness and waste management.</p>
-                    </div>
-                </a>
-            </div>
-        </div>
-        <a href="#" class="view-more">View More Services</a>
+  <h1 class="text-center gradient-text">SERVICES</h1>
+  <div class="container mt-5">
+    <div class="row row-cols-1 row-cols-md-2 g-3">
+      <!-- Barangay ID Button -->
+      <div class="col d-flex">
+        <button type="button" class="service-card mid-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#barangayIDModal">
+          <i class="fas fa-id-card icon"></i>
+          <div>
+            <h4>Barangay ID</h4>
+            <p>An official identification card issued by the barangay.</p>
+          </div>
+        </button>
+      </div>
+      <!-- Barangay Clearance Button -->
+      <div class="col d-flex">
+        <button type="button" class="service-card light-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#barangayClearanceModal">
+          <i class="fas fa-file-alt icon"></i>
+          <div>
+            <h4>Barangay Clearance</h4>
+            <p>Certifies a resident has no pending issues.</p>
+          </div>
+        </button>
+      </div>
+      <!-- Certification Button -->
+      <div class="col d-flex">
+        <button type="button" class="service-card dark-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#certificationModal">
+          <i class="fas fa-certificate icon"></i>
+          <div>
+            <h4>Certification</h4>
+            <p>Confirms a resident's identity, residency, or status.</p>
+          </div>
+        </button>
+      </div>
+      <!-- Business Permit Button -->
+      <div class="col d-flex">
+        <button type="button" class="service-card mid-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#businessPermitModal">
+          <i class="fas fa-store icon"></i>
+          <div>
+            <h4>Business Permit</h4>
+            <p>Authorization to operate within the barangay.</p>
+          </div>
+        </button>
+      </div>
+      <!-- Katarungang Pambarangay Button -->
+      <div class="col d-flex">
+        <button type="button" class="service-card light-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#katarungangModal">
+          <i class="fas fa-balance-scale icon"></i>
+          <div>
+            <h4>Katarungang Pambarangay</h4>
+            <p>Barangay justice system for settling disputes.</p>
+          </div>
+        </button>
+      </div>
+      <!-- Environmental Services Button -->
+      <div class="col d-flex">
+        <button type="button" class="service-card dark-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#equipmentModal">
+        <i class="fas fa-chair icon"></i>
+          <div>
+            <h4>Equipment Borrowing Services</h4>
+            <p>Provides equipment rental services.</p>
+          </div>
+        </button>
+      </div>
     </div>
+    <a href="services.php" class="view-more">View More Services</a>
+  </div>
+</div>
+
+<!-- Bootstrap Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Barangay ID Modal -->
+<div class="modal fade" id="barangayIDModal" tabindex="-1" aria-labelledby="barangayIDModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 40px; height: 40px; object-fit: contain; margin-right: 15px;">
+        <h5 class="modal-title" id="barangayIDModalLabel">How to Get a Barangay ID</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <ol>
+          <li>Log in your account to the eBarangay Mo website.</li>
+          <li>Click the "Services" tab in the left sidebar and select "Barangay ID".</li>
+          <li>Fill out the form with your personal details.</li>
+          <li>Double check your information and choose a payment option.</li>
+          <li>Submit your application</li> 
+          <li>Wait for the verification and processing of your application.</li>
+          <li>Collect your Barangay ID once notified or the date specified.</li>
+        </ol>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Barangay Clearance Modal -->
+<div class="modal fade" id="barangayClearanceModal" tabindex="-1" aria-labelledby="barangayClearanceModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 40px; height: 40px; object-fit: contain; margin-right: 15px;">
+        <h5 class="modal-title" id="barangayClearanceModalLabel">How to Get a Barangay Clearance</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <ol>
+          <li>Log in your account to the eBarangay Mo website.</li>
+          <li>Click the "Services" tab in the left sidebar and select "Barangay Clearance".</li>
+          <li>Fill out the form with your personal details.</li>
+          <li>Double check your information and choose a payment option.</li>
+          <li>Submit your application</li> 
+          <li>Wait for the verification and processing of your application.</li>
+          <li>Collect your Barangay Clearance once notified or the date specified.</li>
+        </ol>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Barangay Certification Modal -->
+<div class="modal fade" id="barangayCertificationModal" tabindex="-1" aria-labelledby="barangayCertificationModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 40px; height: 40px; object-fit: contain; margin-right: 15px;">
+        <h5 class="modal-title" id="barangayCertificationModalLabel">How to Get a Barangay Certification</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <ol>
+          <li>Log in your account to the eBarangay Mo website.</li>
+          <li>Click the "Apply for Barangay ID" button.</li>
+          <li>Fill out the form with your personal details.</li>
+          <li>Double check your information and choose a payment option.</li>
+          <li>Submit your application</li> 
+          <li>Wait for the verification and processing of your application.</li>
+          <li>Collect your Barangay ID once notified or the date specified.</li>
+        </ol>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Barangay Business Permit Modal -->
+<div class="modal fade" id="businessPermitModal" tabindex="-1" aria-labelledby="businessPermitModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 40px; height: 40px; object-fit: contain; margin-right: 15px;">
+        <h5 class="modal-title" id="businessPermitModalLabel">How to Get a Barangay Business Permit</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <ol>
+          <li>Log in your account to the eBarangay Mo website.</li>
+          <li>Click the "Apply for Barangay ID" button.</li>
+          <li>Fill out the form with your personal details.</li>
+          <li>Double check your information and choose a payment option.</li>
+          <li>Submit your application</li> 
+          <li>Wait for the verification and processing of your application.</li>
+          <li>Collect your Barangay ID once notified or the date specified.</li>
+        </ol>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Katarungang Pambarangay Modal -->
+<div class="modal fade" id="katarungangModal" tabindex="-1" aria-labelledby="katarungangModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 40px; height: 40px; object-fit: contain; margin-right: 15px;">
+        <h5 class="modal-title" id="katarungangModalLabel">How to Apply for a Katarungang Pambarangay</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <ol>
+          <li>Log in your account to the eBarangay Mo website.</li>
+          <li>Click the "Apply for Barangay ID" button.</li>
+          <li>Fill out the form with your personal details.</li>
+          <li>Double check your information and choose a payment option.</li>
+          <li>Submit your application</li> 
+          <li>Wait for the verification and processing of your application.</li>
+          <li>Collect your Barangay ID once notified or the date specified.</li>
+        </ol>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Equipment Borrowing Modal -->
+<div class="modal fade" id="equipmentModal" tabindex="-1" aria-labelledby="equipmentModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 40px; height: 40px; object-fit: contain; margin-right: 15px;">
+        <h5 class="modal-title" id="equipmentModalLabel">How to Apply for an Equipment Borrowing</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <ol>
+          <li>Log in your account to the eBarangay Mo website.</li>
+          <li>Click the "Apply for Barangay ID" button.</li>
+          <li>Fill out the form with your personal details.</li>
+          <li>Double check your information and choose a payment option.</li>
+          <li>Submit your application</li> 
+          <li>Wait for the verification and processing of your application.</li>
+          <li>Collect your Barangay ID once notified or the date specified.</li>
+        </ol>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- NEWS AND UPDATES SECTION -->

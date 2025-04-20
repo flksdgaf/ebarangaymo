@@ -40,10 +40,10 @@ include 'includes/header.php';
                     <div class="col-md-8"><input type="date" id="birthdate" name="birthdate" class="form-control custom-input" required></div>
                 </div>
                 <div class="row mb-3">
-                    <label class="col-md-4 text-start fw-bold">Gender</label>
+                    <label class="col-md-4 text-start fw-bold">Sex</label>
                     <div class="col-md-8">
-                        <select id="gender" name="gender" class="form-control custom-input" required>
-                            <option value="">Select Gender</option>
+                        <select id="sex" name="sex" class="form-control custom-input" required>
+                            <option value="">Select Sex</option>
                             <option value="Male">Male</option>
                             <option value="Female">Female</option>
                             <option value="Prefer not to say">Prefer not to say</option>
@@ -77,8 +77,9 @@ include 'includes/header.php';
                 <div class="row mb-3">
                     <label class="col-md-4 text-start fw-bold">Municipality</label>
                     <div class="col-md-8">
-                        <select id="municipality" name="municipality" class="form-control custom-input" required disabled>
+                        <select id="municipality" name="municipality" class="form-control custom-input" required>
                             <option value="">Select Municipality</option>
+                            <option value="Daet">Daet</option>
                         </select>
                     </div>
                 </div>
@@ -86,18 +87,35 @@ include 'includes/header.php';
                 <div class="row mb-3">
                     <label class="col-md-4 text-start fw-bold">Barangay</label>
                     <div class="col-md-8">
-                        <select id="barangay" name="barangay" class="form-control custom-input" required disabled>
+                        <select id="barangay" name="barangay" class="form-control custom-input" required>
                             <option value="">Select Barangay</option>
+                            <option value="Magang">Magang</option>
                         </select>
                     </div>
                 </div>
+
                 <div class="row mb-3">
-                    <label class="col-md-4 text-start fw-bold">Subdivision/Purok</label>
-                    <div class="col-md-8"><input type="text" id="purok" name="purok" class="form-control custom-input" required></div>
+                    <label class="col-md-4 text-start fw-bold">Purok</label>
+                    <div class="col-md-8">
+                        <select id="purok" name="purok" class="form-control custom-input" required>
+                            <option value="">Select Purok</option>
+                            <option value="Purok 1">Purok 1</option>
+                            <option value="Purok 2">Purok 2</option>
+                            <option value="Purok 3">Purok 3</option>
+                            <option value="Purok 4">Purok 4</option>
+                            <option value="Purok 5">Purok 5</option>
+                            <option value="Purok 6">Purok 6</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <label class="col-md-4 text-start fw-bold">Street/Subdivision</label>
+                    <div class="col-md-8"><input type="text" id="subdivision" name="subdivision" class="form-control custom-input" required></div>
                 </div>
                 <div class="row mb-3">
-                    <label class="col-md-4 text-start fw-bold">Block/Lot/Street</label>
-                    <div class="col-md-8"><input type="text" id="block" name="email" class="form-control custom-input" required></div>
+                    <label class="col-md-4 text-start fw-bold">Block/Lot</label>
+                    <div class="col-md-8"><input type="text" id="block" name="block" class="form-control custom-input" required></div>
                 </div>
                 <div class="row mb-3">
                     <label class="col-md-4 text-start fw-bold">Zip Code</label>
@@ -184,7 +202,7 @@ include 'includes/header.php';
                 <div class="summary-container p-3">
                     <p><strong>Full Name:</strong> <span id="summaryFullName"></span></p>
                     <p><strong>Birthdate:</strong> <span id="summaryBirthdate"></span></p>
-                    <p><strong>Gender:</strong> <span id="summaryGender"></span></p>
+                    <p><strong>Sex:</strong> <span id="summarySex"></span></p>
                     <p><strong>Contact Number:</strong> <span id="summaryContact"></span></p>
                     <p><strong>Email:</strong> <span id="summaryEmail"></span></p>
                     <p><strong>Address:</strong> <span id="summaryAddress"></span></p>

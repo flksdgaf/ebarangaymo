@@ -39,7 +39,7 @@ $stmt->close();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - eBarangayMo</title>
     <!-- CUSTOM CSS -->
-    <link rel="stylesheet" href="adminPanel.css">
+    <link rel="stylesheet" href="panels.css">
     <link rel="stylesheet" href="includes/sidebar.css">
     <!-- GOOGLE FONTS -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
@@ -56,7 +56,7 @@ $stmt->close();
 
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg border-bottom px-3 py-2 main-content admin-top-bar">
+    <nav class="navbar navbar-expand-lg border-bottom px-3 py-2 admin-top-bar">
         <div class="container-fluid d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-2 topbar-title">
                 <img src="images/good_governance_logo.png" alt="Good Governance Logo" style="width: 40px; height: 40px; object-fit: contain;">

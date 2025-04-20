@@ -36,7 +36,7 @@ if(isset($_POST['username']) && isset($_POST['password'])) {
                     header("Location: ../superAdminPanel.php");
                 } elseif (in_array($row['role'], $admin_roles)) {
                     header("Location: ../adminPanel.php");
-                } elseif($row['role'] === 'Resident') {
+                } elseif($row['role'] === 'Constituent') {
                     header("Location: ../userPanel.php");
                 }
                 exit();

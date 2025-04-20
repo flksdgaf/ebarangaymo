@@ -1,5 +1,5 @@
 <div class="container-fluid p-3">
-
+  
   <!-- Stats Cards -->
   <!-- <div class="row g-3 mb-4"> -->
   <?php
@@ -79,17 +79,17 @@
     ?>
   </div>
 
-  <div class="row g-3 mb-4">
   <!-- Calendar -->
-  <div class="col-lg-6">
-    <div class="card p-3 shadow-sm">
-      <h5 class="fw-bold mb-3">Meeting Schedule</h5>
-      <div id="calendar"></div>
-    </div>
-  </div>
+  <!-- <div class="row g-3 mb-4">
+    <div class="col-lg-6">
+      <div class="card p-3 shadow-sm">
+        <h5 class="fw-bold mb-3">Meeting Schedule</h5>
+        <div id="calendar"></div>
+      </div>
+    </div> -->
 
   <!-- Pie Chart -->
-  <div class="col-lg-6">
+  <!-- <div class="col-lg-6">
     <div class="card p-3 shadow-sm" style="height: 425px;">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="fw-bold mb-0">Recent Service Requests</h5>
@@ -117,8 +117,7 @@
         <span class="badge bg-success-emphasis">Brgy ID</span>
       </div>
     </div>
-  </div>
-  </div>
+  </div> -->
 
 
     <!-- Recent Requests Table -->
@@ -126,69 +125,66 @@
       <div class="card p-3 shadow-sm">
         <h5 class="fw-bold mb-3">Recent Requests</h5>
         <div class="table-responsive">
-          <table class="table table-hover align-middle text-center">
+          <table class="table table-hover align-middle text-start">
             <thead class="table-light">
               <tr>
                 <th>Transaction No.</th>
                 <th>Name</th>
                 <th>Request</th>
                 <th>Payment Method</th>
-                <th>Date Request</th>
                 <th>Payment Status</th>
                 <th>Document Status</th>
               </tr>
             </thead>
             <tbody>
-                <?php
-                    $stmt = $conn->prepare("SELECT transaction_no, full_name, request_type, payment_method, date_request, payment_status, document_status FROM general_requests ORDER BY transaction_no LIMIT 5");
-                    $stmt->execute();
-                    $stmt->bind_result($txn, $name, $request_type, $payment_method ,$date_request, $payment_status, $document_status);
+              <?php
+                $stmt = $conn->prepare("SELECT transaction_id, full_name, request_type, payment_method, payment_status, document_status FROM view_general_requests ORDER BY created_at DESC LIMIT 10");
+                $stmt->execute();
+                $stmt->bind_result($txn, $name, $request_type, $payment_method, $payment_status, $document_status);
 
-                    // Table Rows
-                    while ($stmt->fetch()) {
-                        $formattedDate = date("m-d-Y", strtotime($date_request));
+                // Table Rows
+                while ($stmt->fetch()) {
 
-                        // Determine the payment status class
-                        if ($payment_status == 'Paid') {
-                          $paymentClass = 'paid-status';
-                        } else if ($payment_status == 'Unpaid') {
-                            $paymentClass = 'unpaid-status';
-                        } else {
-                            $paymentClass = '';
-                        }
-
-                        // Determine the document status class
-                        if ($document_status == 'Processing') {
-                            $documentClass = 'processing-status';
-                        } else if ($document_status == 'Ready To Release') {
-                            $documentClass = 'ready-to-release-status';
-                        } else if ($document_status == 'Released') {
-                            $documentClass = 'released-status';
-                        } else {
-                            $documentClass = '';
-                        }
-                        
-                        echo "<tr>
-                            <td>{$txn}</td>
-                            <td>{$name}</td>
-                            <td>{$request_type}</td>
-                            <td>{$payment_method}</td>
-                            <td>{$date_request}</td>
-                            <td><span class='badge {$paymentClass}'>{$payment_status}</span></td>
-                            <td><span class='badge {$documentClass}'>{$document_status}</span></td>
-                        </tr>";
+                    // Determine the payment status class
+                    if ($payment_status == 'Paid') {
+                      $paymentClass = 'paid-status';
+                    } else if ($payment_status == 'Unpaid') {
+                        $paymentClass = 'unpaid-status';
+                    } else {
+                        $paymentClass = '';
                     }
 
-                    $stmt->close();
-                ?>
+                    // Determine the document status class
+                    if ($document_status == 'Processing') {
+                        $documentClass = 'processing-status';
+                    } else if ($document_status == 'Ready To Release') {
+                        $documentClass = 'ready-to-release-status';
+                    } else if ($document_status == 'Released') {
+                        $documentClass = 'released-status';
+                    } else {
+                        $documentClass = '';
+                    }
+                    
+                    echo "<tr>
+                        <td>{$txn}</td>
+                        <td>{$name}</td>
+                        <td>{$request_type}</td>
+                        <td>{$payment_method}</td>
+                        <td><span class='badge {$paymentClass}'>{$payment_status}</span></td>
+                        <td><span class='badge {$documentClass}'>{$document_status}</span></td>
+                    </tr>";
+                }
+
+                $stmt->close();
+              ?>
             </tbody>
           </table>
         </div>
       </div>
     </div>
   </div>
-
 </div>
+
 <!-- Full Calendar -->
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 <!-- Chart.js (Make sure it's included in admin_header.php or load below) -->
@@ -251,5 +247,4 @@
       }
     }
   });
-
 </script>

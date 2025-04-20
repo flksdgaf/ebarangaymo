@@ -78,26 +78,12 @@ $result = $stmt->get_result();
                 <td><?= $row['document_status'] ?></td>
                 <td>
                   <div class="d-flex justify-content-center gap-2">
-                    <button 
-                      class="btn btn-sm btn-outline-success viewBtn" 
-                      data-transaction="<?= $row['transaction_id'] ?>" 
-                      data-table="<?= $row['table_type'] ?>" 
-                      data-bs-toggle="modal" 
-                      data-bs-target="#viewModal">
+                    <button class="btn btn-sm btn-outline-success viewBtn" data-transaction="<?= $row['transaction_id'] ?>" data-table="<?= $row['table_type'] ?>" data-bs-toggle="modal" data-bs-target="#viewModal">
                       View
                     </button>
-
-                    <button 
-                      class="btn btn-sm btn-success text-white editBtn" 
-                      data-transaction="<?= $row['transaction_id'] ?>" 
-                      data-table="<?= $row['table_type'] ?>" 
-                      data-payment-status="<?= $row['payment_status'] ?>"
-                      data-document-status="<?= $row['document_status'] ?>"
-                      data-bs-toggle="modal" 
-                      data-bs-target="#editModal">
+                    <button class="btn btn-sm btn-success text-white editBtn" data-transaction="<?= $row['transaction_id'] ?>" data-table="<?= $row['table_type'] ?>" data-payment-status="<?= $row['payment_status'] ?>"data-document-status="<?= $row['document_status'] ?>"data-bs-toggle="modal" data-bs-target="#editModal">
                       Edit
                     </button>
-
                   </div>
                 </td>
               </tr>
@@ -116,9 +102,14 @@ $result = $stmt->get_result();
       <div class="modal fade" id="viewModal" tabindex="-1" aria-labelledby="viewModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
           <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header d-flex justify-content-between align-items-center">
               <h5 class="modal-title" id="viewModalLabel">View Details</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-outline-success btn-sm" id="printButton">
+                <span class="material-symbols-outlined">print</span>
+                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
             </div>
             <div class="modal-body" id="viewModalBody">
               <!-- Data will be loaded here dynamically -->

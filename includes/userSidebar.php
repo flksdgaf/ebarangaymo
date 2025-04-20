@@ -20,21 +20,21 @@
 
     <ul class="nav flex-column gap-2">
         <li>
-            <a href="userpanel.php?page=userDashboard" class="nav-link d-flex align-items-center <?= ($currentPage === 'userDashboard') ? 'active' : '' ?>">
+            <a href="userPanel.php?page=userDashboard" class="nav-link d-flex align-items-center <?= ($currentPage === 'userDashboard') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">dashboard</span>
             Dashboard
             </a>
         </li>
         <li>
-            <a href="userpanel.php?page=userRequest" class="nav-link d-flex align-items-center <?= ($currentPage === 'userRequest') ? 'active' : '' ?>">
+            <a href="userPanel.php?page=userRequest" class="nav-link d-flex align-items-center <?= ($currentPage === 'userRequest') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">description</span>
-            Request
+            Request a Service
             </a>
         </li>
         <li>
-            <a href="userpanel.php?page=userTransactions" class="nav-link d-flex align-items-center <?= ($currentPage === 'userTransactions') ? 'active' : '' ?>">
-            <span class="material-symbols-outlined me-2">receipt_long</span>
-            Transaction History
+            <a href="userPanel.php?page=userTransactions" class="nav-link d-flex align-items-center <?= ($currentPage === 'userTransactions') ? 'active' : '' ?>">
+            <span class="material-symbols-outlined me-2">home_storage</span>
+            My Requests
             </a>
         </li>
     </ul>

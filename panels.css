@@ -5,11 +5,11 @@
 /* Top Bar */
 .admin-top-bar {
   transition: 0.3s ease;
-  background-color: #C4C4C4;
+  background-color: #E4E4E4;
 }
 
 .topbar-text {
-  color: #13411F;
+  /* color: #13411F; */
   font-size: 22px;
 }
 
@@ -54,8 +54,8 @@
 /* Main Content Area */
 .main-content {
     margin-left: 300px;
-    background-color: #EFEFEF;
-    transition: 0.3s ease;
+    background-color: #ffffff;
+    
   }
 
 @media (max-width: 768px) {
@@ -164,7 +164,96 @@
 /* END OF RECENT REQUEST TABLE */
 
 /* ADMIN REQUEST */
+.services-container h1 {
+  font-size: 25px; 
+  font-weight: 700;
+}
 
+.service-card {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 20px;
+  border-radius: 10px;
+  color: white;
+  width: 100%;
+  min-height: 120px;
+  max-width: 500px;
+  margin: 0 auto; 
+  text-decoration: none;
+  gap: 15px; 
+  flex-shrink: 0;
+  flex-grow: 1;
+}
+
+.service-card > .icon {
+  flex: 0 0 auto;
+  font-size: 50px;
+}
+
+.service-card > div {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.service-card h4 {
+  font-size: 18px; 
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.service-card p {
+  font-size: 14px; 
+  font-weight: 400;
+  margin: 0;
+}
+
+.service-card:hover {
+  transform: scale(1.05);
+  transition: transform 0.3s ease-in-out;
+  cursor: pointer;
+  text-decoration: none;
+  color: white;
+  border-style: solid;
+  gap: 15px;
+  flex-shrink: 0;
+  flex-grow: 1;
+}
+
+/* Responsive tweaks */
+@media (max-width: 576px) {
+  .service-card {
+      padding: 15px;
+  }
+
+  .service-card .icon {
+      font-size: 40px;
+  }
+
+  .service-card h4 {
+      font-size: 16px;
+  }
+
+  .service-card p {
+      font-size: 13px;
+  }
+}
+
+/* Backgrounds */
+.mid-green { background-color: #2A9245; }
+.light-green { background-color: #61AD41; }
+.dark-green { background-color: #13411F; }
+
+.services-container .row {
+  --bs-gutter-x: 1rem;
+}
+
+.gradient-text {
+  background: linear-gradient(to bottom, #2A9245, #0D2C15);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
 /* END OF ADMIN REQUEST */
 
 /* END OF MAIN CONTENT */

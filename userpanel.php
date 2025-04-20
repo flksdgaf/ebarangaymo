@@ -24,7 +24,6 @@
             echo "<div class='alert alert-warning'>Invalid page requested.</div>";
         }
     ?>
-
 </div>
 
 <script src="js/adminPanel.js"></script>

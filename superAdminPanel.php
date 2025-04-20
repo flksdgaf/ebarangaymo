@@ -8,7 +8,7 @@
         $page = $_GET['page'] ?? 'superAdminDashboard';
 
         // List of allowed pages for security
-        $allowed_pages = ['superAdminDashboard','superAdminRequest', 'superAdminBlotter', 'superAdminResidents', 'superAdminWebsite', 'superAdminUsers', 'superAdminTransactions', 'superAdminLogs', 'superAdminVerifications', 'superAdminSettings'];
+        $allowed_pages = ['superAdminDashboard','superAdminRequest', 'superAdminBlotter', 'superAdminResidents', 'superAdminWebsite', 'superAdminUsers', 'superAdminTransactions', 'superAdminLogs', 'superAdminVerifications', 'superAdminDeviceStatus', 'superAdminSettings'];
 
         // Check if the requested page is allowed
         if (in_array($page, $allowed_pages)) {

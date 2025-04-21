@@ -97,7 +97,7 @@ label {
     font-weight: bold;
     border-radius: 100px;
     border-width: 3px;
-    width: 190px;
+    width: 210px;
 }
 
 .next-btn {
@@ -108,7 +108,7 @@ label {
     font-size: 20px;
     border-radius: 100px;
     padding: 10px 50px;
-    width: 190px;
+    width: 250px;
 }
 
 .summary-container {
@@ -123,4 +123,146 @@ label {
 
 .active-step {
     display: block;
+}
+
+/* Grouped buttons stay attached */
+.btn-group .payment-btn {
+    /* override default border-radius so only outer corners are rounded */
+    border-radius: 0;
+    border-width: 2.5px;
+}
+.btn-group .payment-btn:first-child {
+    border-top-left-radius: 20px;
+    border-bottom-left-radius: 20px;
+}
+.btn-group .payment-btn:last-child {
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+  
+  /* larger clickable area & column layout */
+.payment-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 250px;
+    height: 90px;
+}
+
+/* icon or image size */
+.payment-icon {
+    font-size: 2rem;
+    width: 2.5rem;
+    height: auto;
+}
+
+/* active state */
+.payment-btn.active {
+    background-color: #28a745;
+    color: white;
+}
+
+h4 {
+    color: #2A9245;
+}
+
+/* center and inline-block the numbered list */
+.payment-instruction {
+    text-align: center;
+}
+.payment-instruction ol {
+    list-style-position: inside;
+    padding: 0;
+    margin: 0 auto;
+    display: inline-block;
+    text-align: left; /* keep each item’s text left‑aligned within its box */
+}
+
+/* ---------- Step 4: “Request Submitted” Screen ---------- */
+
+.submission-screen {
+    padding: 2rem 1rem;
+  }
+  
+  .submission-title {
+    color: #2E7D32;           /* deep green */
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+  }
+  
+  .submission-text {
+    color: #555;
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+  }
+  
+  .txn-display {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .txn-char {
+    background: #2E7D32;      /* match title color */
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: bold;
+    width: 3rem;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+  }
+  
+  .submission-footer {
+    color: #555;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+    line-height: 1.4;
+  }
+  
+  .btn-green {
+    background: linear-gradient(90deg, #2E7D32 0%, #388E3C 100%);
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    text-decoration: none;
+    display: inline-block;
+  }
+  
+  .btn-green:hover {
+    opacity: 0.9;
+  }
+  
+  /* QR vs Hourglass */
+.qr-container,
+.hourglass-container {
+  margin-top: 50px;
+  margin-bottom: 50px;
+  text-align: center;
+}
+
+.qr-container img {
+  width: 200px;
+  height: 200px;
+  border: 2px solid #2E7D32;
+  border-radius: 8px;
+  margin: auto;
+}
+
+.hourglass-container p {
+  margin-top: 0.5rem;
+  color: #555;
+  font-size: 1rem;
+}
+
+.download-btn {
+  margin-bottom: 25px;
 }

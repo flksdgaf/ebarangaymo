@@ -24,7 +24,7 @@ include 'includes/header.php';
                 autoplay: true,
                 loop: true,
                 canvas: document.getElementById("canvas"),
-                src: "https://lottie.host/d0aee06e-c4f8-41ce-900f-8fc92274c294/3lsI0L5C6d.lottie", // or .json file
+                src: "https://lottie.host/d0aee06e-c4f8-41ce-900f-8fc92274c294/3lsI0L5C6d.lottie", 
             });
             </script>
     

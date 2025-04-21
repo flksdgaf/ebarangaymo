@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-    let currentStep = 1;
+    let currentStep = window.initialStep || 1;
     const steps = document.querySelectorAll(".step");
     const mainHeader = document.getElementById("mainHeader");
     const subHeader = document.getElementById("subHeader");
@@ -11,9 +11,13 @@ document.addEventListener("DOMContentLoaded", function () {
     const totalSteps = circleSteps.length;
 
     // — ADDED: Payment method controls
-    const paymentButtons = document.querySelectorAll('.btn-group [data-method]');
+    const paymentButtons    = document.querySelectorAll('.payment-btn');
     const instructionPanels = document.querySelectorAll('.payment-instruction');
     const hiddenPaymentInput = document.getElementById('paymentMethod');
+
+    const confirmationModalEl = document.getElementById("confirmationModal"); // ← ADDED
+    const confirmationModal = new bootstrap.Modal(confirmationModalEl);     // ← ADDED
+    const confirmSubmitBtn = document.getElementById("confirmSubmitBtn");    
 
     // Initial state
     updateNavigation();
@@ -46,25 +50,29 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        // Move forward
-        steps[currentStep - 1].classList.remove("active-step");
-        circleSteps[currentStep - 1].classList.add('completed');
-        stepLabels[currentStep - 1].classList.add('completed');
-        currentStep++;
-        steps[currentStep - 1].classList.add("active-step");
-        circleSteps[currentStep - 1].classList.add('active');
-        stepLabels[currentStep - 1].classList.add('active');
-
-        // Update progress bar
-        const progressPercent = ((currentStep - 1) / (totalSteps - 1)) * 100;
-        progressFill.style.width = `${progressPercent}%`;
-
-        // If stepping into summary, populate all fields
         if (currentStep === 3) {
-            populateSummary();
-        }
+            confirmationModal.show();
+        } else {
+            // Move forward
+            steps[currentStep - 1].classList.remove("active-step");
+            circleSteps[currentStep - 1].classList.add('completed');
+            stepLabels[currentStep - 1].classList.add('completed');
+            currentStep++;
+            steps[currentStep - 1].classList.add("active-step");
+            circleSteps[currentStep - 1].classList.add('active');
+            stepLabels[currentStep - 1].classList.add('active');
 
-        updateNavigation();
+            // Update progress bar
+            const progressPercent = ((currentStep - 1) / (totalSteps - 1)) * 100;
+            progressFill.style.width = `${progressPercent}%`;
+            
+            // If stepping into summary, populate all fields
+            if (currentStep === 3) {
+                populateSummary();
+            }
+    
+            updateNavigation();
+        }
     });
 
     backBtn.addEventListener('click', () => {
@@ -88,6 +96,10 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
+    confirmSubmitBtn.addEventListener('click', () => {                        // ← ADDED
+        document.getElementById("barangayIDForm").submit();                   // ← ADDED
+    });
+
     function updateNavigation() {
         backBtn.style.visibility = currentStep === 1 ? 'hidden' : 'visible';
 
@@ -103,9 +115,21 @@ document.addEventListener("DOMContentLoaded", function () {
             mainHeader.textContent = "REVIEW and CONFIRMATION";
             subHeader.textContent = "Please review all your information before submitting.";
             nextBtn.textContent = "SUBMIT";
+        } else if (currentStep === 4) {
+            mainHeader.remove();
+            subHeader.remove();
+            document.getElementById('mainHr').remove();
+            backBtn.style.visibility = 'hidden';
+            nextBtn.textContent = "Back to Home";
+            nextBtn.replaceWith(nextBtn.cloneNode(true));
+            const newNext = document.getElementById('nextBtn') || document.querySelector('#nextBtn');
+            newNext.addEventListener('click', () => {
+                window.location.href = 'userpanel.php?page=userDashboard';
+            });
         }
     }
 
+    
     function populateSummary() {
         // existing fields...
         document.getElementById("summarytransactionType").textContent = document.getElementById("transactiontype").value;
@@ -119,8 +143,6 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("summaryReligion").textContent        = document.getElementById("religion").value;
         document.getElementById("summaryContactPerson").textContent   = document.getElementById("contactperson").value;
         document.getElementById("summaryClaimDate").textContent       = document.getElementById("claimdate").value;
-
-        // ADDED: show chosen payment method
         document.getElementById("summaryPaymentMethod").textContent   = hiddenPaymentInput.value;
     }
 
@@ -128,16 +150,16 @@ document.addEventListener("DOMContentLoaded", function () {
     function setupPaymentControls() {
         paymentButtons.forEach(btn => {
             btn.addEventListener('click', () => {
-                // mark active button
+                // toggle active class
                 paymentButtons.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
 
-                const method = btn.getAttribute('data-method');
+                const method = btn.dataset.method;
                 hiddenPaymentInput.value = method;
 
-                // show matching instruction panel
+                // show matching panel
                 instructionPanels.forEach(panel => {
-                    panel.classList.toggle('d-none', panel.getAttribute('data-method') !== method);
+                    panel.classList.toggle('d-none', panel.dataset.method !== method);
                 });
             });
         });

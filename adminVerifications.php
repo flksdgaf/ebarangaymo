@@ -26,16 +26,25 @@
             if ($result->num_rows > 0) {
               while ($row = $result->fetch_assoc()) {
                 $formatted = date("F d, Y h:i A", strtotime($row['time_creation']));
-                $allRequests[$row['id']] = $row;
+                $allRequests[$row['account_ID']] = $row;
 
-                echo "<tr class='request-row' data-id='{$row['id']}' style='cursor:pointer'>";
-                echo "<td>{$row['id']}</td>";
+                echo "<tr class='request-row' data-id='{$row['account_ID']}' style='cursor:pointer'>";
+                echo "<td>{$row['account_ID']}</td>";
                 echo "<td>{$row['full_name']}</td>";
                 echo "<td>{$formatted}</td>";
                 echo "<td>";
                 echo "<div class='d-flex justify-content-center gap-2'>";
-                echo "<button class='btn btn-sm btn-outline-success' data-account-id='{$row['id']}'>Approve</button>";
-                echo "<button class='btn btn-sm btn-danger text-white' data-account-id='{$row['id']}'>Decline</button>";
+                // -------------------------------------------------------------------
+                // FORM CHANGED: Added class="approve-form" so we can intercept it
+                // -------------------------------------------------------------------
+                echo "
+                  <form action='functions/approve_account.php' method='POST' class='d-inline approve-form'> <!-- MODIFIED -->
+                    <input type='hidden' name='account_id' value='{$row['account_ID']}'>
+                    <input type='hidden' name='name' value='{$row['full_name']}'>
+                    <button type='submit' class='btn btn-sm btn-outline-success'>Approve</button>
+                  </form>
+                ";
+                echo "<button class='btn btn-sm btn-danger text-white' data-account-id='{$row['account_ID']}'>Decline</button>";
                 echo "</div>";
                 echo "</td>";
                 echo "</tr>";
@@ -48,21 +57,37 @@
   </div>
 </div>
 
-<!-- Modal -->
+<!-- Details Modal (unchanged) -->
 <div class="modal fade" id="requestDetailsModal" tabindex="-1" aria-labelledby="requestDetailsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg"> <!-- Adjusted for a larger modal size -->
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="requestDetailsModalLabel">Account Request Details</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
-        <!-- content will be inserted by JS -->
-      </div>
+      <div class="modal-body"><!-- content by JS --></div>
     </div>
   </div>
 </div>
 
+<!-- NEW: Confirmation Modal -->
+<div class="modal fade" id="confirmApproveModal" tabindex="-1" aria-labelledby="confirmApproveModalLabel" aria-hidden="true"> <!-- MODIFIED -->
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmApproveModalLabel">Confirm Account Verification</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to approve <strong id="confirmName"></strong>'s account with ID <strong id="confirmAccountId"></strong>?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success" id="confirmApproveBtn">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Pass the PHP array to JS -->
 <script>
@@ -70,54 +95,59 @@
 </script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.request-row').forEach(row => {
+document.addEventListener('DOMContentLoaded', () => {
+  // === existing details‐modal code (unchanged) ===
+  document.querySelectorAll('.request-row').forEach(row => {
     row.addEventListener('click', (e) => {
-        // Prevent action when clicking a button inside the row
-        if (e.target.tagName === 'BUTTON') return;
-
-        const id = row.dataset.id;
-        const data = requestsData[id];
-
-        if (data) {
-            let html = '';
-
-            const excludedKeys = ['username', 'password']; // exclude sensitive fields
-
-            for (let key in data) {
-            if (excludedKeys.includes(key)) continue;
-
-            let label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-
-            // Check if the value is an image file (basic check)
-            if (/\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(data[key])) {
-                let imagePath = '';
-
-                // Decide the correct folder based on the key
-                if (key.includes('front')) {
-                imagePath = `frontID/${data[key]}`;
-                } else if (key.includes('back')) {
-                imagePath = `backID/${data[key]}`;
-                } else {
-                imagePath = `uploads/${data[key]}`; // default folder
-                }
-
-                html += `
-                <div class="mb-3">
-                    <strong>${label}:</strong><br>
-                    <img src="${imagePath}" class="img-fluid rounded" style="max-height:300px;">
-                </div>
-                `;
-            } else {
-                html += `<p><strong>${label}:</strong> ${data[key]}</p>`;
-            }
-            }
-
-            document.querySelector('#requestDetailsModal .modal-body').innerHTML = html;
-            const modal = new bootstrap.Modal(document.getElementById('requestDetailsModal'));
-            modal.show();
+      if (e.target.tagName === 'BUTTON') return;
+      const id = row.dataset.id;
+      const data = requestsData[id];
+      if (!data) return;
+      let html = '';
+      const excludedKeys = ['username', 'password', 'purok'];
+      for (let key in data) {
+        if (excludedKeys.includes(key)) continue;
+        let label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        if (/\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(data[key])) {
+          let imagePath = key.includes('front')
+            ? `frontID/${data[key]}`
+            : key.includes('back')
+              ? `backID/${data[key]}`
+              : `uploads/${data[key]}`;
+          html += `
+            <div class="mb-3">
+              <strong>${label}:</strong><br>
+              <img src="${imagePath}" class="img-fluid rounded" style="max-height:300px;">
+            </div>`;
+        } else {
+          html += `<p><strong>${label}:</strong> ${data[key]}</p>`;
         }
-        });
+      }
+      document.querySelector('#requestDetailsModal .modal-body').innerHTML = html;
+      new bootstrap.Modal(document.getElementById('requestDetailsModal')).show();
     });
+  });
+
+  // === NEW: confirmation flow for Approve buttons ===
+  let pendingForm = null;
+  const confirmModalEl = document.getElementById('confirmApproveModal');
+  const confirmModal = new bootstrap.Modal(confirmModalEl);
+  const confirmIdSpan = document.getElementById('confirmAccountId');
+  const confirmNameSpan = document.getElementById('confirmName');
+  const confirmBtn = document.getElementById('confirmApproveBtn');
+
+  document.querySelectorAll('.approve-form').forEach(form => {              // MODIFIED
+    form.addEventListener('submit', e => {
+      e.preventDefault();             // stop immediate submit
+      pendingForm = form;             // remember which
+      confirmIdSpan.textContent = form.account_id.value; // show ID
+      confirmNameSpan.textContent = form.name.value;     // show name
+      confirmModal.show();            // pop the confirm dialog
     });
+  });
+
+  confirmBtn.addEventListener('click', () => {                            // MODIFIED
+    if (pendingForm) pendingForm.submit();
+  });
+});
 </script>

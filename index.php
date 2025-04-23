@@ -235,7 +235,7 @@ include 'includes/header.php';
 </div>
 
 <!-- Barangay Certification Modal -->
-<div class="modal fade" id="barangayCertificationModal" tabindex="-1" aria-labelledby="barangayCertificationModalLabel" aria-hidden="true">
+<div class="modal fade" id="certificationModal" tabindex="-1" aria-labelledby="barangayCertificationModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">

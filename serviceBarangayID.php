@@ -71,7 +71,7 @@ $chosenPayment = null;
 if ($transactionId) {
     $stmt = $conn->prepare("
       SELECT payment_method 
-       FROM barangay_id_requestss
+       FROM barangay_id_requests
        WHERE transaction_id = ? 
        LIMIT 1
     ");

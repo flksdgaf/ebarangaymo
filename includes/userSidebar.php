@@ -24,25 +24,25 @@
 
     <ul class="nav flex-column gap-2">
         <li>
-        <a href="userpanel.php?page=userDashboard"
+        <a href="userPanel.php?page=userDashboard"
             class="nav-link <?= $currentPage === 'userDashboard' ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">dashboard</span> Dashboard
         </a>
         </li>
         <li>
-        <a href="userpanel.php?page=userServices"
+        <a href="userPanel.php?page=userServices"
             class="nav-link <?= $isServicesActive ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">description</span> Request a Service
         </a>
         </li>
         <li>
-        <a href="userpanel.php?page=userRequest"
+        <a href="userPanel.php?page=userRequest"
             class="nav-link <?= $currentPage === 'userRequest' ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">home_storage</span> My Requests
         </a>
         </li>
         <li>
-        <a href="userpanel.php?page=userTransactions"
+        <a href="userPanel.php?page=userTransactions"
             class="nav-link <?= $currentPage === 'userTransactions' ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">receipt_long</span> Transaction History
         </a>

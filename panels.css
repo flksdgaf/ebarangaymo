@@ -136,6 +136,16 @@
 /* END OF FULL CALENDAR */
 
 /* RECENT REQUEST TABLE */
+.for-verification-status {
+  background-color: #ffc107; /* Yellow */
+  color: black;
+}
+
+.rejected-status {
+  background-color: #dc3545; /* Red */
+  color: black;
+}
+
 .paid-status {
   background-color: #28a745; /* Green */
   color: black;
@@ -255,5 +265,10 @@
   -webkit-text-fill-color: transparent;
 }
 /* END OF ADMIN REQUEST */
+
+
+/* ADMIN RESIDENTS */
+
+/* END OF ADMIN RESIDENTS */
 
 /* END OF MAIN CONTENT */

@@ -35,7 +35,7 @@ if (!empty($_FILES['brgyIDpicture']['name']) && $_FILES['brgyIDpicture']['error'
 // 3) Generate next transaction_id
 $stmt = $conn->prepare("
     SELECT transaction_id 
-      FROM barangay_id_requestss
+      FROM barangay_id_requests
      ORDER BY id DESC 
      LIMIT 1
 ");
@@ -52,7 +52,7 @@ $stmt->close();
 
 // 4) Insert into barangay_id_requests
 $stmt = $conn->prepare("
-  INSERT INTO barangay_id_requestss
+  INSERT INTO barangay_id_requests
     (account_id, transaction_id, transaction_type, full_name, address,
      height, weight, birthdate, birthplace, civil_status, religion,
      contact_person, formal_picture, claim_date, payment_method)

@@ -131,6 +131,8 @@
                 <th>Transaction No.</th>
                 <th>Name</th>
                 <th>Request</th>
+                <th>Date Created</th>
+                <th>Claim Date</th>
                 <th>Payment Method</th>
                 <th>Payment Status</th>
                 <th>Document Status</th>
@@ -138,13 +140,15 @@
             </thead>
             <tbody>
               <?php
-                $stmt = $conn->prepare("SELECT transaction_id, full_name, request_type, payment_method, payment_status, document_status FROM view_general_requests ORDER BY created_at DESC LIMIT 10");
+                $stmt = $conn->prepare("SELECT transaction_id, full_name, request_type, created_at, claim_date, payment_method, payment_status, document_status FROM view_general_requests"); //ORDER BY created_at DESC LIMIT 10
                 $stmt->execute();
-                $stmt->bind_result($txn, $name, $request_type, $payment_method, $payment_status, $document_status);
+                $stmt->bind_result($txn, $name, $request, $date_created, $claim_date, $payment_method, $payment_status, $document_status);
 
                 // Table Rows
                 while ($stmt->fetch()) {
-
+                  $formattedDateCreated = date("F d, Y h:i A", strtotime($date_created));
+                  $formattedClaimDate = !empty($claim_date) ? date("F d, Y", strtotime($claim_date)) : '—';
+              
                     // Determine the payment status class
                     if ($payment_status == 'Paid') {
                       $paymentClass = 'paid-status';
@@ -155,7 +159,11 @@
                     }
 
                     // Determine the document status class
-                    if ($document_status == 'Processing') {
+                    if ($document_status == 'For Verification') {
+                        $documentClass = 'for-verification-status';
+                    } else if ($document_status == 'Rejected') {
+                        $documentClass = 'rejected-status';
+                    } else if ($document_status == 'Processing') {
                         $documentClass = 'processing-status';
                     } else if ($document_status == 'Ready To Release') {
                         $documentClass = 'ready-to-release-status';
@@ -168,7 +176,9 @@
                     echo "<tr>
                         <td>{$txn}</td>
                         <td>{$name}</td>
-                        <td>{$request_type}</td>
+                        <td>{$request}</td>
+                        <td>{$formattedDateCreated}</td>
+                        <td>{$formattedClaimDate}</td>
                         <td>{$payment_method}</td>
                         <td><span class='badge {$paymentClass}'>{$payment_status}</span></td>
                         <td><span class='badge {$documentClass}'>{$document_status}</span></td>

@@ -75,14 +75,14 @@ if (isset($_FILES['frontID']) && isset($_FILES['backID'])) {
     // Move the uploaded files to your designated folders
     if (move_uploaded_file($frontFile["tmp_name"], $frontTarget) && move_uploaded_file($backFile["tmp_name"], $backTarget)) {
         // Prepare and execute the insertion query using a prepared statement
-        $stmt = $conn->prepare("INSERT INTO new_acc_requests (full_name, birthdate, sex, contact, full_address, purok, validID, frontID, backID, username, password)
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("INSERT INTO new_acc_requests (full_name, birthdate, sex, contact_number, email_address, full_address, purok, valid_ID, front_ID, back_ID, username, password)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         if (!$stmt) {
             die("Prepare failed: (" . $conn->errno . ") " . $conn->error);
         }
         
         // Bind parameters
-        $stmt->bind_param("sssssssssss", $full_name, $birthdate, $sex, $contact, $full_address, $purok, $validID, $frontFileName, $backFileName, $username, $password);
+        $stmt->bind_param("ssssssssssss", $full_name, $birthdate, $sex, $contact, $email, $full_address, $purok, $validID, $frontFileName, $backFileName, $username, $password);
         
         if ($stmt->execute()) {
             // Record inserted successfully.

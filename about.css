@@ -100,8 +100,8 @@ html {
     padding-bottom: 75px;
 }
 
-button {
+.btn-send {
     color: #fff;
-    font-weight: bold;
+    font-weight: 500;
     background: linear-gradient(to right, #0D2C15, #2A9245);
 }

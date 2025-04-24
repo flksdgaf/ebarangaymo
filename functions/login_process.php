@@ -13,7 +13,7 @@ if(isset($_POST['username']) && isset($_POST['password'])) {
         // Prepare the statement to prevent SQL injection
         $query = "SELECT * FROM user_accounts WHERE username = ? LIMIT 1";
         $stmt = $conn->prepare($query);
-        if(!$stmt) {
+        if(!$stmt) { 
             $_SESSION['login_error'] = "An internal error occurred.";
             header("Location: ../signin.php");
             exit();

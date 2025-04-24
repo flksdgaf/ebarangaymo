@@ -72,7 +72,7 @@ include 'includes/header.php';
             <div class="card-custom mission-shape w-100 d-flex flex-column justify-content-center">
                 <h4 class="section-title mb-3">MISSION</h4>
                 <p class="mb-0">
-                    "We members of of Sangguniang Barangay will continue to strive more to effectively deliver basic services needed by the people, promote peace and order, protect the interest, promote social and economic development in pursuit of peaceful reliant towards a develop and progressive community within a just VARI social order."
+                    We members of of Sangguniang Barangay will continue to strive more to effectively deliver basic services needed by the people, promote peace and order, protect the interest, promote social and economic development in pursuit of peaceful reliant towards a develop and progressive community within a just VARI social order.
                 </p>
             </div>
         </div>
@@ -82,7 +82,7 @@ include 'includes/header.php';
             <div class="card-custom vision-shape w-100 d-flex flex-column justify-content-center">
                 <h4 class="section-title mb-3">VISION</h4>
                 <p class="mb-0">
-                    "Barangay Magang is one of the most widely competitive community in Daet with well-developed, self-reliant, vigorously, God fearing and empowered people, economically adequate with expensive infrastructure facilities an and ecologically balance environment governed by effective and service centered leaders ready to implement the Good Governance and Ethical Leadership."
+                    Barangay Magang is one of the most widely competitive community in Daet with well-developed, self-reliant, vigorously, God fearing and empowered people, economically adequate with expensive infrastructure facilities an and ecologically balance environment governed by effective and service centered leaders ready to implement the Good Governance and Ethical Leadership.
                 </p>
             </div>
         </div>
@@ -132,7 +132,7 @@ include 'includes/header.php';
                     <label for="message" class="form-label">Message</label>
                     <textarea class="form-control" id="message" name="message" rows="5" placeholder="Your Message" required></textarea>
                 </div>
-                <button type="submit" class="btn btn-primary">Send Message</button>
+                <button type="submit" class="btn btn-send btn-primary">Send Message</button>
             </form>
         </div>
     </div>

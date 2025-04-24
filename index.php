@@ -14,31 +14,28 @@ include 'includes/header.php';
     <div class="container">
       <!-- DESKTOP VIEW -->
       <div class="row align-items-center justify-content-center d-none d-md-flex">
-        <div class="col-md-3 text-end">
-          <img src="images/good_governance_logo.png" alt="Left Logo" class="img-fluid" style="max-width: 100px;">
+        <div class="col-md-3 offset-md-1 text-end">
+          <img src="images/magang_logo.png" alt="Brgy. Magang Logo" class="img-fluid" style="max-width: 110px;">
         </div>
-        <div class="col-md-3 text-center">
-          <h6 class="mb-1">Republic of the Philippines</h6>
-          <hr class="mx-auto" style="width: 80%; border-top: 2px solid white; opacity: 1; margin: 0;">
-          <h1 class="fw-semibold">eBarangay Mo</h1>
-          <p class="mb-0">BARANGAY SERVICES PORTAL OF <br> DAET, CAMARINES NORTE</p>
-        </div>
-        <div class="col-md-3 text-start">
-          <img src="images/magang_logo.png" alt="Right Logo" class="img-fluid" style="max-width: 100px;">
+        <div class="col-md-6 text-start">
+          <h6 class="mb-2">Republic of the Philippines</h6>
+          <hr class="my-1" style="width: 62%; border-top: 2px solid white; opacity: 1; margin-left: 0;">
+          <h1 class="fw-bold my-0">BARANGAY MAGANG</h1>
+          <p class="mt-0 mb-0">Daet, Camarines Norte, Philippines</p>
         </div>
       </div>
-
+    </div>
+      
       <!-- MOBILE VIEW -->
       <div class="d-flex d-md-none flex-column align-items-center">
         <div class="d-flex justify-content-center gap-3 mb-3">
-          <img src="images/good_governance_logo.png" alt="Left Logo" class="img-fluid">
-          <img src="images/magang_logo.png" alt="Right Logo" class="img-fluid">
+          <img src="images/magang_logo.png" alt="Brgy. Magang Logo" class="img-fluid">
         </div>
         <div class="text-center">
           <h6 class="mb-1 small">Republic of the Philippines</h6>
-          <hr class="mx-auto" style="width: 60%; border-top: 2px solid white; opacity: 1; margin: 0;">
-          <h3 class="fw-semibold my-2">eBarangay Mo</h3>
-          <p class="mb-0 small">BARANGAY SERVICES PORTAL OF <br> DAET, CAMARINES NORTE</p>
+          <hr class="my-1" style="width: 100%; border-top: 2px solid white; opacity: 1; margin: 0;">
+          <h3 class="fw-bold my-0">BARANGAY MAGANG</h3>
+          <p class="mt-0 mb-0">Daet, Camarines Norte, Philippines</p>
         </div>
       </div>
     </div>
@@ -84,97 +81,92 @@ include 'includes/header.php';
 </div>
 
 <!-- MISSION VISION VALUES SECTION -->
-<div class="container-fluid px-0">
-    <div class="mission-vision-values text-center">
-        <div class="row g-4 mt-4 justify-content-center text-center">
-            <div class="col-lg-5 col-md-6 col-sm-10 d-flex justify-content-center">
-                <div class="card-custom p-4">
-                    <h5 class="gradient-text text-uppercase">Mission</h5>
-                    <p>
-                        "We members of Sangguniang Barangay will continue to strive more to effectively deliver basic services needed by the people, promote peace and order, protect the interest, promote social and economic development in pursuit of peaceful reliant towards a develop and progressive community within a just VARI social order."
-                    </p>
-                </div>
+<!-- <div id="mission-vision" class="container custom-padding">
+    <div class="row justify-content-center align-items-stretch g-4 text-center"> -->
+        <!-- Mission Card -->
+        <!-- <div class="col-lg-5 col-md-6 d-flex">
+            <div class="card-custom mission-shape w-100 d-flex flex-column justify-content-center">
+                <h4 class="section-title mb-3">MISSION</h4>
+                <p class="mb-0">
+                    We members of of Sangguniang Barangay will continue to strive more to effectively deliver basic services needed by the people, promote peace and order, protect the interest, promote social and economic development in pursuit of peaceful reliant towards a develop and progressive community within a just VARI social order.
+                </p>
             </div>
-            <div class="col-lg-5 col-md-6 col-sm-10 d-flex justify-content-center">
-                <div class="card-custom p-4">
-                    <h5 class="gradient-text text-uppercase">Vision</h5>
-                    <p>
-                    "Barangay Magang is one of the most widely competitive community in Daet with well-developed, self-reliant, vigorously, God fearing and empowered people, economically adequate with expensive infrastructure facilities an and ecologically balance environment governed by effective and service centered leaders ready to implement the Good Governance and Ethical Leadership."
-                    </p>
-                </div>
+        </div> -->
+
+        <!-- Vision Card -->
+        <!-- <div class="col-lg-5 col-md-6 d-flex">
+            <div class="card-custom vision-shape w-100 d-flex flex-column justify-content-center">
+                <h4 class="section-title mb-3">VISION</h4>
+                <p class="mb-0">
+                    Barangay Magang is one of the most widely competitive community in Daet with well-developed, self-reliant, vigorously, God fearing and empowered people, economically adequate with expensive infrastructure facilities an and ecologically balance environment governed by effective and service centered leaders ready to implement the Good Governance and Ethical Leadership.
+                </p>
             </div>
         </div>
     </div>
-</div>
+</div> -->
 
 <!-- SERVICE SECTION -->
 <div class="container-fluid mt-5 mb-5 services-container">
-  <h1 class="text-center gradient-text">SERVICES</h1>
-  <div class="container mt-5">
-    <div class="row row-cols-1 row-cols-md-2 g-3">
-      <!-- Barangay ID Button -->
-      <div class="col d-flex">
-        <button type="button" class="service-card mid-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#barangayIDModal">
-          <i class="fas fa-id-card icon"></i>
-          <div>
-            <h4>Barangay ID</h4>
-            <p>An official identification card issued by the barangay.</p>
-          </div>
-        </button>
+  <h1 class="text-center gradient-text text-uppercase">Services Offered</h1>
+    <div class="container mt-5">
+        <div class="row row-cols-1 row-cols-md-2 g-3">
+            <div class="col d-flex">
+                <button type="button" class="service-card light-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#barangayIDModal">
+                    <i class="fas fa-id-card icon"></i>
+                    <div>
+                        <h4>Barangay ID</h4>
+                        <p>An official identification card issued by the barangay.</p>
+                    </div>
+                </button>
+            </div>
+            <div class="col d-flex">
+                  <button type="button" class="service-card mid-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#barangayIDModal">
+                    <i class="fas fa-file-alt icon"></i>
+                    <div>
+                        <h4>Barangay Clearance</h4>
+                        <p>Certifies a resident has no pending issues.</p>
+                    </div>
+                  </button>
+            </div>
+            <div class="col d-flex">
+                <button type="button" class="service-card dark-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#barangayIDModal">
+                    <i class="fas fa-certificate icon"></i>
+                    <div>
+                        <h4>Certification</h4>
+                        <p>Confirms a resident's identity, residency, or status.</p>
+                    </div>
+                </button>
+            </div>
+            <div class="col d-flex">
+                <button type="button" class="service-card light-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#barangayIDModal">
+                    <i class="fas fa-store icon"></i>
+                    <div>
+                        <h4>Business Permit</h4>
+                        <p>Authorization to operate within the barangay.</p>
+                    </div>
+                </button>
+            </div>
+            <div class="col d-flex">
+                <button type="button" class="service-card mid-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#barangayIDModal">
+                    <i class="fas fa-balance-scale icon"></i>
+                    <div>
+                        <h4>Katarungang Pambarangay</h4>
+                        <p>Barangay justice system for settling disputes.</p>
+                    </div>
+                </button>
+            </div>
+            <div class="col d-flex">
+                <button type="button" class="service-card dark-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#barangayIDModal">
+                    <i class="fas fa-leaf icon"></i>
+                    <div>
+                        <h4>Environmental Services</h4>
+                        <p>Programs for cleanliness and waste management.</p>
+                    </div>
+                </button>
+            </div>
+        </div>
       </div>
-      <!-- Barangay Clearance Button -->
-      <div class="col d-flex">
-        <button type="button" class="service-card light-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#barangayClearanceModal">
-          <i class="fas fa-file-alt icon"></i>
-          <div>
-            <h4>Barangay Clearance</h4>
-            <p>Certifies a resident has no pending issues.</p>
-          </div>
-        </button>
-      </div>
-      <!-- Certification Button -->
-      <div class="col d-flex">
-        <button type="button" class="service-card dark-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#certificationModal">
-          <i class="fas fa-certificate icon"></i>
-          <div>
-            <h4>Certification</h4>
-            <p>Confirms a resident's identity, residency, or status.</p>
-          </div>
-        </button>
-      </div>
-      <!-- Business Permit Button -->
-      <div class="col d-flex">
-        <button type="button" class="service-card mid-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#businessPermitModal">
-          <i class="fas fa-store icon"></i>
-          <div>
-            <h4>Business Permit</h4>
-            <p>Authorization to operate within the barangay.</p>
-          </div>
-        </button>
-      </div>
-      <!-- Katarungang Pambarangay Button -->
-      <div class="col d-flex">
-        <button type="button" class="service-card light-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#katarungangModal">
-          <i class="fas fa-balance-scale icon"></i>
-          <div>
-            <h4>Katarungang Pambarangay</h4>
-            <p>Barangay justice system for settling disputes.</p>
-          </div>
-        </button>
-      </div>
-      <!-- Environmental Services Button -->
-      <div class="col d-flex">
-        <button type="button" class="service-card dark-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#equipmentModal">
-        <i class="fas fa-chair icon"></i>
-          <div>
-            <h4>Equipment Borrowing Services</h4>
-            <p>Provides equipment rental services.</p>
-          </div>
-        </button>
-      </div>
-    </div>
     <a href="services.php" class="view-more">View More Services</a>
-  </div>
 </div>
 
 <!-- Bootstrap Bundle with Popper -->

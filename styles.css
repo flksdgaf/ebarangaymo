@@ -41,7 +41,7 @@ body {
 /* Overlay shared style */
 .banner-overlay {
     top: 50%;
-    left: 50%;
+    left: 22.5%;
     transform: translate(-50%, -50%);
     width: 100%;
     padding: 20px;
@@ -134,6 +134,8 @@ body {
     border-radius: 12px;
 }
 
+
+/* SERVICES */
 .card-custom {
     background: #FFFFFF;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
@@ -201,7 +203,7 @@ body {
     max-width: 500px;
     margin: 0 auto; 
     text-decoration: none;
-    gap: 15px; 
+    gap: 20px; 
     flex-shrink: 0;
     flex-grow: 1;
 }
@@ -220,12 +222,14 @@ body {
     font-size: 18px; 
     font-weight: 600;
     margin-bottom: 5px;
+    text-align: left;
 }
 
 .service-card p {
     font-size: 14px; 
     font-weight: 400;
     margin: 0;
+    text-align: left;
 }
 
 /* Responsive tweaks */
@@ -418,7 +422,25 @@ body {
 }
 
 .quick-link {
-    font-size: 15px;    
+    font-size: 15px; 
+    position: relative;
+    display: inline-block;
+    transition: color 0.5s ease-in-out;   
+}
+
+.quick-link::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0.1px;
+    bottom: 0;
+    left: 0;
+    background-color: #FFFFFF; /* choose your green shade */
+    transition: width 0.5s ease-in-out;
+}
+  
+.quick-link:hover::after {
+    width: 100%;
 }
 
 .agency-footer .icon {
@@ -432,6 +454,27 @@ body {
 .standard-footer .seal {
     width: 280px;
     height: 280px;
+}
+
+.gov-link {
+    position: relative;
+    display: inline-block;
+    transition: color 0.5s ease-in-out;
+}
+  
+.gov-link::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0.5px;
+    bottom: 0;
+    left: 0;
+    background-color: #000000; /* choose your green shade */
+    transition: width 0.8s ease-in-out;
+}
+  
+.gov-link:hover::after {
+    width: 100%;
 }
 
 .dropdown-item {

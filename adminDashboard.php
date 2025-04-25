@@ -123,24 +123,24 @@
     <!-- Recent Requests Table -->
     <div class="col-12">
       <div class="card p-3 shadow-sm">
-        <h5 class="fw-bold mb-3">Recent Requests</h5>
-        <div class="table-responsive">
+        <h5 class="fw-bold ms-2 text-success">Recent Requests</h5>
+        <div class="table-responsive admin-request-table">
           <table class="table table-hover align-middle text-start">
             <thead class="table-light">
               <tr>
-                <th>Transaction No.</th>
-                <th>Name</th>
-                <th>Request</th>
-                <th>Date Created</th>
-                <th>Claim Date</th>
-                <th>Payment Method</th>
-                <th>Payment Status</th>
-                <th>Document Status</th>
+                <th class="text-nowrap">Transaction No.</th>
+                <th class="text-nowrap">Name</th>
+                <th class="text-nowrap">Request</th>
+                <th class="text-nowrap">Date Created</th>
+                <th class="text-nowrap">Claim Date</th>
+                <th class="text-nowrap">Payment Method</th>
+                <th class="text-nowrap">Payment Status</th>
+                <th class="text-nowrap">Document Status</th>
               </tr>
             </thead>
             <tbody>
               <?php
-                $stmt = $conn->prepare("SELECT transaction_id, full_name, request_type, created_at, claim_date, payment_method, payment_status, document_status FROM view_general_requests"); //ORDER BY created_at DESC LIMIT 10
+                $stmt = $conn->prepare("SELECT transaction_id, full_name, request_type, created_at, claim_date, payment_method, payment_status, document_status FROM view_general_requests LIMIT 10");
                 $stmt->execute();
                 $stmt->bind_result($txn, $name, $request, $date_created, $claim_date, $payment_method, $payment_status, $document_status);
 

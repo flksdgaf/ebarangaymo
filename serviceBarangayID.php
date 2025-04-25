@@ -14,7 +14,7 @@ $t = $transactionId ? true : false;
 // --- 1) Check for existing Brgy-ID record: Renewal vs. New Application
 $stmtID = $conn->prepare("
     SELECT * 
-    FROM barangayID_accounts 
+    FROM barangayid_accounts 
     WHERE account_id = ? 
     LIMIT 1
 ");
@@ -300,9 +300,9 @@ if ($transactionId) {
                         </button>
 
                         <!-- Over‑the‑Counter (now uses a “paid” icon) -->
-                        <button type="button" class="btn btn-outline-success payment-btn" data-method="Over the Counter">
+                        <button type="button" class="btn btn-outline-success payment-btn" data-method="Over-the-Counter">
                             <span class="material-symbols-outlined mb-2 payment-icon">paid</span>
-                            <span class="fw-bold fs-6">Over the Counter</span>
+                            <span class="fw-bold fs-6">Over-the-Counter</span>
                         </button>
                     </div>
 
@@ -329,7 +329,7 @@ if ($transactionId) {
                                 <li>Submit the receipt to the Clerk and claim your Barangay ID.</li>
                             </ol>
                         </div>
-                        <div class="payment-instruction d-none" data-method="Over the Counter">
+                        <div class="payment-instruction d-none" data-method="Over-the-Counter">
                             <ol>
                                 <h4 class="fw-bold mb-4 fs-6">HOW TO USE:</h4>
                                 <li>Visit the Barangay Treasurer at the barangay hall.</li>

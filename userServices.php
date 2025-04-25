@@ -5,7 +5,7 @@
       <div class="container mt-5">
           <div class="row row-cols-1 row-cols-md-2 g-3">
               <div class="col d-flex">
-                  <a href="userpanel.php?page=serviceBarangayID" class="service-card mid-green w-100">
+                  <a href="userPanel.php?page=serviceBarangayID" class="service-card mid-green w-100">
                       <i class="fas fa-id-card icon"></i>
                       <div>
                           <h4>Barangay ID</h4>

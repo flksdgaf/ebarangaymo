@@ -1,9 +1,25 @@
 <?php
 if (!isset($page)) {
-    $page = 'default'; // Default page
+    $page = $_GET['page'] ?? 'adminDashboard';
 }
 require 'functions/dbconn.php';
 session_start();
+
+$pageTitles = [
+    'adminDashboard'    => 'Dashboard',
+    'adminRequest'      => 'Service Requests',
+    'adminBlotter'      => 'Blotter Records',
+    'adminResidents'    => 'Residents Records',
+    'adminUsers'        => 'Users',
+    'adminVerifications'=> 'Account Verifications',
+    'adminTransactions' => 'Transaction History',
+    'adminWebsite'      => 'Website Management',
+    'adminDeviceStatus' => 'Device Status',
+    'adminSettings'     => 'Settings',
+    'adminLogs'         => 'Activity Logs'
+];
+
+$topbarText = $pageTitles[$page] ?? 'Dashboard';
 
 // Ensure the user is authenticated.
 if (!isset($_SESSION['auth']) || $_SESSION['auth'] !== true) {
@@ -56,18 +72,18 @@ $stmt->close();
 
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg border-bottom px-3 py-2 admin-top-bar">
+    <nav class="navbar navbar-expand-lg border-bottom px-3 py-2 top-bar">
         <div class="container-fluid d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-2 topbar-title">
-                <img src="images/good_governance_logo.png" alt="Good Governance Logo" style="width: 40px; height: 40px; object-fit: contain;">
-                <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 40px; height: 40px; object-fit: contain;">
-                <span class="fw-bold ms-1 topbar-text">
-                    Barangay Magang
+                <!-- <img src="images/good_governance_logo.png" alt="Good Governance Logo" style="width: 40px; height: 40px; object-fit: contain;">
+                <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 40px; height: 40px; object-fit: contain;"> -->
+                <span class="fw-bold topbar-text">
+                    <?php echo htmlspecialchars($topbarText); ?></span>
                 </span>
             </div>
             <div class="d-none d-md-block flex-grow-1"></div>
             <div class="dropdown">
-                <img src="<?php echo htmlspecialchars($profilePic); ?>" class="rounded-circle" width="40" height="40" style="object-fit: cover; margin-right: 8px; border: 2px solid #13411F;">
+                <img src="<?php echo htmlspecialchars($profilePic); ?>" class="rounded-circle" width="40" height="40" style="object-fit: cover; margin-right: 8px; border: 2px solid #000000;">
                 <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="adminDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     <!-- Text for large screens -->
                     <span class="d-none d-md-inline"><?php echo htmlspecialchars($fullName); ?> - <?php echo htmlspecialchars($_SESSION['loggedInUserRole']); ?></span>

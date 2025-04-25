@@ -1,12 +1,13 @@
-<?php include 'functions/dbconn.php'; ?>
-<?php include 'includes/account_header.php'; ?>
-<?php include 'includes/adminSidebar.php'; ?>
+<?php 
+    include 'functions/dbconn.php'; 
+
+    $page = $_GET['page'] ?? 'adminDashboard';
+    include 'includes/account_header.php';
+    include 'includes/adminSidebar.php'; 
+?>
 
 <div class="main-content">
     <?php
-        // Default to 'dashboard' if no page is set
-        $page = $_GET['page'] ?? 'adminDashboard';
-
         // List of allowed pages for security
         $allowed_pages = ['adminDashboard','adminRequest', 'adminBlotter', 'adminResidents', 'adminWebsite', 'adminUsers', 'adminTransactions', 'adminLogs', 'adminVerifications', 'adminSettings', 'adminDeviceStatus'];
 
@@ -27,6 +28,7 @@
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
 <script src="js/adminPanel.js"></script>
 </body>
 </html>

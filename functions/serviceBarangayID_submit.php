@@ -68,5 +68,10 @@ $stmt->execute();
 $stmt->close();
 
 // 5) Redirect back to the form page with ?tid= so it jumps to Step 4
-header("Location: ../userpanel.php?page=serviceBarangayID&tid={$transactionId}");
-exit();
+if (!empty($_POST['adminRedirect'])) {
+    // Came from the admin panel → send back there
+    header("Location: ../adminPanel.php?page=adminRequest&transaction_id={$transactionId}");
+} else {
+    // Default: user panel
+    header("Location: ../userpanel.php?page=serviceBarangayID&tid={$transactionId}");
+}exit();

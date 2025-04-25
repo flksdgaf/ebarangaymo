@@ -73,7 +73,7 @@
 }
 
 .sidebar h1 {
-  font-size: 25px;
+  font-size: 23px;
   font-weight: 600;
   color: #ffffff;
 }
@@ -105,26 +105,3 @@
     display: block;
   }
 }
-
-/* .toggle-btn {
-  display: none;
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  font-size: 28px;
-  background-color: #d4f1d7;
-  color: #10451d;
-  padding: 6px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  z-index: 1100;
-} */
-
-/* @media (max-width: 768px) {
-  .toggle-btn {
-    display: block;
-  }
-  #sidebar.expand ~ .toggle-btn {
-    display: none;
-  }
-}  */

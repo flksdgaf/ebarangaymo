@@ -3,7 +3,7 @@
 }
 
 /* Top Bar */
-.admin-top-bar {
+.top-bar {
   transition: 0.3s ease;
   background-color: #E4E4E4;
 }
@@ -14,13 +14,13 @@
 }
 
 @media (min-width: 768px) {
-  .admin-top-bar {
+  .top-bar {
       margin-left: 300px;
   }
 }
 
 @media (max-width: 767.98px) {
-  .admin-top-bar {
+  .top-bar {
       margin-left: 0;
   }
 
@@ -173,7 +173,31 @@
 }
 /* END OF RECENT REQUEST TABLE */
 
-/* ADMIN REQUEST */
+/* REQUEST TAB */
+.admin-request-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.admin-request-table table tbody td {
+  font-size: 0.75rem;  
+}
+
+.modal-content { 
+  border-radius: 1rem; 
+}
+
+.modal-body {
+   padding: 2rem !important; 
+  }
+
+.modal-header, .modal-footer { 
+  padding: 1.5rem !important; 
+  }
+/* END OF REQUEST TAB */
+
+/* USER REQUEST */
 .services-container h1 {
   font-size: 25px; 
   font-weight: 700;
@@ -264,11 +288,29 @@
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
-/* END OF ADMIN REQUEST */
+/* END OF USER REQUEST */
 
+/* PAGINATION STYLES */
+.pagination .page-link {
+  color: black;                   
+  background-color: #fff;              
+  border-color: #fff;                 
+}
 
-/* ADMIN RESIDENTS */
+/* hovered / focused page links */
+.pagination .page-link:hover,
+.pagination .page-link:focus {
+  background-color: #1e7e34;          
+  border-color: #1c7430;
+  color: #fff;
+}
 
-/* END OF ADMIN RESIDENTS */
+/* active page */
+.pagination .page-item.active .page-link {
+  background-color: #28a745;       
+  border-color: #28a745;
+  color: #fff;
+}
 
+/* END OF PAGINATION STYLES */
 /* END OF MAIN CONTENT */

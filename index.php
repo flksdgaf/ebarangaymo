@@ -19,8 +19,8 @@ include 'includes/header.php';
         </div>
         <div class="col-md-6 text-start">
           <h6 class="mb-2">Republic of the Philippines</h6>
-          <hr class="my-1" style="width: 62%; border-top: 2px solid white; opacity: 1; margin-left: 0;">
-          <h1 class="fw-bold my-0">BARANGAY MAGANG</h1>
+          <hr class="my-1" style="width: 55%; border-top: 2px solid white; opacity: 1; margin-left: 0;">
+          <h2 class="fw-bold my-0">BARANGAY MAGANG</h2>
           <p class="mt-0 mb-0">Daet, Camarines Norte, Philippines</p>
         </div>
       </div>
@@ -401,7 +401,7 @@ include 'includes/header.php';
             <img src="images/step_1.png" alt="Visit the Website" class="img-fluid mx-auto d-block w-75">
             <h4 class="mt-3 fw-bold">Visit the Website</h4>
             <hr class="underline">
-            <p>Go to the eBarangay Mo website and click <strong>Sign Up</strong>.</p>
+            <p>Go to the eBarangay Mo website and click <strong><a href="signup.php" class="text-decoration-none text-black sign-up-text">Sign Up</a></strong>.</p>
         </div>
 
         <!-- Step 2 -->

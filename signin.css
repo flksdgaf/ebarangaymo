@@ -10,19 +10,27 @@ body, html {
 }
 /* Login container styling */
 .login-container {
-    background: rgba(255, 255, 255, 0.1); /* transparent white background */
-    padding: 2rem;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 3rem;
     position: relative;
     z-index: 1;
-    width: 100%;
-    max-width: 600px;
+    width: 50vw; /* use viewport width */
+    max-width: none; /* remove default width cap */
+    min-height: 400px;
     text-align: center;
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
-    /* Create gradient border */
-    border: 5px solid;
+
+    /* Gradient border */
+    border: 6px solid;
     border-image-slice: 100;
     border-image-source: linear-gradient(45deg, #0D2C15, #2A9245);
+}
 
+/* Logos above the heading */
+.logo-wrapper .login-logo {
+    height: 50px;
+    width: auto;
+    object-fit: contain;
 }
 
 /* Gradient Header */
@@ -76,4 +84,41 @@ label {
 .form-control:focus {
     box-shadow: none;
     border-color: #ee0979;
+}
+
+/* Mobile View */
+@media (max-width: 768px) {
+    .login-container {
+        width: 100%;
+        padding: 2rem 3rem 2rem 3rem;
+        margin: 0 1rem; /* Adds left and right spacing */
+    }
+
+    .login-container .row {
+        flex-direction: column;
+        text-align: left;
+    }
+
+    .login-container label {
+        width: 100%;
+        margin-bottom: 0.25rem;
+    }
+
+    .login-container .col-md-8,
+    .login-container .col-md-6,
+    .login-container .col-md-5,
+    .login-container .col-md-4,
+    .login-container .col-md-3,
+    .login-container .col-md-2 {
+        width: 100% !important;
+        padding: 0;
+    }
+
+    .btn-gradient {
+        width: 100%;
+    }
+
+    .toggle-password {
+        right: 10px;
+    }
 }

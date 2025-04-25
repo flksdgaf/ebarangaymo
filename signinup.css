@@ -11,10 +11,35 @@
     overflow: hidden;
 }
 
+
 /* Left Section (Sign In) */
 .left {
     background: url('images/bg_hover.png') center/cover no-repeat;
     transition: all 0.5s ease-in-out;
+}
+
+#left-side h1 {
+    font-size: 1.6rem;
+    transition: font-size 0.3s ease-in-out;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+  
+.split-container:hover #left-side:hover h1 {
+    font-size: 2rem;
+}
+
+#left-side p {
+    font-size: 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: font-size 0.3s ease-in-out;
+}
+  
+.split-container:hover #left-side:hover p {
+    font-size: 1.2rem;
 }
 
 .left a {
@@ -30,6 +55,30 @@
 .right {
     background: url('images/bg_nothover.png') center/cover no-repeat;
     transition: all 0.5s ease-in-out;
+}
+
+#right-side h1 {
+    font-size: 1.5rem;
+    transition: font-size 0.3s ease-in-out;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.split-container:hover #right-side:hover h1 {
+    font-size: 2rem;
+}
+  
+#right-side p {
+    font-size: 0.75rem;
+    transition: font-size 0.3s ease-in-out;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+ 
+.split-container:hover #right-side:hover p {
+    font-size: 1rem;
 }
 
 .right h1 {
@@ -67,3 +116,46 @@
     padding: 10px 25px;
     font-size: 16px;
 }
+
+/* Responsive layout for small screens */
+@media (max-width: 768px) {
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+    }
+  
+    .split-container {
+      flex-direction: column;
+      height: 100vh;
+    }
+  
+    .split {
+      width: 100% !important;
+      height: 50vh;
+      padding: 20px;
+    }
+  
+    #left-side h1,
+    #right-side h1 {
+      font-size: 1.3rem;
+    }
+  
+    #left-side p,
+    #right-side p {
+      font-size: 0.8rem;
+    }
+  
+    .split-container:hover .split {
+      width: 100%;
+    }
+  
+    .split-container:hover .split:hover {
+      width: 100%;
+    }
+  
+    .split-container:hover .split:not(:hover) {
+      width: 100%;
+    }
+  }
+  

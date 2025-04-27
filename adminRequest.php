@@ -1,4 +1,5 @@
 <?php
+require 'functions/dbconn.php';
 $userId = (int)$_SESSION['loggedInUserID'];
 
 // ── 0) FILTER SETUP ──────────────────────────────────────────────────────────
@@ -186,13 +187,18 @@ if (isset($_GET['transaction_id'])) {
       const groupView = document.getElementById('groupView');
       const groupEdit = document.getElementById('groupEdit');
       const form      = document.querySelector('#detailsArea form');
-      const inputs = form.querySelectorAll('input, select');
+      const inputs    = form.querySelectorAll('input, select');
+
+      // This object will hold the original values
+      let originalValues = {};
 
       // Enter edit mode
       editBtn.addEventListener('click', () => {
+        // Store originals
         inputs.forEach(i => {
+          originalValues[i.name] = i.value;
           i.removeAttribute('readonly');
-          i.removeAttribute('disabled');  // for selects
+          i.removeAttribute('disabled');
         });
         groupView.classList.add('d-none');
         groupEdit.classList.remove('d-none');
@@ -200,13 +206,22 @@ if (isset($_GET['transaction_id'])) {
 
       // Cancel edit
       cancelBtn.addEventListener('click', () => {
+        // Restore originals
         inputs.forEach(i => {
+          if (originalValues.hasOwnProperty(i.name)) {
+            i.value = originalValues[i.name];
+          }
+          // Then put back to read‐only/disabled
           if (i.tagName === 'INPUT') {
             i.setAttribute('readonly', '');
           } else {
             i.setAttribute('disabled', '');
           }
         });
+
+        // Clear stored originals (optional)
+        originalValues = {};
+
         groupEdit.classList.add('d-none');
         groupView.classList.remove('d-none');
       });
@@ -240,7 +255,7 @@ $sql = "
          DATE_FORMAT(created_at, '%M %d, %Y %h:%i %p') AS formatted_date
     FROM view_general_requests
     {$whereSQL}
-    ORDER BY created_at ASC
+    ORDER BY created_at DESC
     LIMIT ? OFFSET ?
 ";
 $st = $conn->prepare($sql);
@@ -411,7 +426,7 @@ $result = $st->get_result();
 
 
   <div class="card shadow-sm p-3">
-    <div class="table-responsive admin-request-table" style="height:500px; overflow-y:auto;">
+    <div class="table-responsive admin-table" style="height:500px; overflow-y:auto;">
       <table class="table table-hover align-middle text-start">
         <thead class="table-light">
           <tr>

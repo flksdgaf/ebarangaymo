@@ -35,7 +35,7 @@
                       data-account_id='{$row['account_id']}'
                       data-full_name='{$row['full_name']}'
                       data-birthdate='{$row['birthdate']}'
-                      data-gender='{$row['gender']}'
+                      data-sex='{$row['sex']}'
                       data-contact='{$row['contact']}'
                       data-full_address='{$row['full_address']}'
                       data-profile_pic='{$profilePicPath}'
@@ -69,7 +69,7 @@
         <p><strong>Account ID:</strong> <span id="modalAccountID"></span></p>
         <p><strong>Full Name:</strong> <span id="modalFullName"></span></p>
         <p><strong>Birthdate:</strong> <span id="modalBirthdate"></span></p>
-        <p><strong>Sex:</strong> <span id="modalGender"></span></p>
+        <p><strong>Sex:</strong> <span id="modalSex"></span></p>
         <p><strong>Contact Number:</strong> <span id="modalContact"></span></p>
         <p><strong>Address:</strong> <span id="modalFullAddress"></span></p>
       </div>
@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const accountId = this.dataset.account_id;
       const fullName = this.dataset.full_name;
       const birthdate = this.dataset.birthdate;
-      const gender = this.dataset.gender;
+      const sex = this.dataset.sex;
       const contact = this.dataset.contact;
       const fullAddress = this.dataset.full_address;
       const profilePic = this.dataset.profile_pic;
@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('modalAccountID').textContent = accountId;
       document.getElementById('modalFullName').textContent = fullName;
       document.getElementById('modalBirthdate').textContent = birthdate;
-      document.getElementById('modalGender').textContent = gender;
+      document.getElementById('modalSex').textContent = sex;
       document.getElementById('modalContact').textContent = contact;
       document.getElementById('modalFullAddress').textContent = fullAddress;
     });

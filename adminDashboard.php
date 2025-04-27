@@ -1,5 +1,6 @@
 <?php
 require 'functions/dbconn.php';
+$userId = (int)$_SESSION['loggedInUserID'];
 
 // ── PAGINATION SETUP ─────────────────────────────────────────────────────────
 $page_num = isset($_GET['page_num']) && is_numeric($_GET['page_num']) ? (int)$_GET['page_num'] : 1;
@@ -216,7 +217,7 @@ if ($queryString) {
         </div>
       </div>
 
-      <div class="table-responsive admin-request-table">
+      <div class="table-responsive admin-table">
         <table class="table table-hover align-middle text-start">
           <thead class="table-light">
             <tr>

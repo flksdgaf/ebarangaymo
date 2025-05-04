@@ -30,8 +30,8 @@ include 'includes/header.php';
       <h5 class="gradient-text mb-4">
         Bringing Barangay Services Closer to You.
       </h5>
-      <p><strong>eBarangay Mo</strong> is the online portal of Barangay Magang, Daet, Camarines Norte, developed to bring essential barangay services closer and more accessible to the community. This digital platform aims to simplify and modernize the way residents interact with their local government.</p>
-      <p>Through eBarangay Mo, residents can conveniently access a range of services — from applying for business permits and requesting certificates, to checking the status of transactions — all from the comfort of their homes, anytime and anywhere. It is our goal to improve transparency, efficiency, and public service delivery by embracing technology that meets the growing needs of our barangay.</p>
+      <p>Ang <strong>eBarangay Mo</strong> ay ang online portal ng Barangay Magang, Daet, Camarines Norte, na binuo upang mas mapalapit at madaliang ma‑access ng komunidad ang mahahalagang serbisyo ng barangay. Layunin ng digital na plataporma na ito na pasimplehin at i‑modernisa ang paraan ng pakikipag‑ugnayan ng mga residente sa kanilang lokal na pamahalaan.</p>
+      <p>Sa pamamagitan ng eBarangay Mo, maaaring mag‑apply ng business permit, humiling ng iba't ibang sertipiko, o suriin ang katayuan ng transaksyon—lahat ng ito ay magagawa nang maginhawa mula sa inyong tahanan, anumang oras at saanman. Pangarap namin na mapabuti ang transparency, kahusayan, at kalidad ng serbisyo publiko sa pagtanggap at paggamit ng teknolohiya na tutugon sa lumalaking pangangailangan ng ating barangay.</p>
     </div>
 
     <!-- Image Grid -->
@@ -55,7 +55,7 @@ include 'includes/header.php';
 <div id="officials" class="container custom-padding">
     <div>
         <h2 class="text-uppercase fw-bold gradient-text">Barangay Officials</h2>
-        <p>This section presents the duly elected officials of Barangay Magang, Daet, Camarines Norte. These public servants are entrusted with the responsibility of leading the barangay, implementing policies, and ensuring the delivery of essential services for the welfare and development of the community.</p>
+        <p>Ipinapakilala ng seksyong ito ang mga opisyal na halal ng Barangay Magang, Daet, Camarines Norte. Sila ang inatasang pamunuan ang barangay, magpatupad ng mga patakaran, at tiyakin ang maayos na paghahatid ng mahahalagang serbisyo para sa kapakanan at kaunlaran ng komunidad.</p>
     </div>
 
     <div>
@@ -93,7 +93,7 @@ include 'includes/header.php';
 <div id="citizens-charter" class="container custom-padding">
     <div>
         <h2 class="text-uppercase fw-bold gradient-text">Citizen's Charter</h2>
-        <p>The Citizen's Charter  outlines the commitment of the barangay Magang to provide efficient, transparent, and accountable public service. It serves as a guide for residents on the available services, step-by-step procedures, requirements, processing time, and contact information. This charter reflects our dedication to upholding the rights of every constituent and ensuring quality service delivery.</p>
+        <p>Inilalahad ng Citizen’s Charter ang pangako ng Barangay Magang na magbigay ng serbisyong mabilis, transparent, at may pananagutan. Gabay ito para sa mga residente upang malaman ang mga serbisyong iniaalok, hakbang‑hakbang na proseso, mga kinakailangang dokumento, oras ng pag‑proseso, at impormasyon sa pakikipag‑ugnayan. Sumasalamin ang charter na ito sa aming dedikasyon sa pagprotekta sa karapatan ng bawat mamamayan at sa pagbibigay ng de‑kalidad na serbisyo.</p>
     </div>
 
     <div>
@@ -105,7 +105,7 @@ include 'includes/header.php';
 <div id="barangay-map" class="container custom-padding">
     <div>
         <h2 class="text-uppercase fw-bold gradient-text">Barangay Map</h2>
-        <p>This map serves as a visual guide for residents, visitors, and service planning within the community.</p>
+        <p>Ang mapang ito ay nagsisilbing visual na gabay para sa mga residente, bisita, at sa maayos na pagpaplano ng mga serbisyo sa loob ng komunidad.</p>
     </div>
 
     <div>
@@ -118,7 +118,7 @@ include 'includes/header.php';
     <div>
         <div class="col-lg-10">
             <h2 class="text-uppercase fw-bold gradient-text">Contact Us</h2>
-            <p>If you have any questions or need assistance, please fill out the form below and we will get back to you as soon as possible.</p>
+            <p>Kung mayroon kayong mga tanong o kailangan ng tulong, mangyaring i-fill out ang form sa ibaba at agad naming susagutin o tutulungan kayo sa lalong madaling panahon.</p>
             <form action="contact_process.php" method="post">
                 <div class="mb-3">
                     <label for="name" class="form-label">Name</label>

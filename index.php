@@ -115,7 +115,10 @@ include 'includes/header.php';
                     <i class="fas fa-id-card icon"></i>
                     <div>
                         <h4>Barangay ID</h4>
-                        <p>An official identification card issued by the barangay.</p>
+                        <p>
+                          Opisyal na identification card na inilalaan ng barangay.
+                          <!-- An official identification card issued by the barangay. -->
+                        </p>
                     </div>
                 </button>
             </div>
@@ -124,7 +127,10 @@ include 'includes/header.php';
                     <i class="fas fa-file-alt icon"></i>
                     <div>
                         <h4>Barangay Clearance</h4>
-                        <p>Certifies a resident has no pending issues.</p>
+                        <p>
+                          Patunay na ang residente ay walang nakabinbing isyu.
+                          <!-- Certifies a resident has no pending issues. -->
+                        </p>
                     </div>
                   </button>
             </div>
@@ -133,7 +139,10 @@ include 'includes/header.php';
                     <i class="fas fa-certificate icon"></i>
                     <div>
                         <h4>Certification</h4>
-                        <p>Confirms a resident's identity, residency, or status.</p>
+                        <p>
+                          Patunay ng pagkakakilanlan, paninirahan, o katayuan ng residente.
+                          <!-- Confirms a resident's identity, residency, or status. -->
+                        </p>
                     </div>
                 </button>
             </div>
@@ -142,7 +151,10 @@ include 'includes/header.php';
                     <i class="fas fa-store icon"></i>
                     <div>
                         <h4>Business Permit</h4>
-                        <p>Authorization to operate within the barangay.</p>
+                        <p>
+                          Pahintulot para mag‑operate sa loob ng barangay.
+                          <!-- Authorization to operate within the barangay. -->
+                        </p>
                     </div>
                 </button>
             </div>
@@ -151,7 +163,10 @@ include 'includes/header.php';
                     <i class="fas fa-balance-scale icon"></i>
                     <div>
                         <h4>Katarungang Pambarangay</h4>
-                        <p>Barangay justice system for settling disputes.</p>
+                        <p>
+                          Sistema ng katarungan ng barangay para sa pag‑aayos ng alitan.
+                          <!-- Barangay justice system for settling disputes. -->
+                        </p>
                     </div>
                 </button>
             </div>
@@ -160,7 +175,10 @@ include 'includes/header.php';
                     <i class="fas fa-leaf icon"></i>
                     <div>
                         <h4>Environmental Services</h4>
-                        <p>Programs for cleanliness and waste management.</p>
+                        <p>
+                          Mga programa para sa kalinisan at pamamahala ng basura.
+                          <!-- Programs for cleanliness and waste management. -->
+                        </p>
                     </div>
                 </button>
             </div>
@@ -373,10 +391,15 @@ include 'includes/header.php';
             <div class="p-4 text-white rounded about-text">
                 <h1 class="fw-bold">ABOUT</h1>
                 <p class="mt-3">
-                    <strong>eBarangay Mo</strong> is a digital platform designed to streamline barangay services, 
+                    <strong>eBarangay Mo</strong> ay isang digital platform na dinisenyo upang gawing mas 
+                    maayos ang mga serbisyo ng barangay, na nagbibigay sa mga residente ng madaling access 
+                    sa kanilang mga kahilingan, aplikasyon, at balita sa komunidad. Pinapabuti nito ang 
+                    kahusayan, transparency, at kaginhawahan sa lokal na pamamahala sa pamamagitan ng ligtas 
+                    at madaling gamitin na online na transaksyon.
+                    <!-- is a digital platform designed to streamline barangay services, 
                     providing residents with easy access to requests, applications, and community updates. 
                     It enhances efficiency, transparency, and convenience in local governance through secure 
-                    and user-friendly online transactions.
+                    and user-friendly online transactions. -->
                 </p>
             </div>
         </div>
@@ -401,7 +424,7 @@ include 'includes/header.php';
             <img src="images/step_1.png" alt="Visit the Website" class="img-fluid mx-auto d-block w-75">
             <h4 class="mt-3 fw-bold">Visit the Website</h4>
             <hr class="underline">
-            <p>Go to the eBarangay Mo website and click <strong><a href="signup.php" class="text-decoration-none text-black sign-up-text">Sign Up</a></strong>.</p>
+            <p>Pumunta sa website ng eBarangay Mo at i‑click ang <strong><a href="signup.php" class="text-decoration-none text-black sign-up-text">Sign Up</a></strong>.</p>
         </div>
 
         <!-- Step 2 -->
@@ -409,7 +432,7 @@ include 'includes/header.php';
             <img src="images/step_2.png" alt="Register an Account" class="img-fluid mx-auto d-block w-75">
             <h4 class="mt-3 fw-bold">Register an Account</h4>
             <hr class="underline">
-            <p>Fill out the registration form with your required personal information.</p>
+            <p>Kumpletuhin ang form sa pagregister gamit ang kinakailangang personal na impormasyon.</p>
         </div>
 
         <!-- Step 3 -->
@@ -417,7 +440,7 @@ include 'includes/header.php';
             <img src="images/step_3.png" alt="Wait for Verification" class="img-fluid mx-auto d-block w-75">
             <h4 class="mt-3 fw-bold">Wait for Verification</h4>
             <hr class="underline">
-            <p>Wait for the notification in verifying the account you created.</p>
+            <p>Maghintay ng notification para sa verification ng iyong account.</p>
         </div>
 
         <!-- Step 4 -->
@@ -425,7 +448,7 @@ include 'includes/header.php';
             <img src="images/step_4.png" alt="Avail Barangay Services" class="img-fluid mx-auto d-block w-75">
             <h4 class="mt-3 fw-bold">Avail Barangay Services</h4>
             <hr class="underline">
-            <p>Once your account is verified, you can now submit a request for your desired service.</p>
+            <p>Kapag na‑verify na ang iyong account, maaari ka nang magsubmit ng request para sa serbisyong nais mo.</p>
         </div>
     </div>
 </div>

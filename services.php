@@ -22,8 +22,9 @@ include 'includes/header.php';
 <div class="container my-5">
     <h4 class="gradient-text fw-bold text-success">BARANGAY SERVICES</h4>
     <p class="mb-4">
-        Access the range of services offered by Barangay Magang, including permits, certificates, and community assistance programs. 
-        This page provides information to help residents conveniently avail of barangay services.
+        Tingnan ang iba't ibang serbisyong iniaalok ng Barangay Magang—mula sa permit at sertipiko hanggang sa mga programang pangkomunidad—upang mas mapadali at maging maginhawa ang pag‑avail ng serbisyo para sa lahat ng residente.
+        <!-- Access the range of services offered by Barangay Magang, including permits, certificates, and community assistance programs. 
+        This page provides information to help residents conveniently avail of barangay services. -->
     </p>
 
     <div class="row g-4">
@@ -36,7 +37,10 @@ include 'includes/header.php';
                 </div>
                 <div>
                     <h5 class="barangay-id-title fw-bold mb-1">Barangay ID</h5>
-                    <p class="mb-0">An official identification card issued by the barangay that serves as proof of residency and identity.</p>
+                    <p class="mb-0">
+                        Opisyal na identification card na inilalaan ng barangay bilang patunay ng paninirahan at pagkakakilanlan.
+                        <!-- An official identification card issued by the barangay that serves as proof of residency and identity. -->
+                    </p>
                 </div>
                 </div>
             </a>
@@ -52,7 +56,10 @@ include 'includes/header.php';
                     </div>
                     <div>
                         <h5 class="fw-bold mb-1">Barangay Clearance</h5>
-                        <p class="mb-0">An official document that certifies a resident has no pending issues in the barangay.</p>
+                        <p class="mb-0">
+                            Opisyal na dokumento na nagpapatunay na ang residente ay walang hindi pa natapos o hindi naayos na isyu sa barangay.
+                            <!-- An official document that certifies a resident has no pending issues in the barangay. -->
+                        </p>
                     </div>
                 </div>
             </a>
@@ -67,7 +74,10 @@ include 'includes/header.php';
                     </div>
                     <div>
                         <h5 class="fw-bold mb-1">Certification</h5>
-                        <p class="mb-0">An official document issued by the barangay to confirm a resident’s identity, residency, or specific status.</p>
+                        <p class="mb-0">
+                            Opisyal na dokumento upang patunayan ang pagkakakilanlan, paninirahan, o tiyak na katayuan ng residente.
+                            <!-- An official document issued by the barangay to confirm a resident’s identity, residency, or specific status. -->
+                        </p>
                     </div>
                 </div>
             </a>
@@ -82,7 +92,10 @@ include 'includes/header.php';
                     </div>
                     <div>
                         <h5 class="fw-bold mb-1">Business Permit</h5>
-                        <p class="mb-0">An official authorization issued by the barangay that allows a business to operate legally within the community.</p>
+                        <p class="mb-0">
+                            Opisyal na pahintulot na ibinibigay ng barangay para makapagsagawa ng negosyo nang legal sa komunidad.
+                            <!-- An official authorization issued by the barangay that allows a business to operate legally within the community. -->
+                        </p>
                     </div>
                 </div>
             </a>
@@ -97,7 +110,10 @@ include 'includes/header.php';
                     </div>
                     <div>
                         <h5 class="fw-bold mb-1">Katarungang Pambarangay</h5>
-                        <p class="mb-0">A community-based justice system in the barangay that helps settle disputes peacefully.</p>
+                        <p class="mb-0">
+                            Community-based na sistema ng katarungan sa barangay na tumutulong sa mapayapang pag‑aayos ng alitan.
+                            <!-- A community-based justice system in the barangay that helps settle disputes peacefully. -->
+                        </p>
                     </div>
                 </div>
             </a>
@@ -112,7 +128,10 @@ include 'includes/header.php';
                     </div>
                     <div>
                         <h5 class="fw-bold mb-1">Environmental Services</h5>
-                        <p class="mb-0">Programs and initiatives to help maintain cleanliness, proper waste management, and environmental protection.</p>
+                        <p class="mb-0">
+                            Programa at inisyatiba para mapanatili ang kalinisan, wastong pamamahala ng basura, at proteksyon sa kapaligiran.
+                            <!-- Programs and initiatives to help maintain cleanliness, proper waste management, and environmental protection. -->
+                        </p>
                     </div>
                 </div>
             </a>
@@ -127,7 +146,10 @@ include 'includes/header.php';
                     </div>
                     <div>
                         <h5 class="fw-bold mb-1">Cash Incentives</h5>
-                        <p class="mb-0">Offering cash incentives to recognize and reward outstanding students for academic excellence.</p>
+                        <p class="mb-0">
+                            Pagbibigay ng insentibong pera bilang pagkilala at parangal sa mga mag-aaral na may natatanging tagumpay sa akademiko.
+                            <!-- Offering cash incentives to recognize and reward outstanding students for academic excellence. -->
+                        </p>
                     </div>
                 </div>
             </a>

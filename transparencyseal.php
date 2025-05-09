@@ -28,7 +28,7 @@ include 'includes/header.php';
         <div class="col-md-8">
             <h4 class="gradient-text fw-bold text-success mb-4">SYMBOLISM</h4>
             <p class="text-justify">
-                “A pearl buried inside a tightly-shut shell is practically worthless. Government information is a pearl, meant to be shared with the public to maximize its inherent value. The Transparency Seal, depicted by a pearl shining out of an open shell, symbolizes a policy shift towards openness in access to government information. On the one hand, it hopes to inspire Filipinos in the civil service to be more open to citizen engagement; on the other, to invite the Filipino citizenry to exercise their right to participate in governance. This initiative is envisioned as a step in the right direction towards solidifying the position of the Philippines as the Pearl of the Orient — a shining example of democratic virtue in the region.”
+                A pearl buried inside a tightly-shut shell is practically worthless. Government information is a pearl, meant to be shared with the public to maximize its inherent value. The Transparency Seal, depicted by a pearl shining out of an open shell, symbolizes a policy shift towards openness in access to government information. On the one hand, it hopes to inspire Filipinos in the civil service to be more open to citizen engagement; on the other, to invite the Filipino citizenry to exercise their right to participate in governance. This initiative is envisioned as a step in the right direction towards solidifying the position of the Philippines as the Pearl of the Orient — a shining example of democratic virtue in the region.
             </p>
         </div>
     </div>

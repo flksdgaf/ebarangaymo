@@ -197,7 +197,9 @@ include 'includes/header.php';
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <ol>
+        <h6>Narito ang flowchart na nagpapakita ng mga hakbang sa pagkuha ng Barangay ID.</br></br></h6>
+        <img src="images/brgy_id_flowchart.png" alt="Barangay ID Process Flowchart" class="img-fluid rounded">
+        <!-- <ol>
           <li>Log in your account to the eBarangay Mo website.</li>
           <li>Click the "Services" tab in the left sidebar and select "Barangay ID".</li>
           <li>Fill out the form with your personal details.</li>
@@ -205,7 +207,7 @@ include 'includes/header.php';
           <li>Submit your application</li> 
           <li>Wait for the verification and processing of your application.</li>
           <li>Collect your Barangay ID once notified or the date specified.</li>
-        </ol>
+        </ol> -->
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

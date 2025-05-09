@@ -38,21 +38,33 @@
             </a>
         </li>
         <li>
+            <a href="superAdminPanel.php?page=superAdminSummon" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminSummon') ? 'active' : '' ?>">
+            <span class="material-symbols-outlined me-2">event</span>
+            Summon
+            </a>
+        </li>
+        <li>
+            <a href="superAdminPanel.php?page=superAdminKatarungangPambarangay" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminKatarungangPambarangay') ? 'active' : '' ?>">
+            <span class="material-symbols-outlined me-2">balance</span>
+            Katarungang Pambarangay
+            </a>
+        </li>
+        <li>
             <a href="superAdminPanel.php?page=superAdminResidents" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminResidents') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">folder_shared</span>
             Residents
             </a>
         </li>
         <li>
-            <a href="superAdminPanel.php?page=superAdminWebsite" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminWebsite') ? 'active' : '' ?>">
-            <span class="material-symbols-outlined me-2">web</span>
-            eBarangay Mo - Website
+            <a href="superAdminPanel.php?page=superAdminVerifications" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminVerifications') ? 'active' : '' ?>">
+            <span class="material-symbols-outlined me-2">verified</span>
+            Account Verifications
             </a>
         </li>
         <li>
-            <a href="superAdminPanel.php?page=superAdminUsers" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminUsers') ? 'active' : '' ?>">
-            <span class="material-symbols-outlined me-2">group</span>
-            Users
+            <a href="superAdminPanel.php?page=superAdminDeviceStatus" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminDeviceStatus') ? 'active' : '' ?>">
+            <span class="material-symbols-outlined me-2">devices</span>
+            Device Status
             </a>
         </li>
         <li>
@@ -68,15 +80,9 @@
             </a>
         </li>
         <li>
-            <a href="superAdminPanel.php?page=superAdminVerifications" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminVerifications') ? 'active' : '' ?>">
-            <span class="material-symbols-outlined me-2">verified</span>
-            Account Verifications
-            </a>
-        </li>
-        <li>
-            <a href="superAdminPanel.php?page=superAdminDeviceStatus" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminDeviceStatus') ? 'active' : '' ?>">
-            <span class="material-symbols-outlined me-2">devices</span>
-            Device Status
+            <a href="superAdminPanel.php?page=superAdminWebsite" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminWebsite') ? 'active' : '' ?>">
+            <span class="material-symbols-outlined me-2">web</span>
+            Website Configuration
             </a>
         </li>
         <li>

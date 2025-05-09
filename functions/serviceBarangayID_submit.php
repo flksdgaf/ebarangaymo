@@ -73,5 +73,5 @@ if (!empty($_POST['adminRedirect'])) {
     header("Location: ../adminPanel.php?page=adminRequest&transaction_id={$transactionId}");
 } else {
     // Default: user panel
-    header("Location: ../userpanel.php?page=serviceBarangayID&tid={$transactionId}");
+    header("Location: ../userPanel.php?page=serviceBarangayID&tid={$transactionId}");
 }exit();

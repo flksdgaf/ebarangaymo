@@ -174,13 +174,13 @@
 /* END OF RECENT REQUEST TABLE */
 
 /* REQUEST TAB */
-.admin-request-table thead th {
+.admin-table thead th {
   position: sticky;
   top: 0;
   z-index: 10;
 }
 
-.admin-request-table table tbody td {
+.admin-table table tbody td {
   font-size: 0.75rem;  
 }
 

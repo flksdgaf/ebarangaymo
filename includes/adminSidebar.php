@@ -18,7 +18,7 @@
     $currentPage = $_GET['page'] ?? 'adminDashboard';
     ?>
 
-    <ul class="nav flex-column gap-2">
+    <ul class="nav flex-column gap-1">
         <li>
             <a href="adminPanel.php?page=adminDashboard" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminDashboard') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">dashboard</span>
@@ -35,6 +35,18 @@
             <a href="adminPanel.php?page=adminBlotter" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminBlotter') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">edit_document</span>
             Blotter Record
+            </a>
+        </li>
+        <li>
+            <a href="adminPanel.php?page=adminSummon" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminSummon') ? 'active' : '' ?>">
+            <span class="material-symbols-outlined me-2">event</span>
+            Summon
+            </a>
+        </li>
+        <li>
+            <a href="adminPanel.php?page=adminKatarungangPambarangay" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminKatarungangPambarangay') ? 'active' : '' ?>">
+            <span class="material-symbols-outlined me-2">balance</span>
+            Katarungang Pambarangay
             </a>
         </li>
         <li>

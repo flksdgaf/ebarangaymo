@@ -56,12 +56,6 @@
             </a>
         </li>
         <li>
-            <a href="adminPanel.php?page=adminUsers" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminUsers') ? 'active' : '' ?>">
-            <span class="material-symbols-outlined me-2">group</span>
-            Users
-            </a>
-        </li>
-        <li>
             <a href="adminPanel.php?page=adminVerifications" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminVerifications') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">verified</span>
             Account Verifications

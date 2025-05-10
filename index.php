@@ -123,7 +123,7 @@ include 'includes/header.php';
                 </button>
             </div>
             <div class="col d-flex">
-                  <button type="button" class="service-card mid-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#barangayIDModal">
+                  <button type="button" class="service-card mid-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#barangayClearanceModal">
                     <i class="fas fa-file-alt icon"></i>
                     <div>
                         <h4>Barangay Clearance</h4>
@@ -135,7 +135,7 @@ include 'includes/header.php';
                   </button>
             </div>
             <div class="col d-flex">
-                <button type="button" class="service-card dark-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#barangayIDModal">
+                <button type="button" class="service-card dark-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#certificationModal">
                     <i class="fas fa-certificate icon"></i>
                     <div>
                         <h4>Certification</h4>
@@ -147,7 +147,7 @@ include 'includes/header.php';
                 </button>
             </div>
             <div class="col d-flex">
-                <button type="button" class="service-card light-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#barangayIDModal">
+                <button type="button" class="service-card light-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#businessPermitModal">
                     <i class="fas fa-store icon"></i>
                     <div>
                         <h4>Business Permit</h4>
@@ -198,16 +198,7 @@ include 'includes/header.php';
       </div>
       <div class="modal-body">
         <h6>Narito ang flowchart na nagpapakita ng mga hakbang sa pagkuha ng Barangay ID.</br></br></h6>
-        <img src="images/brgy_id_flowchart.png" alt="Barangay ID Process Flowchart" class="img-fluid rounded">
-        <!-- <ol>
-          <li>Log in your account to the eBarangay Mo website.</li>
-          <li>Click the "Services" tab in the left sidebar and select "Barangay ID".</li>
-          <li>Fill out the form with your personal details.</li>
-          <li>Double check your information and choose a payment option.</li>
-          <li>Submit your application</li> 
-          <li>Wait for the verification and processing of your application.</li>
-          <li>Collect your Barangay ID once notified or the date specified.</li>
-        </ol> -->
+        <img src="images/flowchart_barangay_id.png" alt="Barangay ID Process Flowchart" class="img-fluid rounded">
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -226,15 +217,8 @@ include 'includes/header.php';
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <ol>
-          <li>Log in your account to the eBarangay Mo website.</li>
-          <li>Click the "Services" tab in the left sidebar and select "Barangay Clearance".</li>
-          <li>Fill out the form with your personal details.</li>
-          <li>Double check your information and choose a payment option.</li>
-          <li>Submit your application</li> 
-          <li>Wait for the verification and processing of your application.</li>
-          <li>Collect your Barangay Clearance once notified or the date specified.</li>
-        </ol>
+        <h6>Narito ang flowchart na nagpapakita ng mga hakbang sa pagkuha ng Barangay Clearance.</br></br></h6>
+        <img src="images/flowchart_barangay_clearance.png" alt="Barangay Clearance Process Flowchart" class="img-fluid rounded">
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -253,15 +237,8 @@ include 'includes/header.php';
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <ol>
-          <li>Log in your account to the eBarangay Mo website.</li>
-          <li>Click the "Apply for Barangay ID" button.</li>
-          <li>Fill out the form with your personal details.</li>
-          <li>Double check your information and choose a payment option.</li>
-          <li>Submit your application</li> 
-          <li>Wait for the verification and processing of your application.</li>
-          <li>Collect your Barangay ID once notified or the date specified.</li>
-        </ol>
+        <h6>Narito ang flowchart na nagpapakita ng mga hakbang sa pagkuha ng Barangay Certification.</br></br></h6>
+        <img src="images/flowchart_barangay_certification.png" alt="Barangay Certification Process Flowchart" class="img-fluid rounded">
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -280,15 +257,8 @@ include 'includes/header.php';
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <ol>
-          <li>Log in your account to the eBarangay Mo website.</li>
-          <li>Click the "Apply for Barangay ID" button.</li>
-          <li>Fill out the form with your personal details.</li>
-          <li>Double check your information and choose a payment option.</li>
-          <li>Submit your application</li> 
-          <li>Wait for the verification and processing of your application.</li>
-          <li>Collect your Barangay ID once notified or the date specified.</li>
-        </ol>
+        <h6>Narito ang flowchart na nagpapakita ng mga hakbang sa pagkuha ng Barangay Business Permit.</br></br></h6>
+        <img src="images/flowchart_business_permit.png" alt="Barangay Business Permit Process Flowchart" class="img-fluid rounded">
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

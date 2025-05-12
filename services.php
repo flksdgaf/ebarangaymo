@@ -33,7 +33,8 @@ include 'includes/header.php';
             <a href="#" class="text-decoration-none br-10px">
                 <div class="barangay-id d-flex p-3 rounded text-white">
                 <div class="me-3">
-                    <img src="images/barangay_id.png" alt="Barangay ID Icon" class="barangay-id-icon">
+                    <i class="fas fa-id-card icon"></i>
+                    <!-- <img src="images/barangay_id.png" alt="Barangay ID Icon" class="barangay-id-icon"> -->
                 </div>
                 <div>
                     <h5 class="barangay-id-title fw-bold mb-1">Barangay ID</h5>
@@ -46,13 +47,12 @@ include 'includes/header.php';
             </a>
         </div>
 
-
         <!-- BARANGAY CLEARANCE -->
         <div class="col-md-6">
             <a href="#" class="text-decoration-none">
                 <div class="barangay-clearance d-flex p-3 rounded text-white">
                     <div class="me-3">
-                        <img src="images/barangay_clearance.png" alt="Barangay Clearance Icon" class="barangay-clearance-icon">  
+                        <i class="fas fa-file-alt icon"></i>  
                     </div>
                     <div>
                         <h5 class="fw-bold mb-1">Barangay Clearance</h5>
@@ -70,7 +70,7 @@ include 'includes/header.php';
             <a href="#" class="text-decoration-none">
                 <div class="certification d-flex p-3 rounded text-white">
                     <div class="me-3">
-                        <img src="images/certification.png" alt="Certification Icon" class="certification-icon"> 
+                        <i class="fas fa-certificate icon"></i> 
                     </div>
                     <div>
                         <h5 class="fw-bold mb-1">Certification</h5>
@@ -88,7 +88,7 @@ include 'includes/header.php';
             <a href="#" class="text-decoration-none">
                 <div class="business-permit d-flex p-3 rounded text-white">
                     <div class="me-3">
-                        <img src="images/business_permit.png" alt="Business Permit Icon" class="business-permit-icon"> 
+                        <i class="fas fa-store icon"></i> 
                     </div>
                     <div>
                         <h5 class="fw-bold mb-1">Business Permit</h5>
@@ -102,7 +102,7 @@ include 'includes/header.php';
         </div>
 
         <!-- KATARUNGANG PAMBARANGAY -->
-        <div class="col-md-6">
+        <!-- <div class="col-md-6">
             <a href="#" class="text-decoration-none">
                 <div class="katarungang-pambarangay d-flex p-3 rounded text-white">
                     <div class="me-3">
@@ -112,15 +112,14 @@ include 'includes/header.php';
                         <h5 class="fw-bold mb-1">Katarungang Pambarangay</h5>
                         <p class="mb-0">
                             Community-based na sistema ng katarungan sa barangay na tumutulong sa mapayapang pag‑aayos ng alitan.
-                            <!-- A community-based justice system in the barangay that helps settle disputes peacefully. -->
                         </p>
                     </div>
                 </div>
             </a>
-        </div>
+        </div> -->
 
         <!-- ENVIRONMENTAL SERVICES -->
-        <div class="col-md-6">
+        <!-- <div class="col-md-6">
             <a href="#" class="text-decoration-none">
                 <div class="environmental-services d-flex p-3 rounded text-white">
                     <div class="me-3">
@@ -130,7 +129,23 @@ include 'includes/header.php';
                         <h5 class="fw-bold mb-1">Environmental Services</h5>
                         <p class="mb-0">
                             Programa at inisyatiba para mapanatili ang kalinisan, wastong pamamahala ng basura, at proteksyon sa kapaligiran.
-                            <!-- Programs and initiatives to help maintain cleanliness, proper waste management, and environmental protection. -->
+                        </p>
+                    </div>
+                </div>
+            </a>
+        </div> -->
+
+        <!-- EQUIPMENT BORROWING -->
+        <div class="col-md-6">
+            <a href="#" class="text-decoration-none">
+                <div class="equipment-borrowing d-flex p-3 rounded text-white">
+                    <div class="me-3">
+                        <i class="fas fa-chair icon"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Equipment Borrowing</h5>
+                        <p class="mb-0">
+                            Pagpapahiram ng kagamitan mula sa barangay para sa pansamantalang gamit, ayon sa itinakdang alituntunin at iskedyul.
                         </p>
                     </div>
                 </div>
@@ -142,7 +157,7 @@ include 'includes/header.php';
             <a href="#" class="text-decoration-none">
                 <div class="cash-incentives d-flex p-3 rounded text-white">
                     <div class="me-3">
-                        <img src="images/cash_incentives.png" alt="Cash Incentives Icon" class="cash-incentives-icon">
+                        <i class="fas fa-money-bill cash_icon"></i>
                     </div>
                     <div>
                         <h5 class="fw-bold mb-1">Cash Incentives</h5>

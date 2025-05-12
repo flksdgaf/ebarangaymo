@@ -80,31 +80,6 @@ include 'includes/header.php';
     </div>
 </div>
 
-<!-- MISSION VISION VALUES SECTION -->
-<!-- <div id="mission-vision" class="container custom-padding">
-    <div class="row justify-content-center align-items-stretch g-4 text-center"> -->
-        <!-- Mission Card -->
-        <!-- <div class="col-lg-5 col-md-6 d-flex">
-            <div class="card-custom mission-shape w-100 d-flex flex-column justify-content-center">
-                <h4 class="section-title mb-3">MISSION</h4>
-                <p class="mb-0">
-                    We members of of Sangguniang Barangay will continue to strive more to effectively deliver basic services needed by the people, promote peace and order, protect the interest, promote social and economic development in pursuit of peaceful reliant towards a develop and progressive community within a just VARI social order.
-                </p>
-            </div>
-        </div> -->
-
-        <!-- Vision Card -->
-        <!-- <div class="col-lg-5 col-md-6 d-flex">
-            <div class="card-custom vision-shape w-100 d-flex flex-column justify-content-center">
-                <h4 class="section-title mb-3">VISION</h4>
-                <p class="mb-0">
-                    Barangay Magang is one of the most widely competitive community in Daet with well-developed, self-reliant, vigorously, God fearing and empowered people, economically adequate with expensive infrastructure facilities an and ecologically balance environment governed by effective and service centered leaders ready to implement the Good Governance and Ethical Leadership.
-                </p>
-            </div>
-        </div>
-    </div>
-</div> -->
-
 <!-- SERVICE SECTION -->
 <div class="container-fluid mt-5 mb-5 services-container">
   <h1 class="text-center gradient-text text-uppercase">Services Offered</h1>
@@ -117,7 +92,6 @@ include 'includes/header.php';
                         <h4>Barangay ID</h4>
                         <p>
                           Opisyal na identification card na inilalaan ng barangay.
-                          <!-- An official identification card issued by the barangay. -->
                         </p>
                     </div>
                 </button>
@@ -129,7 +103,6 @@ include 'includes/header.php';
                         <h4>Barangay Clearance</h4>
                         <p>
                           Patunay na ang residente ay walang nakabinbing isyu.
-                          <!-- Certifies a resident has no pending issues. -->
                         </p>
                     </div>
                   </button>
@@ -141,7 +114,6 @@ include 'includes/header.php';
                         <h4>Certification</h4>
                         <p>
                           Patunay ng pagkakakilanlan, paninirahan, o katayuan ng residente.
-                          <!-- Confirms a resident's identity, residency, or status. -->
                         </p>
                     </div>
                 </button>
@@ -153,38 +125,46 @@ include 'includes/header.php';
                         <h4>Business Permit</h4>
                         <p>
                           Pahintulot para mag‑operate sa loob ng barangay.
-                          <!-- Authorization to operate within the barangay. -->
                         </p>
                     </div>
                 </button>
             </div>
-            <div class="col d-flex">
+            <!-- <div class="col d-flex">
                 <button type="button" class="service-card mid-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#barangayIDModal">
                     <i class="fas fa-balance-scale icon"></i>
                     <div>
                         <h4>Katarungang Pambarangay</h4>
                         <p>
                           Sistema ng katarungan ng barangay para sa pag‑aayos ng alitan.
-                          <!-- Barangay justice system for settling disputes. -->
+                        </p>
+                    </div>
+                </button>
+            </div> -->
+            <div class="col d-flex">
+                <button type="button" class="service-card mid-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#equipmentModal">
+                    <i class="fas fa-chair icon"></i>
+                    <div>
+                        <h4>Equipment Borrowing</h4>
+                        <p>
+                          Paghiram ng mga barangay equipments.
                         </p>
                     </div>
                 </button>
             </div>
             <div class="col d-flex">
-                <button type="button" class="service-card dark-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#barangayIDModal">
-                    <i class="fas fa-leaf icon"></i>
+                <button type="button" class="service-card dark-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#cashModal">
+                    <i class="fas fa-money-bill cash_icon"></i>
                     <div>
-                        <h4>Environmental Services</h4>
+                        <h4>Cash Incentives</h4>
                         <p>
-                          Mga programa para sa kalinisan at pamamahala ng basura.
-                          <!-- Programs for cleanliness and waste management. -->
+                          Insentibong salapi para sa mga natatanging mag-aaral.
                         </p>
                     </div>
                 </button>
             </div>
         </div>
       </div>
-    <a href="services.php" class="view-more">View More Services</a>
+    <!-- <a href="services.php" class="view-more">View More Services</a> -->
 </div>
 
 <!-- Barangay ID Modal -->
@@ -193,7 +173,7 @@ include 'includes/header.php';
     <div class="modal-content">
       <div class="modal-header">
         <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 40px; height: 40px; object-fit: contain; margin-right: 15px;">
-        <h5 class="modal-title" id="barangayIDModalLabel">How to Get a Barangay ID</h5>
+        <h5 class="modal-title" id="barangayIDModalLabel">Barangay ID</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
@@ -213,7 +193,7 @@ include 'includes/header.php';
     <div class="modal-content">
       <div class="modal-header">
         <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 40px; height: 40px; object-fit: contain; margin-right: 15px;">
-        <h5 class="modal-title" id="barangayClearanceModalLabel">How to Get a Barangay Clearance</h5>
+        <h5 class="modal-title" id="barangayClearanceModalLabel">Barangay Clearance</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
@@ -233,7 +213,7 @@ include 'includes/header.php';
     <div class="modal-content">
       <div class="modal-header">
         <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 40px; height: 40px; object-fit: contain; margin-right: 15px;">
-        <h5 class="modal-title" id="barangayCertificationModalLabel">How to Get a Barangay Certification</h5>
+        <h5 class="modal-title" id="barangayCertificationModalLabel">Barangay Certification</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
@@ -253,39 +233,12 @@ include 'includes/header.php';
     <div class="modal-content">
       <div class="modal-header">
         <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 40px; height: 40px; object-fit: contain; margin-right: 15px;">
-        <h5 class="modal-title" id="businessPermitModalLabel">How to Get a Barangay Business Permit</h5>
+        <h5 class="modal-title" id="businessPermitModalLabel">Barangay Business Permit</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <h6>Narito ang flowchart na nagpapakita ng mga hakbang sa pagkuha ng Barangay Business Permit.</br></br></h6>
         <img src="images/flowchart_business_permit.png" alt="Barangay Business Permit Process Flowchart" class="img-fluid rounded">
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Katarungang Pambarangay Modal -->
-<div class="modal fade" id="katarungangModal" tabindex="-1" aria-labelledby="katarungangModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 40px; height: 40px; object-fit: contain; margin-right: 15px;">
-        <h5 class="modal-title" id="katarungangModalLabel">How to Apply for a Katarungang Pambarangay</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <ol>
-          <li>Log in your account to the eBarangay Mo website.</li>
-          <li>Click the "Apply for Barangay ID" button.</li>
-          <li>Fill out the form with your personal details.</li>
-          <li>Double check your information and choose a payment option.</li>
-          <li>Submit your application</li> 
-          <li>Wait for the verification and processing of your application.</li>
-          <li>Collect your Barangay ID once notified or the date specified.</li>
-        </ol>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -300,11 +253,13 @@ include 'includes/header.php';
     <div class="modal-content">
       <div class="modal-header">
         <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 40px; height: 40px; object-fit: contain; margin-right: 15px;">
-        <h5 class="modal-title" id="equipmentModalLabel">How to Apply for an Equipment Borrowing</h5>
+        <h5 class="modal-title" id="equipmentModalLabel">Equipment Borrowing</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <ol>
+        <h6>Narito ang flowchart na nagpapakita ng mga hakbang sa Barangay Equipment Borrowing .</br></br></h6>
+        <img src="images/flowchart_equipment_borrowing.png" alt="Barangay Equipment Borrowing Process Flowchart" class="img-fluid rounded">
+        <!-- <ol>
           <li>Log in your account to the eBarangay Mo website.</li>
           <li>Click the "Apply for Barangay ID" button.</li>
           <li>Fill out the form with your personal details.</li>
@@ -312,7 +267,36 @@ include 'includes/header.php';
           <li>Submit your application</li> 
           <li>Wait for the verification and processing of your application.</li>
           <li>Collect your Barangay ID once notified or the date specified.</li>
-        </ol>
+        </ol> -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Cash Incentives Modal -->
+<div class="modal fade" id="cashModal" tabindex="-1" aria-labelledby="cashModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 40px; height: 40px; object-fit: contain; margin-right: 15px;">
+        <h5 class="modal-title" id="cashModalLabel">Cash Incentives</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <h6>Narito ang flowchart na nagpapakita ng mga hakbang sa pag-apply sa Cash Incentives program.</br></br></h6>
+        <img src="images/flowchart_cash_incentives.png" alt="Cash Incentives Application Process Flowchart" class="img-fluid rounded">
+        <!-- <ol>
+          <li>Log in your account to the eBarangay Mo website.</li>
+          <li>Click the "Apply for Barangay ID" button.</li>
+          <li>Fill out the form with your personal details.</li>
+          <li>Double check your information and choose a payment option.</li>
+          <li>Submit your application</li> 
+          <li>Wait for the verification and processing of your application.</li>
+          <li>Collect your Barangay ID once notified or the date specified.</li>
+        </ol> -->
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -365,10 +349,6 @@ include 'includes/header.php';
                     sa kanilang mga kahilingan, aplikasyon, at balita sa komunidad. Pinapabuti nito ang 
                     kahusayan, transparency, at kaginhawahan sa lokal na pamamahala sa pamamagitan ng ligtas 
                     at madaling gamitin na online na transaksyon.
-                    <!-- is a digital platform designed to streamline barangay services, 
-                    providing residents with easy access to requests, applications, and community updates. 
-                    It enhances efficiency, transparency, and convenience in local governance through secure 
-                    and user-friendly online transactions. -->
                 </p>
             </div>
         </div>

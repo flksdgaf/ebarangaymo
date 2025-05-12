@@ -2,82 +2,62 @@
     font-family: 'Poppins', sans-serif;
 }
 
+.icon {
+    flex: 0 0 auto;
+    font-size: 50px;
+}
+
 .barangay-id {
     background-color: #2A9245;
     padding: 50px 20px;
-}
-
-.barangay-id-icon {
-    width: 70px;        /* Adjust the size as needed */
-    height: 70px;
-    margin-bottom: 10px;
-    object-fit: contain;
+    display: flex;         
+    align-items: center;
 }
 
 .barangay-clearance {
     background-color: #61AD41;
-}
-
-.barangay-clearance-icon {
-    width: 70px;        /* Adjust the size as needed */
-    height: 70px;
-    margin-bottom: 10px;
-    object-fit: contain;
+    display: flex;         
+    align-items: center;
 }
 
 .certification {
     background-color: #13411F;
-}
-
-.certification-icon {
-    width: 70px;        /* Adjust the size as needed */
-    height: 70px;
-    margin-bottom: 10px;
-    object-fit: contain;
+    display: flex;         
+    align-items: center;
 }
 
 .business-permit {
     background-color: #2A9245;
     padding: 50px 20px;
+    display: flex;         
+    align-items: center;
 }
 
-.business-permit-icon {
-    width: 70px;        /* Adjust the size as needed */
-    height: 70px;
-    margin-bottom: 10px;
-    object-fit: contain;
-}
-
-.katarungang-pambarangay {
+.equipment-borrowing {
     background-color: #61AD41;
-}
-
-.katarungang-pambarangay-icon {
-    width: 70px;        /* Adjust the size as needed */
-    height: 70px;
-    margin-bottom: 10px;
-    object-fit: contain;
-}
-
-.environmental-services {
-    background-color: #13411F;
-}
-
-.environmental-services-icon {
-    width: 70px;        /* Adjust the size as needed */
-    height: 70px;
-    margin-bottom: 10px;
-    object-fit: contain;
+    padding: 50px 20px;
+    display: flex;         
+    align-items: center;
 }
 
 .cash-incentives {
-    background-color: #2A9245;
+    background-color: #13411F;
     padding: 50px 20px;
+    display: flex;         
+    align-items: center;
 }
 
-.cash-incentives-icon {
-    width: 70px;        /* Adjust the size as needed */
-    height: 70px;
-    margin-bottom: 10px;
-    object-fit: contain;
+.cash_icon {
+    flex: 0 0 auto;
+    font-size: 50px;
 }
+
+/* .katarungang-pambarangay {
+    background-color: #61AD41;
+} */
+
+/* .environmental-services {
+    background-color: #13411F;
+} */
+
+

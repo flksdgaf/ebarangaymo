@@ -6,17 +6,29 @@ require 'functions/dbconn.php';
 session_start();
 
 $pageTitles = [
-    'adminDashboard'    => 'Dashboard',
-    'adminRequest'      => 'Service Requests',
-    'adminBlotter'      => 'Blotter Records',
-    'adminResidents'    => 'Residents Records',
-    'adminUsers'        => 'Users',
-    'adminVerifications'=> 'Account Verifications',
+    'adminDashboard' => 'Dashboard',
+    'adminRequest' => 'Service Requests',
+    'adminBlotter' => 'Blotter Records',
+    'adminResidents' => 'Residents Records',
+    'adminUsers' => 'Users',
+    'adminVerifications' => 'Account Verifications',
     'adminTransactions' => 'Transaction History',
-    'adminWebsite'      => 'Website Management',
+    'adminWebsite' => 'Website Management',
     'adminDeviceStatus' => 'Device Status',
-    'adminSettings'     => 'Settings',
-    'adminLogs'         => 'Activity Logs'
+    'adminSettings'=> 'Settings',
+    'adminLogs' => 'Activity Logs',
+    'superAdminDashboard' => 'Dashboard',
+    'superAdminRequest' => 'Service Requests',
+    'superAdminBlotter' => 'Blotter Records',
+    'superAdminSummon' => 'Summon',
+    'superAdminKatarungangPambarangay' => 'Katarungang Pambarangay',
+    'superAdminResidents' => 'Residents Records',
+    'superAdminVerifications' => 'Account Verifications',
+    'superAdminTransactions' => 'Transaction History', 
+    'superAdminLogs' => 'Activity Logs',
+    'superAdminWebsite' => 'Website Management',
+    'superAdminDeviceStatus' => 'Device Status',
+    'superAdminSettings' => 'Settings'
 ];
 
 $topbarText = $pageTitles[$page] ?? 'Dashboard';
@@ -91,9 +103,6 @@ $stmt->close();
                     <span class="d-md-none icon"><i class="fas fa-user"></i></span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
-                    <li><a class="dropdown-item" href="profile.php">My Profile</a></li>
-                    <li><a class="dropdown-item" href="settings.php">Settings</a></li>
-                    <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="functions/logout.php">Logout</a></li>
                 </ul>
             </div>

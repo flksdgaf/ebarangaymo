@@ -53,7 +53,7 @@ $whereSQL = $whereClauses
   ? 'WHERE ' . implode(' AND ', $whereClauses)
   : '';
 
-$limit = 11; // records per page
+$limit = 10; // records per page
 $page = isset($_GET['page_num']) ? max((int)$_GET['page_num'], 1) : 1;
 $offset = ($page - 1) * $limit;
   
@@ -278,12 +278,12 @@ $result = $st->get_result();
 <div class="container py-3">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <!-- modal trigger -->
-    <button type="button"
+    <!-- <button type="button"
             class="btn btn-success"
             data-bs-toggle="modal"
             data-bs-target="#newRequestModal">
       Add New Request
-    </button> 
+    </button>  -->
     <div class="dropdown">
       <button class="btn btn-sm btn-outline-success dropdown-toggle"
               type="button"
@@ -506,7 +506,7 @@ $st->close();
 $conn->close();
 ?>
 
-<script>
+<!-- <script>
   document.addEventListener('DOMContentLoaded', () => {
     const selector  = document.getElementById('requestType');
     const container = document.getElementById('requestFormContainer');
@@ -531,4 +531,4 @@ $conn->close();
     const tabEl = document.getElementById('pill-barangay');
     tabEl.addEventListener('shown.bs.tab', loadBarangayForm);
   });
-</script>
+</script> -->

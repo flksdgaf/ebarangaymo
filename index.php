@@ -15,28 +15,27 @@ include 'includes/header.php';
       <!-- DESKTOP VIEW -->
       <div class="row align-items-center justify-content-center d-none d-md-flex">
         <div class="col-md-3 offset-md-1 text-end">
-          <img src="images/magang_logo.png" alt="Brgy. Magang Logo" class="img-fluid" style="max-width: 110px;">
+          <img src="images/magang_logo.png" alt="Barangay Logo" class="img-fluid" style="max-width: 110px;">
         </div>
         <div class="col-md-6 text-start">
           <h6 class="mb-2">Republic of the Philippines</h6>
           <hr class="my-1" style="width: 55%; border-top: 2px solid white; opacity: 1; margin-left: 0;">
-          <h2 class="fw-bold my-0">BARANGAY MAGANG</h2>
-          <p class="mt-0 mb-0">Daet, Camarines Norte, Philippines</p>
+          <h2 class="fw-bold my-0" aria-label="Barangay Name">BARANGAY MAGANG</h2>
+          <p class="mt-0 mb-0" aria-label="Barangay Address">Daet, Camarines Norte, Philippines</p>
         </div>
       </div>
     </div>
       
-      <!-- MOBILE VIEW -->
-      <div class="d-flex d-md-none flex-column align-items-center">
-        <div class="d-flex justify-content-center gap-3 mb-3">
-          <img src="images/magang_logo.png" alt="Brgy. Magang Logo" class="img-fluid">
-        </div>
-        <div class="text-center">
-          <h6 class="mb-1 small">Republic of the Philippines</h6>
-          <hr class="my-1" style="width: 100%; border-top: 2px solid white; opacity: 1; margin: 0;">
-          <h3 class="fw-bold my-0">BARANGAY MAGANG</h3>
-          <p class="mt-0 mb-0">Daet, Camarines Norte, Philippines</p>
-        </div>
+    <!-- MOBILE VIEW -->
+    <div class="d-flex d-md-none flex-column align-items-center">
+      <div class="d-flex justify-content-center gap-3 mb-3">
+        <img src="images/magang_logo.png" alt="Brgy. Magang Logo" class="img-fluid">
+      </div>
+      <div class="text-center">
+        <h6 class="mb-1 small">Republic of the Philippines</h6>
+        <hr class="my-1" style="width: 100%; border-top: 2px solid white; opacity: 1; margin: 0;">
+        <h3 class="fw-bold my-0">BARANGAY MAGANG</h3>
+        <p class="mt-0 mb-0">Daet, Camarines Norte, Philippines</p>
       </div>
     </div>
   </div>

@@ -5,8 +5,8 @@
             <img src="images/good_governance_logo.png" alt="Good Governance Logo" style="width: 50px;">
             <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 50px;">
         </div>
-        <h1 class="mt-3 mb-1">eBarangay Mo</h1>
-        <h2 class="text-uppercase">Barangay Services Portal of  Brgy. Magang, Daet, Camarines Norte</h2>
+        <h1 class="mt-1 mb-1">Barangay Magang</h1>
+        <h2 class="text-uppercase">Daet, Camarines Norte</h2>
         <hr class="custom-hr">
 
         <button class="btn btn-sm" id="close-btn">
@@ -18,7 +18,7 @@
     $currentPage = $_GET['page'] ?? 'superAdminDashboard';
     ?>
 
-    <ul class="nav flex-column gap-2">
+    <ul class="nav flex-column gap-1">
         <li>
             <a href="superAdminPanel.php?page=superAdminDashboard" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminDashboard') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">dashboard</span>
@@ -62,12 +62,6 @@
             </a>
         </li>
         <li>
-            <a href="superAdminPanel.php?page=superAdminDeviceStatus" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminDeviceStatus') ? 'active' : '' ?>">
-            <span class="material-symbols-outlined me-2">devices</span>
-            Device Status
-            </a>
-        </li>
-        <li>
             <a href="superAdminPanel.php?page=superAdminTransactions" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminTransactions') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">receipt_long</span>
             Transaction History
@@ -83,6 +77,12 @@
             <a href="superAdminPanel.php?page=superAdminWebsite" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminWebsite') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">web</span>
             Website Configuration
+            </a>
+        </li>
+        <li>
+            <a href="superAdminPanel.php?page=superAdminDeviceStatus" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminDeviceStatus') ? 'active' : '' ?>">
+            <span class="material-symbols-outlined me-2">devices</span>
+            Device Status
             </a>
         </li>
         <li>

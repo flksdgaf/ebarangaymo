@@ -2,12 +2,12 @@
 require 'functions/dbconn.php';
 $userId = (int)$_SESSION['loggedInUserID'];
 
-// ── PAGINATION SETUP ─────────────────────────────────────────────────────────
+// PAGINATION SETUP
 $page_num = isset($_GET['page_num']) && is_numeric($_GET['page_num']) ? (int)$_GET['page_num'] : 1;
-$limit    = 7; // entries per page
+$limit    = 10; 
 $offset   = ($page_num - 1) * $limit;
 
-// ── 2) PULL IN FILTERS ────────────────────────────────────────────────────────
+// PULL IN FILTERS
 $request_type = $_GET['request_type'] ?? '';
 $date_from = $_GET['date_from'] ?? '';
 $date_to = $_GET['date_to'] ?? '';
@@ -18,30 +18,27 @@ $payment_status = $_GET['payment_status'] ?? '';
 $document_status = $_GET['document_status'] ?? '';
 $search = trim($_GET['search'] ?? '');
 
-// ── 3) BUILD WHERE CLAUSES ───────────────────────────────────────────────────
+// BUILD WHERE CLAUSES
 $whereClauses = [];
 $bindTypes    = '';
 $bindParams   = [];
 
-// global search across columns
+// GLOBAL FULL-TEXT SEARCH
 if ($search !== '') {
   $whereClauses[] = "(
-      transaction_id LIKE ? OR
-      full_name        LIKE ? OR
-      request_type     LIKE ? OR
-      DATE(created_at) LIKE ? OR
-      DATE(claim_date) LIKE ? OR
-      payment_method   LIKE ? OR
-      payment_status   LIKE ? OR
-      document_status  LIKE ?
+    transaction_id LIKE ? OR
+    full_name        LIKE ? OR
+    request_type     LIKE ? OR
+    payment_method   LIKE ? OR
+    payment_status   LIKE ? OR
+    document_status  LIKE ?
   )";
-  $bindTypes .= str_repeat('s', 8);
+  $bindTypes .= 'ssssss';
   $term = "%{$search}%";
-  for ($i = 0; $i < 8; $i++) {
-      $bindParams[] = $term;
-  }
+  $bindParams = array_merge($bindParams, array_fill(0, 6, $term));
 }
 
+// INDIVIDUAL FILTERS
 if ($request_type) {
   $whereClauses[] = 'request_type = ?';
   $bindTypes    .= 's';
@@ -62,7 +59,8 @@ if ($document_status) {
   $bindTypes    .= 's';
   $bindParams[]  = $document_status;
 }
-// ── date range ────────────────────────────────────────────────
+
+// DATE RANGE
 if ($date_from && $date_to) {
   $whereClauses[] = 'DATE(created_at) BETWEEN ? AND ?';
   $bindTypes    .= 'ss';
@@ -78,7 +76,7 @@ if ($date_from && $date_to) {
   $bindParams[]  = $date_to;
 }
 
-// ── claim date range ────────────────────────────────────────────────
+// CLAIM DATE RANGE
 if ($claim_from && $claim_to) {
   $whereClauses[] = 'DATE(claim_date) BETWEEN ? AND ?';
   $bindTypes    .= 'ss';
@@ -98,11 +96,10 @@ $whereSQL = $whereClauses
   ? 'WHERE ' . implode(' AND ', $whereClauses)
   : '';
   
-// ── 4) COUNT TOTAL WITH FILTERS ──────────────────────────────────────────────
+// COUNT TOTAL WITH FILTERS
 $countSql = "SELECT COUNT(*) FROM view_general_requests {$whereSQL}";
 $cst = $conn->prepare($countSql);
 if ($whereClauses) {
-  // bind only the filter params
   $cst->bind_param($bindTypes, ...$bindParams);
 }
 $cst->execute();
@@ -111,24 +108,19 @@ $cst->close();
 
 $pages = max(1, ceil($total / $limit));
 
-// ── 5) FETCH PAGE WITH FILTERS ──────────────────────────────────────────────
+// FETCH PAGE WITH FILTERS
 $sql = "
-  SELECT transaction_id, full_name, request_type,
-         created_at, claim_date,
-         payment_method, payment_status, document_status
-    FROM view_general_requests
-    {$whereSQL}
-    ORDER BY created_at DESC
-    LIMIT ? OFFSET ?
-";
+    SELECT transaction_id, full_name, request_type, DATE_FORMAT(created_at, '%M %d, %Y') AS formatted_date, claim_date, payment_method, payment_status, document_status
+    FROM view_general_requests {$whereSQL} ORDER BY created_at DESC LIMIT ? OFFSET ?
+  ";
 $st = $conn->prepare($sql);
 
+// BIND FILTERS & PAGINATION
 if ($whereClauses) {
-  // stitch types + filters + ii
   $fullTypes = $bindTypes . 'ii';
   $allParams = [];
   $allParams[] = $fullTypes;
-  // needs references for call_user_func_array
+
   foreach ($bindParams as $k => $v) {
     $allParams[] = & $bindParams[$k];
   }
@@ -143,107 +135,18 @@ if ($whereClauses) {
 $st->execute();
 $result = $st->get_result();
 
-// ── 6) BUILD QUERYSTRING FOR PAGINATION LINKS ────────────────────────────────
+// BUILD QUERYSTRING FOR PAGINATION LINKS
 $qs = $_GET;
-unset($qs['page_num']);   // we’ll append a fresh one for each link
+unset($qs['page_num']); 
 $queryString = http_build_query($qs);
 if ($queryString) {
   $queryString .= '&';
 }
 ?>
 
+<!-- MAIN CONTENT -->
 <div class="container-fluid p-3">
   <div class="row g-3 mb-4">
-    <div class="dropdown">
-      <button class="btn btn-sm btn-outline-success dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
-        Filter
-      </button>
-      <div class="dropdown-menu dropdown-menu-end p-3" aria-labelledby="filterDropdown" style="min-width:260px; --bs-body-font-size:.75rem; font-size:.75rem;">
-        <form method="get" class="mb-0" id="filterForm">
-          <!-- always reset back to page 1 on filter -->
-          <input type="hidden" name="page_num" value="1">
-
-          <!-- Request Type -->
-          <div class="mb-2">
-            <label class="form-label mb-1">Request Type</label>
-            <select name="request_type" class="form-select form-select-sm" style="font-size:.75rem;">
-              <option value="">All</option>
-              <option <?= $request_type==='Barangay ID'?'selected':'' ?>      value="Barangay ID">Barangay ID</option>
-              <option <?= $request_type==='Barangay Clearance'?'selected':'' ?> value="Barangay Clearance">Barangay Clearance</option>
-              <option <?= $request_type==='Certificate'?'selected':'' ?>       value="Certification">Certification</option>
-              <option <?= $request_type==='Business Permit'?'selected':'' ?>    value="Business Permit">Business Permit</option>
-              <option <?= $request_type==='Katarungang Pambarangay'?'selected':'' ?> value="Katarungang Pambarangay">Katarungang Pambarangay</option>
-              <option <?= $request_type==='Environmental Services'?'selected':'' ?>  value="Environmental Services">Environmental Services</option>
-            </select>
-          </div>
-
-          <!-- Date Created -->
-          <div class="mb-2">
-            <label class="form-label mb-1">Date Created</label>
-            <div class="d-flex">
-              <input type="date" name="date_from" class="form-control form-control-sm me-1" style="font-size:.75rem;" value="<?= htmlspecialchars($date_from) ?>">
-              <input type="date" name="date_to" class="form-control form-control-sm" style="font-size:.75rem;" value="<?= htmlspecialchars($date_to) ?>">
-            </div>
-          </div>
-
-          <!-- Claim Date -->
-          <div class="mb-2">
-            <label class="form-label mb-1">Claim Date</label>
-            <div class="d-flex">
-              <input type="date"
-                    name="claim_from"
-                    class="form-control form-control-sm me-1"
-                    style="font-size:.75rem;"
-                    value="<?= htmlspecialchars($claim_from) ?>">
-              <input type="date"
-                    name="claim_to"
-                    class="form-control form-control-sm"
-                    style="font-size:.75rem;"
-                    value="<?= htmlspecialchars($claim_to) ?>">
-            </div>
-          </div>
-
-          <!-- Payment Method -->
-          <div class="mb-2">
-            <label class="form-label mb-1">Payment Method</label>
-            <select name="payment_method" class="form-select form-select-sm" style="font-size:.75rem;">
-              <option value="">All</option>
-              <option <?= $payment_method==='GCash'?'selected':'' ?>             value="GCash">GCash</option>
-              <option <?= $payment_method==='Brgy Payment Device'?'selected':'' ?> value="Brgy Payment Device">Brgy Payment Device</option>
-              <option <?= $payment_method==='Over-the-Counter'?'selected':'' ?>    value="Over-the-Counter">Over-the-Counter</option>
-            </select>
-          </div>
-
-          <!-- Payment Status -->
-          <div class="mb-2">
-            <label class="form-label mb-1">Payment Status</label>
-            <select name="payment_status" class="form-select form-select-sm" style="font-size:.75rem;">
-              <option value="">All</option>
-              <option <?= $payment_status==='Paid'?'selected':'' ?>   value="Paid">Paid</option>
-              <option <?= $payment_status==='Unpaid'?'selected':'' ?> value="Unpaid">Unpaid</option>
-            </select>
-          </div>
-
-          <!-- Document Status -->
-          <div class="mb-2">
-            <label class="form-label mb-1">Document Status</label>
-            <select name="document_status" class="form-select form-select-sm" style="font-size:.75rem;">
-              <option value="">All</option>
-              <option <?= $document_status==='For Verification'?'selected':'' ?> value="For Verification">For Verification</option>
-              <option <?= $document_status==='Processing'?'selected':'' ?>       value="Processing">Processing</option>
-              <option <?= $document_status==='Ready To Release'?'selected':'' ?> value="Ready To Release">Ready To Release</option>
-              <option <?= $document_status==='Released'?'selected':'' ?>         value="Released">Released</option>
-              <option <?= $document_status==='Rejected'?'selected':'' ?>         value="Rejected">Rejected</option>
-            </select>
-          </div>
-
-          <div class="d-flex">
-            <a href="?page_num=1" class="btn btn-sm btn-outline-secondary me-2">Reset</a>
-            <button type="submit" class="btn btn-sm btn-success flex-grow-1">Apply</button>
-          </div>
-        </form>
-      </div>
-    </div>
     <?php
       $stats = [
         ['icon' => 'group', 'label' => 'Users', 'count' => 3],
@@ -252,96 +155,258 @@ if ($queryString) {
         ['icon' => 'person_add', 'label' => 'Account Requests', 'count' => 0],
       ];
 
-      foreach ($stats as $stat) {
-        echo '
-        <div class="col-md-3 col-sm-6">
-          <div class="card shadow-sm text-center p-3">
-            <span class="material-symbols-outlined fs-1 text-success">' . $stat['icon'] . '</span>
-            <h2 class="fw-bold">' . $stat['count'] . '</h2>
-            <p class="text-muted">' . $stat['label'] . '</p>
-          </div>
-        </div>';
-      }
-    ?>
+    foreach ($stats as $stat): ?>
+      <div class="col-md-3 col-sm-6">
+        <div class="card shadow-sm text-center p-3">
+          <span class="material-symbols-outlined fs-1 text-success"><?= $stat['icon'] ?></span>
+          <h2 class="fw-bold"><?= $stat['count'] ?></h2>
+          <p class="text-muted"><?= $stat['label'] ?></p>
+        </div>
+      </div>
+    <?php endforeach; ?>
   </div>
 
   <!-- Recent Requests Table -->
   <div class="col-12">
     <div class="card p-3 shadow-sm">
       <div class="d-flex align-items-center mb-3">
-        <h5 class="fw-bold text-success ms-2">Recent Requests</h5>
-        <div class="ms-auto me-2">
-          <div class="input-group input-group-sm">
-            <input
-              id="searchBox"
-              type="text"
-              class="form-control"
-              placeholder="Search…">
-            <span class="input-group-text">
-              <span class="material-symbols-outlined">search</span>
-            </span>
+        <div class="dropdown">
+          <button class="btn btn-sm btn-outline-success dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            Filter
+          </button>
+          <div class="dropdown-menu p-3" aria-labelledby="filterDropdown" style="min-width:260px; --bs-body-font-size:.75rem; font-size:.75rem;">
+            <form method="get" class="mb-0" id="filterForm">
+              <input type="hidden" name="page_num" value="1">
+              
+              <!-- Request Type -->
+              <div class="mb-2">
+                <label class="form-label mb-1">Request Type</label>
+                <select name="request_type" class="form-select form-select-sm" style="font-size:.75rem;">
+                  <option value="">All</option>
+                  <option <?= $request_type ==='Barangay ID'?'selected':'' ?> value="Barangay ID">Barangay ID</option>
+                  <option <?= $request_type ==='Business Permit'?'selected':'' ?> value="Business Permit">Business Permit</option>
+                  <option <?= $request_type ==='Certification'?'selected':'' ?> value="Certification">Certification</option>
+                </select>
+              </div>
+
+              <!-- Date Created -->
+              <div class="mb-2">
+                <label class="form-label mb-1">Date Created</label>
+                <div class="d-flex gap-1">
+                  <div class="flex-grow-1">
+                    <small class="text-muted">From</small>
+                    <input type="date" name="date_from" class="form-control form-control-sm" style="font-size:.75rem;" value="<?= htmlspecialchars($date_from) ?>">
+                  </div>
+                  <div class="flex-grow-1">
+                    <small class="text-muted">To</small>
+                    <input type="date" name="date_to" class="form-control form-control-sm" style="font-size:.75rem;" value="<?= htmlspecialchars($date_to) ?>">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Claim Date -->
+              <div class="mb-2">
+                <label class="form-label mb-1">Claim Date</label>
+                <div class="d-flex gap-1">
+                  <div class="flex-grow-1">
+                    <small class="text-muted">From</small>
+                    <input type="date" name="claim_from" class="form-control form-control-sm me-1" style="font-size:.75rem;" value="<?= htmlspecialchars($claim_from) ?>">
+                  </div>
+                  <div class="flex-grow-1">
+                    <small class="text-muted">To</small>
+                    <input type="date" name="claim_to" class="form-control form-control-sm" style="font-size:.75rem;" value="<?= htmlspecialchars($claim_to) ?>">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Payment Method -->
+              <div class="mb-2">
+                <label class="form-label mb-1">Payment Method</label>
+                <select name="payment_method" class="form-select form-select-sm" style="font-size:.75rem;">
+                  <option value="">All</option>
+                  <option <?= $payment_method ==='GCash'?'selected':'' ?> value="GCash">GCash</option>
+                  <option <?= $payment_method ==='Brgy Payment Device'?'selected':'' ?> value="Brgy Payment Device">Brgy Payment Device</option>
+                  <option <?= $payment_method ==='Over-the-Counter'?'selected':'' ?> value="Over-the-Counter">Over-the-Counter</option>
+                </select>
+              </div>
+
+              <!-- Payment Status -->
+              <div class="mb-2">
+                <label class="form-label mb-1">Payment Status</label>
+                <select name="payment_status" class="form-select form-select-sm" style="font-size:.75rem;">
+                  <option value="">All</option>
+                  <option <?= $payment_status ==='Paid'?'selected':'' ?> value="Paid">Paid</option>
+                  <option <?= $payment_status ==='Unpaid'?'selected':'' ?> value="Unpaid">Unpaid</option>
+                </select>
+              </div>
+
+              <!-- Document Status -->
+              <div class="mb-2">
+                <label class="form-label mb-1">Document Status</label>
+                <select name="document_status" class="form-select form-select-sm" style="font-size:.75rem;">
+                  <option value="">All</option>
+                  <option <?= $document_status ==='For Verification'?'selected':'' ?> value="For Verification">For Verification</option>
+                  <option <?= $document_status ==='Processing'?'selected':'' ?> value="Processing">Processing</option>
+                  <option <?= $document_status ==='Ready To Release'?'selected':'' ?> value="Ready To Release">Ready To Release</option>
+                  <option <?= $document_status ==='Released'?'selected':'' ?> value="Released">Released</option>
+                  <option <?= $document_status ==='Rejected'?'selected':'' ?> value="Rejected">Rejected</option>
+                </select>
+              </div>
+
+              <div class="d-flex">
+                <a href="?page_num=1" class="btn btn-sm btn-outline-secondary me-2">Reset</a>
+                <button type="submit" class="btn btn-sm btn-success flex-grow-1">Apply</button>
+              </div>
+            </form>
           </div>
         </div>
+
+        <form method="get" id="searchForm" class="d-flex ms-auto me-2">
+          <input type="hidden" name="page_num" value="1">
+          <?php foreach ([
+            'request_type','date_from','date_to',
+            'claim_from','claim_to',
+            'payment_method','payment_status','document_status'
+          ] as $f):
+              if (!empty($_GET[$f])): ?>
+            <input type="hidden"
+                  name="<?= $f ?>"
+                  value="<?= htmlspecialchars($_GET[$f]) ?>">
+          <?php endif; endforeach; ?>
+
+          <div class="input-group input-group-sm">
+            <input id="searchInput" name="search" type="text" class="form-control" placeholder="Search…" value="<?= htmlspecialchars($search) ?>">
+            <button id="searchBtn" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" type="button">
+              <span class="material-symbols-outlined" id="searchIcon">
+                <?= $search ? 'close' : 'search' ?>
+              </span>
+            </button>
+          </div>
+        </form>
       </div>
 
       <div class="table-responsive admin-table">
         <table class="table table-hover align-middle text-start">
           <thead class="table-light">
             <tr>
-              <th class="text-nowrap">Transaction No.</th>
-              <th class="text-nowrap">Name</th>
-              <th class="text-nowrap">Request</th>
-              <th class="text-nowrap">Date Created</th>
-              <th class="text-nowrap">Claim Date</th>
-              <th class="text-nowrap">Payment Method</th>
-              <th class="text-nowrap">Payment Status</th>
-              <th class="text-nowrap">Document Status</th>
+              <th>Transaction No.</th>
+              <th>Name</th>
+              <th>Request</th>
+              <th>Payment Method</th>
+              <th>Payment Status</th>
+              <th>Document Status</th>
             </tr>
           </thead>
           <tbody>
-            <?php
-              // use the filtered & paginated result we already ran above
-              while ($row = $result->fetch_assoc()) {
-                $txn            = $row['transaction_id'];
-                $name           = $row['full_name'];
-                $request        = $row['request_type'];
-                $formattedDate  = date("Y/m/d", strtotime($row['created_at']));
-                $formattedClaim = $row['claim_date'] ? date("Y/m/d", strtotime($row['claim_date'])) : '—';
-                $pmethod        = $row['payment_method'];
-                $pstatus        = $row['payment_status'];
-                $dstatus        = $row['document_status'];
-
+            <?php if ($result->num_rows > 0): ?>
+              <?php while ($row = $result->fetch_assoc()): 
+                // extract and escape
+                $txn   = htmlspecialchars($row['transaction_id']);
+                $name  = htmlspecialchars($row['full_name']);
+                $req   = htmlspecialchars($row['request_type']);
+                $pm    = htmlspecialchars($row['payment_method']);
+                $ps    = htmlspecialchars($row['payment_status']);
+                $ds    = htmlspecialchars($row['document_status']);
+                
                 // badge classes
-                $payClass = $pstatus === 'Paid' ? 'paid-status' : 'unpaid-status';
-                switch ($dstatus) {
-                  case 'For Verification': $docClass='for-verification-status'; break;
-                  case 'Processing':       $docClass='processing-status';        break;
-                  case 'Ready To Release': $docClass='ready-to-release-status'; break;
-                  case 'Released':         $docClass='released-status';          break;
-                  case 'Rejected':         $docClass='rejected-status';          break;
-                  default:                 $docClass='';                        break;
+                $payClass = $ps === 'Paid' ? 'paid-status' : 'unpaid-status';
+                switch ($ds) {
+                  case 'For Verification': $docClass = 'for-verification-status'; break;
+                  case 'Processing': $docClass = 'processing-status'; break;
+                  case 'Ready To Release': $docClass = 'ready-to-release-status'; break;
+                  case 'Released': $docClass = 'released-status'; break;
+                  case 'Rejected': $docClass = 'rejected-status'; break;
+                  default: $docClass = ''; break;
                 }
-
-                  echo "<tr>
-                          <td>{$txn}</td>
-                          <td>{$name}</td>
-                          <td>{$request}</td>
-                          <td>{$formattedDate}</td>
-                          <td>{$formattedClaim}</td>
-                          <td>{$pmethod}</td>
-                          <td><span class='badge {$payClass}'>{$pstatus}</span></td>
-                          <td><span class='badge {$docClass}'>{$dstatus}</span></td>
-                      </tr>";
-              }
-            ?>
+              ?>
+              <tr class="clickable-row"
+                  data-transaction_id="<?= $txn?>"
+                  data-full_name="<?= $name?>"
+                  data-request_type="<?= $req?>"
+                  data-created_at="<?= htmlspecialchars($row['formatted_date'])?>"
+                  data-claim_date="<?= htmlspecialchars($row['claim_date'] ?: '—')?>"
+                  data-payment_method="<?= $pm?>"
+                  data-payment_status="<?= $ps?>"
+                  data-document_status="<?= $ds?>"
+                  style="cursor:pointer">
+                <td><?= $txn ?></td>
+                <td><?= $name ?></td>
+                <td><?= $req ?></td>
+                <td><?= $pm ?></td>
+                <td><span class="badge <?= $payClass ?>"><?= $ps ?></span></td>
+                <td><span class="badge <?= $docClass ?>"><?= $ds ?></span></td>
+              </tr>
+              <?php endwhile; ?>
+            <?php else: ?>
+              <tr><td colspan="7" class="text-center">No records found.</td></tr>
+            <?php endif; ?>
           </tbody>
         </table>
+      </div>
+
+      <!-- Details Modal -->
+      <div class="modal fade" id="rowModal" tabindex="-1" aria-labelledby="rowModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+          <div class="modal-content shadow-lg">
+            <div class="modal-header bg-dark text-white">
+              <h5 class="modal-title" id="rowModalLabel">
+                <i class="bi bi-card-list me-2"></i>Request Details
+              </h5>
+            </div>
+            <div class="modal-body">
+              <!-- Section: User & Request -->
+              <div class="mb-4">
+                <h6 class="fw-bold fs-5">Basic Information</h6>
+                <dl class="row">
+                  <dt class="col-sm-4">Transaction No.</dt>
+                  <dd class="col-sm-8" id="modal-transaction_id">—</dd>
+
+                  <dt class="col-sm-4">Name</dt>
+                  <dd class="col-sm-8" id="modal-full_name">—</dd>
+
+                  <dt class="col-sm-4">Request Type</dt>
+                  <dd class="col-sm-8" id="modal-request_type">—</dd>
+                </dl>
+              </div>
+              <!-- Section: Dates -->
+              <div class="mb-4">
+                <h6 class="fw-bold fs-5">Dates</h6>
+                <dl class="row">
+                  <dt class="col-sm-4">Date Created</dt>
+                  <dd class="col-sm-8" id="modal-created_at">—</dd>
+
+                  <dt class="col-sm-4">Claim Date</dt>
+                  <dd class="col-sm-8" id="modal-claim_date">—</dd>
+                </dl>
+              </div>
+              <!-- Section: Payment & Status -->
+              <div>
+                <h6 class="fw-bold fs-5">Payment & Status</h6>
+                <dl class="row">
+                  <dt class="col-sm-4">Payment Method</dt>
+                  <dd class="col-sm-8" id="modal-payment_method">—</dd>
+
+                  <dt class="col-sm-4">Payment Status</dt>
+                  <dd class="col-sm-8" id="modal-payment_status">—</dd>
+
+                  <dt class="col-sm-4">Document Status</dt>
+                  <dd class="col-sm-8" id="modal-document_status">—</dd>
+                </dl>
+              </div>
+            </div>
+            <div class="modal-footer border-0">
+              <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Pagination Controls -->
       <?php if ($pages > 1): ?>
       <nav aria-label="Request pagination">
-        <ul class="pagination justify-content-center flex-wrap mt-3">
+        <ul class="pagination justify-content-center pagination-sm">
           <li class="page-item<?= $page_num<=1?' disabled':'' ?>">
             <a class="page-link" href="?<?= $queryString ?>page_num=<?= max(1,$page_num-1) ?>">Prev</a>
           </li>
@@ -380,80 +445,34 @@ if ($queryString) {
   </div>
 </div>
 
-<!-- Full Calendar -->
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-<!-- Chart.js (Make sure it's included in admin_header.php or load below) -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  // Full Calendar
-  document.addEventListener('DOMContentLoaded', function () {
-    const calendarEl = document.getElementById('calendar');
+document.addEventListener('DOMContentLoaded', () => {
+  // Search/clear logic
+  const form       = document.getElementById('searchForm');
+  const input      = document.getElementById('searchInput');
+  const btn        = document.getElementById('searchBtn');
+  const hasSearch  = <?= $search !== '' ? 'true' : 'false' ?>;
+  btn.addEventListener('click', () => {
+    if (hasSearch) input.value = '';
+    form.submit();
+  });
 
-    const calendar = new FullCalendar.Calendar(calendarEl, {
-      initialView: 'dayGridMonth',
-      height: 350,
-      headerToolbar: {
-        left: 'prev,next today',
-        center: 'title',
-        right: ''
-      },
-      events: [
-        {
-          title: 'Barangay Meeting',
-          start: '2025-04-16',
-          description: 'Monthly barangay council meeting',
-          color: '#2e7d32'
-        },
-        {
-          title: 'Vaccination Drive',
-          start: '2025-04-20',
-          end: '2025-04-22',
-          description: 'Barangay health initiative',
-          color: '#2e7d32'
-        }
-      ],
-      eventClick: function(info) {
-        alert(info.event.title + "\n" + info.event.extendedProps.description);
-      }
+  // Modal populator
+  const modalEl      = document.getElementById('rowModal');
+  const bsModal      = new bootstrap.Modal(modalEl);
+  const dataKeys     = ['transaction_id','full_name','request_type','created_at','claim_date','payment_method','payment_status','document_status'];
+  const getDlElement = key => document.getElementById(`modal-${key}`);
+
+  document.querySelector('tbody').addEventListener('click', e => {
+    const tr = e.target.closest('tr.clickable-row');
+    if (!tr) return;
+
+    dataKeys.forEach(key => {
+      const el = getDlElement(key);
+      el.textContent = tr.dataset[key] || '—';
     });
 
-    calendar.render();
-  });
-
-  // Chart
-  const ctx = document.getElementById('servicePieChart');
-  new Chart(ctx, {
-    type: 'pie',
-    data: {
-      labels: ['Brgy Clearance', 'Certification', 'Business Permit', 'Brgy ID'],
-      datasets: [{
-        label: 'Request Types',
-        data: [45, 25, 10, 20],
-        backgroundColor: ['#1e7e34', '#28a745', '#ffc107', '#20c997'],
-        borderColor: '#fff',
-        borderWidth: 1
-      }]
-    },
-    options: {
-      plugins: {
-        legend: {
-          display: false
-        }
-      }
-    }
-  });
-</script>
-
-<script>
-  // simple text search across all columns
-const searchBox = document.getElementById('searchBox');
-searchBox.addEventListener('input', () => {
-  const term = searchBox.value.trim().toLowerCase();
-  document.querySelectorAll('table.table-hover tbody tr').forEach(row => {
-    // show row if any cell’s text includes the term
-    const text = row.textContent.toLowerCase();
-    row.style.display = text.includes(term) ? '' : 'none';
+    bsModal.show();
   });
 });
-
 </script>

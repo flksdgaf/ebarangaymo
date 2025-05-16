@@ -67,11 +67,15 @@ $stmt->bind_param(
 $stmt->execute();
 $stmt->close();
 
-// 5) Redirect back to the form page with ?tid= so it jumps to Step 4
-if (!empty($_POST['adminRedirect'])) {
-    // Came from the admin panel → send back there
+// 5) Redirect back to the appropriate panel
+if (!empty($_POST['superAdminRedirect'])) {
+    // Came from the super‐admin panel → send back there
+    header("Location: ../superAdminPanel.php?page=superAdminRequest&transaction_id={$transactionId}");
+} elseif (!empty($_POST['adminRedirect'])) {
+    // (old) from the legacy admin panel
     header("Location: ../adminPanel.php?page=adminRequest&transaction_id={$transactionId}");
 } else {
     // Default: user panel
     header("Location: ../userPanel.php?page=serviceBarangayID&tid={$transactionId}");
-}exit();
+}
+exit();

@@ -59,7 +59,7 @@ $sql = "
     complainants,
     respondents,
     DATE_FORMAT(date_filed,    '%M %d, %Y %h:%i %p') AS date_filed_fmt,
-    DATE_FORMAT(date_occurred, '%M %d, %Y')             AS date_occurred_fmt,
+    DATE_FORMAT(date_occurrence, '%M %d, %Y')             AS date_occurred_fmt,
     complaint_nature,
     complaint_description,
     payment_method,

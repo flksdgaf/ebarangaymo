@@ -1,8 +1,4 @@
 <div class="container py-3">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="fw-bold">Residents</h4>
-  </div>
-
   <div class="card shadow-sm p-3">
     <div class="table-responsive">
       <table class="table table-hover align-middle text-start resident-table">

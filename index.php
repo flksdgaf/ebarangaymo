@@ -167,7 +167,7 @@ include 'includes/header.php';
 </div>
 
 <!-- Barangay ID Modal -->
-<div class="modal fade" id="barangayIDModal" tabindex="-1" aria-labelledby="barangayIDModalLabel" aria-hidden="true">
+<div class="modal fade" id="barangayIDModal" tabindex="-1" aria-labelledby="barangayIDModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
@@ -187,7 +187,7 @@ include 'includes/header.php';
 </div>
 
 <!-- Barangay Clearance Modal -->
-<div class="modal fade" id="barangayClearanceModal" tabindex="-1" aria-labelledby="barangayClearanceModalLabel" aria-hidden="true">
+<div class="modal fade" id="barangayClearanceModal" tabindex="-1" aria-labelledby="barangayClearanceModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
@@ -207,7 +207,7 @@ include 'includes/header.php';
 </div>
 
 <!-- Barangay Certification Modal -->
-<div class="modal fade" id="certificationModal" tabindex="-1" aria-labelledby="barangayCertificationModalLabel" aria-hidden="true">
+<div class="modal fade" id="certificationModal" tabindex="-1" aria-labelledby="barangayCertificationModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
@@ -227,7 +227,7 @@ include 'includes/header.php';
 </div>
 
 <!-- Barangay Business Permit Modal -->
-<div class="modal fade" id="businessPermitModal" tabindex="-1" aria-labelledby="businessPermitModalLabel" aria-hidden="true">
+<div class="modal fade" id="businessPermitModal" tabindex="-1" aria-labelledby="businessPermitModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
@@ -247,7 +247,7 @@ include 'includes/header.php';
 </div>
 
 <!-- Equipment Borrowing Modal -->
-<div class="modal fade" id="equipmentModal" tabindex="-1" aria-labelledby="equipmentModalLabel" aria-hidden="true">
+<div class="modal fade" id="equipmentModal" tabindex="-1" aria-labelledby="equipmentModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
@@ -258,15 +258,6 @@ include 'includes/header.php';
       <div class="modal-body">
         <h6>Narito ang flowchart na nagpapakita ng mga hakbang sa Barangay Equipment Borrowing .</br></br></h6>
         <img src="images/flowchart_equipment_borrowing.png" alt="Barangay Equipment Borrowing Process Flowchart" class="img-fluid rounded">
-        <!-- <ol>
-          <li>Log in your account to the eBarangay Mo website.</li>
-          <li>Click the "Apply for Barangay ID" button.</li>
-          <li>Fill out the form with your personal details.</li>
-          <li>Double check your information and choose a payment option.</li>
-          <li>Submit your application</li> 
-          <li>Wait for the verification and processing of your application.</li>
-          <li>Collect your Barangay ID once notified or the date specified.</li>
-        </ol> -->
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -276,7 +267,7 @@ include 'includes/header.php';
 </div>
 
 <!-- Cash Incentives Modal -->
-<div class="modal fade" id="cashModal" tabindex="-1" aria-labelledby="cashModalLabel" aria-hidden="true">
+<div class="modal fade" id="cashModal" tabindex="-1" aria-labelledby="cashModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
@@ -287,15 +278,6 @@ include 'includes/header.php';
       <div class="modal-body">
         <h6>Narito ang flowchart na nagpapakita ng mga hakbang sa pag-apply sa Cash Incentives program.</br></br></h6>
         <img src="images/flowchart_cash_incentives.png" alt="Cash Incentives Application Process Flowchart" class="img-fluid rounded">
-        <!-- <ol>
-          <li>Log in your account to the eBarangay Mo website.</li>
-          <li>Click the "Apply for Barangay ID" button.</li>
-          <li>Fill out the form with your personal details.</li>
-          <li>Double check your information and choose a payment option.</li>
-          <li>Submit your application</li> 
-          <li>Wait for the verification and processing of your application.</li>
-          <li>Collect your Barangay ID once notified or the date specified.</li>
-        </ol> -->
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

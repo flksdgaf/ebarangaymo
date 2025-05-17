@@ -255,7 +255,12 @@ function populateSummary() {
   const sn = document.getElementById("suffix").value.trim();
   const sx = document.getElementById("sex").value;
   const bd = document.getElementById("birthdate").value;
-  let fullName = `${ln} ${sn}, ${fn}${mn ? ' ' + mn : ''}`;
+  // Build the optional pieces
+  const suffixPart = sn ? ` ${sn}` : "";
+  const middlePart = mn ? ` ${mn}` : "";
+
+  // Always put the comma *after* last name (or last name + suffix), then a space
+  const fullName = `${ln}${suffixPart}, ${fn}${middlePart}`;
 
   // Step 2
   const cs = document.getElementById("civilstatus").value;

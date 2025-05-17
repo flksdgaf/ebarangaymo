@@ -19,8 +19,12 @@ $sn = trim($_POST['suffix']      ?? '');
 $sx = $_POST['sex']              ?? '';
 $bd = $_POST['birthdate']        ?? '';
 
-// Format “Last, First Middle”
-$full_name = "{$ln} {$sn}, {$fn}" . ($mn ? " {$mn}" : '');
+// Build the optional pieces
+$suffixPart = $sn ? " {$sn}" : '';
+$middlePart = $mn ? " {$mn}" : '';
+
+// Always put the comma immediately after last name (+ suffix), then a space
+$full_name = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
 
 // Step 2 inputs
 $cs = $_POST['civilstatus']          ?? '';

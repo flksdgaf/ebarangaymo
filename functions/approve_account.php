@@ -1,37 +1,37 @@
 <?php
 // functions/approve_account.php
+require_once 'dbconn.php';
 
-require_once 'dbconn.php';  // $conn = new mysqli(...);
-
-if ($_SERVER['REQUEST_METHOD'] !== 'POST' || empty($_POST['account_ID'])) {
+if ($_SERVER['REQUEST_METHOD']!=='POST'
+    || empty($_POST['account_ID'])
+    || empty($_POST['name'])) {
     http_response_code(400);
     die("Invalid request");
 }
 
-$accountId = (int)$_POST['account_ID'];
+$accountId = (int) $_POST['account_ID'];
+$name      = trim($_POST['name']);
 
-// 1) Pull the pending record
+// 1) Pull pending row into $pending
 $stmt = $conn->prepare("
-    SELECT full_name, birthdate, sex, civil_status, blood_type, birth_registration_number,
-           highest_educational_attainment, occupation, purok, profile_picture
+    SELECT full_name, birthdate, sex, civil_status, blood_type,
+           birth_registration_number, highest_educational_attainment,
+           occupation, purok, profile_picture
     FROM pending_accounts
     WHERE account_ID = ?
 ");
 $stmt->bind_param("i", $accountId);
 $stmt->execute();
-$result = $stmt->get_result();
-
-if ($result->num_rows !== 1) {
-    $stmt->close();
-    die("No such pending account");
+$res = $stmt->get_result();
+if (!$res || $res->num_rows!==1) {
+    http_response_code(404);
+    die("Pending record not found");
 }
-
-$row = $result->fetch_assoc();
+$pending = $res->fetch_assoc();
 $stmt->close();
 
-// 2) Pick the destination table based on purok
-//    sanitize to prevent injection—our enum is Purok 1..6
-$validPuroks = [
+// 2) Detect attach mode & target table
+$map = [
   'Purok 1'=>'purok1_rbi',
   'Purok 2'=>'purok2_rbi',
   'Purok 3'=>'purok3_rbi',
@@ -39,70 +39,113 @@ $validPuroks = [
   'Purok 5'=>'purok5_rbi',
   'Purok 6'=>'purok6_rbi'
 ];
+$attachMode  = false;
+$targetTable = '';
 
-if (!isset($validPuroks[$row['purok']])) {
-    die("Invalid purok: " . htmlspecialchars($row['purok']));
+if (isset($map[$pending['purok']])) {
+    $targetTable = $map[$pending['purok']];
+    // check if that name exists already
+    $chk = $conn->prepare("
+      SELECT account_ID
+      FROM `$targetTable`
+      WHERE full_name = ?
+      LIMIT 1
+    ");
+    $chk->bind_param("s", $pending['full_name']);
+    $chk->execute();
+    $chkRes = $chk->get_result();
+    if ($chkRes && $chkRes->num_rows === 1) {
+        $attachMode = true;
+    }
+    $chk->close();
+} else {
+    die("Invalid purok '{$pending['purok']}'");
 }
 
-$destTable = $validPuroks[$row['purok']];
+if ($attachMode) {
+    // 3A) Attach: UPDATE all columns on the existing row
+    $up = $conn->prepare("
+      UPDATE `$targetTable`
+        SET account_ID = ?,
+            birthdate = ?,
+            sex = ?,
+            civil_status = ?,
+            blood_type = ?,
+            birth_registration_number = ?,
+            highest_educational_attainment = ?,
+            occupation = ?,
+            profile_picture = ?
+      WHERE full_name = ?
+    ");
+    $up->bind_param(
+      "isssssssss",
+      $accountId,
+      $pending['birthdate'],
+      $pending['sex'],
+      $pending['civil_status'],
+      $pending['blood_type'],
+      $pending['birth_registration_number'],
+      $pending['highest_educational_attainment'],
+      $pending['occupation'],
+      $pending['profile_picture'],
+      $pending['full_name']
+    );
+    if (!$up->execute()) {
+        die("Attach update failed: " . $up->error);
+    }
+    $up->close();
 
-// 3) Insert into the purokX_rbi table
-//    (we skip valid_ID, front_ID, back_ID, time_creation)
-$insertSql = "
-  INSERT INTO `$destTable`
-    (account_ID, full_name, birthdate, sex,
-     civil_status, blood_type, birth_registration_number,
-     highest_educational_attainment, occupation, profile_picture)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-";
-
-$stmtIns = $conn->prepare($insertSql);
-$stmtIns->bind_param(
-  "isssssssss",
-  $accountId,
-  $row['full_name'],
-  $row['birthdate'],
-  $row['sex'],
-  $row['civil_status'],
-  $row['blood_type'],
-  $row['birth_registration_number'],
-  $row['highest_educational_attainment'],
-  $row['occupation'],
-  $row['profile_picture']
-);
-
-if (!$stmtIns->execute()) {
-    die("Insert into $destTable failed: " . $stmtIns->error);
+} else {
+    // 3B) Insert: new record
+    $ins = $conn->prepare("
+      INSERT INTO `$targetTable`
+        (account_ID, full_name, birthdate, sex,
+         civil_status, blood_type, birth_registration_number,
+         highest_educational_attainment, occupation, profile_picture)
+      VALUES (?,?,?,?,?,?,?,?,?,?)
+    ");
+    $ins->bind_param(
+      "isssssssss",
+      $accountId,
+      $pending['full_name'],
+      $pending['birthdate'],
+      $pending['sex'],
+      $pending['civil_status'],
+      $pending['blood_type'],
+      $pending['birth_registration_number'],
+      $pending['highest_educational_attainment'],
+      $pending['occupation'],
+      $pending['profile_picture']
+    );
+    if (!$ins->execute()) {
+        die("Insert failed: " . $ins->error);
+    }
+    $ins->close();
 }
-$stmtIns->close();
 
-// 4) Update user_accounts role to 'Resident'
-$upd = $conn->prepare("
-    UPDATE user_accounts
-      SET role = 'Resident'
-    WHERE account_id = ?
+// 4) Promote in user_accounts
+$u = $conn->prepare("
+  UPDATE user_accounts
+    SET role = 'Resident'
+  WHERE account_id = ?
 ");
-$upd->bind_param("i", $accountId);
-
-if (!$upd->execute()) {
-    die("Failed to update user_accounts: " . $upd->error);
+$u->bind_param("i", $accountId);
+if (!$u->execute()) {
+    die("Role update failed: " . $u->error);
 }
-$upd->close();
+$u->close();
 
 // 5) Delete from pending_accounts
-// $del = $conn->prepare("
-//     DELETE FROM pending_accounts
-//     WHERE account_id = ?
-// ");
-// $del->bind_param("i", $accountId);
+$d = $conn->prepare("
+  DELETE FROM pending_accounts
+  WHERE account_ID = ?
+");
+$d->bind_param("i", $accountId);
+if (!$d->execute()) {
+    die("Delete pending failed: " . $d->error);
+}
+$d->close();
 
-// if (!$del->execute()) {
-//     die("Failed to delete pending_accounts: " . $del->error);
-// }
-// $del->close();
-
-// 6) Finally, redirect back to the listing
+// 6) Redirect back
 header("Location: ../adminpanel.php?page=adminVerifications");
 exit;
-
-

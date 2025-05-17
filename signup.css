@@ -163,6 +163,52 @@ label {
     padding-right: 35px; /* Ensure text doesn't overlap with the icon */
 }
 
+/* Summary card styling */
+.summary-card {
+  border-radius: 20px;
+  overflow: hidden;
+  background-color: rgba(211,211,211, 0.2); /* light transparent gray */
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* Gradient header like your H1 text */
+.summary-card .card-header {
+  background: linear-gradient(to right, #0D2C15, #2A9245);
+  color: white;
+  font-size: 1.2rem;
+  padding: 0.75rem;
+}
+
+/* List-group flush but with subtle separators */
+.summary-card .list-group-item {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+  padding: 0.75rem 1.25rem;
+}
+
+/* Last item shouldn’t need a bottom border */
+.summary-card .list-group-item:last-child {
+  border-bottom: none;
+}
+
+/* Right-aligned values underlined (like your old span style) */
+.summary-card #summaryFullName,
+.summary-card #summaryBirthdate,
+.summary-card #summarySex,
+.summary-card #summaryCivilStatus,
+.summary-card #summaryBloodType,
+.summary-card #summaryBirthReg,
+.summary-card #summaryEducation,
+.summary-card #summaryOccupation,
+.summary-card #summaryPurok,
+.summary-card #summaryValidID,
+.summary-card #summaryProfilePic,
+.summary-card #summaryUsername {
+  text-decoration: underline;
+  color: white; /* or whatever contrasts best on your bg */
+}
+
 @media screen and (max-width: 767px) {
     .password-rules {
         margin-left: 0px; /* Aligns with the password field */

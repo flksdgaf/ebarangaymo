@@ -1,76 +1,156 @@
+<?php 
+
+include 'functions/dbconn.php';
+
+// 1) Fetch coin counts for this device
+$deviceName = 'IOTPS-Magang';
+$stmt = $conn->prepare("
+  SELECT one_peso, five_peso, ten_peso, twenty_peso
+    FROM device_management
+   WHERE device_name = ?
+   LIMIT 1
+");
+$stmt->bind_param('s', $deviceName);
+$stmt->execute();
+$stmt->bind_result($c1, $c5, $c10, $c20);
+$stmt->fetch();
+$stmt->close();
+
+// 2) Compute totals
+$amount1   = $c1  * 1;
+$amount5   = $c5  * 5;
+$amount10  = $c10 * 10;
+$amount20  = $c20 * 20;
+
+$totalAmount   = $amount1 + $amount5 + $amount10 + $amount20;
+$conn->close();
+
+?>
+
 <div class="container-fluid p-3">
-  
-  <!-- Devices Stats Cards -->
-  <div class="row g-3 mb-4">
-    <!-- Total Devices -->
-    <div class="col-md-3 col-sm-6">
-      <div class="card shadow-sm text-center p-3">
-        <span class="material-symbols-outlined fs-1 text-success">devices</span>
-        <h2 class="fw-bold text-success">120</h2>
-        <p class="text-muted mb-0">Total Devices</p>
-        <small class="text-muted">As of <?php echo date('m-d-Y'); ?></small>
-      </div>
-    </div>
 
-    <!-- Online Devices -->
-    <div class="col-md-3 col-sm-6">
-      <div class="card shadow-sm text-center p-3">
-        <span class="material-symbols-outlined fs-1 text-success">wifi</span>
-        <h2 class="fw-bold text-success">90</h2>
-        <p class="text-muted mb-0">Online Devices</p>
-        <small class="text-muted">As of <?php echo date('m-d-Y'); ?></small>
-      </div>
-    </div>
+  <div class="row g-3">
+    <div class="col-12">
+      <div class="card p-3 shadow-sm mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0">Main Status</h5>
+        </div>
 
-    <!-- Offline Devices -->
-    <div class="col-md-3 col-sm-6">
-      <div class="card shadow-sm text-center p-3">
-        <span class="material-symbols-outlined fs-1 text-danger">wifi_off</span>
-        <h2 class="fw-bold text-danger">30</h2>
-        <p class="text-muted mb-0">Offline Devices</p>
-        <small class="text-muted">As of <?php echo date('m-d-Y'); ?></small>
-      </div>
-    </div>
+        <!-- Stats Cards -->
+        <div class="row g-3 mb-4">
+          <!-- Device ID -->
+          <div class="col-md-4 col-sm-6">
+            <div class="card shadow-sm text-center p-3">
+              <span class="material-symbols-outlined fs-1 text-success">devices</span>
+              <h2 class="fw-bold text-success">IOTPS-Magang</h2>
+              <p class="text-muted mb-0">Device Name</p>
+              <small class="text-muted">As of <?php echo date('m-d-Y'); ?></small>
+            </div>
+          </div>
 
-    <!-- Devices Needing Maintenance -->
-    <div class="col-md-3 col-sm-6">
-      <div class="card shadow-sm text-center p-3">
-        <span class="material-symbols-outlined fs-1 text-warning">build</span>
-        <h2 class="fw-bold text-warning">5</h2>
-        <p class="text-muted mb-0">Maintenance Needed</p>
-        <small class="text-muted">As of <?php echo date('m-d-Y'); ?></small>
+          <!-- Turned On/Off (AJAX‐updated) -->
+          <div class="col-md-4 col-sm-6">
+            <div class="card shadow-sm text-center p-3">
+              <span id="status-icon" class="material-symbols-outlined fs-1 text-danger">power</span>
+              <h2 id="status-text" class="fw-bold text-danger">Off</h2>
+              <p class="text-muted mb-0">Power Status</p>
+              <small id="status-clock" class="text-muted">As of --/--/---- --:--:--</small>
+            </div>
+          </div>    
+
+          <!-- Total collected -->
+          <div class="col-md-4 col-sm-6">
+            <div class="card shadow-sm text-center p-3">
+              <span class="material-symbols-outlined fs-1 text-warning">payments</span>
+              <h2 class="fw-bold text-warning">Php <?= number_format($totalAmount, 2) ?></h2>
+              <p class="text-muted mb-0">Total Amount Collected</p>
+              <small class="text-muted">As of <?php echo date('m-d-Y'); ?></small>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Devices Table -->
+  <div class="row g-3">
+    <div class="col-12">
+      <div class="card p-3 shadow-sm mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0">Coin Counter</h5>
+        </div>
+
+        <!-- Devices Stats Cards -->
+        <div class="row g-3 mb-4">
+          <!-- Total Devices -->
+          <div class="col-md-3 col-sm-6">
+            <div class="card shadow-sm text-center p-3">
+              <span class="material-symbols-outlined fs-1 text-warning">monetization_on</span>
+              <h2 class="fw-bold text-warning"><?= $c1 ?></h2>
+              <p class="text-muted mb-0">1 Peso Coin</p>
+              <small class="text-muted">As of <?php echo date('m-d-Y'); ?></small>
+            </div>
+          </div>
+
+          <!-- Online Devices -->
+          <div class="col-md-3 col-sm-6">
+            <div class="card shadow-sm text-center p-3">
+              <span class="material-symbols-outlined fs-1 text-warning">monetization_on</span>
+              <h2 class="fw-bold text-warning"><?= $c5 ?></h2>
+              <p class="text-muted mb-0">5 Peso Coin</p>
+              <small class="text-muted">As of <?php echo date('m-d-Y'); ?></small>
+            </div>
+          </div>
+
+          <!-- Offline Devices -->
+          <div class="col-md-3 col-sm-6">
+            <div class="card shadow-sm text-center p-3">
+              <span class="material-symbols-outlined fs-1 text-warning">monetization_on</span>
+              <h2 class="fw-bold text-warning"><?= $c10 ?></h2>
+              <p class="text-muted mb-0">10 Peso Coin</p>
+              <small class="text-muted">As of <?php echo date('m-d-Y'); ?></small>
+            </div>
+          </div>
+
+          <!-- Devices Needing Maintenance -->
+          <div class="col-md-3 col-sm-6">
+            <div class="card shadow-sm text-center p-3">
+              <span class="material-symbols-outlined fs-1 text-warning">monetization_on</span>
+              <h2 class="fw-bold text-warning"><?= $c20 ?></h2>
+              <p class="text-muted mb-0">20 Peso Coin</p>
+              <small class="text-muted">As of <?php echo date('m-d-Y'); ?></small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Collections Table -->
   <div class="row g-3">
     <div class="col-12">
       <div class="card p-3 shadow-sm">
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <h5 class="fw-bold mb-0">Device Status</h5>
+          <h5 class="fw-bold mb-0">Collection History</h5>
           <button class="btn btn-success btn-sm">Filter</button>
         </div>
         <div class="table-responsive">
           <table class="table table-hover align-middle text-start">
             <thead class="table-light">
               <tr>
-                <th>Device ID</th>
                 <th>Device Name</th>
-                <th>Status</th>
-                <th>Last Online</th>
+                <th>User</th>
+                <th>Timestamp</th>
+                <th>Amount</th>
                 <th class="text-center">Action</th>
               </tr>
             </thead>
             <tbody>
               <!-- Example Row -->
               <tr>
-                <td>DVC-001</td>
-                <td>Device Alpha</td>
-                <td>
-                  <span class="badge bg-success">Online</span>
-                </td>
+                <td>IOTPS-Magang</td>
+                <td>John Doe</td>
                 <td>01-01-2025 10:00 AM</td>
+                <td>Php 100.00</td>
                 <td class="text-center">
                   <button class="btn btn-primary btn-sm me-2">View</button>
                   <button class="btn btn-success btn-sm">Edit</button>
@@ -85,3 +165,61 @@
   </div>
 
 </div>
+
+<script>
+const API = 'functions/status_api.php?device_name=IOTPS-Magang';
+
+async function refreshStatus() {
+  try {
+    const res  = await fetch(API);
+    if (!res.ok) throw new Error(res.status);
+    const json = await res.json();
+    if (json.error) throw new Error(json.error);
+
+    // update icon color & class
+    document
+      .getElementById('status-icon')
+      .className = 'material-symbols-outlined fs-1 ' + json.iconClass;
+
+    // update text & color
+    const h2 = document.getElementById('status-text');
+    h2.className   = 'fw-bold ' + json.statusClass;
+    h2.textContent = json.statusText;
+
+  } catch (e) {
+    console.error('Failed to fetch status:', e);
+  }
+}
+
+// initial load + repeat every 3 seconds
+refreshStatus();
+setInterval(refreshStatus, 3000);
+
+// Returns "MM-DD-YYYY hh:mm:ss"
+function nowAsOf() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const M = pad(d.getMonth()+1);
+  const D = pad(d.getDate());
+  const Y = d.getFullYear();
+  const h = pad(d.getHours());
+  const m = pad(d.getMinutes());
+  const s = pad(d.getSeconds());
+  return `As of ${M}-${D}-${Y} ${h}:${m}:${s}`;
+}
+
+// Update every second
+function startClock() {
+  const el = document.getElementById('status-clock');
+  if (!el) return;
+  el.textContent = nowAsOf();
+  setInterval(() => {
+    el.textContent = nowAsOf();
+  }, 1000);
+}
+
+// Kick it off once DOM is loaded
+document.addEventListener('DOMContentLoaded', startClock);
+
+</script>
+

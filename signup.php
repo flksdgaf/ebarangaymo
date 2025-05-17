@@ -50,53 +50,66 @@ include 'includes/header.php';
                         </select>
                     </div>
                 </div>
-                <div class="row mb-3">
-                    <label class="col-md-4 text-start fw-bold">Contact Number</label>
-                    <div class="col-md-8"><input type="text" id="contact" name="contact" class="form-control custom-input" placeholder="09xxxxxxxxx" required></div>
-                </div>
-                <div class="row mb-3">
-                    <label class="col-md-4 text-start fw-bold">Email</label>
-                    <div class="col-md-8">
-                        <input type="email" id="email" name="email" class="form-control custom-input" placeholder="@email.com" required>
-                    </div>
-                </div>
             </div>
 
-            <!-- Step 2: Address Information -->
+            <!-- Step 2: More Personal Information -->
             <div class="step">
                 <div class="row mb-3">
-                    <label class="col-md-4 text-start fw-bold">Province</label>
-                    <div class="col-md-8">
-                        <select id="province" name="province" class="form-control custom-input" required>
-                            <option value="">Select Province</option>
-                            <option value="Camarines Norte">Camarines Norte</option>
+                    <label class="col-md-6 text-start fw-bold">Civil Status</label>
+                    <div class="col-md-6">
+                        <select id="civilstatus" name="civilstatus" class="form-control custom-input" required>
+                            <option value="">Select Status</option>
+                            <option value="Single">Single</option>
+                            <option value="Married">Married</option>
+                            <option value="Separated">Separated</option>
+                            <option value="Widowed">Widowed</option>        
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <label class="col-md-6 text-start fw-bold">Blood Type</label>
+                    <div class="col-md-6">
+                        <select id="bloodtype" name="bloodtype" class="form-control custom-input" required>
+                            <option value="">Select Blood Type</option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="AB">AB</option>
+                            <option value="O">O</option>
+                            <option value="Unknown">Unknown</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="row mb-3">
-                    <label class="col-md-4 text-start fw-bold">Municipality</label>
-                    <div class="col-md-8">
-                        <select id="municipality" name="municipality" class="form-control custom-input" required>
-                            <option value="">Select Municipality</option>
-                            <option value="Daet">Daet</option>
-                        </select>
-                    </div>
+                    <label class="col-md-6 text-start fw-bold text-nowrap">Birth Registration Number</label>
+                    <div class="col-md-6"><input type="text" id="birthreg" name="birthreg" class="form-control custom-input" placeholder="Unknown"></div>
                 </div>
 
                 <div class="row mb-3">
-                    <label class="col-md-4 text-start fw-bold">Barangay</label>
-                    <div class="col-md-8">
-                        <select id="barangay" name="barangay" class="form-control custom-input" required>
-                            <option value="">Select Barangay</option>
-                            <option value="Magang">Magang</option>
+                    <label class="col-md-6 text-start fw-bold text-nowrap">Highest Educational Attainment</label>
+                    <div class="col-md-6">
+                        <select id="educationalattainment" name="educationalattainment" class="form-control custom-input" required>
+                            <option value="">Select Educational Attainment</option>
+                            <option value="Kindergarten">Kindergarten</option>
+                            <option value="Elementary">Elementary</option>
+                            <option value="High School">High School</option>
+                            <option value="Senior High School">Senior High School</option>
+                            <option value="College">College</option>
+                            <option value="College Graduate">College Graduate</option>
+                            <option value="Vocational">Vocational</option>
+                            <option value="None">None</option>
                         </select>
                     </div>
                 </div>
+                <div class="row mb-3">
+                    <label class="col-md-6 text-start fw-bold">Occupation</label>
+                    <div class="col-md-6"><input type="text" id="occupation" name="occupation" class="form-control custom-input" required></div>
+                </div>
 
                 <div class="row mb-3">
-                    <label class="col-md-4 text-start fw-bold">Purok</label>
-                    <div class="col-md-8">
+                    <label class="col-md-6 text-start fw-bold">Purok</label>
+                    <div class="col-md-6">
                         <select id="purok" name="purok" class="form-control custom-input" required>
                             <option value="">Select Purok</option>
                             <option value="Purok 1">Purok 1</option>
@@ -109,7 +122,7 @@ include 'includes/header.php';
                     </div>
                 </div>
 
-                <div class="row mb-3">
+                <!-- <div class="row mb-3">
                     <label class="col-md-4 text-start fw-bold">Street/Subdivision</label>
                     <div class="col-md-8"><input type="text" id="subdivision" name="subdivision" class="form-control custom-input" required></div>
                 </div>
@@ -120,7 +133,7 @@ include 'includes/header.php';
                 <div class="row mb-3">
                     <label class="col-md-4 text-start fw-bold">Zip Code</label>
                     <div class="col-md-8"><input type="text" id="zip" name="zip" class="form-control custom-input" required></div>
-                </div>
+                </div> -->
             </div>
 
             <!-- Step 3: Upload Valid ID -->
@@ -163,6 +176,12 @@ include 'includes/header.php';
             <!-- Step 4: Create Username & Password -->
             <div class="step">
                 <div class="row mb-3">
+                    <label class="col-md-4 text-start fw-bold">Profile Picture</label>
+                    <div class="col-md-8">
+                        <input type="file" id="profilePic" name="profilePic" class="form-control custom-input" accept="image/*" required>
+                    </div>
+                </div>
+                <div class="row mb-3">
                     <label class="col-md-4 text-start fw-bold">Username</label>
                     <div class="col-md-8">
                         <input type="text" class="form-control custom-input" id="username" name="username" required>
@@ -196,16 +215,71 @@ include 'includes/header.php';
                     <small id="confirmMessage" class="text-danger"></small>
                 </div>
             </div>
-
-            <!-- Step 5: Review Filled Out Information -->
+            
+            <!-- Step 5: Review Filled-Out Information -->
             <div class="step">
-                <div class="summary-container p-3">
-                    <p><strong>Full Name:</strong> <span id="summaryFullName"></span></p>
-                    <p><strong>Birthdate:</strong> <span id="summaryBirthdate"></span></p>
-                    <p><strong>Sex:</strong> <span id="summarySex"></span></p>
-                    <p><strong>Contact Number:</strong> <span id="summaryContact"></span></p>
-                    <p><strong>Email:</strong> <span id="summaryEmail"></span></p>
-                    <p><strong>Address:</strong> <span id="summaryAddress"></span></p>
+                <!-- Full Name -->
+                <div class="row mb-3">
+                    <label class="col-md-4 text-start fw-bold">Full Name</label>
+                    <div class="col-md-8">
+                    <input type="text" id="summaryFullName" class="form-control custom-input" readonly>
+                    </div>
+                </div>
+                <!-- Birthdate -->
+                <div class="row mb-3">
+                    <label class="col-md-4 text-start fw-bold">Birthdate</label>
+                    <div class="col-md-8">
+                    <input type="text" id="summaryBirthdate" class="form-control custom-input" readonly>
+                    </div>
+                </div>
+                <!-- Sex -->
+                <div class="row mb-3">
+                    <label class="col-md-4 text-start fw-bold">Sex</label>
+                    <div class="col-md-8">
+                    <input type="text" id="summarySex" class="form-control custom-input" readonly>
+                    </div>
+                </div>
+                <!-- Civil Status -->
+                <div class="row mb-3">
+                    <label class="col-md-4 text-start fw-bold">Civil Status</label>
+                    <div class="col-md-8">
+                    <input type="text" id="summaryCivilStatus" class="form-control custom-input" readonly>
+                    </div>
+                </div>
+                <!-- Blood Type -->
+                <div class="row mb-3">
+                    <label class="col-md-4 text-start fw-bold">Blood Type</label>
+                    <div class="col-md-8">
+                    <input type="text" id="summaryBloodType" class="form-control custom-input" readonly>
+                    </div>
+                </div>
+                <!-- Birth Registration Number -->
+                <div class="row mb-3">
+                    <label class="col-md-4 text-start fw-bold">Birth Reg. No.</label>
+                    <div class="col-md-8">
+                    <input type="text" id="summaryBirthReg" class="form-control custom-input" readonly>
+                    </div>
+                </div>
+                <!-- Educational Attainment -->
+                <div class="row mb-3">
+                    <label class="col-md-4 text-start fw-bold">Education</label>
+                    <div class="col-md-8">
+                    <input type="text" id="summaryEducation" class="form-control custom-input" readonly>
+                    </div>
+                </div>
+                <!-- Occupation -->
+                <div class="row mb-3">
+                    <label class="col-md-4 text-start fw-bold">Occupation</label>
+                    <div class="col-md-8">
+                    <input type="text" id="summaryOccupation" class="form-control custom-input" readonly>
+                    </div>
+                </div>
+                <!-- Purok -->
+                <div class="row mb-3">
+                    <label class="col-md-4 text-start fw-bold">Purok</label>
+                    <div class="col-md-8">
+                    <input type="text" id="summaryPurok" class="form-control custom-input" readonly>
+                    </div>
                 </div>
             </div>
 

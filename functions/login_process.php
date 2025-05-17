@@ -38,6 +38,8 @@ if(isset($_POST['username']) && isset($_POST['password'])) {
                     header("Location: ../adminPanel.php");
                 } elseif($row['role'] === 'Resident') {
                     header("Location: ../userPanel.php");
+                } elseif($row['role'] === 'Pending') {
+                    header("Location: ../underreview.php");
                 }
                 exit();
             } else {

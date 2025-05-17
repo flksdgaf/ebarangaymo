@@ -1,104 +1,104 @@
 <?php
+// DB credentials
+require_once 'dbconn.php';
 
-// Database configuration (replace with your actual credentials)
-$servername   = "localhost";
-$username_db  = "root";
-$password_db  = "";
-$dbname       = "magang_ebarangaymo_db";
-
-// Create a new MySQLi connection
-$conn = new mysqli($servername, $username_db, $password_db, $dbname);
-
-// Check the connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+// Atomically get next ID starting at 100000001
+function getNextAccountId($conn) {
+    $res = $conn->query("SELECT MAX(account_id) AS max_id FROM user_accounts");
+    $row = $res->fetch_assoc();
+    return $row['max_id'] ? $row['max_id'] + 1 : 100000001;
 }
 
-// Retrieve individual name inputs from the form.
-$firstname   = trim($_POST['firstname'] ?? '');
-$middlename  = trim($_POST['middlename'] ?? '');
-$lastname    = trim($_POST['lastname'] ?? '');
-$suffix      = trim($_POST['suffix'] ?? '');
+$account_id = getNextAccountId($conn);
 
-// Construct the full name
-$full_name = $firstname;
-if (!empty($middlename)) {
-    $full_name .= " " . $middlename;
+// Step 1 inputs
+$fn = trim($_POST['firstname']   ?? '');
+$mn = trim($_POST['middlename']  ?? '');
+$ln = trim($_POST['lastname']    ?? '');
+$sn = trim($_POST['suffix']      ?? '');
+$sx = $_POST['sex']              ?? '';
+$bd = $_POST['birthdate']        ?? '';
+
+// Format “Last, First Middle”
+$full_name = "{$ln} {$sn}, {$fn}" . ($mn ? " {$mn}" : '');
+
+// Step 2 inputs
+$cs = $_POST['civilstatus']          ?? '';
+$bt = $_POST['bloodtype']            ?? '';
+$br = trim($_POST['birthreg']        ?? '');
+if ($br === '') {
+    $br = 'Unknown';
 }
-$full_name .= " " . $lastname;
-if (!empty($suffix)) {
-    $full_name .= " " . $suffix;
-}
+$ed = $_POST['educationalattainment']?? '';
+$oc = trim($_POST['occupation']      ?? '');
+$pu = $_POST['purok']                ?? '';
 
-// Retrieve individual address inputs from the form.
-$province     = trim($_POST['province'] ?? '');
-$municipality = trim($_POST['municipality'] ?? '');
-$barangay     = trim($_POST['barangay'] ?? '');
-$purok        = trim($_POST['purok'] ?? '');
-$subdivision  = trim($_POST['subdivision'] ?? '');
-$block        = trim($_POST['block'] ?? '');
-$zip          = trim($_POST['zip'] ?? '');
+// Step 3 & 4 file fields
+$validID  = $_POST['validID']                ?? '';
+$front    = $_FILES['frontID']   ?? null;
+$back     = $_FILES['backID']    ?? null;
+$profile  = $_FILES['profilePic']?? null;
 
-// Construct the full address string
-$full_address = "$block, $subdivision, $purok, $barangay, $municipality, $province, $zip";
+// Step 4 creds
+$username = trim($_POST['username'] ?? '');
+$pwd_plain= $_POST['password']       ?? '';
+$pwd_hash = password_hash($pwd_plain, PASSWORD_DEFAULT);
 
-// Other fields (make sure your form uses matching name attributes)
-$birthdate = $_POST['birthdate'] ?? '';
-$sex       = $_POST['sex'] ?? '';
-$contact   = $_POST['contact'] ?? '';
-$email     = $_POST['email'] ?? ''; // if you need email separately; otherwise, adjust as needed.
-$validID   = $_POST['validID'] ?? '';
-$username  = $_POST['username'] ?? '';
+// Directories (ensure they exist & are writable)
+$dirs = [
+  'front'   => '../frontID/',
+  'back'    => '../backID/',
+  'profile' => '../profilePictures/'
+];
 
-// Securely hash the password.
-$password_plain = $_POST['password'] ?? '';
-$password = password_hash($password_plain, PASSWORD_DEFAULT);
+// Build unique filenames
+$time = time();
+$frontName   = $time . "_front_"  . basename($front['name']);
+$backName    = $time . "_back_"   . basename($back['name']);
+$profileName = $time . "_prof_"   . basename($profile['name']);
 
-// --- Handle File Uploads ---
-// Ensure your form tag includes: enctype="multipart/form-data"
-// e.g. <form action="new_acc_signup.php" method="POST" enctype="multipart/form-data">
-if (isset($_FILES['frontID']) && isset($_FILES['backID'])) {
-    // Directories for storing the images (ensure these folders exist and are writable)
-    $frontDir = "../frontID/";
-    $backDir  = "../backID/";
-    
-    // Process front ID image upload
-    $frontFile = $_FILES['frontID'];
-    $frontFileName = time() . "_" . basename($frontFile["name"]);
-    $frontTarget = $frontDir . $frontFileName;
-    
-    // Process back ID image upload
-    $backFile = $_FILES['backID'];
-    $backFileName = time() . "_" . basename($backFile["name"]);
-    $backTarget = $backDir . $backFileName;
-    
-    // Move the uploaded files to your designated folders
-    if (move_uploaded_file($frontFile["tmp_name"], $frontTarget) && move_uploaded_file($backFile["tmp_name"], $backTarget)) {
-        // Prepare and execute the insertion query using a prepared statement
-        $stmt = $conn->prepare("INSERT INTO new_acc_requests (full_name, birthdate, sex, contact_number, email_address, full_address, purok, valid_ID, front_ID, back_ID, username, password)
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        if (!$stmt) {
-            die("Prepare failed: (" . $conn->errno . ") " . $conn->error);
-        }
-        
-        // Bind parameters
-        $stmt->bind_param("ssssssssssss", $full_name, $birthdate, $sex, $contact, $email, $full_address, $purok, $validID, $frontFileName, $backFileName, $username, $password);
-        
-        if ($stmt->execute()) {
-            // Record inserted successfully.
-            header("Location: ../underreview.php");
-            exit();
-        } else {
-            echo "Error inserting record: " . $stmt->error;
-        }
-        
-        $stmt->close();
-    } else {
-        // Error handling for file upload issues.
-        echo "There was an error uploading your ID images.";
-    }
+if (
+  move_uploaded_file($front['tmp_name'],   $dirs['front']   . $frontName)  &&
+  move_uploaded_file($back['tmp_name'],    $dirs['back']    . $backName)   &&
+  move_uploaded_file($profile['tmp_name'], $dirs['profile'] . $profileName)
+) {
+  // Pending table insert
+  $stmt1 = $conn->prepare("
+    INSERT INTO pending_accounts
+      (account_ID, full_name, birthdate, sex,
+       civil_status, blood_type, birth_registration_number,
+       highest_educational_attainment, occupation, purok,
+       valid_ID, front_ID, back_ID, profile_picture)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+  ");
+  $stmt1->bind_param(
+    "isssssssssssss",
+    $account_id, $full_name, $bd, $sx,
+    $cs, $bt, $br,
+    $ed, $oc, $pu,
+    $validID,
+    $frontName, $backName, $profileName
+  );
+
+  // User-accounts insert
+  $stmt2 = $conn->prepare("
+    INSERT INTO user_accounts
+      (account_id, username, password)
+    VALUES (?,?,?)
+  ");
+  $stmt2->bind_param("iss", $account_id, $username, $pwd_hash);
+
+  if ($stmt1->execute() && $stmt2->execute()) {
+    header("Location: ../underreview.php");
+    exit;
+  } else {
+    echo "DB error: " . $conn->error;
+  }
+
+  $stmt1->close();
+  $stmt2->close();
 } else {
-    echo "Please upload both the front and back images of your ID.";
+  echo "Error uploading one or more files.";
 }
 
 $conn->close();

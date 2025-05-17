@@ -32,7 +32,7 @@ include 'includes/header.php';
             <h1 class="mb-5">UNDER REVIEW</h2>
             <p class="mb-40">
                 Your account details is being verified by the system and will take a few minutes.<br>
-                You will receive an email or SMS notification once your account has been successfully verified.<br>
+                This page will change once your account has been successfully verified.<br>
                 If you have any urgent concerns, feel free to contact our support team.<br>
                 Thank you for your patience!
             </p>

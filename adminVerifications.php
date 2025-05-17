@@ -1,8 +1,8 @@
 <div class="container py-4">
   <!-- Title and Filter -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
+  <!-- <div class="d-flex justify-content-between align-items-center mb-3">
     <h4 class="fw-bold">Account Requests</h4>
-  </div>
+  </div> -->
 
   <!-- Account Requests Table -->
   <div class="card shadow-sm p-3">
@@ -19,13 +19,13 @@
         <tbody>
           <?php
             // Fetch account requests from the database
-            $sql = "SELECT * FROM new_acc_requests";
+            $sql = "SELECT * FROM pending_accounts";
             $result = $conn->query($sql);
             $allRequests = [];
 
             if ($result->num_rows > 0) {
               while ($row = $result->fetch_assoc()) {
-                $formatted = date("F d, Y h:i A", strtotime($row['time_creation']));
+                $formatted = date("F d, Y - h:i A", strtotime($row['time_creation']));
                 $allRequests[$row['account_ID']] = $row;
 
                 echo "<tr class='request-row' data-id='{$row['account_ID']}' style='cursor:pointer'>";
@@ -39,7 +39,7 @@
                 // -------------------------------------------------------------------
                 echo "
                   <form action='functions/approve_account.php' method='POST' class='d-inline approve-form'> <!-- MODIFIED -->
-                    <input type='hidden' name='account_id' value='{$row['account_ID']}'>
+                    <input type='hidden' name='account_ID' value='{$row['account_ID']}'>
                     <input type='hidden' name='name' value='{$row['full_name']}'>
                     <button type='submit' class='btn btn-sm btn-outline-success'>Approve</button>
                   </form>
@@ -100,32 +100,50 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.request-row').forEach(row => {
     row.addEventListener('click', (e) => {
       if (e.target.tagName === 'BUTTON') return;
-      const id = row.dataset.id;
+      const id   = row.dataset.id;
       const data = requestsData[id];
       if (!data) return;
-      let html = '';
-      const excludedKeys = ['username', 'password', 'purok'];
+
+      // Start a Bootstrap grid + definition list
+      let html = '<div class="container-fluid"><dl class="row">';
+
+      const excludedKeys = ['username', 'password'];
       for (let key in data) {
         if (excludedKeys.includes(key)) continue;
-        let label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        // Turn snake_case into Title Case
+        let label = key
+          .replace(/_/g, ' ')
+          .replace(/\b\w/g, l => l.toUpperCase());
+
+        // Check for image file extensions
         if (/\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(data[key])) {
-          let imagePath = key.includes('front')
-            ? `frontID/${data[key]}`
+          const folder = key.includes('front')
+            ? 'frontID'
             : key.includes('back')
-              ? `backID/${data[key]}`
-              : `uploads/${data[key]}`;
+              ? 'backID'
+              : 'profilePictures';
+          const imgSrc = `${folder}/${data[key]}`;
+
           html += `
-            <div class="mb-3">
-              <strong>${label}:</strong><br>
-              <img src="${imagePath}" class="img-fluid rounded" style="max-height:300px;">
-            </div>`;
+            <dt class="col-sm-5">${label}</dt>
+            <dd class="col-sm-7 mb-4">
+              <img src="${imgSrc}" class="img-fluid img-thumbnail" style="max-height:200px;" alt="${label}">
+            </dd>`;
         } else {
-          html += `<p><strong>${label}:</strong> ${data[key]}</p>`;
+          html += `
+            <dt class="col-sm-5">${label}</dt>
+            <dd class="col-sm-7 mb-3">${data[key]}</dd>`;
         }
       }
-      document.querySelector('#requestDetailsModal .modal-body').innerHTML = html;
+
+      html += '</dl></div>';
+      
+      // Inject and show
+      document.querySelector('#requestDetailsModal .modal-body')
+              .innerHTML = html;
       new bootstrap.Modal(document.getElementById('requestDetailsModal')).show();
     });
+
   });
 
   // === NEW: confirmation flow for Approve buttons ===
@@ -138,11 +156,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.querySelectorAll('.approve-form').forEach(form => {              // MODIFIED
     form.addEventListener('submit', e => {
-      e.preventDefault();             // stop immediate submit
-      pendingForm = form;             // remember which
-      confirmIdSpan.textContent = form.account_id.value; // show ID
-      confirmNameSpan.textContent = form.name.value;     // show name
-      confirmModal.show();            // pop the confirm dialog
+      e.preventDefault();
+      pendingForm = form;
+
+      // grab the hidden inputs by their name attributes
+      const accInput  = form.querySelector('input[name="account_ID"]');
+      const nameInput = form.querySelector('input[name="name"]');
+
+      confirmIdSpan.textContent   = accInput  ? accInput.value  : '';
+      confirmNameSpan.textContent = nameInput ? nameInput.value : '';
+
+      confirmModal.show();
     });
   });
 

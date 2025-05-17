@@ -78,3 +78,19 @@ $stmt->close();
 // 6) Redirect back with the new SMN ID for your alert
 header("Location: ../superAdminPanel.php?page=superAdminSummon&transaction_id={$transactionId}");
 exit();
+
+if (!empty($_POST['superAdminRedirect'])) {
+    // Came from the super‐admin panel → send back there
+    header("Location: ../superAdminPanel.php?page=superAdminSummon&transaction_id={$transactionId}");
+    exit();
+}
+
+if (!empty($_POST['adminRedirect'])) {
+    // Came from the admin panel → send back there
+    header("Location: ../adminPanel.php?page=adminSummon&transaction_id={$transactionId}");
+    exit();
+}
+
+// Default: user panel
+header("Location: ../userPanel.php?page=Summon&transaction_id={$transactionId}");
+exit();

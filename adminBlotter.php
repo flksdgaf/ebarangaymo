@@ -1,29 +1,41 @@
 <?php
 require 'functions/dbconn.php';
-
 $userId = (int)$_SESSION['loggedInUserID'];
+$newTid    = $_GET['transaction_id'] ?? '';
 
-// ── 0) FILTER SETUP ──────────────────────────────────────────────────────────
-$date_from = $_GET['date_from'] ?? '';
-$date_to   = $_GET['date_to']   ?? '';
+// ── 0) FILTER + SEARCH SETUP ───────────────────────────────────────────────────
+$search      = trim($_GET['search'] ?? '');
+$date_from   = $_GET['date_from'] ?? '';
+$date_to     = $_GET['date_to'] ?? '';
 
 $whereClauses = [];
 $bindTypes    = '';
 $bindParams   = [];
 
+// Global search on transaction_id and complainants
+if ($search !== '') {
+  $whereClauses[] = "(transaction_id LIKE ? OR complainants LIKE ? OR complaint_nature LIKE ?)";
+  $bindTypes   .= 'sss';
+  $term         = "%{$search}%";
+  $bindParams[] = $term;
+  $bindParams[] = $term;
+  $bindParams[] = $term;
+}
+
+// Date occurrence filter
 if ($date_from && $date_to) {
-  $whereClauses[]  = 'DATE(date_occurred) BETWEEN ? AND ?';
-  $bindTypes      .= 'ss';
-  $bindParams[]    = $date_from;
-  $bindParams[]    = $date_to;
+  $whereClauses[] = 'DATE(date_occurrence) BETWEEN ? AND ?';
+  $bindTypes    .= 'ss';
+  $bindParams[]  = $date_from;
+  $bindParams[]  = $date_to;
 } elseif ($date_from) {
-  $whereClauses[]  = 'DATE(date_occurred) >= ?';
-  $bindTypes      .= 's';
-  $bindParams[]    = $date_from;
+  $whereClauses[] = 'DATE(date_occurrence) >= ?';
+  $bindTypes    .= 's';
+  $bindParams[]  = $date_from;
 } elseif ($date_to) {
-  $whereClauses[]  = 'DATE(date_occurred) <= ?';
-  $bindTypes      .= 's';
-  $bindParams[]    = $date_to;
+  $whereClauses[] = 'DATE(date_occurrence) <= ?';
+  $bindTypes    .= 's';
+  $bindParams[]  = $date_to;
 }
 
 $whereSQL = $whereClauses
@@ -34,7 +46,7 @@ $limit  = 10;
 $page   = isset($_GET['page_num']) ? max((int)$_GET['page_num'], 1) : 1;
 $offset = ($page - 1) * $limit;
 
-// ── COUNT FOR PAGINATION ─────────────────────────────────────────────────────
+// ── COUNT TOTAL ROWS ──────────────────────────────────────────────────────────
 $countSQL  = "SELECT COUNT(*) AS total FROM blotter_records {$whereSQL}";
 $countStmt = $conn->prepare($countSQL);
 if ($whereClauses) {
@@ -50,278 +62,131 @@ $totalRows  = $countStmt->get_result()->fetch_assoc()['total'];
 $totalPages = ceil($totalRows / $limit);
 $countStmt->close();
 
-// ── 1) FETCH LIST ────────────────────────────────────────────────────────────
+// ── FETCH PAGE OF RECORDS ────────────────────────────────────────────────────
 $sql = "
   SELECT
-    id,
-    account_id,
     transaction_id,
     complainants,
-    respondents,
-    DATE_FORMAT(date_filed,    '%M %d, %Y %h:%i %p') AS date_filed_fmt,
-    DATE_FORMAT(date_occurrence, '%M %d, %Y')             AS date_occurred_fmt,
-    complaint_nature,
-    complaint_description,
-    payment_method,
-    OR_number,
-    DATE_FORMAT(OR_issued_date,'%M %d, %Y')             AS OR_issued_fmt
+    DATE_FORMAT(date_occurrence, '%M %d, %Y') AS formatted_occurrence,
+    complaint_nature
   FROM blotter_records
   {$whereSQL}
-  ORDER BY transaction_id DESC
+  ORDER BY date_filed DESC
   LIMIT ? OFFSET ?
 ";
 $st = $conn->prepare($sql);
+
+// bind search + date + pagination params
 $types = $bindTypes . 'ii';
 $bindParams[] = $limit;
 $bindParams[] = $offset;
+
 $refs = [];
 foreach ($bindParams as $i => $v) {
   $refs[$i] = & $bindParams[$i];
 }
 array_unshift($refs, $types);
 call_user_func_array([$st, 'bind_param'], $refs);
+
 $st->execute();
 $result = $st->get_result();
 ?>
 
 <div class="container py-3">
-  <!-- New Blotter & Filter -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <button class="btn btn-success"
-            data-bs-toggle="modal"
-            data-bs-target="#newBlotterModal">
-      New Blotter
-    </button>
-    <div class="dropdown">
-      <button class="btn btn-sm btn-outline-success dropdown-toggle"
-              type="button"
-              id="filterDropdown"
-              data-bs-toggle="dropdown"
-              aria-expanded="false">
-        Filter
-      </button>
-      <div class="dropdown-menu dropdown-menu-end p-3"
-           aria-labelledby="filterDropdown"
-           style="min-width:260px; --bs-body-font-size:.75rem; font-size:.75rem;">
-        <form method="get" class="mb-0" action="adminPanel.php">
-        <!-- tell adminPanel to render the blotter page -->
-        <input type="hidden" name="page" value="adminBlotter">
-          <div class="mb-2">
-            <label class="form-label mb-1">Date Occurred</label>
-            <div class="d-flex">
-              <input type="date" name="date_from" class="form-control form-control-sm me-1" style="font-size:.75rem;" value="<?=htmlspecialchars($date_from)?>">
-              <input type="date" name="date_to"   class="form-control form-control-sm" style="font-size:.75rem;" value="<?=htmlspecialchars($date_to)?>">
-            </div>
-          </div>
-          <div class="d-flex">
-            <a href="adminPanel.php?page=adminBlotter" class="btn btn-sm btn-outline-secondary me-2">Reset</a>
-            <button type="submit" class="btn btn-sm btn-success flex-grow-1">Apply</button>
-          </div>
-        </form>
-      </div>
+   <?php if ($newTid): ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      New blotter record <strong><?= htmlspecialchars($newTid) ?></strong> added successfully!
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
-  </div>
-
-  <!-- New Blotter Modal -->
-  <div class="modal fade" id="newBlotterModal" tabindex="-1" aria-labelledby="newBlotterModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-      <div class="modal-content rounded-2xl shadow-lg border-0">
-        <div class="modal-header">
-          <h5 class="modal-title" id="newBlotterModalLabel">Record New Blotter</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-  <!-- point at your handler and let it know we came from admin -->
-        <form action="functions/create_blotter.php" method="POST" id="newBlotterForm">
-          <input type="hidden" name="adminRedirect" value="1">
-          <div class="modal-body">
-            <div class="mb-3">
-              <label class="form-label">Complainants</label>
-              <input type="text" name="complainants" class="form-control" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Respondents</label>
-              <input type="text" name="respondents" class="form-control" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Date Occurred</label>
-              <input type="date" name="date_occurred" class="form-control" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Complaint Nature</label>
-              <input type="text" name="complaint_nature" class="form-control" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Complaint Description</label>
-              <textarea name="complaint_description" class="form-control" rows="3" required></textarea>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Payment Method</label>
-              <input type="text" name="payment_method" class="form-control">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">OR Number</label>
-              <input type="text" name="OR_number" class="form-control">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">OR Issued Date</label>
-              <input type="date" name="OR_issued_date" class="form-control">
-            </div>
-          </div>
-          <div class="modal-footer bg-light">
-            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-            <button type="submit" class="btn btn-success">Save Blotter</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- Blotter Records Table -->
+  <?php endif; ?>
   <div class="card shadow-sm p-3">
-  <div class="table-responsive admin-table" style="height:500px; overflow-y:auto;">
+    <!-- SEARCH + FILTER DROPDOWN -->
+    <div class="d-flex align-items-center mb-3">
+      <div class="dropdown">
+        <button class="btn btn-sm btn-outline-success dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+          Filter
+        </button>
+        <div class="dropdown-menu p-3" aria-labelledby="filterDropdown" style="min-width:260px; --bs-body-font-size:.75rem; font-size:.75rem;">
+          <form method="get" id="filterForm" class="mb-0">
+            <!-- preserve search -->
+            <input type="hidden" name="page" value="adminBlotter">
+            <input type="hidden" name="search" value="<?= htmlspecialchars($search) ?>">
+
+            <!-- Date Occurrence -->
+            <div class="mb-2">
+              <label class="form-label mb-1">Date Occurrence</label>
+              <div class="d-flex gap-1">
+                <div class="flex-grow-1">
+                  <small class="text-muted">From</small>
+                  <input type="date" name="date_from" class="form-control form-control-sm" style="font-size:.75rem;" value="<?=htmlspecialchars($date_from)?>">
+                </div>
+                <div class="flex-grow-1">
+                  <small class="text-muted">To</small>
+                  <input type="date" name="date_to" class="form-control form-control-sm" style="font-size:.75rem;" value="<?=htmlspecialchars($date_to)?>">
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex">
+              <a href="?page=adminBlotter" class="btn btn-sm btn-outline-secondary me-2">Reset</a>
+              <button type="submit" class="btn btn-sm btn-success flex-grow-1">Apply</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Add New Blotter button -->
+      <button type="button" class="btn btn-sm btn-success ms-3" id="addBlotterBtn">
+        <i class="bi bi-plus-lg me-1"></i> Add New Blotter
+      </button>
+
+
+      <form method="get" id="searchForm" class="d-flex ms-auto me-2">
+        <input type="hidden" name="page" value="adminBlotter">
+        <input type="hidden" name="page_num" value="1">
+        <!-- preserve filters -->
+        <input type="hidden" name="date_from" value="<?=htmlspecialchars($date_from)?>">
+        <input type="hidden" name="date_to"   value="<?=htmlspecialchars($date_to)?>">
+
+        <div class="input-group input-group-sm">
+          <input name="search" id="searchInput" type="text" class="form-control" placeholder="Search…" value="<?= htmlspecialchars($search) ?>">
+          <button type="button" class="btn btn-outline-secondary" id="searchBtn">
+            <span class="material-symbols-outlined" id="searchIcon">
+              <?= !empty($search) ? 'close' : 'search' ?>
+            </span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-responsive admin-table" style="height:500px; overflow-y:auto;">
       <table class="table table-hover align-middle text-start">
-      <thead class="table-light">
+        <thead class="table-light">
           <tr>
-            <th>Transaction No.</th>
-            <th>Complainants</th>
-            <th>Date Occurred</th>
-            <th>Nature of Complaint</th>
+            <th class="text-nowrap">Transaction No.</th>
+            <th class="text-nowrap">Complainant</th>
+            <th class="text-nowrap">Date Occurrence</th>
+            <th class="text-nowrap">Complaint Nature</th>
           </tr>
         </thead>
         <tbody>
           <?php if ($result->num_rows): ?>
-            <?php while ($r = $result->fetch_assoc()): ?>
-              <tr style="cursor:pointer"
-                  data-bs-toggle="modal"
-                  data-bs-target="#viewModal-<?= htmlspecialchars($r['id']) ?>">
-                <td><?= htmlspecialchars($r['transaction_id']) ?></td>
-                <td><?= htmlspecialchars($r['complainants']) ?></td>
-                <td><?= $r['date_occurred_fmt'] ?></td>
-                <td><?= htmlspecialchars($r['complaint_nature']) ?></td>
+            <?php while ($row = $result->fetch_assoc()): ?>
+              <tr>
+                <td><?= htmlspecialchars($row['transaction_id']) ?></td>
+                <td><?= htmlspecialchars($row['complainants']) ?></td>
+                <td><?= $row['formatted_occurrence'] ?></td>
+                <td><?= htmlspecialchars($row['complaint_nature']) ?></td>
               </tr>
-
-              <!-- View Modal -->
-              <div class="modal fade" id="viewModal-<?= $r['id'] ?>" tabindex="-1" aria-labelledby="viewModalLabel-<?= $r['id'] ?>" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <?php
-        // re-fetch record so we can render the full detail form
-        $m = $conn->prepare("SELECT * FROM blotter_records WHERE id = ? LIMIT 1");
-        $m->bind_param('i', $r['id']);
-        $m->execute();
-        $detail = $m->get_result()->fetch_assoc();
-        $m->close();
-      ?>
-      <div class="modal-header">
-        <h5 class="modal-title" id="viewModalLabel-<?= $r['id'] ?>">
-          Blotter #<?= htmlspecialchars($detail['transaction_id']) ?>
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <form id="detailForm-<?= $r['id'] ?>" method="post">
-          <?php
-            $exclude = ['id','account_id'];
-            foreach ($detail as $col => $val) {
-              if (in_array($col, $exclude, true)) continue;
-              $label = ucwords(str_replace('_',' ',$col));
-              // formatted fields already have `_fmt` alias
-              if (strpos($col, '_fmt') !== false) {
-                echo "<p><strong>{$label}:</strong> {$val}</p>";
-              } else {
-                echo "<div class='mb-3'>";
-                echo "  <label class='form-label'>{$label}</label>";
-                if ($col === 'complaint_description') {
-                  echo "<textarea name='{$col}' class='form-control' rows='3' readonly>".
-                        htmlspecialchars($val).
-                        "</textarea>";
-                } else {
-                  echo "<input type='text' name='{$col}' value='".
-                        htmlspecialchars($val).
-                        "' class='form-control' readonly>";
-                }
-                echo "</div>";
-              }
-            }
-            // keep the ID for editing
-            echo "<input type='hidden' name='id' value='{$detail['id']}'>";
-          ?>
-        </form>
-      </div>
-      <!-- view‐mode buttons -->
-      <div id="groupView-<?= $r['id'] ?>" class="btn-group w-100 p-3" role="group">
-        <button type="button"
-                class="btn btn-outline-danger me-1"
-                onclick="if(confirm('Really delete?')) location.href='adminPanel.php?page=adminBlotter&action=delete&id=<?= $r['id'] ?>'">
-          Delete
-        </button>
-        <button type="button"
-                class="btn btn-outline-primary me-1"
-                id="editBtn-<?= $r['id'] ?>">
-          Edit
-        </button>
-        <button type="button"
-                class="btn btn-outline-secondary"
-                onclick="location.href='adminPanel.php?page=adminBlotter&action=certificate&id=<?= $r['id'] ?>'">
-          Generate Certificate
-        </button>
-      </div>
-      <!-- edit‐mode buttons (hidden initially) -->
-      <div id="groupEdit-<?= $r['id'] ?>" class="btn-group w-100 p-3 d-none" role="group">
-        <button type="button"
-                class="btn btn-outline-danger me-1"
-                id="cancelBtn-<?= $r['id'] ?>">
-          Cancel
-        </button>
-        <button type="button"
-                class="btn btn-primary"
-                id="saveBtn-<?= $r['id'] ?>">
-          Save
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const id        = <?= json_encode($r['id']) ?>;
-    const editBtn   = document.getElementById(`editBtn-${id}`);
-    const cancelBtn = document.getElementById(`cancelBtn-${id}`);
-    const saveBtn   = document.getElementById(`saveBtn-${id}`);
-    const viewGrp   = document.getElementById(`groupView-${id}`);
-    const editGrp   = document.getElementById(`groupEdit-${id}`);
-    const form      = document.getElementById(`detailForm-${id}`);
-    const inputs    = form.querySelectorAll('input, textarea');
-
-    // Enter Edit
-    editBtn.addEventListener('click', () => {
-      inputs.forEach(i => i.removeAttribute('readonly'));
-      viewGrp.classList.add('d-none');
-      editGrp.classList.remove('d-none');
-    });
-
-    // Cancel Edit
-    cancelBtn.addEventListener('click', () => {
-      // just reload the modal contents
-      location.reload();
-    });
-
-    // Save
-    saveBtn.addEventListener('click', () => {
-      form.action = 'functions/edit_blotter.php';
-      form.submit();
-    });
-  });
-</script>
             <?php endwhile; ?>
           <?php else: ?>
-            <tr><td colspan="4" class="text-center">No blotter records found.</td></tr>
+            <tr><td colspan="4" class="text-center">No records found.</td></tr>
           <?php endif; ?>
         </tbody>
       </table>
 
-      <!-- Pagination -->
+      <!-- PAGINATION -->
       <?php if ($totalPages > 1): ?>
       <nav class="mt-3">
         <ul class="pagination justify-content-center pagination-sm">
@@ -329,19 +194,23 @@ $result = $st->get_result();
             <a class="page-link" href="?<?= http_build_query(array_merge($_GET, ['page_num' => $page - 1])) ?>">Previous</a>
           </li>
           <?php
-            $range = 2; $dots = false;
-            for ($i = 1; $i <= $totalPages; $i++) {
-              if ($i == 1 || $i == $totalPages || ($i >= $page - $range && $i <= $page + $range)) {
-                $active = $i == $page ? 'active' : '';
-                echo "<li class='page-item {$active}'>
-                        <a class='page-link' href='?".http_build_query(array_merge($_GET, ['page_num'=>$i]))."'>$i</a>
-                      </li>";
-                $dots = true;
-              } elseif ($dots) {
-                echo "<li class='page-item disabled'><span class='page-link'>…</span></li>";
-                $dots = false;
-              }
+          $range = 2; $dots = false;
+          for ($i = 1; $i <= $totalPages; $i++) {
+            if (
+              $i == 1 ||
+              $i == $totalPages ||
+              ($i >= $page - $range && $i <= $page + $range)
+            ) {
+              $active = $i == $page ? 'active' : '';
+              echo "<li class='page-item {$active}'>
+                      <a class='page-link' href='?" . http_build_query(array_merge($_GET, ['page_num' => $i])) . "'>$i</a>
+                    </li>";
+              $dots = true;
+            } elseif ($dots) {
+              echo "<li class='page-item disabled'><span class='page-link'>…</span></li>";
+              $dots = false;
             }
+          }
           ?>
           <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
             <a class="page-link" href="?<?= http_build_query(array_merge($_GET, ['page_num' => $page + 1])) ?>">Next</a>
@@ -349,10 +218,183 @@ $result = $st->get_result();
         </ul>
       </nav>
       <?php endif; ?>
-
     </div>
   </div>
 </div>
+
+<!-- Add New Blotter Modal -->
+<div class="modal fade" id="addBlotterModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content shadow-sm">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title">
+          <i class="bi bi-plus-lg me-2"></i> New Blotter Record
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="addBlotterForm" action="functions/superAdminBlotter_submit.php" method="POST">
+        <div class="modal-body">
+          <div class="row">
+
+            <!-- Complainants column -->
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Complainants</label>
+              <div id="complainantsWrapper">
+                <div class="input-group mb-2 complaint-entry">
+                  <input name="complainants[]" type="text" class="form-control" required>
+                  <button type="button" class="btn btn-danger remove-entry">×</button>
+                </div>
+              </div>
+              <button type="button" class="btn btn-sm btn-success" id="addComplainantBtn" style="width: 100%;">
+                <i class="bi bi-plus-lg"></i> Add Complainant
+              </button>
+            </div>
+
+            <!-- Respondents column -->
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Respondents</label>
+              <div id="respondentsWrapper">
+                <div class="input-group mb-2 respondent-entry">
+                  <input name="respondents[]" type="text" class="form-control" required>
+                  <button type="button" class="btn btn-danger remove-entry">×</button>
+                </div>
+              </div>
+              <button type="button" class="btn btn-sm btn-success" id="addRespondentBtn" style="width: 100%;">
+                <i class="bi bi-plus-lg"></i> Add Respondent
+              </button>
+            </div>
+          </div>
+
+          <!-- Date Filed & Date Occurrence -->
+          <div class="row mb-3">
+            <div class="col">
+              <label class="form-label">Date Filed</label>
+              <input name="date_filed" type="date" class="form-control" required>
+            </div>
+            <div class="col">
+              <label class="form-label">Date Occurrence</label>
+              <input name="date_occurrence" type="date" class="form-control" required>
+            </div>
+          </div>
+          <!-- Incidence Place -->
+          <div class="mb-3">
+            <label class="form-label">Incidence Place</label>
+            <input name="incidence_place" type="text" class="form-control" required>
+          </div>
+          <!-- Complaint Nature -->
+          <div class="mb-3">
+            <label class="form-label">Complaint Nature</label>
+            <input name="complaint_nature" type="text" class="form-control" required>
+          </div>
+          <!-- Complaint Description -->
+          <div class="mb-3">
+            <label class="form-label">Complaint Description</label>
+            <textarea name="complaint_description" class="form-control" rows="3" required></textarea>
+          </div>
+          <!-- Remarks -->
+          <div class="mb-3">
+            <label class="form-label">Remarks</label>
+            <textarea name="remarks" class="form-control" rows="2"></textarea>
+          </div>
+          <!-- Payment Method -->
+          <div class="mb-3">
+            <label class="form-label">Payment Method</label>
+            <select name="payment_method" class="form-select" required>
+              <option value="GCash">GCash</option>
+              <option value="Brgy Payment Device">Brgy Payment Device</option>
+              <option value="Over-the-Counter">Over-the-Counter</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success">Submit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // ——— SEARCH FORM TOGGLE —————————————————————————————
+  const form      = document.getElementById('searchForm');
+  const input     = document.getElementById('searchInput');
+  const btn       = document.getElementById('searchBtn');
+  const hasSearch = <?= json_encode(!empty($search)) ?>;
+
+  btn.addEventListener('click', () => {
+    if (hasSearch) input.value = '';
+    form.submit();
+  });
+
+  // ——— “Add New Blotter” modal toggle ——————————————————
+  const addBlotterBtn      = document.getElementById('addBlotterBtn');
+  const addBlotterModalEl  = document.getElementById('addBlotterModal');
+  const addBlotterBs       = new bootstrap.Modal(addBlotterModalEl);
+  const complainantsWrapper = document.getElementById('complainantsWrapper');
+  const respondentsWrapper  = document.getElementById('respondentsWrapper');
+
+  // Prepare HTML templates
+  const complainantTemplate = `
+    <div class="input-group mb-2 complaint-entry">
+      <input name="complainants[]" type="text" class="form-control" required>
+      <button type="button" class="btn btn-danger remove-entry">×</button>
+    </div>
+  `;
+  const respondentTemplate = `
+    <div class="input-group mb-2 respondent-entry">
+      <input name="respondents[]" type="text" class="form-control" required>
+      <button type="button" class="btn btn-danger remove-entry">×</button>
+    </div>
+  `;
+
+  // Utility to add / remove entries
+  function setupDynamicList(addBtnId, wrapperEl, entryHtml) {
+    // Delegate remove clicks
+    wrapperEl.addEventListener('click', e => {
+      if (e.target.matches('.remove-entry')) {
+        e.target.closest('.input-group').remove();
+      }
+    });
+
+    // “Add” button
+    document.getElementById(addBtnId).addEventListener('click', () => {
+      const temp = document.createElement('div');
+      temp.innerHTML = entryHtml.trim();
+      wrapperEl.appendChild(temp.firstChild);
+    });
+  }
+
+  // Initialize dynamic lists
+  setupDynamicList('addComplainantBtn', complainantsWrapper, complainantTemplate);
+  setupDynamicList('addRespondentBtn',  respondentsWrapper,  respondentTemplate);
+
+  // Reset form & wrappers each time modal opens
+  addBlotterBtn.addEventListener('click', () => {
+    // clear all fields
+    document.getElementById('addBlotterForm').reset();
+
+    // re-populate with exactly one blank row each
+    complainantsWrapper.innerHTML = complainantTemplate.trim();
+    respondentsWrapper.innerHTML  = respondentTemplate.trim();
+
+      // INJECT adminRedirect FLAG
+      const form = document.getElementById('addBlotterForm');
+      // remove any old flags just in case
+      const old = form.querySelector('input[name="adminRedirect"]');
+      if (old) old.remove();
+      const flag = document.createElement('input');
+      flag.type  = 'hidden';
+      flag.name  = 'adminRedirect';
+      flag.value = '1';
+      form.prepend(flag);
+
+    addBlotterBs.show();
+  });
+});
+</script>
+
 
 <?php
 $st->close();

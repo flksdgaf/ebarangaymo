@@ -1,6 +1,7 @@
 <?php
 require 'functions/dbconn.php';
 $userId = (int)$_SESSION['loggedInUserID'];
+$newTid    = $_GET['transaction_id'] ?? '';
 
 // ── 0) FILTER SETUP ──────────────────────────────────────────────────────────
 $request_type    = $_GET['request_type']    ?? '';
@@ -13,6 +14,24 @@ $document_status = $_GET['document_status'] ?? '';
 $whereClauses = [];
 $bindTypes    = '';
 $bindParams   = [];
+
+// ── 1) GLOBAL SEARCH ─────────────────────────────────────────────────────────────
+$search = trim($_GET['search'] ?? '');
+if ($search !== '') {
+  $whereClauses[] = "("
+    . "transaction_id   LIKE ? OR "
+    . "full_name        LIKE ? OR "
+    . "request_type     LIKE ? OR "
+    . "payment_method   LIKE ? OR "
+    . "payment_status   LIKE ? OR "
+    . "document_status  LIKE ?"
+    . ")";
+  $bindTypes .= str_repeat('s', 6);
+  $term = "{$search}%";
+  for ($i = 0; $i < 6; $i++) {
+    $bindParams[] = $term;
+  }
+}
 
 if ($request_type) {
   $whereClauses[] = 'request_type = ?';
@@ -75,173 +94,22 @@ $totalRows = $countResult['total'];
 $totalPages = ceil($totalRows / $limit);
 $countStmt->close();
 
-// ── 1) DETAIL VIEW ───────────────────────────────────────────────────────────
-if (isset($_GET['transaction_id'])) {
-    $tx = $_GET['transaction_id'];
-
-    // fetch base view row
-    $vsql = "SELECT * FROM view_general_requests WHERE transaction_id = ? LIMIT 1";
-    $vst = $conn->prepare($vsql);
-    $vst->bind_param('s', $tx);
-    $vst->execute();
-    $vrow = $vst->get_result()->fetch_assoc();
-    $vst->close();
-
-    if (!$vrow) {
-        echo "<div class='alert alert-danger'>Request not found.</div>";
-        exit();
-    }
-
-    // determine underlying table name
-    switch ($vrow['request_type']) {
-      case 'Barangay ID':      $tbl = 'barangay_id_requests';    break;
-      case 'Business Permit':  $tbl = 'business_permit_requests';break;
-      case 'Certification':    $tbl = 'certification_requests';  break;
-      default:                 $tbl = null;
-    }
-
-    echo "<div class='container py-3'>";
-    echo "  <div id='detailsArea' class='card shadow-sm p-4 mb-4'>";
-    echo "<div class='d-flex justify-content-between align-items-start '>";
-    echo "  <h5 class='fw-bold'>Full Details for {$tx}</h5>";
-    echo "    <a href='?page=adminRequest' class='btn btn-secondary'>";
-    echo "      <span class='material-symbols-outlined'>close_small</span>";
-    echo "    </a>";  
-    echo "</div>";
-    
-    if ($tbl) {
-        $dsql = "SELECT * FROM {$tbl} WHERE transaction_id = ? LIMIT 1";
-        $dst  = $conn->prepare($dsql);
-        $dst->bind_param('s', $tx);
-        $dst->execute();
-        $drow = $dst->get_result()->fetch_assoc();
-        $dst->close();
-
-        if ($drow) {
-          $exclude = ['id','account_id','transaction_id','created_at'];
-          echo "<form method='post'>";
-          foreach ($drow as $col => $val) {
-              if ($val === null || in_array($col, $exclude, true)) continue;
-              $label   = ucwords(str_replace('_', ' ', $col));
-              $safeVal = htmlspecialchars($val, ENT_QUOTES, 'UTF-8');
-              echo "<div class='row mb-2'>";
-              // fixed‐width label column
-              echo "  <div class='col-sm-2 fw-bold'>";
-              echo "    <label class='col-form-label' style='font-size:0.75rem;'>$label</label>";
-              echo "  </div>";
-              // fixed‐width input column (won't span full container)
-              echo "  <div class='col-sm-7'>";
-              if ($col === 'payment_status') {
-                echo "<select class='form-select form-select-sm' style='font-size:0.75rem;' name='$col' disabled>";
-                foreach (['Paid', 'Unpaid'] as $opt) {
-                  $sel = $opt === $val ? 'selected' : '';
-                  echo "<option value='$opt' $sel>$opt</option>";
-                }
-                echo "</select>";
-              } elseif ($col === 'document_status') {
-                echo "<select class='form-select form-select-sm' style='font-size:0.75rem;' name='$col' disabled>";
-                foreach (['For Verification','Processing','Ready To Release','Released','Rejected'] as $opt) {
-                  $sel = $opt === $val ? 'selected' : '';
-                  echo "<option value='$opt' $sel>$opt</option>";
-                }
-                echo "</select>";
-              } else {
-                echo "<input type='text' name='$col' class='form-control' style='font-size:0.75rem;' value='$safeVal' readonly>";
-
-              }
-              echo "  </div>";
-              echo "</div>";
-          }
-          echo "</form>";
-      } else {
-          echo "<p class='text-danger'>No record found in <code>{$tbl}</code>.</p>";
-      }      
-    } else {
-        echo "<p class='text-danger'>Unknown request type: <strong>" . htmlspecialchars($vrow['request_type']) . "</strong></p>";
-    }
-
-    // — View mode buttons (shown by default) —
-    echo "<div id='groupView' class='btn-group w-100 mt-3' role='group'>";
-    echo "  <button id='deleteBtn' type='button' class='btn btn-outline-danger me-1'>Delete</button>";
-    echo "  <button id='editBtn'   type='button' class='btn btn-outline-primary me-1'>Edit</button>";
-    echo "  <button id='certBtn'   type='button' class='btn btn-outline-secondary'>Generate Certificate</button>";
-    echo "</div>";
-
-    // — Edit mode buttons (hidden initially) —
-    echo "<div id='groupEdit' class='btn-group w-100 mt-3 d-none' role='group'>";
-    echo "  <button id='cancelBtn' type='button' class='btn btn-outline-danger me-1'>Cancel</button>";
-    echo "  <button id='saveBtn'   type='button' class='btn btn-primary'>Save</button>";
-    echo "</div>";
-    echo "  </div>";  // close detailsArea
-    echo "</div>";    // close container
-
-    ?>
-
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const editBtn   = document.getElementById('editBtn');
-      const deleteBtn = document.getElementById('deleteBtn');
-      const certBtn   = document.getElementById('certBtn');
-      const cancelBtn = document.getElementById('cancelBtn');
-      const saveBtn   = document.getElementById('saveBtn');
-      const groupView = document.getElementById('groupView');
-      const groupEdit = document.getElementById('groupEdit');
-      const form      = document.querySelector('#detailsArea form');
-      const inputs    = form.querySelectorAll('input, select');
-
-      // This object will hold the original values
-      let originalValues = {};
-
-      // Enter edit mode
-      editBtn.addEventListener('click', () => {
-        // Store originals
-        inputs.forEach(i => {
-          originalValues[i.name] = i.value;
-          i.removeAttribute('readonly');
-          i.removeAttribute('disabled');
-        });
-        groupView.classList.add('d-none');
-        groupEdit.classList.remove('d-none');
-      });
-
-      // Cancel edit
-      cancelBtn.addEventListener('click', () => {
-        // Restore originals
-        inputs.forEach(i => {
-          if (originalValues.hasOwnProperty(i.name)) {
-            i.value = originalValues[i.name];
-          }
-          // Then put back to read‐only/disabled
-          if (i.tagName === 'INPUT') {
-            i.setAttribute('readonly', '');
-          } else {
-            i.setAttribute('disabled', '');
-          }
-        });
-
-        // Clear stored originals (optional)
-        originalValues = {};
-
-        groupEdit.classList.add('d-none');
-        groupView.classList.remove('d-none');
-      });
-
-      // Save changes
-      saveBtn.addEventListener('click', () => {
-        form.submit();
-      });
-
-      // Delete action
-      deleteBtn.addEventListener('click', () => {
-        if (confirm('Really delete?')) {
-          window.location = `?page=adminRequest&action=delete&transaction_id=<?=urlencode($tx)?>`;
-        }
-      });
-    });
-    </script>
-
-    <?php
-    exit();
+// If there’s a new transaction, fetch its request_type
+$newType = '';
+if ($newTid) {
+  $q = $conn->prepare("
+    SELECT request_type
+      FROM view_general_requests
+     WHERE transaction_id = ?
+     LIMIT 1
+  ");
+  $q->bind_param('s', $newTid);
+  $q->execute();
+  $r = $q->get_result()->fetch_assoc();
+  if ($r) {
+    $newType = $r['request_type'];
+  }
+  $q->close();
 }
 
 // ── 2) LIST + FILTERED QUERY ─────────────────────────────────────────────────
@@ -252,7 +120,7 @@ $sql = "
          payment_method,
          payment_status,
          document_status,
-         DATE_FORMAT(created_at, '%M %d, %Y %h:%i %p') AS formatted_date
+         DATE_FORMAT(created_at, '%M %d, %Y') AS formatted_date
     FROM view_general_requests
     {$whereSQL}
     ORDER BY created_at DESC
@@ -276,156 +144,131 @@ $result = $st->get_result();
 ?>
 
 <div class="container py-3">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <!-- modal trigger -->
-    <!-- <button type="button"
-            class="btn btn-success"
-            data-bs-toggle="modal"
-            data-bs-target="#newRequestModal">
-      Add New Request
-    </button>  -->
-    <div class="dropdown">
-      <button class="btn btn-sm btn-outline-success dropdown-toggle"
-              type="button"
-              id="filterDropdown"
-              data-bs-toggle="dropdown"
-              aria-expanded="false">
-        Filter
-      </button>
-      <div class="dropdown-menu dropdown-menu-end p-3"
-           aria-labelledby="filterDropdown"
-           style="min-width:260px; --bs-body-font-size:.75rem; font-size:.75rem;">
-        <form method="get" class="mb-0" id="filterForm">
-          <!-- preserve the page -->
-          <input type="hidden" name="page" value="adminRequest">
-
-          <!-- Request Type -->
-          <div class="mb-2">
-            <label class="form-label mb-1">Request Type</label>
-            <select name="request_type" class="form-select form-select-sm" style="font-size:.75rem;">
-              <option value="">All</option>
-              <option <?= $request_type==='Barangay ID'?'selected':''?>      value="Barangay ID">Barangay ID</option>
-              <option <?= $request_type==='Business Permit'?'selected':''?> value="Business Permit">Business Permit</option>
-              <option <?= $request_type==='Certification'?'selected':''?>   value="Certification">Certification</option>
-            </select>
-          </div>
-
-          <!-- Date Created -->
-          <div class="mb-2">
-            <label class="form-label mb-1">Date Created</label>
-            <div class="d-flex">
-              <input type="date" name="date_from" class="form-control form-control-sm me-1" style="font-size:.75rem;" value="<?=htmlspecialchars($date_from)?>">
-              <input type="date" name="date_to"   class="form-control form-control-sm" style="font-size:.75rem;" value="<?=htmlspecialchars($date_to)?>">
-            </div>
-          </div>
-
-          <!-- Payment Method -->
-          <div class="mb-2">
-            <label class="form-label mb-1">Payment Method</label>
-            <select name="payment_method" class="form-select form-select-sm" style="font-size:.75rem;">
-              <option value="">All</option>
-              <option <?= $payment_method==='GCash'?'selected':''?>          value="GCash">GCash</option>
-              <option <?= $payment_method==='Brgy Payment Device'?'selected':''?> value="Brgy Payment Device">Brgy Payment Device</option>
-              <option <?= $payment_method==='Over-the-Counter'?'selected':''?>    value="Over-the-Counter">Over-the-Counter</option>
-            </select>
-          </div>
-
-          <!-- Payment Status -->
-          <div class="mb-2">
-            <label class="form-label mb-1">Payment Status</label>
-            <select name="payment_status" class="form-select form-select-sm" style="font-size:.75rem;">
-              <option value="">All</option>
-              <option <?= $payment_status==='Paid'?'selected':''?>   value="Paid">Paid</option>
-              <option <?= $payment_status==='Unpaid'?'selected':''?> value="Unpaid">Unpaid</option>
-            </select>
-          </div>
-
-          <!-- Document Status -->
-          <div class="mb-2">
-            <label class="form-label mb-1">Document Status</label>
-            <select name="document_status" class="form-select form-select-sm" style="font-size:.75rem;">
-              <option value="">All</option>
-              <option <?= $document_status==='For Verification'?'selected':''?> value="For Verification">For Verification</option>
-              <option <?= $document_status==='Processing'?'selected':''?>       value="Processing">Processing</option>
-              <option <?= $document_status==='Ready To Release'?'selected':''?> value="Ready To Release">Ready To Release</option>
-              <option <?= $document_status==='Released'?'selected':''?>         value="Released">Released</option>
-              <option <?= $document_status==='Rejected'?'selected':''?>         value="Rejected">Rejected</option>
-            </select>
-          </div>
-
-          <div class="d-flex">
-            <a href="?page=adminRequest" class="btn btn-sm btn-outline-secondary me-2">Reset</a>
-            <button type="submit" class="btn btn-sm btn-success flex-grow-1">Apply</button>
-          </div>
-        </form>
-      </div>
+  <?php if ($newTid && $newType): ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <?= htmlspecialchars($newType) ?> request 
+      <strong><?= htmlspecialchars($newTid) ?></strong> added successfully!
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
-  </div>
-  <!-- end of your filter/header row -->
-
-  <!-- New Request Modal -->
-  <div class="modal fade" id="newRequestModal" tabindex="-1" aria-labelledby="newRequestModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content rounded-2xl shadow-lg border-0">
-
-      <!-- Header -->
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-
-      <!-- Body: selection pills + dynamic form -->
-      <div class="modal-body p-4">
-
-        <!-- Request Type Pills -->
-        <ul class="nav nav-pills nav-fill mb-4" id="requestTypeNav" role="tablist">
-          <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="pill-barangay" data-bs-toggle="pill" data-bs-target="#pane-barangay" type="button" role="tab">
-              <i class="bi bi-person-badge me-1"></i> Barangay ID
-            </button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link" id="pill-business" data-bs-toggle="pill" data-bs-target="#pane-business" type="button" role="tab">
-              <i class="bi bi-briefcase me-1"></i> Business Permit
-            </button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link" id="pill-certification" data-bs-toggle="pill" data-bs-target="#pane-certification" type="button" role="tab">
-              <i class="bi bi-file-earmark-check me-1"></i> Certification
-            </button>
-          </li>
-        </ul>
-
-        <div class="tab-content" id="requestTypeNavContent">
-          <!-- Barangay ID Form Pane -->
-          <div class="tab-pane fade show active" id="pane-barangay" role="tabpanel">
-            <!-- placeholder: form will be injected here -->
-            <div id="requestFormContainer"></div>
-          </div>
-          <!-- Other types can load their own forms later -->
-          <div class="tab-pane fade" id="pane-business" role="tabpanel">
-            <p class="text-muted text-center mt-5">Business Permit form coming soon...</p>
-          </div>
-          <div class="tab-pane fade" id="pane-certification" role="tabpanel">
-            <p class="text-muted text-center mt-5">Certification form coming soon...</p>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Footer: Submit -->
-      <div class="modal-footer bg-light p-3 rounded-bottom-2xl">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-          <i class="bi bi-x-circle me-1"></i> Close
-        </button>
-        <button type="submit" id="submitRequestBtn" class="btn btn-success" disabled form="barangayIDForm">
-          Submit Request
-        </button>
-      </div>
-
-    </div>
-  </div>
-</div>
-
-
+  <?php endif; ?>
   <div class="card shadow-sm p-3">
+    <!-- 2a) SEARCH FORM -->
+    <div class="d-flex align-items-center mb-3">
+      <div class="dropdown">
+        <button class="btn btn-sm btn-outline-success dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+          Filter
+        </button>
+        <div class="dropdown-menu p-3" aria-labelledby="filterDropdown" style="min-width:260px; --bs-body-font-size:.75rem; font-size:.75rem;">
+          <form method="get" class="mb-0" id="filterForm">
+            <!-- preserve the page -->
+            <input type="hidden" name="page" value="adminRequest">
+
+            <!-- Request Type -->
+            <div class="mb-2">
+              <label class="form-label mb-1">Request Type</label>
+              <select name="request_type" class="form-select form-select-sm" style="font-size:.75rem;">
+                <option value="">All</option>
+                <option <?= $request_type==='Barangay ID'?'selected':''?> value="Barangay ID">Barangay ID</option>
+                <option <?= $request_type==='Business Permit'?'selected':''?> value="Business Permit">Business Permit</option>
+                <option <?= $request_type==='Certification'?'selected':''?> value="Certification">Certification</option>
+              </select>
+            </div>
+
+            <!-- Date Created -->
+            <div class="mb-2">
+              <label class="form-label mb-1">Date Created</label>
+              <div class="d-flex gap-1">
+                <div class="flex-grow-1">
+                  <small class="text-muted">From</small>
+                  <input type="date" name="date_from" class="form-control form-control-sm" style="font-size:.75rem;" value="<?=htmlspecialchars($date_from)?>">
+                </div>
+                <div class="flex-grow-1">
+                  <small class="text-muted">To</small>
+                  <input type="date" name="date_to" class="form-control form-control-sm" style="font-size:.75rem;" value="<?=htmlspecialchars($date_to)?>">
+                </div>
+              </div>
+            </div>
+
+            <!-- Payment Method -->
+            <div class="mb-2">
+              <label class="form-label mb-1">Payment Method</label>
+              <select name="payment_method" class="form-select form-select-sm" style="font-size:.75rem;">
+                <option value="">All</option>
+                <option <?= $payment_method==='GCash'?'selected':''?>          value="GCash">GCash</option>
+                <option <?= $payment_method==='Brgy Payment Device'?'selected':''?> value="Brgy Payment Device">Brgy Payment Device</option>
+                <option <?= $payment_method==='Over-the-Counter'?'selected':''?>    value="Over-the-Counter">Over-the-Counter</option>
+              </select>
+            </div>
+
+            <!-- Payment Status -->
+            <div class="mb-2">
+              <label class="form-label mb-1">Payment Status</label>
+              <select name="payment_status" class="form-select form-select-sm" style="font-size:.75rem;">
+                <option value="">All</option>
+                <option <?= $payment_status==='Paid'?'selected':''?>   value="Paid">Paid</option>
+                <option <?= $payment_status==='Unpaid'?'selected':''?> value="Unpaid">Unpaid</option>
+              </select>
+            </div>
+
+            <!-- Document Status -->
+            <div class="mb-2">
+              <label class="form-label mb-1">Document Status</label>
+              <select name="document_status" class="form-select form-select-sm" style="font-size:.75rem;">
+                <option value="">All</option>
+                <option <?= $document_status==='For Verification'?'selected':''?> value="For Verification">For Verification</option>
+                <option <?= $document_status==='Processing'?'selected':''?>       value="Processing">Processing</option>
+                <option <?= $document_status==='Ready To Release'?'selected':''?> value="Ready To Release">Ready To Release</option>
+                <option <?= $document_status==='Released'?'selected':''?>         value="Released">Released</option>
+                <option <?= $document_status==='Rejected'?'selected':''?>         value="Rejected">Rejected</option>
+              </select>
+            </div>
+
+            <div class="d-flex">
+              <a href="?page=adminRequest" class="btn btn-sm btn-outline-secondary me-2">Reset</a>
+              <button type="submit" class="btn btn-sm btn-success flex-grow-1">Apply</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Add New Request button -->
+      <div class="dropdown ms-3">
+        <button class="btn btn-sm btn-success dropdown-toggle" type="button" id="addRequestDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="bi bi-plus-lg me-1"></i> Add New Request
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="addRequestDropdown">
+          <?php foreach (['Barangay ID','Business Permit','Certification'] as $type): ?>
+            <li>
+              <button
+                type="button"
+                class="dropdown-item request-trigger"
+                data-type="<?= $type ?>"
+              ><?= $type ?></button>
+            </li>
+          <?php endforeach; ?>
+        </ul>
+      </div>
+
+      <form method="get" id="searchForm" class="d-flex ms-auto me-2">
+      <!-- preserve pagination & filters -->
+      <input type="hidden" name="page" value="adminRequest">
+      <input type="hidden" name="page_num" value="1">
+      <?php foreach (['request_type','date_from','date_to','payment_method','payment_status','document_status'] as $f): 
+          if (!empty($_GET[$f])): ?>
+          <input type="hidden" name="<?= $f?>" value="<?= htmlspecialchars($_GET[$f]) ?>">
+      <?php endif; endforeach; ?>
+
+      <div class="input-group input-group-sm">
+          <input name="search" id="searchInput" type="text" class="form-control" placeholder="Search…" value="<?= htmlspecialchars($search) ?>">
+          <button type="button" class="btn btn-outline-secondary" id="searchBtn">
+          <span class="material-symbols-outlined" id="searchIcon">
+              <?= !empty($search) ? 'close' : 'search' ?>
+          </span>
+          </button>
+      </div>
+      </form>
+    </div>
+
     <div class="table-responsive admin-table" style="height:500px; overflow-y:auto;">
       <table class="table table-hover align-middle text-start">
         <thead class="table-light">
@@ -442,7 +285,7 @@ $result = $st->get_result();
         <tbody>
           <?php if ($result->num_rows): ?>
             <?php while ($row = $result->fetch_assoc()): ?>
-              <tr style="cursor:pointer" onclick="window.location.href='?page=adminRequest&transaction_id=<?=urlencode($row['transaction_id'])?>'">
+              <tr class="clickable-row" data-tid="<?= htmlspecialchars($row['transaction_id']) ?>">
                 <td><?= htmlspecialchars($row['transaction_id']) ?></td>
                 <td><?= htmlspecialchars($row['full_name']) ?></td>
                 <td><?= htmlspecialchars($row['request_type']) ?></td>
@@ -453,7 +296,7 @@ $result = $st->get_result();
               </tr>
             <?php endwhile; ?>
           <?php else: ?>
-            <tr><td colspan="7" class="text-center">No requests found.</td></tr>
+            <tr><td colspan="7" class="text-center">No records found.</td></tr>
           <?php endif; ?>
         </tbody>
       </table>
@@ -495,10 +338,354 @@ $result = $st->get_result();
         </ul>
       </nav>
       <?php endif; ?>
-
-
     </div>
   </div>
+
+  <!-- Details Modal -->
+  <div class="modal fade" id="rowModal" tabindex="-1" aria-labelledby="rowModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content shadow-lg">
+        <div class="modal-header bg-dark text-white">
+          <h5 class="modal-title" id="rowModalLabel">
+            <i class="bi bi-card-list me-2"></i>Request Details
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Basic Information -->
+          <div class="mb-4">
+            <h6 class="fw-bold fs-5 text-secondary">Basic Information</h6>
+            <dl class="row">
+              <dt class="col-sm-4">Transaction No.</dt>
+              <dd class="col-sm-8" id="modal-transaction_id">—</dd>
+              <dt class="col-sm-4">Name</dt>
+              <dd class="col-sm-8" id="modal-full_name">—</dd>
+              <dt class="col-sm-4">Request Type</dt>
+              <dd class="col-sm-8" id="modal-request_type">—</dd>
+            </dl>
+          </div>
+          <!-- Dates -->
+          <div class="mb-4">
+            <h6 class="fw-bold fs-5 text-secondary">Dates</h6>
+            <dl class="row">
+              <dt class="col-sm-4">Created At</dt>
+              <dd class="col-sm-8" id="modal-created_at">—</dd>
+              <dt class="col-sm-4">Claim Date</dt>
+              <dd class="col-sm-8" id="modal-claim_date">—</dd>
+            </dl>
+          </div>
+          <!-- Payment & Status -->
+          <div>
+            <h6 class="fw-bold fs-5 text-secondary">Payment & Status</h6>
+            <dl class="row">
+              <dt class="col-sm-4">Payment Method</dt>
+              <dd class="col-sm-8" id="modal-payment_method">—</dd>
+              <dt class="col-sm-4">Payment Status</dt>
+              <dd class="col-sm-8" id="modal-payment_status">—</dd>
+              <dt class="col-sm-4">Document Status</dt>
+              <dd class="col-sm-8" id="modal-document_status">—</dd>
+            </dl>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Universal “Add New Request” Modal -->
+  <div class="modal fade" id="addRequestModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content shadow-sm">
+        <div class="modal-header bg-dark text-white">
+          <h5 class="modal-title">
+            <i class="bi bi-plus-lg me-2"></i>
+            <span id="addRequestModalTitle">New Request</span>
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <form id="addRequestForm" action="functions/serviceBarangayID_submit.php" method="POST" enctype="multipart/form-data">
+          <div class="modal-body" id="addRequestModalBody">
+            <!-- fields will be injected here -->
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-success">Submit</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Templates for Barangay ID -->
+  <template data-type="Barangay ID">
+    <!-- core hidden value -->
+    <input type="hidden" name="request_type" value="Barangay ID">
+
+    <!-- Type of Transaction -->
+    <div class="mb-3">
+      <label class="form-label">Type of Transaction</label>
+      <select name="transactiontype" class="form-select" required>
+        <option value="New Application">New Application</option>
+        <option value="Renewal">Renewal</option>
+      </select>
+    </div>
+
+    <!-- Full Name -->
+    <div class="mb-3">
+      <label class="form-label">Full Name</label>
+      <input name="fullname" type="text" class="form-control" required>
+    </div>
+
+    <!-- Full Address -->
+    <div class="mb-3">
+      <label class="form-label">Full Address</label>
+      <input name="address" type="text" class="form-control" required>
+    </div>
+
+    <!-- Height & Weight -->
+    <div class="row mb-3">
+      <div class="col">
+        <label class="form-label">Height (cm)</label>
+        <input name="height" type="number" class="form-control" min="0" required>
+      </div>
+      <div class="col">
+        <label class="form-label">Weight (kg)</label>
+        <input name="weight" type="number" class="form-control" min="0" required>
+      </div>
+    </div>
+
+    <!-- Birthdate & Birthplace -->
+    <div class="row mb-3">
+      <div class="col">
+        <label class="form-label">Birthday</label>
+        <input name="birthday" type="date" class="form-control" required>
+      </div>
+      <div class="col">
+        <label class="form-label">Birthplace</label>
+        <input name="birthplace" type="text" class="form-control" required>
+      </div>
+    </div>
+
+    <!-- Civil Status & Religion -->
+    <div class="row mb-3">
+      <div class="col">
+        <label class="form-label">Civil Status</label>
+        <select name="civilstatus" class="form-select" required>
+          <option value="">Select…</option>
+          <option>Single</option>
+          <option>Married</option>
+          <option>Divorced</option> 
+          <option>Separated</option>
+          <option>Widowed</option>
+        </select>
+      </div>
+      <div class="col">
+        <label class="form-label">Religion</label>
+        <input name="religion" type="text" class="form-control" required>
+      </div>
+    </div>
+
+    <!-- Contact Person -->
+    <div class="mb-3">
+      <label class="form-label">Contact Person</label>
+      <input name="contactperson" type="text" class="form-control" required>
+    </div>
+
+    <!-- Formal Picture -->
+    <div class="mb-3">
+      <label class="form-label">1x1 Formal Picture</label>
+      <input name="brgyIDpicture" type="file" class="form-control" accept="image/*" required>
+    </div>
+
+    <!-- Preferred Claim Date -->
+    <div class="mb-3">
+      <label class="form-label">Preferred Claim Date</label>
+      <input name="claimdate" type="date" class="form-control" required>
+    </div>
+
+    <!-- Payment Method -->
+    <div class="mb-3">
+      <label class="form-label">Payment Method</label>
+      <select name="paymentMethod" class="form-select" required>
+        <option value="GCash">GCash</option>
+        <option value="Brgy Payment Device">Brgy Payment Device</option>
+        <option value="Over-the-Counter">Over-the-Counter</option>
+      </select>
+    </div>
+  </template>
+  
+  <!-- Templates for Business Permit -->
+  <template data-type="Business Permit">
+    <!-- core hidden value -->
+    <input type="hidden" name="request_type" value="Business Permit">
+
+    <!-- Transaction Type -->
+    <div class="mb-3">
+      <label class="form-label">Transaction Type</label>
+      <select name="transactiontype" class="form-select" required>
+        <option value="New Application">New Application</option>
+        <option value="Renewal">Renewal</option>
+      </select>
+    </div>
+
+    <!-- Full Name -->
+    <div class="mb-3">
+      <label class="form-label">Full Name</label>
+      <input name="fullname" type="text" class="form-control" required>
+    </div>
+
+    <!-- Full Address -->
+    <div class="mb-3">
+      <label class="form-label">Full Address</label>
+      <input name="address" type="text" class="form-control" required>
+    </div>
+
+    <!-- Civil Status -->
+    <div class="mb-3">
+      <label class="form-label">Civil Status</label>
+      <select name="civilstatus" class="form-select" required>
+        <option value="">Select…</option>
+        <option>Single</option>
+        <option>Married</option>
+        <option>Divorced</option>
+        <option>Separated</option>
+        <option>Widowed</option>
+      </select>
+    </div>
+
+    <!-- Purok & Barangay -->
+    <div class="row mb-3">
+      <div class="col">
+        <label class="form-label">Purok</label>
+        <input name="purok" type="text" class="form-control" required>
+      </div>
+      <div class="col">
+        <label class="form-label">Barangay</label>
+        <input name="barangay" type="text" class="form-control" required>
+      </div>
+    </div>
+
+    <!-- Age & Preferred Claim Date -->
+    <div class="row mb-3">
+      <div class="col">
+        <label class="form-label">Age</label>
+        <input name="age" type="number" class="form-control" min="0" required>
+      </div>
+      <div class="col">
+        <label class="form-label">Preferred Claim Date</label>
+        <input name="claimdate" type="date" class="form-control" required>
+      </div>
+    </div>
+
+    <!-- Business Name & Type of Business -->
+    <div class="row mb-3">
+      <div class="col">
+        <label class="form-label">Name of Business</label>
+        <input name="business_name" type="text" class="form-control" required>
+      </div>
+      <div class="col">
+        <label class="form-label">Type of Business</label>
+        <input name="business_type" type="text" class="form-control" required>
+      </div>
+    </div>
+
+    <!-- Payment Method -->
+    <div class="mb-3">
+      <label class="form-label">Payment Method</label>
+      <select name="paymentMethod" class="form-select" required>
+        <option value="GCash">GCash</option>
+        <option value="Brgy Payment Device">Brgy Payment Device</option>
+        <option value="Over-the-Counter">Over-the-Counter</option>
+      </select>
+    </div>
+  </template>
+
+  <template data-type="Certification">
+    <!-- core hidden value -->
+    <input type="hidden" name="request_type" value="Certification">
+
+    <!-- Transaction Type -->
+    <div class="mb-3">
+      <label class="form-label">Transaction Type</label>
+      <select name="transactiontype" class="form-select" required>
+        <option value="New Application">New Application</option>
+        <option value="Renewal">Renewal</option>
+      </select>
+    </div>
+
+    <!-- Full Name -->
+    <div class="mb-3">
+      <label class="form-label">Full Name</label>
+      <input name="fullname" type="text" class="form-control" required>
+    </div>
+
+    <!-- Street & Purok -->
+    <div class="row mb-3">
+      <div class="col">
+        <label class="form-label">Street</label>
+        <input name="street" type="text" class="form-control" required>
+      </div>
+      <div class="col">
+        <label class="form-label">Purok</label>
+        <input name="purok" type="text" class="form-control" required>
+      </div>
+    </div>
+
+    <!-- Birthdate & Birthplace -->
+    <div class="row mb-3">
+      <div class="col">
+        <label class="form-label">Birthdate</label>
+        <input name="birthdate" type="date" class="form-control" required>
+      </div>
+      <div class="col">
+        <label class="form-label">Birthplace</label>
+        <input name="birthplace" type="text" class="form-control" required>
+      </div>
+    </div>
+
+    <!-- Age & Civil Status -->
+    <div class="row mb-3">
+      <div class="col">
+        <label class="form-label">Age</label>
+        <input name="age" type="number" class="form-control" min="0" required>
+      </div>
+      <div class="col">
+        <label class="form-label">Civil Status</label>
+        <select name="civilstatus" class="form-select" required>
+          <option value="">Select…</option>
+          <option>Single</option>
+          <option>Married</option>
+          <option>Divorced</option>
+          <option>Separated</option>
+          <option>Widowed</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Certification Purpose -->
+    <div class="mb-3">
+      <label class="form-label">Certification Purpose</label>
+      <input name="purpose" type="text" class="form-control" required>
+    </div>
+
+    <!-- Preferred Claim Date & Payment Method -->
+    <div class="row mb-3">
+      <div class="col">
+        <label class="form-label">Preferred Claim Date</label>
+        <input name="claimdate" type="date" class="form-control" required>
+      </div>
+      <div class="col">
+        <label class="form-label">Payment Method</label>
+        <select name="paymentMethod" class="form-select" required>
+          <option value="GCash">GCash</option>
+          <option value="Brgy Payment Device">Brgy Payment Device</option>
+          <option value="Over-the-Counter">Over-the-Counter</option>
+        </select>
+      </div>
+    </div>
+  </template>
 </div>
 
 <?php
@@ -506,29 +693,68 @@ $st->close();
 $conn->close();
 ?>
 
-<!-- <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const selector  = document.getElementById('requestType');
-    const container = document.getElementById('requestFormContainer');
-    const submitBtn = document.getElementById('submitRequestBtn');
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // ——— Cache DOM nodes —————————————————————————————————————————————
+  const searchForm     = document.getElementById('searchForm');
+  const searchInput    = document.getElementById('searchInput');
+  const searchBtn      = document.getElementById('searchBtn');
+  const modalEl        = document.getElementById('addRequestModal');
+  const bsModal        = new bootstrap.Modal(modalEl);
+  const titleElem      = document.getElementById('addRequestModalTitle');
+  const bodyElem       = document.getElementById('addRequestModalBody');
+  const formElem       = document.getElementById('addRequestForm');
 
-    // Load Barangay ID form into the active pane
-    function loadBarangayForm() {
-      fetch('functions/adminBarangayIDForm.php')
-        .then(res => res.text())
-        .then(html => {
-          container.innerHTML = html;
-          submitBtn.setAttribute('form', 'barangayIDForm');
-          submitBtn.disabled = false;
-        })
-        .catch(err => console.error('Load failed:', err));
+  const hasSearch      = <?= json_encode(!empty($search)) ?>;
+
+  // ——— Helper: clear+submit search ——————————————————————————————————————
+  const handleSearch = () => {
+    if (hasSearch) searchInput.value = '';
+    searchForm.submit();
+  };
+  searchBtn.addEventListener('click', handleSearch);
+
+  // ——— Helper: open request modal —————————————————————————————————————
+  const openRequestModal = (type) => {
+    // title
+    titleElem.textContent = `${type} Form`;
+
+    // inject fields
+    const tpl = document.querySelector(`template[data-type="${type}"]`);
+    bodyElem.innerHTML = '';
+    bodyElem.appendChild(tpl.content.cloneNode(true));
+
+    // if this is coming from super-admin, tack on the hidden flag
+    if (['Barangay ID','Business Permit','Certification'].includes(type)) {
+      const flag = document.createElement('input');
+      flag.type  = 'hidden';
+      flag.name  = 'adminRedirect';
+      flag.value = '1';
+      bodyElem.prepend(flag);
     }
 
-    // Initial load
-    loadBarangayForm();
+    // point at the correct handler
+    if (type === 'Barangay ID') {
+      formElem.action = 'functions/serviceBarangayID_submit.php';
+    } 
+    else if (type === 'Business Permit') {
+      formElem.action = 'functions/serviceBusinessPermit_submit.php';
+    } 
+    else if (type === 'Certification') {
+      formElem.action = 'functions/serviceCertification_submit.php';
+    } 
+    else {
+      console.warn('Unknown request type:', type);
+    }
+    
+    bsModal.show();
+  };
 
-    // Tab event to reload form when switching back
-    const tabEl = document.getElementById('pill-barangay');
-    tabEl.addEventListener('shown.bs.tab', loadBarangayForm);
+  // ——— Wire up all “Add New Request” buttons —————————————————————————
+  document.querySelectorAll('.request-trigger').forEach(btn => {
+    btn.addEventListener('click', () => {
+      openRequestModal(btn.dataset.type);
+    });
   });
-</script> -->
+});
+</script>

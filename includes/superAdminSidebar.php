@@ -68,12 +68,6 @@
             </a>
         </li>
         <li>
-            <a href="superAdminPanel.php?page=superAdminLogs" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminLogs') ? 'active' : '' ?>">
-            <span class="material-symbols-outlined me-2">badge</span>
-            Logs
-            </a>
-        </li>
-        <li>
             <a href="superAdminPanel.php?page=superAdminWebsite" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminWebsite') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">web</span>
             Website Configuration
@@ -85,6 +79,12 @@
             Device Status
             </a>
         </li>
+        <li>
+            <a href="superAdminPanel.php?page=superAdminLogs" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminLogs') ? 'active' : '' ?>">
+            <span class="material-symbols-outlined me-2">badge</span>
+            Logs
+            </a>
+        </li>   
         <li>
             <a href="superAdminPanel.php?page=superAdminSettings" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminSettings') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">settings</span>

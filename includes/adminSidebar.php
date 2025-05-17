@@ -70,13 +70,19 @@
         <li>
             <a href="adminPanel.php?page=adminWebsite" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminWebsite') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">web</span>
-            eBarangay Mo - Website
+            Website Configuration
             </a>
         </li>
         <li>
             <a href="adminPanel.php?page=adminDeviceStatus" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminDeviceStatus') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">devices</span>
             Device Status
+            </a>
+        </li>
+        <li>
+            <a href="adminPanel.php?page=adminLogs" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminLogs') ? 'active' : '' ?>">
+            <span class="material-symbols-outlined me-2">badge</span>
+            Logs
             </a>
         </li>
     </ul>

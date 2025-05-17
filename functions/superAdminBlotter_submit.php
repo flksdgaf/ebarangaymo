@@ -78,6 +78,18 @@ $stmt->execute();
 $stmt->close();
 
 // 4) Redirect back to the super‐admin blotter page,
-//    including the new transaction_id so you can show a success alert
-header("Location: ../superAdminPanel.php?page=superAdminBlotter&transaction_id={$transactionId}");
+if (!empty($_POST['superAdminRedirect'])) {
+    // Came from the super‐admin panel → send back there
+    header("Location: ../superAdminPanel.php?page=superAdminBlotter&transaction_id={$transactionId}");
+    exit();
+}
+
+if (!empty($_POST['adminRedirect'])) {
+    // Came from the admin panel → send back there
+    header("Location: ../adminPanel.php?page=adminBlotter&transaction_id={$transactionId}");
+    exit();
+}
+
+// Default: user panel
+header("Location: ../userPanel.php?page=blotter&transaction_id={$transactionId}");
 exit();

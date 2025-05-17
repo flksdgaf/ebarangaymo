@@ -6,17 +6,20 @@ require 'functions/dbconn.php';
 session_start();
 
 $pageTitles = [
+    // Admin
     'adminDashboard' => 'Dashboard',
     'adminRequest' => 'Service Requests',
-    'adminBlotter' => 'Blotter Records',
+    'Blotter' => 'Blotter Records',
+    'adminSummon' => 'Summon Records',
+    'adminKatarungangPambarangay' => 'Katarungang Pambarangay',
     'adminResidents' => 'Residents Records',
-    'adminUsers' => 'Users',
     'adminVerifications' => 'Account Verifications',
     'adminTransactions' => 'Transaction History',
-    'adminWebsite' => 'Website Management',
+    'adminWebsite' => 'Website Configuration',
     'adminDeviceStatus' => 'Device Status',
-    'adminSettings'=> 'Settings',
     'adminLogs' => 'Activity Logs',
+    
+    // Super Admin
     'superAdminDashboard' => 'Dashboard',
     'superAdminRequest' => 'Service Requests',
     'superAdminBlotter' => 'Blotter Records',
@@ -103,7 +106,19 @@ $stmt->close();
                     <span class="d-md-none icon"><i class="fas fa-user"></i></span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
-                    <li><a class="dropdown-item" href="functions/logout.php">Logout</a></li>
+                    <?php if (isset($_SESSION['loggedInUserRole']) && $_SESSION['loggedInUserRole'] === 'Barangay Captain'): ?>
+                        <li>
+                            <a class="dropdown-item" href="settings.php">
+                                <i class="fas fa-cog me-2"></i>Settings
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                    <?php endif; ?>
+                    <li>
+                        <a class="dropdown-item" href="functions/logout.php">
+                            <i class="fas fa-sign-out-alt me-2"></i>Logout
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>

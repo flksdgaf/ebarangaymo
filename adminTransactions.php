@@ -8,10 +8,6 @@ $result = $stmt->get_result();
 ?>
 
 <div class="container py-3">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="fw-bold">General Requests</h4>
-  </div>
-
   <div class="card shadow-sm p-3">
     <div class="table-responsive">
       <table class="table align-middle text-center table-hover">
@@ -21,10 +17,8 @@ $result = $stmt->get_result();
             <th>Full Name</th>
             <th>Request Type</th>
             <th>Payment Method</th>
-            <th>Created At</th>
             <th>Payment Status</th>
             <th>Document Status</th>
-            <th>Action</th>
           </tr>
         </thead>
         <tbody>

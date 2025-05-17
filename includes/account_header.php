@@ -1,22 +1,3 @@
-<!-- <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
-    <?php if (isset($_SESSION['loggedInUserRole']) && $_SESSION['loggedInUserRole'] === 'Barangay Captain'): ?>
-        <li>
-            <a class="dropdown-item" href="settings.php">
-                <i class="fas fa-cog me-2"></i>Settings
-            </a>
-        </li>
-        <li><hr class="dropdown-divider"></li>
-    <?php endif; ?>
-    <li>
-        <a class="dropdown-item" href="functions/logout.php">
-            <i class="fas fa-sign-out-alt me-2"></i>Logout
-        </a>
-    </li>
-</ul> -->
-
-
-
-
 <?php
 if (!isset($page)) {
     $page = $_GET['page'] ?? 'adminDashboard';
@@ -98,7 +79,7 @@ if ($stmt) {
 }
 
 $profilePic = "profilePictures/default_profile_pic.png";
-$fullName   = "Resident";
+$fullName   = "User";
 
 // if we found a record in one of the purok tables, use it
 if (isset($result) && $result->num_rows === 1) {
@@ -152,9 +133,9 @@ $stmt->close();
                     <span class="d-md-none icon"><i class="fas fa-user"></i></span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
-                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#myProfileModal">My Profile</a></li>
-                    <li><a class="dropdown-item" href="">Account Settings</a></li>
-                    <li><a class="dropdown-item" href="functions/logout.php">Logout</a></li>
+                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#myProfileModal"><i class="fas fa-cog me-2"></i>My Profile</a></li>
+                    <li><a class="dropdown-item" href="adminPanel.php?page=adminSettings"><i class="fas fa-user-cog me-2"></i>Account Settings</a></li>                    
+                    <li><a class="dropdown-item" href="functions/logout.php"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
                 </ul>
             </div>
         </div>
@@ -214,44 +195,70 @@ $stmt->close();
 
     <!-- My Profile Modal -->
     <div class="modal fade" id="myProfileModal" tabindex="-1" aria-labelledby="myProfileLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="myProfileLabel">My Profile</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+            
+            <!-- Header -->
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="myProfileLabel">
+                <i class="fas fa-user-circle me-2"></i>My Profile
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <!-- Body -->
+            <div class="modal-body">
+                <div class="row">
+                <!-- Profile Picture -->
+                <div class="col-md-4 text-center mb-4 mb-md-0">
+                    <img
+                    src="profilePictures/<?php echo htmlspecialchars($profileData['profile_picture']); ?>"
+                    class="rounded-circle border border-3 border-dark"
+                    width="140" height="140"
+                    style="object-fit: cover;"
+                    alt="Profile Picture"
+                    >
                 </div>
-                <div class="modal-body">
-                    <div class="text-center mb-3">
-                        <img src="profilePictures/<?php echo htmlspecialchars($profileData['profile_picture']); ?>" class="rounded-circle" width="100" height="100" style="object-fit: cover;">
+                
+                <!-- Details -->
+                <div class="col-md-8">
+                    <div class="card border-0">
+                    <div class="card-body">
+                        <dl class="row mb-0">
+                        <?php
+                        $fields = [
+                            'full_name' => 'Full Name:',
+                            'birthdate' => 'Birthdate:',
+                            'sex'    => 'Sex:',
+                            'civil_status' => 'Civil Status:',
+                            'blood_type'   => 'Blood Type:',
+                            'birth_registration_number' => 'Birth Reg. No:',
+                            'highest_educational_attainment' => 'Education:',
+                            'occupation'   => 'Occupation:',
+                            'purok'        => 'Purok:'
+                        ];
+                        foreach ($fields as $key => $label): ?>
+                            <dt class="col-sm-5 text-secondary"><?php echo $label; ?></dt>
+                            <dd class="col-sm-7"><?php echo htmlspecialchars($profileData[$key]); ?></dd>
+                        <?php endforeach; ?>
+                        </dl>
                     </div>
-                    <form>
-                    <?php
-                    // Fields to show, in order:
-                    $fields = [
-                        'full_name' => 'Full Name',
-                        'birthdate' => 'Birthdate',
-                        'sex' => 'Sex',
-                        'civil_status' => 'Civil Status',
-                        'blood_type' => 'Blood Type',
-                        'birth_registration_number' => 'Birth Reg. No.',
-                        'highest_educational_attainment' => 'Education',
-                        'occupation' => 'Occupation',
-                        'purok' => 'Purok'
-                    ];
-                    foreach ($fields as $key => $label): ?>
-                        <div class="mb-3 row">
-                            <label class="col-sm-4 col-form-label fw-bold"><?php echo $label; ?></label>
-                            <div class="col-sm-8"> 
-                                <input type="text" readonly class="form-control-plaintext" value="<?php echo htmlspecialchars($profileData[$key]); ?>">
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                    </form>
+                    </div>
                 </div>
-                <div class="modal-footer">
-                    <button class="btn btn-primary">Edit Profile</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="modal-footer border-0">
+                <a href="adminPanel.php?page=adminSettings" class="btn btn-success">
+                <i class="fas fa-edit me-1"></i>Edit Profile
+                </a>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                Close
+                </button>
+            </div>
+            
             </div>
         </div>
     </div>
+

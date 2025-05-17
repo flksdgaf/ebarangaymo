@@ -1,3 +1,22 @@
+<!-- <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
+    <?php if (isset($_SESSION['loggedInUserRole']) && $_SESSION['loggedInUserRole'] === 'Barangay Captain'): ?>
+        <li>
+            <a class="dropdown-item" href="settings.php">
+                <i class="fas fa-cog me-2"></i>Settings
+            </a>
+        </li>
+        <li><hr class="dropdown-divider"></li>
+    <?php endif; ?>
+    <li>
+        <a class="dropdown-item" href="functions/logout.php">
+            <i class="fas fa-sign-out-alt me-2"></i>Logout
+        </a>
+    </li>
+</ul> -->
+
+
+
+
 <?php
 if (!isset($page)) {
     $page = $_GET['page'] ?? 'adminDashboard';
@@ -45,19 +64,48 @@ if (!isset($_SESSION['auth']) || $_SESSION['auth'] !== true) {
 // Get the user's account id from session.
 $userId = $_SESSION['loggedInUserID'];
 
-// Query user_profiles to retrieve the profile picture.
-$query = "SELECT full_name, profilePic FROM user_profiles WHERE account_id = ? LIMIT 1";
-$stmt = $conn->prepare($query);
-$stmt->bind_param("i", $userId);
-$stmt->execute();
-$result = $stmt->get_result();
+// Try to find the logged‐in account in any purokX_rbi table:
+$sql = "
+  SELECT full_name, profile_picture
+  FROM purok1_rbi WHERE account_ID = ?
+  UNION ALL
+  SELECT full_name, profile_picture
+  FROM purok2_rbi WHERE account_ID = ?
+  UNION ALL
+  SELECT full_name, profile_picture
+  FROM purok3_rbi WHERE account_ID = ?
+  UNION ALL
+  SELECT full_name, profile_picture
+  FROM purok4_rbi WHERE account_ID = ?
+  UNION ALL
+  SELECT full_name, profile_picture
+  FROM purok5_rbi WHERE account_ID = ?
+  UNION ALL
+  SELECT full_name, profile_picture
+  FROM purok6_rbi WHERE account_ID = ?
+  LIMIT 1
+";
 
-$profilePic = "profilePictures/default_profile_pic.png"; // Default image if no record is found.
-$fullName = "User"; // Default name if no record is found.
+$stmt = $conn->prepare($sql);
+if ($stmt) {
+    // bind the same $userId to each placeholder
+    $stmt->bind_param("iiiiii",
+        $userId, $userId, $userId,
+        $userId, $userId, $userId
+    );
+    $stmt->execute();
+    $result = $stmt->get_result();
+}
 
-if ($result && $result->num_rows === 1) {
+$profilePic = "profilePictures/default_profile_pic.png";
+$fullName   = "Resident";
+
+// if we found a record in one of the purok tables, use it
+if (isset($result) && $result->num_rows === 1) {
     $row = $result->fetch_assoc();
-    $profilePic = "profilePictures/" . $row['profilePic'];
+    if (!empty($row['profile_picture'])) {
+        $profilePic = "profilePictures/" . $row['profile_picture'];
+    }
     $fullName = $row['full_name'];
 }
 $stmt->close();
@@ -90,8 +138,6 @@ $stmt->close();
     <nav class="navbar navbar-expand-lg border-bottom px-3 py-2 top-bar">
         <div class="container-fluid d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-2 topbar-title">
-                <!-- <img src="images/good_governance_logo.png" alt="Good Governance Logo" style="width: 40px; height: 40px; object-fit: contain;">
-                <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 40px; height: 40px; object-fit: contain;"> -->
                 <span class="fw-bold topbar-text">
                     <?php echo htmlspecialchars($topbarText); ?></span>
                 </span>
@@ -106,20 +152,106 @@ $stmt->close();
                     <span class="d-md-none icon"><i class="fas fa-user"></i></span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
-                    <?php if (isset($_SESSION['loggedInUserRole']) && $_SESSION['loggedInUserRole'] === 'Barangay Captain'): ?>
-                        <li>
-                            <a class="dropdown-item" href="settings.php">
-                                <i class="fas fa-cog me-2"></i>Settings
-                            </a>
-                        </li>
-                        <li><hr class="dropdown-divider"></li>
-                    <?php endif; ?>
-                    <li>
-                        <a class="dropdown-item" href="functions/logout.php">
-                            <i class="fas fa-sign-out-alt me-2"></i>Logout
-                        </a>
-                    </li>
+                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#myProfileModal">My Profile</a></li>
+                    <li><a class="dropdown-item" href="">Account Settings</a></li>
+                    <li><a class="dropdown-item" href="functions/logout.php">Logout</a></li>
                 </ul>
             </div>
         </div>
     </nav>
+
+    <!-- Profile Modal -->
+    <?php
+    // Fetch full profile details for the modal (including purok)
+    $profileData = [
+    'full_name' => 'Resident',
+    'profile_picture' => 'default_profile_pic.png',
+    'birthdate' => '',
+    'sex' => '',
+    'civil_status' => '',
+    'blood_type' => '',
+    'birth_registration_number' => '',
+    'highest_educational_attainment' => '',
+    'occupation' => '',
+    'purok' => ''
+    ];
+
+    // Union across purok tables, adding a literal 'Purok X'
+    $sql  = "SELECT full_name, profile_picture, birthdate, sex, civil_status, blood_type, ";
+    $sql .= "birth_registration_number, highest_educational_attainment, occupation, 'Purok 1' AS purok
+            FROM purok1_rbi WHERE account_ID = ?
+            UNION ALL
+            SELECT full_name, profile_picture, birthdate, sex, civil_status, blood_type,
+                    birth_registration_number, highest_educational_attainment, occupation, 'Purok 2'
+            FROM purok2_rbi WHERE account_ID = ?
+            UNION ALL
+            SELECT full_name, profile_picture, birthdate, sex, civil_status, blood_type,
+                    birth_registration_number, highest_educational_attainment, occupation, 'Purok 3'
+            FROM purok3_rbi WHERE account_ID = ?
+            UNION ALL
+            SELECT full_name, profile_picture, birthdate, sex, civil_status, blood_type,
+                    birth_registration_number, highest_educational_attainment, occupation, 'Purok 4'
+            FROM purok4_rbi WHERE account_ID = ?
+            UNION ALL
+            SELECT full_name, profile_picture, birthdate, sex, civil_status, blood_type,
+                    birth_registration_number, highest_educational_attainment, occupation, 'Purok 5'
+            FROM purok5_rbi WHERE account_ID = ?
+            UNION ALL
+            SELECT full_name, profile_picture, birthdate, sex, civil_status, blood_type,
+                    birth_registration_number, highest_educational_attainment, occupation, 'Purok 6'
+            FROM purok6_rbi WHERE account_ID = ?
+            LIMIT 1";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("iiiiii", $userId, $userId, $userId, $userId, $userId, $userId);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($res && $row = $res->fetch_assoc()) {
+        $profileData = $row;
+    }
+    $stmt->close();
+    ?>
+
+    <!-- My Profile Modal -->
+    <div class="modal fade" id="myProfileModal" tabindex="-1" aria-labelledby="myProfileLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="myProfileLabel">My Profile</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <img src="profilePictures/<?php echo htmlspecialchars($profileData['profile_picture']); ?>" class="rounded-circle" width="100" height="100" style="object-fit: cover;">
+                    </div>
+                    <form>
+                    <?php
+                    // Fields to show, in order:
+                    $fields = [
+                        'full_name' => 'Full Name',
+                        'birthdate' => 'Birthdate',
+                        'sex' => 'Sex',
+                        'civil_status' => 'Civil Status',
+                        'blood_type' => 'Blood Type',
+                        'birth_registration_number' => 'Birth Reg. No.',
+                        'highest_educational_attainment' => 'Education',
+                        'occupation' => 'Occupation',
+                        'purok' => 'Purok'
+                    ];
+                    foreach ($fields as $key => $label): ?>
+                        <div class="mb-3 row">
+                            <label class="col-sm-4 col-form-label fw-bold"><?php echo $label; ?></label>
+                            <div class="col-sm-8"> 
+                                <input type="text" readonly class="form-control-plaintext" value="<?php echo htmlspecialchars($profileData[$key]); ?>">
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary">Edit Profile</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>

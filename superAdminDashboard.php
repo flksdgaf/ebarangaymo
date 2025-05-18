@@ -347,7 +347,7 @@ if ($queryString) {
       <!-- Details Modal -->
       <div class="modal fade" id="rowModal" tabindex="-1" aria-labelledby="rowModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-dialog-centered modal-lg">
-          <div class="modal-content shadow-lg">
+          <form class="modal-content shadow-lg">
             <div class="modal-header bg-dark text-white">
               <h5 class="modal-title" id="rowModalLabel">
                 <i class="bi bi-card-list me-2"></i>Request Details
@@ -357,41 +357,59 @@ if ($queryString) {
               <!-- Section: User & Request -->
               <div class="mb-4">
                 <h6 class="fw-bold fs-5">Basic Information</h6>
-                <dl class="row">
-                  <dt class="col-sm-4">Transaction No.</dt>
-                  <dd class="col-sm-8" id="modal-transaction_id">—</dd>
+                <div class="row g-2">
+                  <label for="modal-transaction_id" class="col-sm-4 col-form-label">Transaction No.</label>
+                  <div class="col-sm-8">
+                    <input type="text" readonly class="form-control" id="modal-transaction_id">
+                  </div>
 
-                  <dt class="col-sm-4">Name</dt>
-                  <dd class="col-sm-8" id="modal-full_name">—</dd>
+                  <label for="modal-full_name" class="col-sm-4 col-form-label">Name</label>
+                  <div class="col-sm-8">
+                    <input type="text" readonly class="form-control" id="modal-full_name">
+                  </div>
 
-                  <dt class="col-sm-4">Request Type</dt>
-                  <dd class="col-sm-8" id="modal-request_type">—</dd>
-                </dl>
+                  <label for="modal-request_type" class="col-sm-4 col-form-label">Request Type</label>
+                  <div class="col-sm-8">
+                    <input type="text" readonly class="form-control" id="modal-request_type">
+                  </div>
+                </div>
               </div>
+
               <!-- Section: Dates -->
               <div class="mb-4">
                 <h6 class="fw-bold fs-5">Dates</h6>
-                <dl class="row">
-                  <dt class="col-sm-4">Date Created</dt>
-                  <dd class="col-sm-8" id="modal-created_at">—</dd>
+                <div class="row g-2">
+                  <label for="modal-created_at" class="col-sm-4 col-form-label">Date Created</label>
+                  <div class="col-sm-8">
+                    <input type="date" readonly class="form-control" id="modal-created_at">
+                  </div>
 
-                  <dt class="col-sm-4">Claim Date</dt>
-                  <dd class="col-sm-8" id="modal-claim_date">—</dd>
-                </dl>
+                  <label for="modal-claim_date" class="col-sm-4 col-form-label">Claim Date</label>
+                  <div class="col-sm-8">
+                    <input type="date" readonly class="form-control" id="modal-claim_date">
+                  </div>
+                </div>
               </div>
+
               <!-- Section: Payment & Status -->
               <div>
                 <h6 class="fw-bold fs-5">Payment & Status</h6>
-                <dl class="row">
-                  <dt class="col-sm-4">Payment Method</dt>
-                  <dd class="col-sm-8" id="modal-payment_method">—</dd>
+                <div class="row g-2">
+                  <label for="modal-payment_method" class="col-sm-4 col-form-label">Payment Method</label>
+                  <div class="col-sm-8">
+                    <input type="text" readonly class="form-control" id="modal-payment_method">
+                  </div>
 
-                  <dt class="col-sm-4">Payment Status</dt>
-                  <dd class="col-sm-8" id="modal-payment_status">—</dd>
+                  <label for="modal-payment_status" class="col-sm-4 col-form-label">Payment Status</label>
+                  <div class="col-sm-8">
+                    <input type="text" readonly class="form-control" id="modal-payment_status">
+                  </div>
 
-                  <dt class="col-sm-4">Document Status</dt>
-                  <dd class="col-sm-8" id="modal-document_status">—</dd>
-                </dl>
+                  <label for="modal-document_status" class="col-sm-4 col-form-label">Document Status</label>
+                  <div class="col-sm-8">
+                    <input type="text" readonly class="form-control" id="modal-document_status">
+                  </div>
+                </div>
               </div>
             </div>
             <div class="modal-footer border-0">
@@ -399,7 +417,7 @@ if ($queryString) {
                 Close
               </button>
             </div>
-          </div>
+          </form>
         </div>
       </div>
 
@@ -458,18 +476,25 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Modal populator
-  const modalEl      = document.getElementById('rowModal');
-  const bsModal      = new bootstrap.Modal(modalEl);
-  const dataKeys     = ['transaction_id','full_name','request_type','created_at','claim_date','payment_method','payment_status','document_status'];
-  const getDlElement = key => document.getElementById(`modal-${key}`);
+  const modalEl   = document.getElementById('rowModal');
+  const bsModal   = new bootstrap.Modal(modalEl);
+  const dataKeys  = ['transaction_id','full_name','request_type','created_at','claim_date','payment_method','payment_status','document_status'];
 
   document.querySelector('tbody').addEventListener('click', e => {
     const tr = e.target.closest('tr.clickable-row');
     if (!tr) return;
 
     dataKeys.forEach(key => {
-      const el = getDlElement(key);
-      el.textContent = tr.dataset[key] || '—';
+      const input = document.getElementById(`modal-${key}`);
+      // For date inputs, convert to YYYY-MM-DD
+      if (input.type === 'date') {
+        // expecting dataset value in ISO (YYYY-MM-DD) or fallback to today
+        input.value = tr.dataset[key] && !isNaN(Date.parse(tr.dataset[key]))
+          ? new Date(tr.dataset[key]).toISOString().substr(0,10)
+          : '';
+      } else {
+        input.value = tr.dataset[key] || '';
+      }
     });
 
     bsModal.show();

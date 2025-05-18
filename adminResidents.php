@@ -28,32 +28,31 @@ $stmt->close();
 ?>
 
 <div class="container py-3">
-  <!-- Filter -->
-  <div class="d-flex justify-content-end mb-3">
-    <select id="purokFilter" class="form-select w-auto">
-      <?php for ($i = 1; $i <= 6; $i++): ?>
-        <option value="<?= $i ?>" <?= $i === $purokNum ? 'selected' : '' ?>>
-          Purok <?= $i ?>
-        </option>
-      <?php endfor; ?>
-    </select>
-  </div>
-
   <!-- Table -->
   <div class="card shadow-sm p-3">
-    <div class="table-responsive">
+    <!-- Filter -->
+    <div class="d-flex justify-content-end mb-3">
+      <select id="purokFilter" class="form-select w-auto">
+        <?php for ($i = 1; $i <= 6; $i++): ?>
+          <option value="<?= $i ?>" <?= $i === $purokNum ? 'selected' : '' ?>>
+            Purok <?= $i ?>
+          </option>
+        <?php endfor; ?>
+      </select>
+    </div>
+    <div class="table-responsive admin-table" style="height:500px;overflow-y:auto;">
       <table class="table table-hover align-middle resident-table">
         <thead class="table-light">
           <tr>
-            <th>Account ID</th>
-            <th>Full Name</th>
-            <th>Birthdate</th>
-            <th>House No.</th>
-            <th>Relationship to Head</th>
-            <th>Registry No.</th>
-            <th>Total Population</th>
-            <th>Role</th>
-            <th>Remarks</th>
+            <th class="text-nowrap">Account ID</th>
+            <th class="text-nowrap">Full Name</th>
+            <th class="text-nowrap">Birthdate</th>
+            <th class="text-nowrap">House No.</th>
+            <th class="text-nowrap">Relationship to Head</th>
+            <th class="text-nowrap">Registry No.</th>
+            <th class="text-nowrap">Total Population</th>
+            <th class="text-nowrap">Role</th>
+            <th class="text-nowrap">Remarks</th>
           </tr>
         </thead>
         <tbody>

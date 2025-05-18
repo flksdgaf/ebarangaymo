@@ -75,10 +75,44 @@ $stmt->bind_param(
 $stmt->execute();
 $stmt->close();
 
-// 6) Redirect back with the new SMN ID for your alert
-header("Location: ../superAdminPanel.php?page=superAdminSummon&transaction_id={$transactionId}");
-exit();
+// 7) Now insert the new KP case
+$smnId      = $conn->insert_id;       // the PK of the summon we just made
+$casePrefix = 'KPC-';                 
+// generate next case_no: e.g. KPC-0000001
+$last = $conn->query("
+    SELECT case_no
+      FROM katarungang_pambarangay
+     ORDER BY id DESC
+     LIMIT 1
+")->fetch_assoc()['case_no'] ?? null;
 
+if ($last && preg_match('/^' . preg_quote($casePrefix) . '(\d+)$/', $last, $m)) {
+    $nextNum = intval($m[1]) + 1;
+} else {
+    $nextNum = 1;
+}
+$caseNo = sprintf('%s%07d', $casePrefix, $nextNum);
+
+// choose an initial status—if you want “Punong Barangay” as default, change here:
+$initialStatus = 'Punong Barangay';
+
+$kpStmt = $conn->prepare("
+    INSERT INTO katarungang_pambarangay
+      (case_no, smn_id, blt_id, subject, status)
+    VALUES (?,?,?,?,?)
+");
+$kpStmt->bind_param(
+    'siiss',
+    $caseNo,
+    $smnId,
+    $blotterId,
+    $subject,
+    $initialStatus
+);
+$kpStmt->execute();
+$kpStmt->close();
+
+// 6) Redirect back with the new SMN ID for your alert
 if (!empty($_POST['superAdminRedirect'])) {
     // Came from the super‐admin panel → send back there
     header("Location: ../superAdminPanel.php?page=superAdminSummon&transaction_id={$transactionId}");

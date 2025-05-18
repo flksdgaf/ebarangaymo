@@ -9,16 +9,16 @@ $result = $stmt->get_result();
 
 <div class="container py-3">
   <div class="card shadow-sm p-3">
-    <div class="table-responsive">
+    <div class="table-responsive admin-table" style="height:500px;overflow-y:auto;">
       <table class="table align-middle text-center table-hover">
         <thead class="table-light">
           <tr>
-            <th>Transaction ID</th>
-            <th>Full Name</th>
-            <th>Request Type</th>
-            <th>Payment Method</th>
-            <th>Payment Status</th>
-            <th>Document Status</th>
+            <th class="text-nowrap">Transaction ID</th>
+            <th class="text-nowrap">Full Name</th>
+            <th class="text-nowrap">Request Type</th>
+            <th class="text-nowrap">Payment Method</th>
+            <th class="text-nowrap">Payment Status</th>
+            <th class="text-nowrap">Document Status</th>
           </tr>
         </thead>
         <tbody>

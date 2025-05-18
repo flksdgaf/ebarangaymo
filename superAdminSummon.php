@@ -5,7 +5,7 @@ $newTid    = $_GET['transaction_id'] ?? '';
 
 // Fetch blotter options including details
 $blotterOptions = $conn
-  ->query("SELECT id, transaction_id, complainants, respondents, complaint_nature FROM blotter_records ORDER BY date_occurrence DESC")
+  ->query("SELECT id, transaction_id, complainants, respondents, complaint_nature FROM blotter_records ORDER BY id ASC")
   ->fetch_all(MYSQLI_ASSOC);
 
 // ── 0) FILTER + SEARCH SETUP ───────────────────────────────────────────────────
@@ -322,7 +322,18 @@ document.addEventListener('DOMContentLoaded', () => {
   );
 
   addSummonBtn.addEventListener('click', () => {
-    document.getElementById('addSummonForm').reset();
+    const form = document.getElementById('addSummonForm');
+    form.reset();
+
+    // remove any old flag
+    const old = form.querySelector('input[name="superAdminRedirect"]');
+    if (old) old.remove();
+    const flag = document.createElement('input');
+    flag.type  = 'hidden';
+    flag.name  = 'superAdminRedirect';
+    flag.value = '1';
+    form.prepend(flag);
+
     addSummonModal.show();
   });
 

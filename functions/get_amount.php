@@ -9,7 +9,7 @@ if (!isset($_GET['transaction_id'])) {
 }
 
 $txn = $conn->real_escape_string($_GET['transaction_id']);
-$sql = "SELECT amount FROM barangay_id_requestss WHERE transaction_id='$txn' LIMIT 1";
+$sql = "SELECT amount FROM barangay_id_requests WHERE transaction_id='$txn' LIMIT 1";
 $res = $conn->query($sql);
 
 if ($res && $row = $res->fetch_assoc()) {

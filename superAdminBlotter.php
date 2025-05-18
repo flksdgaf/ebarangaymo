@@ -379,6 +379,17 @@ document.addEventListener('DOMContentLoaded', () => {
     complainantsWrapper.innerHTML = complainantTemplate.trim();
     respondentsWrapper.innerHTML  = respondentTemplate.trim();
 
+      // INJECT adminRedirect FLAG
+      const form = document.getElementById('addBlotterForm');
+      // remove any old flags just in case
+      const old = form.querySelector('input[name="superAdminRedirect"]');
+      if (old) old.remove();
+      const flag = document.createElement('input');
+      flag.type  = 'hidden';
+      flag.name  = 'superAdminRedirect';
+      flag.value = '1';
+      form.prepend(flag);
+
     addBlotterBs.show();
   });
 });

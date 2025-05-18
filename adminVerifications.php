@@ -17,17 +17,17 @@ if ($result) {
     }
 }
 ?>
-<div class="container py-4">
-  <div class="card shadow-sm">
+<div class="container py-3">
+  <div class="card shadow-sm p-3">
     <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table mb-0 align-middle text-center">
+      <div class="table-responsive admin-table" style="height:500px;overflow-y:auto;">
+        <table class="table mb-0 align-middle text-start">
           <thead class="table-light">
             <tr>
-              <th>Account ID</th>
-              <th>Name</th>
-              <th>Time Created</th>
-              <th>Action</th>
+              <th class="text-nowrap">Account ID</th>
+              <th class="text-nowrap">Name</th>
+              <th class="text-nowrap">Time Created</th>
+              <th class="text-nowrap">Action</th>
             </tr>
           </thead>
           <tbody>

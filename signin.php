@@ -18,55 +18,52 @@ if(isset($_SESSION['login_error'])){
 <!-- <script src="js/signin.js"></script> -->
 
 <body>
-  <div class="login-container">
-    <div class="logo-wrapper d-flex justify-content-center gap-3 mb-3">
-        <img src="images/magang_logo.png" alt="Brgy. Magang Logo" class="login-logo ">
+  <!-- <div class="login-wrapper p-1"> -->
+    <div class="login-container row p-0 m-0">
+    <!-- Left Column -->
+    <div class="col-md-6 d-flex flex-column align-items-center justify-content-center text-center pt-5 pb-5">
+      <div class="logo-wrapper d-flex justify-content-center gap-3 mb-3">
+        <img src="images/magang_logo.png" alt="Brgy. Magang Logo" class="login-logo">
         <img src="images/good_governance_logo.png" alt="Good Governance Logo" class="login-logo">
-    </div>
-    <h1 class="mb-2">SIGN IN</h1>
-    <h5 class="mb-5">Enter your username and password.</h5>
-
-    <form action="functions/login_process.php" method="POST">
-      
-        <div class="row mb-3 justify-content-center align-items-center">
-            <label class="col-md-2 text-start fw-bold">Username</label>
-            <div class="col-md-6">
-                <input type="text" id="username" name="username" class="form-control custom-input" required>
-            </div>
-        </div>
-
-        <div class="row mb-3 justify-content-center align-items-center">
-            <label class="col-md-2 text-start fw-bold">Password</label>
-            <div class="col-md-6 position-relative">
-                <input type="password" class="form-control custom-input password-field" id="password" name="password" required>
-                <span class="toggle-password" onclick="togglePassword('password')">
-                    <i class="fa fa-eye-slash"></i>
-                </span>
-            </div>
-        </div>
-        
-        <!-- Changed button type from "button" to "submit" so form is submitted -->
-        <button type="submit" class="btn btn-gradient w-50 py-2">Login</button>
-    </form>
-  </div>
-
-  <!-- Modal for login errors -->
-  <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
-              <div class="modal-header">
-                  <h5 class="modal-title" id="errorModalLabel">Login Error</h5>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div class="modal-body">
-                  <?php echo htmlspecialchars($loginError); ?>
-              </div>
-              <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-              </div>
-          </div>
       </div>
-  </div>
+      <h3 class="fw-bold">Barangay Magang</h3>
+      <p class="text-uppercase fs-5 pt-0">Daet, Camarines Norte</p>
+    </div>
+
+    <!-- Right Column -->
+    <div class="col-md-6 pt-5 pb-5" style="padding-right: 100px;">
+      <h1 class="mb-2 text-center">SIGN IN</h1>
+      <h6 class="mb-5 text-center">Enter your username and password.</h6>
+
+      <form action="functions/login_process.php" method="POST">
+        <div class="row mb-3 justify-content-center align-items-center">
+          <label class="col-md-3 text-start fw-bold">Username</label>
+          <div class="col-md-8">
+            <input type="text" id="username" name="username" class="form-control custom-input" required>
+          </div>
+        </div>
+
+        <div class="row mb-1 justify-content-center align-items-center">
+          <label class="col-md-3 text-start fw-bold">Password</label>
+          <div class="col-md-8 position-relative mb-10">
+            <input type="password" class="form-control custom-input password-field" id="password" name="password" required>
+            <span class="toggle-password" onclick="togglePassword('password')">
+              <i class="fa fa-eye-slash"></i>
+            </span>
+          </div>
+          <a href="#" class="forgot-pass"><strong><br>Forgot Password?</strong></a>
+        </div>
+
+        <div class="text-center">
+          <button type="submit" class="btn btn-gradient w-50 py-2 mb-3">Login</button>
+          <p>Don't have an account yet?   
+            <a href="signup.php" class="signin-now">Sign Up Now</a>
+          </p>
+        </div>
+      </form>
+    </div>
+    </div>
+  <!-- </div> -->
 
   <!-- If there is an error, trigger the modal using JavaScript -->
   <?php if(!empty($loginError)) { ?>

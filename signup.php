@@ -284,7 +284,7 @@ include 'includes/header.php';
             </div>
 
             <!-- Navigation Dots -->
-            <div class="text-center mt-3">
+            <div class="text-center mt-2">
                 <span class="dot active-dot"></span>
                 <span class="dot"></span>
                 <span class="dot"></span>
@@ -333,5 +333,8 @@ include 'includes/header.php';
                 </div>
             </div>
         </form>
+        <p class="text-center pt-4" style="color: #0D2C15; font-size: 12px;">Already have an account?   
+            <a href="signin.php" style="color: #0D2C15; font-size: 13px; font-weight: bold; text-decoration: none;">Sign In</a>
+        </p>
     </div>
 </div>

@@ -177,7 +177,26 @@ include 'includes/header.php';
       </div>
       <div class="modal-body">
         <h6>Narito ang flowchart na nagpapakita ng mga hakbang sa pagkuha ng Barangay ID.</br></br></h6>
-        <img src="images/flowchart_barangay_id.png" alt="Barangay ID Process Flowchart" class="img-fluid rounded">
+        <!-- <img src="images/flowchart_barangay_id.png" alt="Barangay ID Process Flowchart" class="img-fluid rounded"> -->
+        <div class="flowchart-wrapper d-flex">
+        <!-- Flowchart Image -->
+          <div class="flowchart-image">
+            <img src="images/flowchart_steps.png" alt="Flowchart Steps" class="img-fluid">
+          </div>
+
+          <!-- Instruction Text Steps -->
+          <div class="flowchart-text">
+            <ol class="flowchart-steps">
+              <li><a href="signin.php" class="step-link">Mag-<strong>Sign In</strong> sa iyong account sa eBarangay Mo website.</a></li>
+              <li>Pumunta sa <strong>“Request a Service”</strong> tab at piliin ang <strong>“Barangay ID”</strong> mula sa listahan ng serbisyo.</li>
+              <li>Ilagay ang iyong personal na impormasyon sa application form.</li>
+              <li>Piliin ang paraan ng pagbabayad (kung kinakailangan).</li>
+              <li>Tiyaking tama ang iyong mga detalye at i-click</br>ang <strong>“Submit”</strong> na button.</li>
+              <li>Maghintay ng notification para sa verification at pagproseso ng iyong aplikasyon.</li>
+              <li>Kunin ang Barangay ID kapag nakatanggap ng abiso o sa takdang petsa ng pag-claim.</li>
+            </ol>
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

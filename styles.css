@@ -134,6 +134,49 @@ body {
     border-radius: 12px;
 }
 
+.flowchart-wrapper {
+  /* gap: 10px; */
+  align-items: flex-start;
+}
+
+.flowchart-image {
+  flex-shrink: 0;
+  width: 120px;
+  margin-right: -20px;
+}
+
+.flowchart-image img {
+  max-width: 65.5%;
+  height: auto;
+}
+
+.flowchart-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  padding-top: 10px;
+}
+
+.flowchart-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  text-decoration: none;
+}
+
+.flowchart-steps li {
+  margin-bottom: 55px;
+  font-size: 14px;
+  color: #0D2C15;
+}
+
+.step-link {
+  text-decoration: none;
+  color: #0D2C15;
+  font-weight: 500;
+}
+
+
 
 /* SERVICES */
 .card-custom {

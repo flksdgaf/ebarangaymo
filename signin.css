@@ -1,7 +1,7 @@
 body, html {
     height: 100%;
     margin: 0;
-    background: url('images/bg_nothover.png') no-repeat center center fixed;
+    background: url('images/signin_bg.png') no-repeat center center fixed;
     background-size: cover;
     display: flex;
     align-items: center;
@@ -9,33 +9,52 @@ body, html {
     font-family: Arial, sans-serif;
 }
 /* Login container styling */
+/* .login-wrapper {
+    background: linear-gradient(45deg, #0D2C15, #2A9245); 
+    padding: 6px; 
+    border-radius: 50px; 
+    display: inline-block;
+} */
 .login-container {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 3rem;
-    position: relative;
-    z-index: 1;
-    width: 50vw; /* use viewport width */
-    max-width: none; /* remove default width cap */
-    min-height: 400px;
-    text-align: center;
+    background: rgba(255, 255, 255, 0.4); 
+    backdrop-filter: blur(3px);
+    border-radius: 48px; /* slightly smaller to fit inside wrapper */
+    border: 2px solid #0D2C15;;
+    width: 70vw;
+    max-width: 1000px;
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+    overflow: hidden; /* clip content inside border radius */
+    display: flex;
+    flex-wrap: wrap;
+}
 
-    /* Gradient border */
-    border: 6px solid;
-    border-image-slice: 100;
-    border-image-source: linear-gradient(45deg, #0D2C15, #2A9245);
+h3 {
+    color: #0D2C15;
+}
+
+p {
+    padding-top: 10px;
+    color: #0D2C15;
+    font-size: 12px;
+ }
+
+.signin-now {
+    color: #0D2C15;
+    font-size: 13px;
+    font-weight: bold;
+    text-decoration: none;
 }
 
 /* Logos above the heading */
 .logo-wrapper .login-logo {
-    height: 50px;
+    height: 150px;
     width: auto;
     object-fit: contain;
 }
 
 /* Gradient Header */
 h1 {
-    background: linear-gradient(to bottom, #2A9245, #0D2C15);
+    background: linear-gradient(30deg, #0D2C15, #2A9245); 
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -44,12 +63,18 @@ h1 {
 
 /* Subheader */
 h5 {
+    color: #0D2C15;
     font-size: 15px;
     margin-bottom: 50px;
 }
 
-label {
-    padding-top: 5px;
+.forgot-pass {
+    font-size: 12px;
+    text-align: right;
+    display: block;
+    padding-right: 35px;
+    color: #333;
+    text-decoration: none;
 }
 
 /* Input Styling */
@@ -75,7 +100,7 @@ label {
 
 /* Gradient background for the button */
 .btn-gradient {
-    background: linear-gradient(to right, #0D2C15, #2A9245);
+    background: linear-gradient(25deg,  #0D2C15, #2A9245);
     border: none;
     color: #fff;
     margin-top: 50px;

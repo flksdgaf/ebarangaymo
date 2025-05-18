@@ -110,118 +110,291 @@ $stmt->close();
   </div>
 </div>
 
-<!-- Details Modal -->
+<!-- Details / Edit Modal -->
 <div class="modal fade" id="residentDetailsModal" tabindex="-1" aria-labelledby="residentDetailsLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="residentDetailsLabel">Resident Details</h5>
+        <h5 class="modal-title"><span id="detailsModalTitle">Resident Details</span></h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body"></div>
+      <div class="modal-body">
+        <form id="residentDetailsForm">
+          <!-- fields will be injected here by JS -->
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="detailsEditSaveBtn">Edit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add this confirmation modal right after your existing modal -->
+<div class="modal fade" id="confirmSaveModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirm Changes</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to save these changes?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="confirmSaveBtn">Yes, Save</button>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
-// Pass data to JS
-const residents = <?= json_encode($allRows, JSON_HEX_TAG) ?>;
-const purokNum  = <?= $purokNum ?>;
+  // Pass data to JS
+  const residents = <?= json_encode($allRows, JSON_HEX_TAG) ?>;
+  const purokNum  = <?= $purokNum ?>;
 
-// map remarks to colors in JS
-const remarkColor = {
-  'Missing':  'yellow',
-  'Deceased': 'red'
-};
+  // map remarks to colors in JS
+  const remarkColor = {
+    'Missing':  'yellow',
+    'Deceased': 'red'
+  };
 
-document.addEventListener('DOMContentLoaded', () => {
-  // Filter
-  document.getElementById('purokFilter').addEventListener('change', function() {
-    const url = new URL(window.location.href);
-    url.searchParams.set('purok', this.value);
-    window.location.href = url;
-  });
+  document.addEventListener('DOMContentLoaded', () => {
+    // --- Filter Purok
+    document.getElementById('purokFilter').addEventListener('change', function() {
+      const url = new URL(window.location.href);
+      url.searchParams.set('purok', this.value);
+      window.location.href = url;
+    });
 
-  // Remarks dropdown handler
-  document.querySelectorAll('.remarks-select').forEach(sel => {
-    sel.addEventListener('change', async function(e) {
-      const row = this.closest('tr');
-      const name = row.dataset.name;
-      const remark = this.value;
-      const color = remarkColor[remark] || '';
+    // --- Remarks dropdown handler
+    document.querySelectorAll('.remarks-select').forEach(sel => {
+      sel.addEventListener('change', async function() {
+        const row    = this.closest('tr');
+        const name   = row.dataset.name;
+        const remark = this.value;
+        const color  = remarkColor[remark] || '';
 
-      // update cell backgrounds immediately
-      row.querySelectorAll('td').forEach(td => {
-        td.style.backgroundColor = color || '';
+        // update backgrounds
+        row.querySelectorAll('td').forEach(td => td.style.backgroundColor = color);
+
+        // persist
+        await fetch('functions/update_remarks.php', {
+          method: 'POST',
+          headers: {'Content-Type':'application/x-www-form-urlencoded'},
+          body: new URLSearchParams({ full_name: name, purok: purokNum, remarks: remark })
+        });
+      });
+    });
+
+    // --- Role dropdown handler
+    document.querySelectorAll('.role-select').forEach(sel => {
+      sel.addEventListener('change', async function() {
+        const tr      = this.closest('tr');
+        const acct    = tr.children[0].textContent.trim();
+        const newRole = this.value;
+        await fetch('functions/update_role.php', {
+          method: 'POST',
+          headers:{'Content-Type':'application/x-www-form-urlencoded'},
+          body: new URLSearchParams({ account_id: acct, role: newRole })
+        });
+      });
+    });
+
+    // --- Details / Edit Modal setup ---
+    const modalEl       = document.getElementById('residentDetailsModal');
+    const modal         = new bootstrap.Modal(modalEl);
+    const form          = document.getElementById('residentDetailsForm');
+    const editSaveBtn   = document.getElementById('detailsEditSaveBtn');
+    let   currentData   = null;
+    let   isEditing     = false;
+
+    // Confirmation modal
+    const confirmSaveModalEl = document.getElementById('confirmSaveModal');
+    const confirmSaveModal   = new bootstrap.Modal(confirmSaveModalEl);
+    const confirmSaveBtn     = document.getElementById('confirmSaveBtn');
+
+    // Build form fields (readonly by default)
+    function buildForm(data) {
+      currentData = data;
+      isEditing   = false;
+      editSaveBtn.textContent = 'Edit';
+      
+      form.innerHTML = '';
+      if (data.profile_picture) {
+        const picDiv = document.createElement('div');
+        picDiv.className = 'text-center mb-4';
+        const img = document.createElement('img');
+        img.src = `profilePictures/${data.profile_picture}`;
+        img.className = 'rounded-circle';
+        img.style = 'width:120px;height:120px;object-fit:cover;';
+        picDiv.appendChild(img);
+        form.appendChild(picDiv);
+      }
+
+      // our schema
+      const fields = [
+        { key:'account_ID',                     label:'Account ID',                     type:'text',   readonly:true },
+        { key:'full_name',                      label:'Full Name',                      type:'text',   readonly:true, editable:true },
+        { key:'birthdate',                      label:'Birthdate',                      type:'date',   readonly:true, editable:true },
+        { key:'sex',                            label:'Sex',                            type:'select', readonly:true, editable:true,
+            options:['Male','Female','Prefer not to say'] },
+        { key:'civil_status',                   label:'Civil Status',                   type:'select', readonly:true, editable:true,
+            options:['Single','Married','Separated','Widowed'] },
+        { key:'blood_type',                     label:'Blood Type',                     type:'select', readonly:true, editable:true,
+            options:['A','B','AB','O','Unknown'] },
+        { key:'birth_registration_number',      label:'Birth Reg. No.',                 type:'text',   readonly:true, editable:true },
+        { key:'highest_educational_attainment', label:'Highest Educational Attainment', type:'select', readonly:true, editable:true,
+            options:['Kindergarten','Elementary','High School','Senior High School','College','College Graduate','Vocational','None'] },
+        { key:'occupation',                     label:'Occupation',                     type:'text',   readonly:true, editable:true },
+        { key:'house_number',                   label:'House No.',                       type:'number', readonly:true, editable:true },
+        { key:'relationship_to_head',           label:'Relationship to Head',           type:'text',   readonly:true, editable:true },
+        { key:'registry_number',                label:'Registry No.',                   type:'number', readonly:true, editable:true },
+        { key:'total_population',               label:'Total Population',               type:'number', readonly:true, editable:true },
+        // note: role & remarks stay readonly
+        { key:'role',                           label:'Role',                           type:'text',   readonly:true },
+        { key:'remarks',                        label:'Remarks',                        type:'text',   readonly:true }
+      ];
+
+      fields.forEach(f => {
+        const wr = document.createElement('div');
+        wr.className = 'mb-3 row';
+
+        const lbl = document.createElement('label');
+        lbl.className = 'col-sm-5 col-form-label fw-bold';
+        lbl.textContent = f.label;
+
+        const inner = document.createElement('div');
+        inner.className = 'col-sm-7';
+
+        let input;
+        if (f.type === 'select') {
+          input = document.createElement('select');
+          input.className = 'form-select';
+          f.options.forEach(opt => {
+            const o = document.createElement('option');
+            o.value = o.textContent = opt;
+            if (data[f.key] === opt) o.selected = true;
+            input.appendChild(o);
+          });
+          input.disabled = true;
+        }
+        else {
+          input = document.createElement('input');
+          input.className = 'form-control';
+          input.type      = f.type;
+          input.value     = data[f.key] ?? '';
+          input.disabled  = true;
+
+          if (f.key === 'remarks') {
+          // if DB returned null/empty, show “None”
+            input.value = data.remarks ? data.remarks : 'None';
+          } else {
+            input.value = data[f.key] ?? '';
+          }
+        }
+
+        input.id   = `field_${f.key}`;
+        input.name = f.key;
+
+        wr.appendChild(lbl);
+        wr.appendChild(inner);
+        inner.appendChild(input);
+        form.appendChild(wr);
+      });
+    }
+
+    // Toggle Edit ↔ Save
+    editSaveBtn.addEventListener('click', () => {
+      if (!isEditing) {
+        // switch to edit mode
+        isEditing = true;
+        editSaveBtn.textContent = 'Save';
+
+        // unlock only the editable controls
+        // ['full_name','birthdate','house_number','relationship_to_head','registry_number','total_population']
+        //   .forEach(k => document.getElementById(`field_${k}`).readOnly = false);
+        // ['sex','civil_status','blood_type','highest_educational_attainment']
+        //   .forEach(k => document.getElementById(`field_${k}`).disabled = false);
+
+          // enable only editable controls
+       ['full_name','birthdate','house_number','relationship_to_head','registry_number','total_population',
+        'sex','civil_status','blood_type', 'birth_registration_number','highest_educational_attainment', 'occupation'
+       ].forEach(k => {
+         const el = document.getElementById(`field_${k}`);
+         if (el) el.disabled = false;
+       });
+      }
+      else {
+        // ask for confirmation
+        confirmSaveModal.show();
+      }
+    });
+
+    // actual save once confirmed
+    confirmSaveBtn.addEventListener('click', async () => {
+      confirmSaveModal.hide();
+
+      // gather payload
+      const payload = new URLSearchParams({ 
+        account_id: currentData.account_ID,
+        purok:       purokNum
+      });
+      ['full_name','birthdate','sex','civil_status','blood_type',
+      'birth_registration_number','highest_educational_attainment',
+      'occupation','house_number','relationship_to_head',
+      'registry_number','total_population'
+      ].forEach(k => {
+        const el = document.getElementById(`field_${k}`);
+        payload.append(k, el.tagName==='SELECT' ? el.value : el.value);
       });
 
-      // persist change by full_name
-      await fetch('functions/update_remarks.php', {
+      // send to your update_resident.php
+      const resp = await fetch('functions/update_resident.php', {
         method: 'POST',
         headers: {'Content-Type':'application/x-www-form-urlencoded'},
-        body: new URLSearchParams({
-          full_name: name,
-          purok: purokNum,
-          remarks: remark
-        })
+        body: payload
+      });
+      const json = await resp.json();
+      if (!json.success) {
+        return alert('Save failed: ' + (json.error||'unknown'));
+      }
+
+      // update table row in the UI
+      const row = document.querySelector(
+        `.resident-row[data-name="${currentData.full_name.replace(/"/g,'\\"')}"]`
+      );
+      // columns: 1=full_name,2=birthdate,3=house_no,4=rel,5=regno,6=pop
+      ['full_name','birthdate','house_number','relationship_to_head','registry_number','total_population']
+        .forEach((k,idx) => {
+          row.children[idx+1].textContent = document.getElementById(`field_${k}`).value;
+        });
+
+      // flip back to readonly mode
+      isEditing = false;
+      editSaveBtn.textContent = 'Edit';
+      form.querySelectorAll('input').forEach(i => i.readOnly = true);
+      ['sex','civil_status','blood_type','highest_educational_attainment'].forEach(key=>{
+        const sel = document.getElementById(`field_${key}`);
+        if (sel && sel.tagName === 'SELECT') sel.disabled = true;
+      });
+
+      modal.hide();
+      window.location.reload();
+    });
+
+    // Row click opens the modal
+    document.querySelectorAll('.resident-row').forEach(row => {
+      row.addEventListener('click', e => {
+        if (e.target.closest('.remarks-select') || e.target.closest('.role-select')) return;
+        const name = row.dataset.name;
+        const data = residents.find(r => r.full_name === name);
+        if (!data) return;
+        buildForm(data);
+        modal.show();
       });
     });
   });
-
-  // handle role changes
-  document.querySelectorAll('.role-select').forEach(sel=>{
-    sel.addEventListener('change', async function(){
-      const tr = this.closest('tr');
-      const acct = tr.querySelector('td').textContent.trim();
-      const newRole = this.value;
-      // immediate UI (no bg change here)
-      // persist
-      await fetch('functions/update_role.php',{
-        method:'POST',
-        headers:{'Content-Type':'application/x-www-form-urlencoded'},
-        body:new URLSearchParams({account_id:acct,purok:purokNum,role:newRole})
-      });
-    });
-  });
-
-  // Details modal setup
-  const modalEl = document.getElementById('residentDetailsModal');
-  const modal   = new bootstrap.Modal(modalEl);
-  const body    = modalEl.querySelector('.modal-body');
-
-  document.querySelectorAll('.resident-row').forEach(row => {
-    row.addEventListener('click', e => {
-      // don’t trigger on the remarks dropdown
-      if (e.target.closest('.remarks-select') || e.target.closest('.role-select')) return;
-
-      const name = row.dataset.name;
-      const data = residents.find(r => r.full_name === name);
-      if (!data) return;
-
-      // build the contents
-      let html = '<div class="text-center mb-3">';
-      if (data.profile_picture) {
-        html += `<img src="profilePictures/${data.profile_picture}"
-                     class="rounded-circle mb-3"
-                     width="120" height="120"
-                     style="object-fit:cover;">`;
-      }
-      html += '</div><dl class="row">';
-      for (let key in data) {
-        if (key === 'profile_picture') continue;
-        const label = key.replace(/_/g,' ')
-                         .replace(/\b\w/g, c=>c.toUpperCase());
-        const val   = data[key]===null ? '—' : data[key];
-        html += `<dt class="col-sm-5">${label}</dt>
-                 <dd class="col-sm-7 mb-2">${val}</dd>`;
-      }
-      html += '</dl>';
-
-      body.innerHTML = html;
-      modal.show();
-    });
-  });
-
-
-});
 </script>

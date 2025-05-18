@@ -23,7 +23,7 @@
                   </a>
               </div>
               <div class="col d-flex">
-                  <a href="#" class="service-card dark-green w-100">
+                  <a href="userPanel.php?page=serviceCertification" class="service-card dark-green w-100">
                       <i class="fas fa-certificate icon"></i>
                       <div>
                           <h4>Certification</h4>

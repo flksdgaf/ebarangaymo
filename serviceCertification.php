@@ -1,4 +1,5 @@
 <?php
+// serviceCertification.php
 require 'functions/dbconn.php';
 
 // Ensure the user is authenticated.
@@ -11,102 +12,61 @@ $userId = $_SESSION['loggedInUserID'];
 $transactionId = $_GET['tid'] ?? null;
 $t = $transactionId ? true : false;
 
-// --- 1) Check for existing Brgy-ID record: Renewal vs. New Application
-$stmtID = $conn->prepare("
-    SELECT * 
-    FROM barangay_id_accounts 
-    WHERE account_id = ? 
-    LIMIT 1
-");
-$stmtID->bind_param("i", $userId);
-$stmtID->execute();
-$resID = $stmtID->get_result();
+// --- fetch user from whichever purok table they’re in ---
+$sql = "
+  SELECT full_name, birthdate, civil_status, 'Purok 1' AS purok
+    FROM purok1_rbi WHERE account_ID = ?
+  UNION ALL
+  SELECT full_name, birthdate, civil_status, 'Purok 2' AS purok
+    FROM purok2_rbi WHERE account_ID = ?
+  UNION ALL
+  SELECT full_name, birthdate, civil_status, 'Purok 3' AS purok
+    FROM purok3_rbi WHERE account_ID = ?
+  UNION ALL
+  SELECT full_name, birthdate, civil_status, 'Purok 4' AS purok
+    FROM purok4_rbi WHERE account_ID = ?
+  UNION ALL
+  SELECT full_name, birthdate, civil_status, 'Purok 5' AS purok
+    FROM purok5_rbi WHERE account_ID = ?
+  UNION ALL
+  SELECT full_name, birthdate, civil_status, 'Purok 6' AS purok
+    FROM purok6_rbi WHERE account_ID = ?
+  LIMIT 1
+";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("iiiiii", $userId,$userId,$userId,$userId,$userId,$userId);
+$stmt->execute();
+$userRec = $stmt->get_result()->fetch_assoc() ?: [];
+$stmt->close();
 
-$isRenewal = false;
-if ($resID && $resID->num_rows === 1) {
-    $isRenewal = true;
-    $rowID       = $resID->fetch_assoc();
-    // *** ADDED: pull in existing values
-    $fullName       = $rowID['full_name'];
-    $fullAddress    = $rowID['address'];
-    $height         = $rowID['height'];
-    $weight         = $rowID['weight'];
-    $birthdate      = $rowID['birthdate'];
-    $birthplace     = $rowID['birthplace'];
-    $civilstatus    = $rowID['civil_status'];
-    $religion       = $rowID['religion'];
-    $contactperson  = $rowID['contact_person'];
-    $formal_picture = $rowID['formal_picture'];
-}
-$stmtID->close();
-
-// --- 2) If NEW, get basic info from user_profiles (and leave editable fields blank)
-if (!$isRenewal) {
-    // build the UNION of all purok tables (no per-SELECT LIMIT)
-    $unionSql = [];
-    for ($i = 1; $i <= 6; $i++) {
-        $unionSql[] = "
-            SELECT full_name, birthdate, civil_status
-              FROM purok{$i}_rbi
-             WHERE account_ID = ?
-        ";
-    }
-    // join with UNION ALL, then one global LIMIT 1
-    $sql = implode(" UNION ALL ", $unionSql) . " LIMIT 1";
-
-    $stmt = $conn->prepare($sql);
-    // bind the same userId six times
-    $types = str_repeat("i", 6);
-    $params = array_fill(0, 6, $userId);
-    $stmt->bind_param($types, ...$params);
-    $stmt->execute();
-    $res = $stmt->get_result();
-
-    if ($res && $res->num_rows === 1) {
-        $r = $res->fetch_assoc();
-        $fullName    = $r['full_name'];
-        $birthdate   = $r['birthdate'];
-        $civilstatus = $r['civil_status'];
-    } else {
-        // not found in any purok table
-        $fullName    = '';
-        $birthdate   = '';
-        $civilstatus = '';
-    }
-    $stmt->close();
-
-    // initialize the “new application”–only fields
-    $fullAddress   = '';
-    $height        = '';
-    $weight        = '';
-    $birthplace    = '';
-    $religion      = '';
-    $contactperson = '';
-    $formal_picture= '';
-}
-
-// Transaction label
-$transactionType = $isRenewal ? 'Renewal' : 'New Application';
-
-$chosenPayment = null;
+$map = [
+  'Residency' => ['table'=>'residency_requests','prefix'=>'RES-'],
+  'Indigency' => ['table'=>'indigency_requests','prefix'=>'IND-'],
+  // …etc for Good Moral, Solo Parent, Guardianship
+];
+// figure out which table this tid lives in
+$chosenPayment = '';
 if ($transactionId) {
-    $stmt = $conn->prepare("
-      SELECT payment_method 
-       FROM barangay_id_requests
-       WHERE transaction_id = ? 
-       LIMIT 1
-    ");
-    $stmt->bind_param("s", $transactionId);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    if ($res && $res->num_rows) {
-        $chosenPayment = $res->fetch_assoc()['payment_method'];
+    // first, find the cert type for this tid
+    // you may have stored it in the table, so:
+    foreach ($map as $typeName => $m) {
+        $tbl = $m['table'];
+        $q = $conn->prepare("SELECT payment_method FROM `$tbl` WHERE transaction_id = ? LIMIT 1");
+        $q->bind_param('s', $transactionId);
+        $q->execute();
+        $r = $q->get_result();
+        if ($r->num_rows) {
+            $chosenPayment = $r->fetch_assoc()['payment_method'];
+            $q->close();
+            break;
+        }
+        $q->close();
     }
-    $stmt->close();
 }
+
 ?>
 
-<link rel="stylesheet" href="serviceBarangayID.css">
+<link rel="stylesheet" href="serviceCertification.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <div class="container pb-2">
@@ -153,151 +113,30 @@ if ($transactionId) {
 
     <div class="card shadow-sm p-5 mb-5 mt-5">
         <h4 class="mb-3 text-success display-6 fw-bold" id="mainHeader">APPLICATION FORM</h4>
-        <p id="subHeader">Provide the necessary details to apply for your Barangay ID.</p>
+        <p id="subHeader">Select a type of certification and provide the necessary details to apply.</p>
         <hr id="mainHr">
 
-        <form id="barangayIDForm" action="functions/serviceBarangayID_submit.php" method="POST" enctype="multipart/form-data">
+        <form id="certForm" action="functions/serviceCertification_submit.php" method="POST" enctype="multipart/form-data">
             <div class="step <?php echo $transactionId ? 'completed' : 'active-step'; ?>">
-                <!-- TYPE OF TRANSACTION -->
+                <!-- TYPE OF CERTIFICATION -->
                 <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Type of Transaction</label>
-                <div class="col-md-8 d-flex align-items-center">
-                    <!-- show readonly select -->
-                    <select class="form-control custom-input" readonly>
-                    <option><?php echo $transactionType; ?></option>
-                    </select>
-                    <!-- hidden so it still posts -->
-                    <input type="hidden" id="transactiontype" name="transactiontype" value="<?php echo $transactionType; ?>">
-                </div>
+                    <label for="certType" class="col-md-2 text-start fw-bold">Type of Certification</label>
+                    <div class="col-md-10 position-relative"> <!-- position-relative to contain the dropdown -->
+                        <input type="text" id="certType" name="certification_type" class="form-control" placeholder="Click to select or type" autocomplete="off" required>
+                        <ul id="certTypeList" class="list-group position-absolute w-100 shadow-sm bg-white" style="max-height: 150px; overflow-y: auto; display: none; z-index: 1000;">
+                        <!-- JS will populate these <li> items -->
+                        </ul>
+                    </div>
                 </div>
 
-                <!-- FULL NAME (always readonly) -->
-                <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Full Name</label>
-                <div class="col-md-8">
-                    <input type="text" id="fullname" name="fullname"
-                        class="form-control custom-input"
-                        disabled
-                        value="<?php echo htmlspecialchars($fullName); ?>">
-                </div>
+                <!-- break line for your future instructions -->
+                <div class="row mb-4">
+                    <div class="col-12"><hr></div>
                 </div>
 
-                <!-- FULL ADDRESS (always readonly) -->
-                <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Full Address</label>
-                <div class="col-md-8">
-                    <input type="text" id="address" name="address"
-                        class="form-control custom-input"
-                        required
-                        value="<?php echo htmlspecialchars($fullAddress); ?>">
-                </div>
-                </div>
+                <div id="certFields"></div>
 
-                <!-- HEIGHT (editable always) -->
-                <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Height (in feet)</label>
-                <div class="col-md-8">
-                    <input type="text" id="height" name="height"
-                        class="form-control custom-input"
-                        required
-                        value="<?php echo htmlspecialchars($height); ?>">
-                </div>
-                </div>
-
-                <!-- WEIGHT (editable always) -->
-                <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Weight (in kilograms)</label>
-                <div class="col-md-8">
-                    <input type="number" id="weight" name="weight"
-                        class="form-control custom-input"
-                        required
-                        value="<?php echo htmlspecialchars($weight); ?>">
-                </div>
-                </div>
-
-                <!-- BIRTHDAY (always readonly) -->
-                <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Birthday</label>
-                <div class="col-md-8">
-                    <input type="date" id="birthday" name="birthday"
-                        class="form-control custom-input"
-                        disabled
-                        value="<?php echo date('Y-m-d', strtotime($birthdate)); ?>">
-                </div>
-                </div>
-
-                <!-- BIRTHPLACE (editable only on NEW) -->
-                <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Birthplace</label>
-                <div class="col-md-8">
-                    <input type="text" id="birthplace" name="birthplace"
-                        class="form-control custom-input"
-                        required
-                        <?php echo $isRenewal ? 'readonly' : ''; ?>
-                        value="<?php echo htmlspecialchars($birthplace); ?>">
-                </div>
-                </div>
-
-                <!-- CIVIL STATUS (editable always) -->
-                <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Civil Status</label>
-                <div class="col-md-8">
-                    <select id="civilstatus" name="civilstatus"
-                            class="form-control custom-input"
-                            required>
-                    <option value="">Select an option</option>
-                    <?php
-                    foreach (['Single','Married','Separated','Widowed'] as $opt) {
-                        $sel = ($opt === $civilstatus) ? 'selected' : '';
-                        echo "<option value=\"$opt\" $sel>$opt</option>";
-                    }
-                    ?>
-                    </select>
-                </div>
-                </div>
-
-                <!-- RELIGION (editable always) -->
-                <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Religion</label>
-                <div class="col-md-8">
-                    <input type="text" id="religion" name="religion"
-                        class="form-control custom-input"
-                        required
-                        value="<?php echo htmlspecialchars($religion); ?>">
-                </div>
-                </div>
-
-                <!-- CONTACT PERSON (editable always) -->
-                <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Contact Person (in case of emergency)</label>
-                <div class="col-md-8">
-                    <input type="text" id="contactperson" name="contactperson"
-                        class="form-control custom-input"
-                        required
-                        value="<?php echo htmlspecialchars($contactperson); ?>">
-                </div>
-                </div>
-
-                <!-- FORMAL PICTURE (always editable; required only on NEW) -->
-                <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">1x1 Formal Picture</label>
-                <div class="col-md-8">
-                    <input type="file" id="brgyIDpicture" name="brgyIDpicture"
-                        class="form-control custom-input"
-                        accept="image/*"
-                        required>
-                </div>
-                </div>
-
-                <!-- CLAIM DATE (always editable) -->
-                <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">When would you prefer to claim your Brgy. ID?</label>
-                <div class="col-md-8">
-                    <input type="date" id="claimdate" name="claimdate"
-                        class="form-control custom-input"
-                        required>
-                </div>
-                </div>
+                <!-- … then the rest of your Step 1 fields (Full Name, etc.) … -->
             </div>
             
             <!-- Step 2: Payment -->
@@ -369,21 +208,10 @@ if ($transactionId) {
 
             <!-- Step 3: Summary / Review -->
             <div class="step <?php echo $transactionId ? 'completed' : ''; ?>">
-                <div class="summary-container p-3">
-                    <p><strong>Transaction Type:</strong> <span id="summarytransactionType"></span></p>
-                    <p><strong>Full Name:</strong> <span id="summaryFullName"></span></p>
-                    <p><strong>Address:</strong> <span id="summaryAddress"></span></p>
-                    <p><strong>Height:</strong> <span id="summaryHeight"></span></p>
-                    <p><strong>Weight:</strong> <span id="summaryWeight"></span></p>
-                    <p><strong>Birthday:</strong> <span id="summaryBirthdate"></span></p>
-                    <p><strong>Birthplace:</strong> <span id="summaryBirthplace"></span></p>
-                    <p><strong>Civil Status:</strong> <span id="summaryCivilStatus"></span></p>
-                    <p><strong>Religion:</strong> <span id="summaryReligion"></span></p>
-                    <p><strong>Contact Person:</strong> <span id="summaryContactPerson"></span></p>
-                    <p><strong>Claim Date:</strong> <span id="summaryClaimDate"></span></p>
-
-                    <!-- ADD: payment method summary -->
-                    <p><strong>Payment Method:</strong> <span id="summaryPaymentMethod"></span></p>
+                <div class="summary-container p-3" id="summaryContainer">
+                    <!-- JS will inject:
+                        Type of Certification
+                        then each of the fields & their values -->
                 </div>
             </div>
 
@@ -523,7 +351,8 @@ if ($transactionId) {
 <script>
     // make the PHP value available to our external JS
     window.initialStep = <?php echo $initial; ?>;
+    window.currentUser = <?= json_encode($userRec, JSON_HEX_TAG) ?>;
 </script>
 
-<script src="js/serviceBarangayID.js"></script>
+<script src="js/serviceCertification.js"></script>
 

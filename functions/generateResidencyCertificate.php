@@ -72,7 +72,7 @@ $yearsInWords = numberToWords($years);
   <style>
     /* 1. Print margins */
     @page {
-      margin: 1in;
+      margin: .5in;
     }
     /* 2. Centering container on screen */
     html, body {

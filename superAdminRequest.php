@@ -603,6 +603,16 @@ $result = $st->get_result();
       <label class="form-label">Purpose</label>
       <textarea name="purpose" class="form-control" rows="2" required></textarea>
     </div>
+
+    <!-- Payment Method -->
+  <div class="mb-3">
+    <label class="form-label">Payment Method</label>
+    <select name="payment_method" class="form-select" required>
+      <option value="GCash">GCash</option>
+      <option value="Brgy Payment Device">Brgy Payment Device</option>
+      <option value="Over-the-Counter">Over-the-Counter</option>
+    </select>
+  </div>
   </template>
 
 
@@ -636,83 +646,202 @@ $conn->close();
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  // ——— Cache DOM nodes —————————————————————————————————————————————
+  // ——— Search & “Add New” modal logic (unchanged) —————————————————————————
   const searchForm     = document.getElementById('searchForm');
   const searchInput    = document.getElementById('searchInput');
   const searchBtn      = document.getElementById('searchBtn');
-  const modalEl        = document.getElementById('addRequestModal');
-  const bsModal        = new bootstrap.Modal(modalEl);
-  const titleElem      = document.getElementById('addRequestModalTitle');
-  const bodyElem       = document.getElementById('addRequestModalBody');
-  const formElem       = document.getElementById('addRequestForm');
-
+  const addModalEl     = document.getElementById('addRequestModal');
+  const bsAddModal     = new bootstrap.Modal(addModalEl);
+  const addTitleElem   = document.getElementById('addRequestModalTitle');
+  const addBodyElem    = document.getElementById('addRequestModalBody');
+  const addFormElem    = document.getElementById('addRequestForm');
   const hasSearch      = <?= json_encode(!empty($search)) ?>;
 
-  // ——— Helper: clear+submit search ——————————————————————————————————————
-  const handleSearch = () => {
+  searchBtn.addEventListener('click', () => {
     if (hasSearch) searchInput.value = '';
     searchForm.submit();
-  };
-  searchBtn.addEventListener('click', handleSearch);
+  });
 
-  // ——— Helper: open request modal —————————————————————————————————————
-  const openRequestModal = (type) => {
-    // title
-    titleElem.textContent = `${type} Form`;
-
-    // inject fields
-    const tpl = document.querySelector(`template[data-type="${type}"]`);
-    bodyElem.innerHTML = '';
-    bodyElem.appendChild(tpl.content.cloneNode(true));
-
-    // const CERT_TYPES = [
-    //   'Good Moral',
-    //   'Guardianship',
-    //   'Indigency',
-    //   'Residency',
-    //   'Solo Parent'
-    // ];
-
-    // if this is coming from super-admin, tack on the hidden flag
-    if (['Barangay ID','Business Permit','Good Moral','Guardianship','Indigency','Residency','Solo Parent'].includes(type)) {
-      const flag = document.createElement('input');
-      flag.type  = 'hidden';
-      flag.name  = 'superAdminRedirect';
-      flag.value = '1';
-      bodyElem.prepend(flag);
-    }
-
-    // point at the correct handler
-    if (type === 'Barangay ID') {
-      formElem.action = 'functions/serviceBarangayID_submit.php';
-    } 
-    else if (type === 'Business Permit') {
-      formElem.action = 'functions/serviceBusinessPermit_submit.php';
-    } 
-    else if (type === 'Residency') {
-      formElem.action = 'functions/serviceResidency_submit.php';
-    } 
-
-    // else if (CERT_TYPES.includes(type)) {
-    //   formElem.action = 'functions/serviceCertification_submit.php';
-    // } 
-    else {
-      console.warn('Unknown request type:', type);
-    }
-    
-    bsModal.show();
-  };
-
-  // ——— Wire up all “Add New Request” buttons —————————————————————————
   document.querySelectorAll('.request-trigger').forEach(btn => {
     btn.addEventListener('click', () => {
-      openRequestModal(btn.dataset.type);
+      const type = btn.dataset.type;
+      addTitleElem.textContent = `${type} Form`;
+      addBodyElem.innerHTML = '';
+      addBodyElem.appendChild(
+        document.querySelector(`template[data-type="${type}"]`).content.cloneNode(true)
+      );
+      if (['Barangay ID','Business Permit','Good Moral','Guardianship','Indigency','Residency','Solo Parent']
+          .includes(type)) {
+        const flag = document.createElement('input');
+        flag.type = 'hidden'; flag.name = 'superAdminRedirect'; flag.value = '1';
+        addBodyElem.prepend(flag);
+      }
+      addFormElem.action = {
+        'Barangay ID':'functions/serviceBarangayID_submit.php',
+        'Business Permit':'functions/serviceBusinessPermit_submit.php',
+        'Residency':'functions/serviceResidency_submit.php'
+      }[type] || addFormElem.action;
+      bsAddModal.show();
+    });
+  });
+
+  // ——— Auto‐print iframe logic —————————————————————————————————————————————
+  const newTid = <?= json_encode($newTid) ?>;
+  if (newTid) {
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = `functions/generateResidencyCertificate.php?transaction_id=${newTid}`;
+    iframe.onload = () => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+      setTimeout(() => document.body.removeChild(iframe), 1000);
+    };
+    document.body.appendChild(iframe);
+  }
+  
+  // ——— View / Edit Details modal logic ——————————————————————————————————————
+  const viewModalEl   = document.getElementById('viewDetailsModal');
+  const bsViewModal   = new bootstrap.Modal(viewModalEl);
+  const bodyContainer = document.getElementById('viewDetailsBody');
+  const editBtn       = document.getElementById('editDetailsBtn');
+  const cancelBtn     = document.getElementById('cancelBtn');
+
+  // create “Save Changes” button ahead of time
+  const saveBtn = document.createElement('button');
+  saveBtn.type = 'button';
+  saveBtn.id = 'saveDetailsBtn';
+  saveBtn.className = 'btn btn-success rounded-pill';
+  saveBtn.textContent = 'Save Changes';
+
+  // at top of your script, after you create saveBtn...
+  saveBtn.style.display = 'none';          // hide by default
+  cancelBtn.insertAdjacentElement('afterend', saveBtn);  // insert once
+
+  let inEditMode = false;
+
+  function labelize(key) {
+    return key.replace(/_/g,' ')
+              .replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  document.querySelectorAll('tbody tr[data-id]').forEach(row => {
+    row.addEventListener('click', () => {
+      const tid  = row.dataset.id;
+      const type = row.dataset.type;
+      inEditMode = false;
+
+      fetch(`functions/getRequestDetails.php?transaction_id=${tid}`)
+        .then(r => r.json())
+        .then(json => {
+          if (json.error) throw json.error;
+          bodyContainer.innerHTML = '';
+
+          // header
+          const h5 = document.createElement('h5');
+          h5.className = 'mb-3';
+          h5.textContent = `${json.request_type} Details`;
+          bodyContainer.appendChild(h5);
+
+          // fields
+          Object.entries(json.details).forEach(([key,val]) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'mb-2';
+            const label = document.createElement('label');
+            label.className = 'form-label fw-semibold';
+            label.textContent = labelize(key);
+            const input = document.createElement('input');
+            input.className = 'form-control';
+            input.type = 'text';
+            input.value = val ?? '';
+            input.dataset.field = key;
+            input.readOnly = true;
+            if (key === 'transaction_id') {
+              input.classList.add('bg-light');
+            }
+            wrapper.append(label, input);
+            bodyContainer.appendChild(wrapper);
+          });
+
+          // reset footer buttons
+          editBtn.textContent   = 'Edit';
+          editBtn.className     = 'btn btn-success rounded-pill';
+          cancelBtn.textContent = 'Close';
+          cancelBtn.className   = 'btn btn-secondary rounded-pill';
+          saveBtn.style.display = 'none';          // ensure hidden on open
+
+          // Edit / Cancel toggle
+          editBtn.onclick = () => {
+            inEditMode = !inEditMode;
+
+            if (inEditMode) {
+              // switch to “Cancel” + show Save
+              editBtn.textContent     = 'Cancel';
+              editBtn.className       = 'btn btn-danger rounded-pill';
+              cancelBtn.style.display = 'none';
+              saveBtn.style.display   = '';
+
+              bodyContainer.querySelectorAll('input').forEach(inp => {
+                if (inp.dataset.field !== 'transaction_id') {
+                  inp.readOnly = false;
+                  inp.classList.remove('bg-light');
+                }
+              });
+            } else {
+              // back to view-only
+              editBtn.textContent     = 'Edit';
+              editBtn.className       = 'btn btn-success rounded-pill';
+              saveBtn.style.display   = 'none';
+              cancelBtn.style.display = '';
+
+              bodyContainer.querySelectorAll('input').forEach(inp => {
+                inp.readOnly = true;
+                if (inp.dataset.field === 'transaction_id') {
+                  inp.classList.add('bg-light');
+                }
+              });
+            }
+          };
+
+
+          // Save Changes
+          saveBtn.onclick = () => {
+            const payload = { transaction_id: tid };
+            bodyContainer.querySelectorAll('input').forEach(inp => {
+              if (inp.dataset.field !== 'transaction_id') {
+                payload[inp.dataset.field] = inp.value;
+              }
+            });
+            fetch('functions/updateRequestDetails.php', {
+              method: 'POST',
+              headers: { 'Content-Type':'application/json' },
+              body: JSON.stringify(payload)
+            })
+            .then(r => r.json())
+            .then(resp => {
+              if (resp.success) {
+                bsViewModal.hide();
+                location.reload();
+              } else {
+                alert('Save failed: ' + (resp.error||'Unknown'));
+              }
+            })
+            .catch(err => alert('Error saving: ' + err));
+          };
+
+          bsViewModal.show();
+        })
+        .catch(err => {
+          console.error(err);
+          alert('Failed to load details: ' + err);
+        });
     });
   });
 });
+</script>
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Grab the new transaction ID from PHP
+
+
+<!-- // Grab the new transaction ID from PHP
     const newTid = <?= json_encode($newTid) ?>;
     if (newTid) {
       // Open the certificate in a new tab/window
@@ -725,6 +854,4 @@ document.addEventListener('DOMContentLoaded', () => {
       win.addEventListener('load', () => {
         win.print();
       });
-    }
-  });
-</script>
+    } -->

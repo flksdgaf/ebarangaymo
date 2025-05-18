@@ -1,53 +1,106 @@
 <?php
-require '../functions/dbconn.php';
-$data = json_decode(file_get_contents('php://input'), true);
+// functions/updateRequestDetails.php
+session_start();
+header('Content-Type: application/json');
 
-$tid  = $data['transaction_id']  ?? '';
-$type = $data['request_type']    ?? '';
-if (!$tid || !$type) {
-  echo json_encode(['success'=>false,'error'=>'Missing identifiers']); exit;
+require 'dbconn.php';
+
+// 1) Decode JSON
+$payload = json_decode(file_get_contents('php://input'), true);
+if (!$payload || empty($payload['transaction_id'])) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => 'Invalid payload']);
+    exit;
+}
+$tid = $payload['transaction_id'];
+
+// 2) Fetch request_type so we know which table
+$stmt = $conn->prepare("
+    SELECT request_type
+      FROM view_general_requests
+     WHERE transaction_id = ?
+     LIMIT 1
+");
+$stmt->bind_param('s', $tid);
+$stmt->execute();
+$res = $stmt->get_result()->fetch_assoc();
+$stmt->close();
+
+if (!$res) {
+    echo json_encode(['success' => false, 'error' => 'Unknown transaction']);
+    exit;
 }
 
-// define which fields are safe to update for each request_type
-$fields_map = [
-  'Barangay ID'     => ['transaction_type','full_name','address','height','weight','birthday','birthplace','civil_status','religion','contact_person','claim_date','payment_method'],
-  'Business Permit' => ['transaction_type','full_name','address','civil_status','purok','barangay','age','claim_date','business_name','business_type','payment_method'],
-  'Certification'   => ['transaction_type','full_name','street','purok','birthdate','birthplace','age','civil_status','purpose','claim_date','payment_method'],
-];
+$type = $res['request_type'];
 
-if (!isset($fields_map[$type])) {
-  echo json_encode(['success'=>false,'error'=>'Unknown request type']); exit;
+// 3) Map to table & allowed fields
+switch ($type) {
+    case 'Residency':
+        $table  = 'residency_requests';
+        $fields = [
+            'full_name','age','civil_status',
+            'purok','residing_years','claim_date',
+            'purpose','payment_method','payment_status','document_status'
+        ];
+        break;
+
+    case 'Barangay ID':
+        $table = 'barangay_id_requests';
+        $fields = [
+            'transaction_type','full_name','address',
+            'height','weight','birthdate','birthplace',
+            'civil_status','religion','contact_person',
+            'claim_date','payment_method','payment_status','document_status'
+        ];
+        break;
+
+    case 'Business Permit':
+        $table = 'business_permit_requests';
+        $fields = [
+            'transaction_type','full_name','full_address',
+            'civil_status','purok','barangay','age',
+            'claim_date','name_of_business','type_of_business',
+            'payment_method','payment_status','document_status'
+        ];
+        break;
+
+    // add other cases as needed...
+
+    default:
+        echo json_encode(['success' => false, 'error' => 'Unsupported request type']);
+        exit;
 }
-$allowed = $fields_map[$type];
 
-// build SET clause dynamically
+// 4) Build SET clauses dynamically based on payload
 $sets = [];
-$params = [];
-$types = '';
-foreach ($allowed as $field) {
-  if (isset($data[$field])) {
-    $sets[]      = "`$field` = ?";
-    $params[]    = $data[$field];
-    $types      .= 's';
-  }
+$vals = [];
+foreach ($fields as $col) {
+    if (isset($payload[$col])) {
+        $sets[] = "`$col` = ?";
+        $vals[] = $payload[$col];
+    }
 }
 
-if (empty($sets)) {
-  echo json_encode(['success'=>false,'error'=>'Nothing to update']); exit;
+if (count($sets) === 0) {
+    echo json_encode(['success' => false, 'error' => 'Nothing to update']);
+    exit;
 }
 
-$sql = "UPDATE requests_table
-         SET " . implode(',', $sets) . "
-       WHERE transaction_id = ?";
-$types .= 's';
-$params[] = $tid;
-
+// 5) Prepare & execute UPDATE
+$sql = "UPDATE `$table` SET " . implode(', ', $sets) . " WHERE transaction_id = ?";
 $stmt = $conn->prepare($sql);
+
+// all-binding as strings for simplicity
+$types = str_repeat('s', count($vals)) . 's';
+$params = array_merge($vals, [$tid]);
 $stmt->bind_param($types, ...$params);
+
 if (!$stmt->execute()) {
-  echo json_encode(['success'=>false,'error'=>$stmt->error]);
+    echo json_encode(['success' => false, 'error' => $stmt->error]);
 } else {
-  echo json_encode(['success'=>true]);
+    echo json_encode(['success' => true]);
 }
 $stmt->close();
 $conn->close();
+exit; 
+?>

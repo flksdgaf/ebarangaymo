@@ -60,6 +60,8 @@ if ($document_status) {
   $bindParams[]  = $document_status;
 }
 
+$whereClauses[] = "NOT (payment_status = 'Paid' AND document_status = 'Released')";
+
 // DATE RANGE
 if ($date_from && $date_to) {
   $whereClauses[] = 'DATE(created_at) BETWEEN ? AND ?';
@@ -99,9 +101,14 @@ $whereSQL = $whereClauses
 // COUNT TOTAL WITH FILTERS
 $countSql = "SELECT COUNT(*) FROM view_general_requests {$whereSQL}";
 $cst = $conn->prepare($countSql);
-if ($whereClauses) {
+if (! empty($bindTypes)) {
   $cst->bind_param($bindTypes, ...$bindParams);
 }
+
+// if ($whereClauses) {
+//   $cst->bind_param($bindTypes, ...$bindParams);
+// }
+
 $cst->execute();
 $total = $cst->get_result()->fetch_row()[0];
 $cst->close();
@@ -185,7 +192,11 @@ if ($queryString) {
                   <option value="">All</option>
                   <option <?= $request_type ==='Barangay ID'?'selected':'' ?> value="Barangay ID">Barangay ID</option>
                   <option <?= $request_type ==='Business Permit'?'selected':'' ?> value="Business Permit">Business Permit</option>
-                  <option <?= $request_type ==='Certification'?'selected':'' ?> value="Certification">Certification</option>
+                  <option <?= $request_type==='Good Moral'?'selected':''?> value="Good Moral">Good Moral</option>
+                  <option <?= $request_type==='Guardianship'?'selected':''?> value="Guardianship">Guardianship</option>
+                  <option <?= $request_type==='Indigency'?'selected':''?> value="Indigency">Indigency</option>
+                  <option <?= $request_type==='Residency'?'selected':''?> value="Residency">Residency</option>
+                  <option <?= $request_type==='Solo Parent'?'selected':''?> value="Solo Parent">Solo Parent</option>
                 </select>
               </div>
 

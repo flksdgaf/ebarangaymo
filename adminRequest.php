@@ -170,10 +170,13 @@ $result = $st->get_result();
                 <option value="">All</option>
                 <option <?= $request_type==='Barangay ID'?'selected':''?> value="Barangay ID">Barangay ID</option>
                 <option <?= $request_type==='Business Permit'?'selected':''?> value="Business Permit">Business Permit</option>
-                <option <?= $request_type==='Certification'?'selected':''?> value="Certification">Certification</option>
+                <option <?= $request_type==='Good Moral'?'selected':''?> value="Good Moral">Good Moral</option>
+                <option <?= $request_type==='Guardianship'?'selected':''?> value="Guardianship">Guardianship</option>
+                <option <?= $request_type==='Indigency'?'selected':''?> value="Indigency">Indigency</option>
+                <option <?= $request_type==='Residency'?'selected':''?> value="Residency">Residency</option>
+                <option <?= $request_type==='Solo Parent'?'selected':''?> value="Solo Parent">Solo Parent</option>
               </select>
             </div>
-
             <!-- Date Created -->
             <div class="mb-2">
               <label class="form-label mb-1">Date Created</label>
@@ -237,7 +240,7 @@ $result = $st->get_result();
           <i class="bi bi-plus-lg me-1"></i> Add New Request
         </button>
         <ul class="dropdown-menu" aria-labelledby="addRequestDropdown">
-          <?php foreach (['Barangay ID','Business Permit','Certification'] as $type): ?>
+          <?php foreach (['Barangay ID','Business Permit','Good Moral','Guardianship','Indigency','Residency','Solo Parent'] as $type): ?>
             <li>
               <button
                 type="button"
@@ -251,7 +254,7 @@ $result = $st->get_result();
 
       <form method="get" id="searchForm" class="d-flex ms-auto me-2">
       <!-- preserve pagination & filters -->
-      <input type="hidden" name="page" value="adminRequest">
+      <input type="hidden" name="page"     value="adminRequest">
       <input type="hidden" name="page_num" value="1">
       <?php foreach (['request_type','date_from','date_to','payment_method','payment_status','document_status'] as $f): 
           if (!empty($_GET[$f])): ?>
@@ -285,7 +288,7 @@ $result = $st->get_result();
         <tbody>
           <?php if ($result->num_rows): ?>
             <?php while ($row = $result->fetch_assoc()): ?>
-              <tr class="clickable-row" data-tid="<?= htmlspecialchars($row['transaction_id']) ?>">
+              <tr data-id="<?= htmlspecialchars($row['transaction_id']) ?>" data-type="<?= htmlspecialchars($row['request_type']) ?>" style="cursor:pointer;"> 
                 <td><?= htmlspecialchars($row['transaction_id']) ?></td>
                 <td><?= htmlspecialchars($row['full_name']) ?></td>
                 <td><?= htmlspecialchars($row['request_type']) ?></td>
@@ -341,59 +344,6 @@ $result = $st->get_result();
     </div>
   </div>
 
-  <!-- Details Modal -->
-  <div class="modal fade" id="rowModal" tabindex="-1" aria-labelledby="rowModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content shadow-lg">
-        <div class="modal-header bg-dark text-white">
-          <h5 class="modal-title" id="rowModalLabel">
-            <i class="bi bi-card-list me-2"></i>Request Details
-          </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <!-- Basic Information -->
-          <div class="mb-4">
-            <h6 class="fw-bold fs-5 text-secondary">Basic Information</h6>
-            <dl class="row">
-              <dt class="col-sm-4">Transaction No.</dt>
-              <dd class="col-sm-8" id="modal-transaction_id">—</dd>
-              <dt class="col-sm-4">Name</dt>
-              <dd class="col-sm-8" id="modal-full_name">—</dd>
-              <dt class="col-sm-4">Request Type</dt>
-              <dd class="col-sm-8" id="modal-request_type">—</dd>
-            </dl>
-          </div>
-          <!-- Dates -->
-          <div class="mb-4">
-            <h6 class="fw-bold fs-5 text-secondary">Dates</h6>
-            <dl class="row">
-              <dt class="col-sm-4">Created At</dt>
-              <dd class="col-sm-8" id="modal-created_at">—</dd>
-              <dt class="col-sm-4">Claim Date</dt>
-              <dd class="col-sm-8" id="modal-claim_date">—</dd>
-            </dl>
-          </div>
-          <!-- Payment & Status -->
-          <div>
-            <h6 class="fw-bold fs-5 text-secondary">Payment & Status</h6>
-            <dl class="row">
-              <dt class="col-sm-4">Payment Method</dt>
-              <dd class="col-sm-8" id="modal-payment_method">—</dd>
-              <dt class="col-sm-4">Payment Status</dt>
-              <dd class="col-sm-8" id="modal-payment_status">—</dd>
-              <dt class="col-sm-4">Document Status</dt>
-              <dd class="col-sm-8" id="modal-document_status">—</dd>
-            </dl>
-          </div>
-        </div>
-        <div class="modal-footer border-0">
-          <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- Universal “Add New Request” Modal -->
   <div class="modal fade" id="addRequestModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -407,7 +357,6 @@ $result = $st->get_result();
         </div>
         <form id="addRequestForm" action="functions/serviceBarangayID_submit.php" method="POST" enctype="multipart/form-data">
           <div class="modal-body" id="addRequestModalBody">
-            <!-- fields will be injected here -->
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -602,47 +551,14 @@ $result = $st->get_result();
     </div>
   </template>
 
-  <template data-type="Certification">
+  <template data-type="Residency">
     <!-- core hidden value -->
-    <input type="hidden" name="request_type" value="Certification">
-
-    <!-- Transaction Type -->
-    <div class="mb-3">
-      <label class="form-label">Transaction Type</label>
-      <select name="transactiontype" class="form-select" required>
-        <option value="New Application">New Application</option>
-        <option value="Renewal">Renewal</option>
-      </select>
-    </div>
+    <input type="hidden" name="request_type" value="Residency">
 
     <!-- Full Name -->
     <div class="mb-3">
-      <label class="form-label">Full Name</label>
-      <input name="fullname" type="text" class="form-control" required>
-    </div>
-
-    <!-- Street & Purok -->
-    <div class="row mb-3">
-      <div class="col">
-        <label class="form-label">Street</label>
-        <input name="street" type="text" class="form-control" required>
-      </div>
-      <div class="col">
-        <label class="form-label">Purok</label>
-        <input name="purok" type="text" class="form-control" required>
-      </div>
-    </div>
-
-    <!-- Birthdate & Birthplace -->
-    <div class="row mb-3">
-      <div class="col">
-        <label class="form-label">Birthdate</label>
-        <input name="birthdate" type="date" class="form-control" required>
-      </div>
-      <div class="col">
-        <label class="form-label">Birthplace</label>
-        <input name="birthplace" type="text" class="form-control" required>
-      </div>
+      <label class="form-label">Name</label>
+      <input name="name" type="text" class="form-control" required>
     </div>
 
     <!-- Age & Civil Status -->
@@ -653,8 +569,8 @@ $result = $st->get_result();
       </div>
       <div class="col">
         <label class="form-label">Civil Status</label>
-        <select name="civilstatus" class="form-select" required>
-          <option value="">Select…</option>
+        <select name="civil_status" class="form-select" required>
+          <option value="" selected>Select…</option>
           <option>Single</option>
           <option>Married</option>
           <option>Divorced</option>
@@ -664,28 +580,63 @@ $result = $st->get_result();
       </div>
     </div>
 
-    <!-- Certification Purpose -->
-    <div class="mb-3">
-      <label class="form-label">Certification Purpose</label>
-      <input name="purpose" type="text" class="form-control" required>
-    </div>
-
-    <!-- Preferred Claim Date & Payment Method -->
+    <!-- Purok & Residing Years -->
     <div class="row mb-3">
       <div class="col">
-        <label class="form-label">Preferred Claim Date</label>
-        <input name="claimdate" type="date" class="form-control" required>
+        <label class="form-label">Purok</label>
+        <input name="purok" type="text" class="form-control" required>
       </div>
       <div class="col">
-        <label class="form-label">Payment Method</label>
-        <select name="paymentMethod" class="form-select" required>
-          <option value="GCash">GCash</option>
-          <option value="Brgy Payment Device">Brgy Payment Device</option>
-          <option value="Over-the-Counter">Over-the-Counter</option>
-        </select>
+        <label class="form-label">Years Residing Here</label>
+        <input name="residing_years" type="number" class="form-control" min="0" required>
       </div>
     </div>
+
+    <!-- Preferred Claim Date -->
+    <div class="mb-3">
+      <label class="form-label">Claim Date</label>
+      <input name="claim_date" type="date" class="form-control" required>
+    </div>
+
+    <!-- Purpose -->
+    <div class="mb-3">
+      <label class="form-label">Purpose</label>
+      <textarea name="purpose" class="form-control" rows="2" required></textarea>
+    </div>
+
+    <!-- Payment Method -->
+  <div class="mb-3">
+    <label class="form-label">Payment Method</label>
+    <select name="payment_method" class="form-select" required>
+      <option value="GCash">GCash</option>
+      <option value="Brgy Payment Device">Brgy Payment Device</option>
+      <option value="Over-the-Counter">Over-the-Counter</option>
+    </select>
+  </div>
   </template>
+
+
+  <!-- View Details Modal -->
+  <div class="modal fade" id="viewDetailsModal" tabindex="-1" aria-labelledby="viewDetailsModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <form class="modal-content shadow-lg">
+        <div class="modal-header bg-dark text-white">
+          <h5 class="modal-title fw-bold fs-5" id="viewDetailsModalLabel">
+            <i class="bi bi-card-list me-2"></i>Request Details
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="viewDetailsBody">
+          <!-- JS will inject labeled inputs here -->
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary rounded-pill" id="cancelBtn" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-success rounded-pill" id="editDetailsBtn">Edit</button>
+          <button type="button" class="btn btn-primary rounded-pill" id="printCertificateBtn">Generate Certificate</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 
 <?php
@@ -695,66 +646,227 @@ $conn->close();
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  // ——— Cache DOM nodes —————————————————————————————————————————————
+  // ——— Search & “Add New” modal logic (unchanged) —————————————————————————
   const searchForm     = document.getElementById('searchForm');
   const searchInput    = document.getElementById('searchInput');
   const searchBtn      = document.getElementById('searchBtn');
-  const modalEl        = document.getElementById('addRequestModal');
-  const bsModal        = new bootstrap.Modal(modalEl);
-  const titleElem      = document.getElementById('addRequestModalTitle');
-  const bodyElem       = document.getElementById('addRequestModalBody');
-  const formElem       = document.getElementById('addRequestForm');
-
+  const addModalEl     = document.getElementById('addRequestModal');
+  const bsAddModal     = new bootstrap.Modal(addModalEl);
+  const addTitleElem   = document.getElementById('addRequestModalTitle');
+  const addBodyElem    = document.getElementById('addRequestModalBody');
+  const addFormElem    = document.getElementById('addRequestForm');
   const hasSearch      = <?= json_encode(!empty($search)) ?>;
 
-  // ——— Helper: clear+submit search ——————————————————————————————————————
-  const handleSearch = () => {
+  searchBtn.addEventListener('click', () => {
     if (hasSearch) searchInput.value = '';
     searchForm.submit();
-  };
-  searchBtn.addEventListener('click', handleSearch);
+  });
 
-  // ——— Helper: open request modal —————————————————————————————————————
-  const openRequestModal = (type) => {
-    // title
-    titleElem.textContent = `${type} Form`;
-
-    // inject fields
-    const tpl = document.querySelector(`template[data-type="${type}"]`);
-    bodyElem.innerHTML = '';
-    bodyElem.appendChild(tpl.content.cloneNode(true));
-
-    // if this is coming from super-admin, tack on the hidden flag
-    if (['Barangay ID','Business Permit','Certification'].includes(type)) {
-      const flag = document.createElement('input');
-      flag.type  = 'hidden';
-      flag.name  = 'adminRedirect';
-      flag.value = '1';
-      bodyElem.prepend(flag);
-    }
-
-    // point at the correct handler
-    if (type === 'Barangay ID') {
-      formElem.action = 'functions/serviceBarangayID_submit.php';
-    } 
-    else if (type === 'Business Permit') {
-      formElem.action = 'functions/serviceBusinessPermit_submit.php';
-    } 
-    else if (type === 'Certification') {
-      formElem.action = 'functions/serviceCertification_submit.php';
-    } 
-    else {
-      console.warn('Unknown request type:', type);
-    }
-    
-    bsModal.show();
-  };
-
-  // ——— Wire up all “Add New Request” buttons —————————————————————————
   document.querySelectorAll('.request-trigger').forEach(btn => {
     btn.addEventListener('click', () => {
-      openRequestModal(btn.dataset.type);
+      const type = btn.dataset.type;
+      addTitleElem.textContent = `${type} Form`;
+      addBodyElem.innerHTML = '';
+      addBodyElem.appendChild(
+        document.querySelector(`template[data-type="${type}"]`).content.cloneNode(true)
+      );
+      if (['Barangay ID','Business Permit','Good Moral','Guardianship','Indigency','Residency','Solo Parent']
+          .includes(type)) {
+        const flag = document.createElement('input');
+        flag.type = 'hidden'; flag.name = 'adminRedirect'; flag.value = '1';
+        addBodyElem.prepend(flag);
+      }
+      addFormElem.action = {
+        'Barangay ID':'functions/serviceBarangayID_submit.php',
+        'Business Permit':'functions/serviceBusinessPermit_submit.php',
+        'Residency':'functions/serviceResidency_submit.php'
+      }[type] || addFormElem.action;
+      bsAddModal.show();
+    });
+  });
+
+  // ——— Auto‐print iframe logic —————————————————————————————————————————————
+  // const newTid = <?= json_encode($newTid) ?>;
+  // if (newTid) {
+  //   const iframe = document.createElement('iframe');
+  //   iframe.style.display = 'none';
+  //   iframe.src = `functions/generateResidencyCertificate.php?transaction_id=${newTid}`;
+  //   iframe.onload = () => {
+  //     iframe.contentWindow.focus();
+  //     iframe.contentWindow.print();
+  //     setTimeout(() => document.body.removeChild(iframe), 1000);
+  //   };
+  //   document.body.appendChild(iframe);
+  // }
+
+  // ——— View / Edit Details modal logic ——————————————————————————————————————
+  const viewModalEl   = document.getElementById('viewDetailsModal');
+  const bsViewModal   = new bootstrap.Modal(viewModalEl);
+  const bodyContainer = document.getElementById('viewDetailsBody');
+  const editBtn       = document.getElementById('editDetailsBtn');
+  const cancelBtn     = document.getElementById('cancelBtn');
+
+  // create “Save Changes” button ahead of time
+  const saveBtn = document.createElement('button');
+  saveBtn.type = 'button';
+  saveBtn.id = 'saveDetailsBtn';
+  saveBtn.className = 'btn btn-success rounded-pill';
+  saveBtn.textContent = 'Save Changes';
+
+  // at top of your script, after you create saveBtn...
+  saveBtn.style.display = 'none';          // hide by default
+  cancelBtn.insertAdjacentElement('afterend', saveBtn);  // insert once
+
+  let inEditMode = false;
+
+  function labelize(key) {
+    return key.replace(/_/g,' ')
+              .replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  document.querySelectorAll('tbody tr[data-id]').forEach(row => {
+    row.addEventListener('click', () => {
+      const tid  = row.dataset.id;
+      const type = row.dataset.type;
+      inEditMode = false;
+
+      fetch(`functions/getRequestDetails.php?transaction_id=${tid}`)
+        .then(r => r.json())
+        .then(json => {
+          if (json.error) throw json.error;
+          bodyContainer.innerHTML = '';
+
+          // header
+          const h5 = document.createElement('h5');
+          h5.className = 'mb-3';
+          h5.textContent = `${json.request_type} Details`;
+          bodyContainer.appendChild(h5);
+
+          // fields
+          Object.entries(json.details).forEach(([key,val]) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'mb-2';
+            const label = document.createElement('label');
+            label.className = 'form-label fw-semibold';
+            label.textContent = labelize(key);
+            const input = document.createElement('input');
+            input.className = 'form-control';
+            input.type = 'text';
+            input.value = val ?? '';
+            input.dataset.field = key;
+            input.readOnly = true;
+            if (key === 'transaction_id') {
+              input.classList.add('bg-light');
+            }
+            wrapper.append(label, input);
+            bodyContainer.appendChild(wrapper);
+          });
+
+          // reset footer buttons
+          editBtn.textContent   = 'Edit';
+          editBtn.className     = 'btn btn-success rounded-pill';
+          cancelBtn.textContent = 'Close';
+          cancelBtn.className   = 'btn btn-secondary rounded-pill';
+          saveBtn.style.display = 'none';          // ensure hidden on open
+
+          // Edit / Cancel toggle
+          editBtn.onclick = () => {
+            inEditMode = !inEditMode;
+
+            if (inEditMode) {
+              // switch to “Cancel” + show Save
+              editBtn.textContent     = 'Cancel';
+              editBtn.className       = 'btn btn-danger rounded-pill';
+              cancelBtn.style.display = 'none';
+              saveBtn.style.display   = '';
+
+              bodyContainer.querySelectorAll('input').forEach(inp => {
+                if (inp.dataset.field !== 'transaction_id') {
+                  inp.readOnly = false;
+                  inp.classList.remove('bg-light');
+                }
+              });
+            } else {
+              // back to view-only
+              editBtn.textContent     = 'Edit';
+              editBtn.className       = 'btn btn-success rounded-pill';
+              saveBtn.style.display   = 'none';
+              cancelBtn.style.display = '';
+
+              bodyContainer.querySelectorAll('input').forEach(inp => {
+                inp.readOnly = true;
+                if (inp.dataset.field === 'transaction_id') {
+                  inp.classList.add('bg-light');
+                }
+              });
+            }
+          };
+
+
+          // Save Changes
+          saveBtn.onclick = () => {
+            const payload = { transaction_id: tid };
+            bodyContainer.querySelectorAll('input').forEach(inp => {
+              if (inp.dataset.field !== 'transaction_id') {
+                payload[inp.dataset.field] = inp.value;
+              }
+            });
+            fetch('functions/updateRequestDetails.php', {
+              method: 'POST',
+              headers: { 'Content-Type':'application/json' },
+              body: JSON.stringify(payload)
+            })
+            .then(r => r.json())
+            .then(resp => {
+              if (resp.success) {
+                bsViewModal.hide();
+                location.reload();
+              } else {
+                alert('Save failed: ' + (resp.error||'Unknown'));
+              }
+            })
+            .catch(err => alert('Error saving: ' + err));
+          };
+
+          bsViewModal.show();
+
+          // DI PA FINAL
+          const printBtn = document.getElementById('printCertificateBtn');
+          printBtn.onclick = () => {
+            if (type === 'Residency') {
+              const certWin = window.open(
+                `functions/generateResidencyCertificate.php?transaction_id=${tid}`,
+                '_blank',
+                'width=800,height=600'
+              );
+              certWin.addEventListener('load', () => certWin.print());
+            } else {
+              alert('Certificate generation is only available for Residency requests.');
+            }
+          };
+        })
+        .catch(err => {
+          console.error(err);
+          alert('Failed to load details: ' + err);
+        });
     });
   });
 });
 </script>
+
+
+
+<!-- // Grab the new transaction ID from PHP
+    const newTid = <?= json_encode($newTid) ?>;
+    if (newTid) {
+      // Open the certificate in a new tab/window
+      const win = window.open(
+        `functions/generateResidencyCertificate.php?transaction_id=${newTid}`,
+        '_blank',
+        'width=800,height=600'
+      );
+      // Once it's loaded, trigger print
+      win.addEventListener('load', () => {
+        win.print();
+      });
+    } -->

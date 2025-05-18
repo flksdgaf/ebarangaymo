@@ -18,6 +18,7 @@ $purok          = trim($_POST['purok'] ?? '');
 $residingYears  = (int)($_POST['residing_years'] ?? 0);
 $claimDate      = $_POST['claim_date'] ?? '';   // YYYY-MM-DD
 $purpose        = trim($_POST['purpose'] ?? '');
+$paymentMethod  = $_POST['payment_method'] ?? '';
 
 // 3) Basic validation (you can expand this)
 $errors = [];
@@ -28,6 +29,7 @@ if ($purok === '')          $errors[] = 'Purok is required';
 if ($residingYears < 0)     $errors[] = 'Residing years cannot be negative';
 if ($claimDate === '')      $errors[] = 'Claim date is required';
 if ($purpose === '')        $errors[] = 'Purpose is required';
+if ($paymentMethod === '')  $errors[] = 'Payment method is required';
 
 if (!empty($errors)) {
     // You might store these in session and redirect back instead
@@ -63,11 +65,12 @@ $insert = $conn->prepare("
      purok,
      residing_years,
      claim_date,
-     purpose)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+     purpose,
+     payment_method)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ");
 $insert->bind_param(
-    "issississ",
+    "issississs",
     $userId,
     $transactionId,
     $name,
@@ -76,7 +79,8 @@ $insert->bind_param(
     $purok,
     $residingYears,
     $claimDate,
-    $purpose
+    $purpose,
+    $paymentMethod
 );
 if (! $insert->execute()) {
     die('Insert failed: ' . $insert->error);
@@ -84,7 +88,20 @@ if (! $insert->execute()) {
 $insert->close();
 
 // 6) Redirect back with success flash
-header("Location: ../superAdminPanel.php?page=superAdminRequest&transaction_id={$transactionId}");
+if (!empty($_POST['superAdminRedirect'])) {
+    // Came from the super‐admin panel → send back there
+    header("Location: ../superAdminPanel.php?page=superAdminRequest&transaction_id={$transactionId}");
+    exit();
+}
+
+if (!empty($_POST['adminRedirect'])) {
+    // Came from the admin panel → send back there
+    header("Location: ../adminPanel.php?page=adminRequest&transaction_id={$transactionId}");
+    exit();
+}
+
+// Default: user panel
+header("Location: ../userPanel.php?page=serviceBarangayID&tid={$transactionId}");
 exit();
 
 // Instead of returning to the panel, go straight to the generator:

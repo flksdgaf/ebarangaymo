@@ -2,7 +2,7 @@
 // functions/login_process.php
 session_start();
 include 'dbconn.php';
-$admin_roles = ['Barangay Captain', 'Barangay Secretary', 'Barangay Kagawad', 'Barangay Bookkeeper'];
+$admin_roles = ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper', 'Brgy Kagawad', 'Brgy Staff'];
 
 if(isset($_POST['username']) && isset($_POST['password'])) {
     // Sanitize and validate the input

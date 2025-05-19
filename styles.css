@@ -134,8 +134,8 @@ body {
     border-radius: 12px;
 }
 
+/* Barangay ID Flowchart */
 .flowchart-wrapper {
-  /* gap: 10px; */
   align-items: flex-start;
 }
 
@@ -176,6 +176,111 @@ body {
   font-weight: 500;
 }
 
+/* Barangay Clearance Flowchart */
+
+.barangay-clearance-image {
+    flex-shrink: 0;
+    width: 120px;
+    margin-right: -20px;
+}
+.barangay-clearance-image img {
+  max-width: 63%;
+  height: auto;
+}
+
+.flowchart-barangay-clearance {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    text-decoration: none;
+}
+
+.flowchart-barangay-clearance li {
+    margin-bottom: 48px;
+    font-size: 14px;
+    color: #0D2C15;
+}
+/* Certification Flowchart */
+.barangay-certification-image {
+    flex-shrink: 0;
+    width: 120px;
+    margin-right: -20px;
+}
+
+.barangay-certification-image img{
+  max-width: 63%;
+  height: auto;
+}
+
+.flowchart-barangay-certification {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    text-decoration: none;
+}
+
+.flowchart-barangay-certification li {
+    margin-bottom: 48px;
+    font-size: 14px;
+    color: #0D2C15;
+}
+/* Business Permit Flowchart */
+.business-permit-image {
+    flex-shrink: 0;
+    width: 120px;
+    margin-right: -20px;
+}
+
+.business-permit-image img {
+  max-width: 63%;
+  height: auto;
+}
+
+.flowchart-business-permit {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    text-decoration: none;
+}
+
+.flowchart-business-permit li {
+    margin-bottom: 50px;
+    font-size: 14px;
+    color: #0D2C15;
+}
+/* Equipment Borrowing Flowchart */
+.equipment-borrowing-image {
+    flex-shrink: 0;
+    width: 120px;
+    margin-right: -20px;
+}
+.equipment-borrowing-image img {
+  max-width: 63%;
+  height: auto;
+}
+
+.flowchart-equipment-borrowing {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    text-decoration: none;
+}
+
+.flowchart-equipment-borrowing li {
+    margin-bottom: 48px;
+    font-size: 14px;
+    color: #0D2C15;
+}
+/* Cash Incentives */
+.cash-incentives-image {
+    flex-shrink: 0;
+    width: 120px;
+    margin-right: -20px;
+}
+.cash-incentives-image img {
+  max-width: 62%;
+  height: auto;
+}
 
 
 /* SERVICES */

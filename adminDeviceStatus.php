@@ -3,6 +3,7 @@
 include 'functions/dbconn.php';
 
 // 1) Fetch coin counts for this device
+// 1) Fetch coin counts for this device
 $deviceName = 'IOTPS-Magang-01';
 $stmt = $conn->prepare("
   SELECT one_peso, five_peso, ten_peso, twenty_peso

@@ -1,22 +1,29 @@
 <?php
+// get_amount.php
+require_once 'dbconn.php';
 header('Content-Type: application/json');
 
-require_once 'dbconn.php';
-
-if (!isset($_GET['transaction_id'])) {
-    echo json_encode(['error'=>'No transaction_id']);
-    exit;
+if (empty($_GET['transaction_id'])) {
+  http_response_code(400);
+  echo json_encode(['error'=>'missing transaction_id']);
+  exit;
 }
 
 $txn = $conn->real_escape_string($_GET['transaction_id']);
-$sql = "SELECT amount FROM barangay_id_requests WHERE transaction_id='$txn' LIMIT 1";
+$sql = "
+  SELECT amount, payment_status
+    FROM residency_requests
+   WHERE transaction_id='{$txn}'
+   LIMIT 1
+";
 $res = $conn->query($sql);
-
 if ($res && $row = $res->fetch_assoc()) {
-    echo json_encode(['amount' => $row['amount']]);
+  echo json_encode([
+    'amount'         => floatval($row['amount']),
+    'payment_status'=> $row['payment_status']
+  ]);
 } else {
-    echo json_encode(['error'=>'Not found']);
+  http_response_code(404);
+  echo json_encode(['error'=>'not found']);
 }
-
 $conn->close();
-?>

@@ -4,17 +4,17 @@ require_once 'dbconn.php';
 
 header('Content-Type: text/plain');
 
-if (empty($_GET['device_name'])) {
+if (empty($_GET['device_id'])) {
   http_response_code(400);
   echo "missing device_name";
   exit;
 }
 
-$id = $conn->real_escape_string($_GET['device_name']);
+$id = $conn->real_escape_string($_GET['device_id']);
 
 // Upsert last_seen for this device_name
 $sql = "
-  INSERT INTO device_management (device_name, last_seen)
+  INSERT INTO device_management (device_id, last_seen)
     VALUES ('{$id}', NOW())
   ON DUPLICATE KEY
     UPDATE last_seen = NOW()

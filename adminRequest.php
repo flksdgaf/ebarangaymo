@@ -841,7 +841,7 @@ document.addEventListener('DOMContentLoaded', () => {
               );
               certWin.addEventListener('load', () => certWin.print());
             } else {
-              alert('Certificate generation is only available for Residency requests.');
+              alert('Certificate is not yet available.');
             }
           };
         })

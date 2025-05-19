@@ -5,7 +5,7 @@ require_once 'dbconn.php';
 if ($_SERVER['REQUEST_METHOD']!=='POST'
  || empty($_POST['account_id'])
  || empty($_POST['role'])
- || !isset($_POST['purok'])) {
+) {
   http_response_code(400);
   exit('Invalid');
 }

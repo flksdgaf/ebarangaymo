@@ -180,8 +180,6 @@ async function refreshStatus() {
     const st = document.getElementById('status-text');
     st.className   = `fw-bold ${data.statusClass}`;
     st.textContent = data.statusText;
-    document.getElementById('status-clock')
-      .textContent = `As of ${data.timestamp}`;
 
     // — Total Amount —
     const totalEl = document.getElementById('total-amount');
@@ -220,11 +218,11 @@ function nowAsOf() {
 
 // Update every second
 function startStatusClock() {
-  const el = document.getElementById('status-clock');
-  if (!el) return;
-  el.textContent = nowAsOf();
+  const sc = document.getElementById('status-clock');
+  if (!sc) return;
+  sc.textContent = nowAsOf();
   setInterval(() => {
-    el.textContent = nowAsOf();
+    sc.textContent = nowAsOf();
   }, 1000);
 }
 

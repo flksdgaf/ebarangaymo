@@ -686,18 +686,18 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ——— Auto‐print iframe logic —————————————————————————————————————————————
-  const newTid = <?= json_encode($newTid) ?>;
-  if (newTid) {
-    const iframe = document.createElement('iframe');
-    iframe.style.display = 'none';
-    iframe.src = `functions/generateResidencyCertificate.php?transaction_id=${newTid}`;
-    iframe.onload = () => {
-      iframe.contentWindow.focus();
-      iframe.contentWindow.print();
-      setTimeout(() => document.body.removeChild(iframe), 1000);
-    };
-    document.body.appendChild(iframe);
-  }
+  // const newTid = <?= json_encode($newTid) ?>;
+  // if (newTid) {
+  //   const iframe = document.createElement('iframe');
+  //   iframe.style.display = 'none';
+  //   iframe.src = `functions/generateResidencyCertificate.php?transaction_id=${newTid}`;
+  //   iframe.onload = () => {
+  //     iframe.contentWindow.focus();
+  //     iframe.contentWindow.print();
+  //     setTimeout(() => document.body.removeChild(iframe), 1000);
+  //   };
+  //   document.body.appendChild(iframe);
+  // }
   
   // ——— View / Edit Details modal logic ——————————————————————————————————————
   const viewModalEl   = document.getElementById('viewDetailsModal');
@@ -829,6 +829,21 @@ document.addEventListener('DOMContentLoaded', () => {
           };
 
           bsViewModal.show();
+
+          // DI PA FINAL
+          const printBtn = document.getElementById('printCertificateBtn');
+          printBtn.onclick = () => {
+            if (type === 'Residency') {
+              const certWin = window.open(
+                `functions/generateResidencyCertificate.php?transaction_id=${tid}`,
+                '_blank',
+                'width=800,height=600'
+              );
+              certWin.addEventListener('load', () => certWin.print());
+            } else {
+              alert('Certificate is not yet available.');
+            }
+          };
         })
         .catch(err => {
           console.error(err);

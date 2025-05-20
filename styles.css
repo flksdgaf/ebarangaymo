@@ -409,6 +409,67 @@ body {
     .service-card p {
         font-size: 13px;
     }
+
+    /* SERVICES MODAL */
+    .modal-title {
+        font-size: 15px;
+    }
+
+    .modal-body h6 {
+        font-size: 12px;
+    }
+
+    .flowchart-image {
+    flex-shrink: 0;
+    width: 90px;
+    margin-right: -20px;
+    }
+
+    .flowchart-image img {
+    max-width: 65.7%;
+    height: auto;
+    }
+
+    .flowchart-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    padding-top: 7px;
+    }
+
+    .flowchart-steps li {
+    margin-bottom: 32px;
+    font-size: 11px;
+    color: #0D2C15;
+    }
+
+    .barangay-clearance-image,
+    .business-permit-image,
+    .barangay-certification-image,
+    .equipment-borrowing-image,
+    .cash-incentives-image {
+        flex-shrink: 0;
+        width: 90px;
+        margin-right: -20px;
+    }
+    .barangay-clearance-image img,
+    .business-permit-image img,
+    .barangay-certification-image img,
+    .equipment-borrowing-image img,
+    .cash-incentives-image img {
+        max-width: 61%;
+        height: auto;
+    }
+
+    .flowchart-barangay-clearance li,
+    .flowchart-business-permit li,
+    .flowchart-barangay-certification li,
+    .flowchart-equipment-borrowing li,
+    .flowchart-cash-incentives li {
+        margin-bottom: 25px;
+        font-size: 11px;
+        color: #0D2C15;
+    }
 }
 
 /* Backgrounds */

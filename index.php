@@ -274,7 +274,7 @@ include 'includes/header.php';
     <div class="modal-content">
       <div class="modal-header">
         <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 40px; height: 40px; object-fit: contain; margin-right: 15px;">
-        <h5 class="modal-title" id="businessPermitModalLabel">Barangay Business Permit</h5>
+        <h5 class="modal-title" id="businessPermitModalLabel">Business Permit</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">

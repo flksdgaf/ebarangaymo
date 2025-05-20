@@ -28,26 +28,44 @@ body, html {
     flex-wrap: wrap;
 }
 
+.login-form-wrapper {
+  padding-right: 100px;
+}
+
+.left-column {
+    padding-top: 5rem;
+    padding-bottom: 5rem; 
+}
+
 h3 {
     color: #0D2C15;
 }
 
-p {
+.magang-address {
     padding-top: 10px;
     color: #0D2C15;
-    font-size: 12px;
+    font-size: 18px;
  }
 
-.signin-now {
+.signup-now {
     color: #0D2C15;
     font-size: 13px;
     font-weight: bold;
     text-decoration: none;
 }
 
+h6 {
+    margin-bottom: 5rem;
+}
+
 /* Logos above the heading */
+.logo-wrapper {
+    gap: 1.5rem;
+    margin-bottom: 1.8rem;
+}
+
 .logo-wrapper .login-logo {
-    height: 150px;
+    height: 160px;
     width: auto;
     object-fit: contain;
 }
@@ -113,10 +131,14 @@ h5 {
 
 /* Mobile View */
 @media (max-width: 768px) {
+    body, html {
+        align-items: center;    /* push content below header */
+        justify-content: center;    /* keep content centered horizontally */
+    }
+
     .login-container {
         width: 100%;
         padding: 2rem 3rem 2rem 3rem;
-        margin: 0 1rem; /* Adds left and right spacing */
     }
 
     .login-container .row {
@@ -126,7 +148,7 @@ h5 {
 
     .login-container label {
         width: 100%;
-        margin-bottom: 0.25rem;
+        margin-bottom: 0.15rem;
     }
 
     .login-container .col-md-8,
@@ -145,5 +167,89 @@ h5 {
 
     .toggle-password {
         right: 10px;
+    }
+
+    .login-container {
+        flex-direction: column; /* Stack left and right columns */
+        width: 100%;
+        margin: 1rem;
+        padding: 1rem;
+        border-radius: 20px;
+    }
+
+    .login-container .col-md-6 {
+        width: 100% !important;
+        padding: 1rem !important;
+    }
+
+    .btn-gradient {
+        width: 100%;
+    }
+
+    .toggle-password {
+        right: 10px;
+    }
+
+    .forgot-pass {
+        text-align: left;
+        padding-right: 0;
+        padding-left: 15px;
+    }
+
+    .login-form-wrapper {
+        padding-right: 1rem;
+    }
+
+    .logo-wrapper {
+        padding-top: 10px;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .logo-wrapper .login-logo {
+    height: 50px;
+    width: auto;
+    object-fit: contain;
+    }
+
+    .left-column {
+        margin-bottom: 0px;
+    }
+
+    h3 {
+        margin-bottom: 2px;
+        font-size: 9px;
+    }
+
+    .magang-address {
+        font-size: 7px;
+        margin-bottom: 0px;
+    }
+
+    h6 {
+        font-size: 12px;
+        margin-bottom: 15px;
+    }
+
+    .text-start {
+        font-size: 13px;
+        margin-bottom: 20px;
+    }
+
+    form {
+        padding: 18px;
+    }
+
+    .forgot-pass {
+        font-size: 10px;
+        padding-left: 5px;
+    }
+
+    p {
+        font-size: 9px;
+    }
+
+    .signup-now {
+        font-size: 9px;
     }
 }

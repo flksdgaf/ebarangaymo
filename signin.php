@@ -19,21 +19,21 @@ if(isset($_SESSION['login_error'])){
 
 <body>
   <!-- <div class="login-wrapper p-1"> -->
-    <div class="login-container row p-0 m-0">
+    <div class="login-container row p-0">
     <!-- Left Column -->
-    <div class="col-md-6 d-flex flex-column align-items-center justify-content-center text-center pt-5 pb-5">
-      <div class="logo-wrapper d-flex justify-content-center gap-3 mb-3">
+    <div class="col-md-6 d-flex flex-column align-items-center justify-content-center text-center left-column">
+      <div class="logo-wrapper d-flex justify-content-center">
         <img src="images/magang_logo.png" alt="Brgy. Magang Logo" class="login-logo">
         <img src="images/good_governance_logo.png" alt="Good Governance Logo" class="login-logo">
       </div>
       <h3 class="fw-bold">Barangay Magang</h3>
-      <p class="text-uppercase fs-5 pt-0">Daet, Camarines Norte</p>
+      <p class="text-uppercase pt-0 magang-address">Daet, Camarines Norte</p>
     </div>
 
     <!-- Right Column -->
-    <div class="col-md-6 pt-5 pb-5" style="padding-right: 100px;">
+    <div class="col-md-6 pt-5 pb-5 login-form-wrapper">
       <h1 class="mb-2 text-center">SIGN IN</h1>
-      <h6 class="mb-5 text-center">Enter your username and password.</h6>
+      <h6 class="text-center">Enter your username and password.</h6>
 
       <form action="functions/login_process.php" method="POST">
         <div class="row mb-3 justify-content-center align-items-center">
@@ -57,7 +57,7 @@ if(isset($_SESSION['login_error'])){
         <div class="text-center">
           <button type="submit" class="btn btn-gradient w-50 py-2 mb-3">Login</button>
           <p>Don't have an account yet?   
-            <a href="signup.php" class="signin-now">Sign Up Now</a>
+            <a href="signup.php" class="signup-now">Sign Up Now</a>
           </p>
         </div>
       </form>

@@ -81,6 +81,12 @@ body {
     .d-md-none {
         display: flex !important;
     }
+
+    .custom-signin-btn {
+        width: 100%;
+        text-align: center;
+        margin-bottom: 5px;
+    }
 }
 
 .carousel-inner img {
@@ -686,3 +692,6 @@ transition: opacity 0.3s ease;
     transition: opacity 0.3s ease;
     }
 
+.nav-item.dropdown .nav-link.dropdown-toggle::after {
+  display: none;
+}

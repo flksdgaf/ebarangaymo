@@ -114,6 +114,7 @@ $yearsInWords = numberToWords($years);
       text-indent: 2em; 
     }
     .underline { text-decoration: underline; }
+    .text-upper { text-transform: uppercase; }
   </style>
 </head>
 <body>
@@ -136,7 +137,7 @@ $yearsInWords = numberToWords($years);
       This certification is issued this <strong><?= $dayFmt ?></strong> day of 
       <strong><?= $monthFmt ?>, <?= $yearFmt ?></strong> at Barangay Magang, 
       Daet, Camarines Norte upon the request of the interested party for 
-      <strong><?= $purpose ?></strong> purposes.
+      <strong class="text-upper"><?= $purpose ?></strong> purposes.
     </div>
   </div>
 

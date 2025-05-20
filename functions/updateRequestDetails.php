@@ -65,6 +65,42 @@ switch ($type) {
         break;
 
     // add other cases as needed...
+    case 'Indigency':
+        $table = 'indigency_requests';
+        $fields = [
+            'full_name','age','civil_status',
+            'purok','claim_date',
+            'purpose','payment_method','payment_status','document_status'
+        ];
+        break;
+
+    case 'Good Moral':
+        $table = 'good_moral_requests';
+        $fields = [
+            'full_name','age','civil_status',
+            'purok','claim_date',
+            'purpose','payment_method','payment_status','document_status'
+        ];
+        break;
+    
+    case 'Guardianship':
+        $table = 'guardianship_requests';
+        $fields = [
+            'full_name','age','civil_status',
+            'purok','child_name','claim_date',
+            'purpose','payment_method','payment_status','document_status'
+        ];
+        break;
+
+    case 'Solo Parent':
+        $table = 'solo_parent_requests';
+        $fields = [
+            'full_name','age','civil_status',
+            'purok','child_name','child_age',
+            'years_solo_parent','claim_date',
+            'purpose','payment_method','payment_status','document_status'
+        ];
+        break;
 
     default:
         echo json_encode(['success' => false, 'error' => 'Unsupported request type']);

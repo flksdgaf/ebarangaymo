@@ -42,6 +42,26 @@ switch($type) {
     $tbl = 'residency_requests';
     $cols = ['transaction_id','full_name','age','civil_status','purok','residing_years','claim_date','purpose','payment_method', 'payment_status', 'document_status'];
     break;
+  case 'Indigency':
+    $tbl = 'indigency_requests';
+    $cols = ['transaction_id','full_name','age','civil_status','purok','claim_date','purpose','payment_method', 'payment_status', 'document_status'];
+  break;
+
+  case 'Good Moral':
+    $tbl = 'good_moral_requests';
+    $cols = ['transaction_id','full_name','age','civil_status','purok','claim_date','purpose','payment_method','payment_status','document_status'];
+  break;
+
+  case 'Guardianship':
+    $tbl = 'guardianship_requests';
+    $cols = ['transaction_id','full_name','age','civil_status','purok','child_name','claim_date','purpose','payment_method','payment_status','document_status'];
+  break;
+
+  case 'Solo Parent':
+    $tbl = 'solo_parent_requests';
+    $cols = ['transaction_id','full_name','age','civil_status','purok','child_name','child_age','years_solo_parent','claim_date','purpose','payment_method','payment_status','document_status'];
+  break;
+
   // add other cases as needed
   default:
     http_response_code(400);

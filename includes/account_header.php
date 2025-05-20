@@ -9,7 +9,7 @@ $pageTitles = [
     // Admin
     'adminDashboard' => 'Dashboard',
     'adminRequest' => 'Service Requests',
-    'Blotter' => 'Blotter Records',
+    'adminBlotter' => 'Blotter Records',
     'adminSummon' => 'Summon Records',
     'adminKatarungangPambarangay' => 'Katarungang Pambarangay',
     'adminResidents' => 'Residents Records',
@@ -31,7 +31,15 @@ $pageTitles = [
     'superAdminLogs' => 'Activity Logs',
     'superAdminWebsite' => 'Website Management',
     'superAdminDeviceStatus' => 'Device Status',
-    'superAdminSettings' => 'Settings'
+    'superAdminSettings' => 'Settings',
+
+    // User 
+    'userDashboard' => 'Dashboard',
+    'userRequest' => 'My Requests',
+    'userServices' => 'Barangay Services',
+    'userTransactions' => 'Transaction History',
+    'serviceBarangayID' => 'Barangay ID',
+    'serviceCertification' => 'Certification'
 ];
 
 $topbarText = $pageTitles[$page] ?? 'Dashboard';

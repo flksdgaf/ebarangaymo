@@ -124,7 +124,7 @@ document.addEventListener("DOMContentLoaded", function () {
             nextBtn.replaceWith(nextBtn.cloneNode(true));
             const newNext = document.getElementById('nextBtn') || document.querySelector('#nextBtn');
             newNext.addEventListener('click', () => {
-                window.location.href = 'userpanel.php?page=userDashboard';
+                window.location.href = 'userPanel.php?page=userDashboard';
             });
         }
     }

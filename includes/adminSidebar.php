@@ -79,12 +79,12 @@
             Device Status
             </a>
         </li>
-        <li>
+        <!-- <li>
             <a href="adminPanel.php?page=adminLogs" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminLogs') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">badge</span>
             Logs
             </a>
-        </li>
+        </li> -->
     </ul>
 </nav>
 

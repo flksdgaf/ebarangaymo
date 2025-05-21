@@ -167,7 +167,7 @@ $conn->close();
 </div>
 
 <script>
-const API = 'functions/status_api.php?device_id=IOTPS-Magang-01';
+const API = 'functions/status_api.php?device_name=IOTPS-Magang';
 
 async function refreshStatus() {
   try {
@@ -180,13 +180,23 @@ async function refreshStatus() {
     const st = document.getElementById('status-text');
     st.className   = `fw-bold ${data.statusClass}`;
     st.textContent = data.statusText;
+    document.getElementById('status-clock')
+      .textContent = `As of ${data.timestamp}`;
 
     // — Total Amount —
     const totalEl = document.getElementById('total-amount');
     totalEl.textContent = `Php ${data.total_amount}`;
+    document.getElementById('total-clock')
+      .textContent = `As of ${new Date().toLocaleString()}`;
 
     // — Coin counts only —
-    const mapping = { '1':'one_peso','5':'five_peso','10':'ten_peso','20':'twenty_peso' };
+    const mapping = {
+      '1': 'one_peso',
+      '5': 'five_peso',
+      '10': 'ten_peso',
+      '20': 'twenty_peso'
+    };
+
     Object.entries(mapping).forEach(([val, key]) => {
       const el = document.getElementById(`count-${val}`);
       if (el && data[key] !== undefined) {
@@ -218,11 +228,11 @@ function nowAsOf() {
 
 // Update every second
 function startStatusClock() {
-  const sc = document.getElementById('status-clock');
-  if (!sc) return;
-  sc.textContent = nowAsOf();
+  const el = document.getElementById('status-clock');
+  if (!el) return;
+  el.textContent = nowAsOf();
   setInterval(() => {
-    sc.textContent = nowAsOf();
+    el.textContent = nowAsOf();
   }, 1000);
 }
 

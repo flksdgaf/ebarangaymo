@@ -71,7 +71,7 @@ $sql = "
     complaint_nature
   FROM blotter_records
   {$whereSQL}
-  ORDER BY date_filed DESC
+  ORDER BY date_filed ASC
   LIMIT ? OFFSET ?
 ";
 $st = $conn->prepare($sql);

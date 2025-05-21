@@ -79,18 +79,18 @@
             Device Status
             </a>
         </li>
-        <li>
+        <!-- <li>
             <a href="superAdminPanel.php?page=superAdminLogs" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminLogs') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">badge</span>
             Logs
             </a>
-        </li>   
-        <li>
+        </li>    -->
+        <!-- <li>
             <a href="superAdminPanel.php?page=superAdminSettings" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminSettings') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">settings</span>
             Admin Settings
             </a>
-        </li>
+        </li> -->
     </ul>
 </nav>
 

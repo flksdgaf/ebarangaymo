@@ -169,14 +169,10 @@ $stmt->close();
             <?php foreach ($cases as $c): ?>
             <tr>
               <td><?= htmlspecialchars($c['case_no']) ?></td>
-              <td><?= htmlspecialchars($c['smn_id'])   ?></td>
-              <td><?= htmlspecialchars($c['blt_id'])   ?></td>
-              <td><?= htmlspecialchars($c['subject'])  ?></td>
-              <td>
-                <span class="badge bg-info text-dark">
-                  <?= htmlspecialchars($c['status']) ?>
-                </span>
-              </td>
+              <td><?= htmlspecialchars($c['smn_id']) ?></td>
+              <td><?= htmlspecialchars($c['blt_id']) ?></td>
+              <td><?= htmlspecialchars($c['subject']) ?></td>
+              <td><?= htmlspecialchars($c['status']) ?></td>
             </tr>
             <?php endforeach; ?>
           <?php else: ?>

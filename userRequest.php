@@ -1,80 +1,82 @@
 <?php
+require 'functions/dbconn.php';
 $userId = (int) $_SESSION['loggedInUserID'];
 
 // ── 1) DETAIL VIEW ───────────────────────────────────────────────────────────
 if (isset($_GET['transaction_id'])) {
     $tx = $_GET['transaction_id'];
 
-    // 1a) fetch the bare view row so we know its request_type
-    $vsql = "SELECT * FROM view_general_requests WHERE transaction_id = ? LIMIT 1";
+    // 1a) fetch from the view (only if it belongs to this user)
+    $vsql = "
+      SELECT *
+        FROM view_general_requests
+       WHERE transaction_id = ?
+         AND account_id     = ?
+       LIMIT 1
+    ";
     $vst = $conn->prepare($vsql);
-    $vst->bind_param('s', $tx);
+    $vst->bind_param('si', $tx, $userId);
     $vst->execute();
     $vrow = $vst->get_result()->fetch_assoc();
     $vst->close();
 
     if (!$vrow) {
-        echo "<div class='alert alert-danger'>Request not found.</div>";
+        echo "<div class='alert alert-danger'>Request not found or you don't have access.</div>";
         exit();
     }
 
-    // 1b) pick the right table to fetch full details
+    // 1b) pick the details table
     switch ($vrow['request_type']) {
-        case 'Barangay ID':
-            $tbl = 'barangay_id_requests';
-            break;
-        case 'Business Permit':
-            $tbl = 'business_permit_requests';
-            break;
-        case 'Certification':
-            $tbl = 'certification_requests';
-            break;
-        default:
-            $tbl = null;
+        case 'Barangay ID':      $tbl = 'barangay_id_requests';    break;
+        case 'Business Permit':  $tbl = 'business_permit_requests';break;
+        case 'Certification':    $tbl = 'certification_requests';  break;
+        case 'Indigency':        $tbl = 'indigency_requests';      break;
+        case 'Residency':        $tbl = 'residency_requests';      break;
+        case 'Good Moral':       $tbl = 'good_moral_requests';     break;
+        case 'Solo Parent':      $tbl = 'solo_parent_requests';    break;
+        case 'Guardianship':     $tbl = 'guardianship_requests';   break;
+        default:                 $tbl = null;
     }
 
-    echo "<div class='container py-3'>";
-    echo "<div class='card shadow-sm p-4 mb-4'>";
+    echo "<div class='container py-3'><div class='card shadow-sm p-4 mb-4'>";
     echo "<h5 class='fw-bold mb-3'>Full Details for {$tx}</h5>";
 
     if ($tbl) {
-        // 1c) pull everything from that base table
-        $dsql = "SELECT * FROM $tbl WHERE transaction_id = ? LIMIT 1";
+        // 1c) fetch full details (again, only for this user)
+        $dsql = "
+          SELECT *
+            FROM {$tbl}
+           WHERE transaction_id = ?
+             AND account_id     = ?
+           LIMIT 1
+        ";
         $dst = $conn->prepare($dsql);
-        $dst->bind_param('s', $tx);
+        $dst->bind_param('si', $tx, $userId);
         $dst->execute();
         $drow = $dst->get_result()->fetch_assoc();
         $dst->close();
 
         if ($drow) {
-            // 1) list of columns you DON’T want to show
-            $exclude = [
-                'id',
-                'account_id',
-                'transaction_id',  // shown in the header
-                'created_at',      // if you prefer your formatted date only
-            ];
-    
+            $exclude = ['id','account_id','transaction_id','created_at'];
             echo "<dl class='row'>";
             foreach ($drow as $col => $val) {
-                // 2) skip both empty and excluded columns
                 if ($val === null || in_array($col, $exclude, true)) {
                     continue;
                 }
-                // 3) pretty up the label
                 $label = ucwords(str_replace('_',' ',$col));
                 echo "<dt class='col-sm-3'>{$label}</dt>";
                 echo "<dd class='col-sm-9'>" . htmlspecialchars($val) . "</dd>";
             }
             echo "</dl>";
         } else {
-            echo "<p class='text-danger'>No detailed record in <code>$tbl</code>.</p>";
+            echo "<p class='text-danger'>No details found in <code>{$tbl}</code> (or not yours).</p>";
         }
     } else {
-        echo "<p class='text-danger'>Unknown request type: <strong>" . htmlspecialchars($vrow['request_type']) . "</strong></p>";
+        echo "<p class='text-danger'>Unknown request type: <strong>"
+           . htmlspecialchars($vrow['request_type']) . "</strong></p>";
     }
 
-    // back button (keeps you on same page number)
+    // Back link
     $backPage = isset($_GET['pagination']) ? (int)$_GET['pagination'] : 1;
     echo "<a href='?page=userRequest&pagination={$backPage}' class='btn btn-secondary mt-3'>← Back to list</a>";
     echo "</div></div>";

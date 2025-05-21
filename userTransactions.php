@@ -10,6 +10,7 @@ if (isset($_GET['transaction_id'])) {
       SELECT * 
         FROM view_general_requests 
        WHERE transaction_id = ? 
+         AND payment_status = 'Paid'
          AND document_status = 'Released'
        LIMIT 1
     ";
@@ -32,6 +33,16 @@ if (isset($_GET['transaction_id'])) {
             $tbl = 'business_permit_requests'; break;
         case 'Certification':
             $tbl = 'certification_requests'; break;
+        case 'Indigency':
+            $tbl = 'indigency_requests'; break;
+        case 'Residency':
+            $tbl = 'residency_requests'; break;
+        case 'Good Moral':
+            $tbl = 'good_moral_requests'; break;
+        case 'Solo Parent':
+            $tbl = 'solo_parent_requests'; break;
+        case 'Guardianship':
+            $tbl = 'guardianship_requests'; break;
         default:
             $tbl = null;
     }
@@ -132,7 +143,7 @@ $result = $st->get_result();
             <th>Name</th>
             <th>Request</th>
             <th>Release Date</th>
-            <th>OR No.</th>
+            <!-- <th>OR No.</th> -->
           </tr>
         </thead>
         <tbody>

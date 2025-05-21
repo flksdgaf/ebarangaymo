@@ -54,6 +54,10 @@ h3 {
     text-decoration: none;
 }
 
+.signup-now:hover {
+  text-decoration: underline; 
+}
+
 h6 {
     margin-bottom: 5rem;
 }
@@ -251,5 +255,9 @@ h5 {
 
     .signup-now {
         font-size: 9px;
+    }
+
+    .signup-now:hover {
+        text-decoration: underline; 
     }
 }

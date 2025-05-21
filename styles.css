@@ -140,154 +140,35 @@ body {
     border-radius: 12px;
 }
 
-/* Barangay ID Flowchart */
-.flowchart-wrapper {
-  align-items: flex-start;
-}
-
-.flowchart-image {
-  flex-shrink: 0;
-  width: 120px;
-  margin-right: -20px;
-}
-
-.flowchart-image img {
-  max-width: 65.5%;
-  height: auto;
-}
-
-.flowchart-text {
+/* Services Flowchart */
+.step-item {
   display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-  padding-top: 10px;
+  align-items: center; /* vertically center image and text */
+  gap: 5px;            /* space between image and text */
+  margin-bottom: 20px;
+}
+
+.step-icon {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+  margin-top: 2px;
+  color: #000000;
 }
 
 .flowchart-steps {
   list-style: none;
-  padding: 0;
-  margin: 0;
+  padding-left: 0;
+}
+
+.flowchart-steps li:first-child .step-link {
+  color: black;
   text-decoration: none;
 }
 
-.flowchart-steps li {
-  margin-bottom: 55px;
-  font-size: 14px;
-  color: #0D2C15;
+.flowchart-steps li:first-child .step-link:hover {
+  color: #2A9245; 
 }
-
-.step-link {
-  text-decoration: none;
-  color: #0D2C15;
-  font-weight: 500;
-}
-
-/* Barangay Clearance Flowchart */
-
-.barangay-clearance-image {
-    flex-shrink: 0;
-    width: 120px;
-    margin-right: -20px;
-}
-.barangay-clearance-image img {
-  max-width: 63%;
-  height: auto;
-}
-
-.flowchart-barangay-clearance {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    text-decoration: none;
-}
-
-.flowchart-barangay-clearance li {
-    margin-bottom: 48px;
-    font-size: 14px;
-    color: #0D2C15;
-}
-/* Certification Flowchart */
-.barangay-certification-image {
-    flex-shrink: 0;
-    width: 120px;
-    margin-right: -20px;
-}
-
-.barangay-certification-image img{
-  max-width: 63%;
-  height: auto;
-}
-
-.flowchart-barangay-certification {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    text-decoration: none;
-}
-
-.flowchart-barangay-certification li {
-    margin-bottom: 48px;
-    font-size: 14px;
-    color: #0D2C15;
-}
-/* Business Permit Flowchart */
-.business-permit-image {
-    flex-shrink: 0;
-    width: 120px;
-    margin-right: -20px;
-}
-
-.business-permit-image img {
-  max-width: 63%;
-  height: auto;
-}
-
-.flowchart-business-permit {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    text-decoration: none;
-}
-
-.flowchart-business-permit li {
-    margin-bottom: 50px;
-    font-size: 14px;
-    color: #0D2C15;
-}
-/* Equipment Borrowing Flowchart */
-.equipment-borrowing-image {
-    flex-shrink: 0;
-    width: 120px;
-    margin-right: -20px;
-}
-.equipment-borrowing-image img {
-  max-width: 63%;
-  height: auto;
-}
-
-.flowchart-equipment-borrowing {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    text-decoration: none;
-}
-
-.flowchart-equipment-borrowing li {
-    margin-bottom: 48px;
-    font-size: 14px;
-    color: #0D2C15;
-}
-/* Cash Incentives */
-.cash-incentives-image {
-    flex-shrink: 0;
-    width: 120px;
-    margin-right: -20px;
-}
-.cash-incentives-image img {
-  max-width: 62%;
-  height: auto;
-}
-
 
 /* SERVICES */
 .card-custom {
@@ -411,64 +292,18 @@ body {
     }
 
     /* SERVICES MODAL */
-    .modal-title {
-        font-size: 15px;
+    .step-icon {
+        width: 40px;
+        height: 40px;
     }
 
     .modal-body h6 {
+        font-size: 13px;
+    }
+
+    .step-item a,
+    .step-item span {
         font-size: 12px;
-    }
-
-    .flowchart-image {
-    flex-shrink: 0;
-    width: 90px;
-    margin-right: -20px;
-    }
-
-    .flowchart-image img {
-    max-width: 65.7%;
-    height: auto;
-    }
-
-    .flowchart-text {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    padding-top: 7px;
-    }
-
-    .flowchart-steps li {
-    margin-bottom: 32px;
-    font-size: 11px;
-    color: #0D2C15;
-    }
-
-    .barangay-clearance-image,
-    .business-permit-image,
-    .barangay-certification-image,
-    .equipment-borrowing-image,
-    .cash-incentives-image {
-        flex-shrink: 0;
-        width: 90px;
-        margin-right: -20px;
-    }
-    .barangay-clearance-image img,
-    .business-permit-image img,
-    .barangay-certification-image img,
-    .equipment-borrowing-image img,
-    .cash-incentives-image img {
-        max-width: 61%;
-        height: auto;
-    }
-
-    .flowchart-barangay-clearance li,
-    .flowchart-business-permit li,
-    .flowchart-barangay-certification li,
-    .flowchart-equipment-borrowing li,
-    .flowchart-cash-incentives li {
-        margin-bottom: 25px;
-        font-size: 11px;
-        color: #0D2C15;
     }
 }
 

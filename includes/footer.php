@@ -55,7 +55,7 @@
             <div class="col-12 col-md-4 text-md-start text-center mb-3 p-5">
                 <h5 class="">Government Directory</h5>
                 <ul class="list-unstyled">
-                    <li><a href="#" class="text-decoration-none text-dark gov-link">Office of the President</a></li>
+                    <li><a href="https://president.gov.ph" class="text-decoration-none text-dark gov-link">Office of the President</a></li>
                     <li><a href="https://main.ovp.gov.ph/" class="text-decoration-none text-dark gov-link">Office of the Vice President</a></li>
                     <li><a href="https://legacy.senate.gov.ph/" class="text-decoration-none text-dark gov-link">Senate of the Philippines</a></li>
                     <li><a href="https://www.congress.gov.ph/" class="text-decoration-none text-dark gov-link">House of Representatives</a></li>

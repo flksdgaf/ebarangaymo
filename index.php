@@ -156,7 +156,7 @@ include 'includes/header.php';
 
 <!-- Barangay ID Modal -->
 <div class="modal fade" id="barangayIDModal" tabindex="-1" aria-labelledby="barangayIDModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 40px; height: 40px; object-fit: contain; margin-right: 15px;">
@@ -164,25 +164,41 @@ include 'includes/header.php';
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <h6>Narito ang flowchart na nagpapakita ng mga hakbang sa pagkuha ng Barangay ID.</br></br></h6>
-        <div class="flowchart-wrapper d-flex">
-        <!-- Flowchart Image -->
-          <div class="flowchart-image">
-            <img src="images/flowchart_steps.png" alt="Flowchart Steps" class="img-fluid">
-          </div>
+        <h6 class="mb-4">Narito ang flowchart na nagpapakita ng mga hakbang sa pagkuha ng Barangay ID:</h6>
 
-          <!-- Instruction Text Steps -->
-          <div class="flowchart-text">
-            <ol class="flowchart-steps">
-              <li><a href="signin.php" class="step-link">Mag-<strong>Sign In</strong> sa iyong account sa eBarangay Mo website.</a></li>
-              <li>Pumunta sa <strong>“Request a Service”</strong> tab at piliin ang <strong>“Barangay ID”</strong> mula sa listahan ng serbisyo.</li>
-              <li>Ilagay ang iyong personal na impormasyon sa application form.</li>
-              <li>Piliin ang paraan ng pagbabayad (kung kinakailangan).</li>
-              <li>Tiyaking tama ang iyong mga detalye at i-click</br>ang <strong>“Submit”</strong> na button.</li>
-              <li>Maghintay ng notification para sa verification at pagproseso ng iyong aplikasyon.</li>
-              <li>Kunin ang Barangay ID kapag nakatanggap ng abiso o sa takdang petsa ng pag-claim.</li>
-            </ol>
-          </div>
+        <div class="flowchart-text">
+          <ol class="flowchart-steps ps-0">
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step1.png" alt="Step 1" class="step-icon me-2">
+              <a href="signin.php" class="step-link text-decoration-none">
+                Mag-<strong>Sign In</strong> sa iyong account sa eBarangay Mo website.
+              </a>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step2.png" alt="Step 2" class="step-icon me-2">
+              <span>Pumunta sa <strong>“Request a Service”</strong> tab at piliin ang <strong>“Barangay ID”</strong> mula sa listahanng serbisyo.</span>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step3.png" alt="Step 3" class="step-icon me-2">
+              <span>Ilagay ang iyong personal na impormasyon sa application form.</span>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step4.png" alt="Step 4" class="step-icon me-2">
+              <span>Piliin ang paraan ng pagbabayad (kung kinakailangan).</span>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step5.png" alt="Step 5" class="step-icon me-2">
+              <span>Tiyaking tama ang iyong mga detalye at i-click ang <strong>“Submit”</strong> na button.</span>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step6.png" alt="Step 6" class="step-icon me-2">
+              <span>Maghintay ng notification para sa verification at pagproseso ng iyong aplikasyon.</span>
+            </li>
+            <li class="step-item d-flex mb-1">
+              <img src="images/flowchart_step7.png" alt="Step 7" class="step-icon me-2">
+              <span>Kunin ang Barangay ID kapag nakatanggap ng abiso o sa takdang petsa ng pag-claim.</span>
+            </li>
+          </ol>
         </div>
       </div>
       <div class="modal-footer">
@@ -192,37 +208,57 @@ include 'includes/header.php';
   </div>
 </div>
 
+
+<!-- Barangay Clearance Modal -->
 <!-- Barangay Clearance Modal -->
 <div class="modal fade" id="barangayClearanceModal" tabindex="-1" aria-labelledby="barangayClearanceModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 40px; height: 40px; object-fit: contain; margin-right: 15px;">
         <h5 class="modal-title" id="barangayClearanceModalLabel">Barangay Clearance</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
-        <h6>Narito ang flowchart na nagpapakita ng mga hakbang sa pagkuha ng Barangay Clearance.</br></br></h6>
-        <div class="flowchart-wrapper d-flex">
-        <!-- Flowchart Image -->
-          <div class="barangay-clearance-image">
-            <img src="images/flowchart_steps3.png" alt="Flowchart Steps" class="img-fluid barangay-clearance-image">
-          </div>
 
-          <!-- Instruction Text Steps -->
-          <div class="flowchart-text">
-            <ol class="flowchart-barangay-clearance">
-              <li><a href="signin.php" class="step-link">Mag-<strong>Sign In</strong> sa iyong account sa eBarangay Mo website.</a></li>
-              <li>Pumunta sa <strong>“Request a Service”</strong> tab at piliin ang <strong>“Barangay Clearance”</strong> mula sa listahan ng serbisyo.</li>
-              <li>Ilagay ang iyong personal na impormasyon sa application form.</li>
-              <li>Piliin ang paraan ng pagbabayad (kung kinakailangan).</li>
-              <li>Tiyaking tama ang iyong mga detalye at i-click</br>ang <strong>“Submit”</strong> na button.</li>
-              <li>Maghintay ng notification para sa verification at pagproseso ng iyong aplikasyon.</li>
-              <li>Kunin ang Barangay Clearance kapag nakatanggap ng abiso o sa takdang petsa ng</br>pag-claim.</li>
-            </ol>
-          </div>
+      <div class="modal-body">
+        <h6 class="mb-4">Narito ang flowchart na nagpapakita ng mga hakbang sa pagkuha ng Barangay Clearance:</h6>
+
+        <div class="flowchart-text">
+          <ol class="flowchart-steps ps-0">
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step1.png" alt="Step 1" class="step-icon me-2">
+              <a href="signin.php" class="step-link text-decoration-none">
+                Mag-<strong>Sign In</strong> sa iyong account sa eBarangay Mo website.
+              </a>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step2.png" alt="Step 2" class="step-icon me-2">
+              <span>Pumunta sa <strong>“Request a Service”</strong> tab at piliin ang <strong>“Barangay Clearance”</strong> mula sa listahan ng serbisyo.</span>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step3.png" alt="Step 3" class="step-icon me-2">
+              <span>Ilagay ang iyong personal na impormasyon sa application form.</span>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step4.png" alt="Step 4" class="step-icon me-2">
+              <span>Piliin ang paraan ng pagbabayad (kung kinakailangan).</span>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step5.png" alt="Step 5" class="step-icon me-2">
+              <span>Tiyaking tama ang iyong mga detalye at i-click ang <strong>“Submit”</strong> na button.</span>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step6.png" alt="Step 6" class="step-icon me-2">
+              <span>Maghintay ng notification para sa verification at pagproseso ng iyong aplikasyon.</span>
+            </li>
+            <li class="step-item d-flex mb-1">
+              <img src="images/flowchart_step7.png" alt="Step 7" class="step-icon me-2">
+              <span>Kunin ang Barangay Clearance kapag nakatanggap ng abiso o sa takdang petsa ng pag-claim.</span>
+            </li>
+          </ol>
         </div>
       </div>
+
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
       </div>
@@ -230,37 +266,56 @@ include 'includes/header.php';
   </div>
 </div>
 
+
 <!-- Barangay Certification Modal -->
 <div class="modal fade" id="certificationModal" tabindex="-1" aria-labelledby="barangayCertificationModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 40px; height: 40px; object-fit: contain; margin-right: 15px;">
         <h5 class="modal-title" id="barangayCertificationModalLabel">Barangay Certification</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
-        <h6>Narito ang flowchart na nagpapakita ng mga hakbang sa pagkuha ng Barangay Certification.</br></br></h6>
-        <div class="flowchart-wrapper d-flex">
-        <!-- Flowchart Image -->
-          <div class="barangay-certification-image">
-            <img src="images/flowchart_steps3.png" alt="Flowchart Steps" class="img-fluid barangay-certification-image">
-          </div>
 
-          <!-- Instruction Text Steps -->
-          <div class="flowchart-text">
-            <ol class="flowchart-barangay-certification">
-              <li><a href="signin.php" class="step-link">Mag-<strong>Sign In</strong> sa iyong account sa eBarangay Mo website.</a></li>
-              <li>Pumunta sa <strong>“Request a Service”</strong> tab at piliin ang <strong>“Barangay Certification"</strong> mula sa listahan ng serbisyo.</li>
-              <li>Ilagay ang iyong personal na impormasyon sa application form.</li>
-              <li>Piliin ang paraan ng pagbabayad (kung kinakailangan).</li>
-              <li>Tiyaking tama ang iyong mga detalye at i-click</br>ang <strong>“Submit”</strong> na button.</li>
-              <li>Maghintay ng notification para sa verification at pagproseso ng iyong aplikasyon.</li>
-              <li>Kunin ang Barangay Certification kapag nakatanggap ng abiso o sa takdang petsa ng</br>pag-claim.</li>
-            </ol>
-          </div>
+      <div class="modal-body">
+        <h6 class="mb-4">Narito ang flowchart na nagpapakita ng mga hakbang sa pagkuha ng Barangay Certification:</h6>
+
+        <div class="flowchart-text">
+          <ol class="flowchart-steps ps-0">
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step1.png" alt="Step 1" class="step-icon me-2">
+              <a href="signin.php" class="step-link text-decoration-none">
+                Mag-<strong>Sign In</strong> sa iyong account sa eBarangay Mo website.
+              </a>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step2.png" alt="Step 2" class="step-icon me-2">
+              <span>Pumunta sa <strong>“Request a Service”</strong> tab at piliin ang <strong>“Barangay Certification”</strong> mula sa listahan ng serbisyo.</span>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step3.png" alt="Step 3" class="step-icon me-2">
+              <span>Ilagay ang iyong personal na impormasyon sa application form.</span>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step4.png" alt="Step 4" class="step-icon me-2">
+              <span>Piliin ang paraan ng pagbabayad (kung kinakailangan).</span>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step5.png" alt="Step 5" class="step-icon me-2">
+              <span>Tiyaking tama ang iyong mga detalye at i-click ang <strong>“Submit”</strong> na button.</span>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step6.png" alt="Step 6" class="step-icon me-2">
+              <span>Maghintay ng notification para sa verification at pagproseso ng iyong aplikasyon.</span>
+            </li>
+            <li class="step-item d-flex mb-1">
+              <img src="images/flowchart_step7.png" alt="Step 7" class="step-icon me-2">
+              <span>Kunin ang Barangay Certification kapag nakatanggap ng abiso o sa takdang petsa ng pag-claim.</span>
+            </li>
+          </ol>
         </div>
       </div>
+
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
       </div>
@@ -270,35 +325,53 @@ include 'includes/header.php';
 
 <!-- Barangay Business Permit Modal -->
 <div class="modal fade" id="businessPermitModal" tabindex="-1" aria-labelledby="businessPermitModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 40px; height: 40px; object-fit: contain; margin-right: 15px;">
         <h5 class="modal-title" id="businessPermitModalLabel">Business Permit</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
-        <h6>Narito ang flowchart na nagpapakita ng mga hakbang sa pagkuha ng Barangay Business Permit.</br></br></h6>
-        <div class="flowchart-wrapper d-flex">
-        <!-- Flowchart Image -->
-          <div class="business-permit-image">
-            <img src="images/flowchart_steps.png" alt="Flowchart Steps" class="img-fluid business-permit-image">
-          </div>
 
-          <!-- Instruction Text Steps -->
-          <div class="flowchart-text">
-            <ol class="flowchart-business-permit">
-              <li><a href="signin.php" class="step-link">Mag-<strong>Sign In</strong> sa iyong account sa eBarangay Mo website.</a></li>
-              <li>Pumunta sa <strong>“Request a Service”</strong> tab at piliin ang <strong>“Business Permit"</strong> mula sa listahan ng serbisyo.</li>
-              <li>Ilagay ang iyong personal na impormasyon sa application form.</li>
-              <li>Piliin ang paraan ng pagbabayad (kung kinakailangan).</li>
-              <li>Tiyaking tama ang iyong mga detalye at i-click</br>ang <strong>“Submit”</strong> na button.</li>
-              <li>Maghintay ng notification para sa verification at pagproseso ng iyong aplikasyon.</li>
-              <li>Kunin ang Business Permit kapag nakatanggap ng abiso o sa takdang petsa ng</br>pag-claim.</li>
-            </ol>
-          </div>
+      <div class="modal-body">
+        <h6 class="mb-4">Narito ang flowchart na nagpapakita ng mga hakbang sa pagkuha ng Barangay Business Permit:</h6>
+
+        <div class="flowchart-text">
+          <ol class="flowchart-steps ps-0">
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step1.png" alt="Step 1" class="step-icon me-2">
+              <a href="signin.php" class="step-link text-decoration-none">
+                Mag-<strong>Sign In</strong> sa iyong account sa eBarangay Mo website.
+              </a>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step2.png" alt="Step 2" class="step-icon me-2">
+              <span>Pumunta sa <strong>“Request a Service”</strong> tab at piliin ang <strong>“Business Permit”</strong> mula sa listahan ng serbisyo.</span>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step3.png" alt="Step 3" class="step-icon me-2">
+              <span>Ilagay ang iyong personal na impormasyon sa application form.</span>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step4.png" alt="Step 4" class="step-icon me-2">
+              <span>Piliin ang paraan ng pagbabayad (kung kinakailangan).</span>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step5.png" alt="Step 5" class="step-icon me-2">
+              <span>Tiyaking tama ang iyong mga detalye at i-click ang <strong>“Submit”</strong> na button.</span>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step6.png" alt="Step 6" class="step-icon me-2">
+              <span>Maghintay ng notification para sa verification at pagproseso ng iyong aplikasyon.</span>
+            </li>
+            <li class="step-item d-flex mb-1">
+              <img src="images/flowchart_step7.png" alt="Step 7" class="step-icon me-2">
+              <span>Kunin ang Business Permit kapag nakatanggap ng abiso o sa takdang petsa ng pag-claim.</span>
+            </li>
+          </ol>
         </div>
       </div>
+
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
       </div>
@@ -308,36 +381,53 @@ include 'includes/header.php';
 
 <!-- Equipment Borrowing Modal -->
 <div class="modal fade" id="equipmentModal" tabindex="-1" aria-labelledby="equipmentModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 40px; height: 40px; object-fit: contain; margin-right: 15px;">
         <h5 class="modal-title" id="equipmentModalLabel">Equipment Borrowing</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
-        <h6>Narito ang flowchart na nagpapakita ng mga hakbang sa Barangay Equipment Borrowing .</br></br></h6>
-        <!-- <img src="images/flowchart_equipment_borrowing.png" alt="Barangay Equipment Borrowing Process Flowchart" class="img-fluid rounded"> -->
-        <div class="flowchart-wrapper d-flex">
-        <!-- Flowchart Image -->
-          <div class="equipment-borrowing-image">
-            <img src="images/flowchart_steps3.png" alt="Flowchart Steps" class="img-fluid equipment-borrowing-image">
-          </div>
 
-          <!-- Instruction Text Steps -->
-          <div class="flowchart-text">
-            <ol class="flowchart-equipment-borrowing">
-              <li><a href="signin.php" class="step-link">Mag-<strong>Sign In</strong> sa iyong account sa eBarangay Mo website.</a></li>
-              <li>Pumunta sa <strong>“Request a Service”</strong> tab at piliin ang <strong>“Equipment Borrowing"</strong> mula sa listahan ng serbisyo.</li>
-              <li>Ilagay ang iyong personal na impormasyon sa application form.</li>
-              <li>Piliin ang paraan ng pagbabayad (kung kinakailangan).</li>
-              <li>Tiyaking tama ang iyong mga detalye at i-click</br>ang <strong>“Submit”</strong> na button.</li>
-              <li>Maghintay ng notification para sa verification at pagproseso ng iyong aplikasyon.</li>
-              <li>Kunin ang kagamitan na nais hiramin kapag nakatanggap ng abiso o sa takdang petsa ng pag-claim.</li>
-            </ol>
-          </div>
-        </div>      
+      <div class="modal-body">
+        <h6 class="mb-4">Narito ang flowchart na nagpapakita ng mga hakbang sa Barangay Equipment Borrowing:</h6>
+
+        <div class="flowchart-text">
+          <ol class="flowchart-steps ps-0">
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step1.png" alt="Step 1" class="step-icon me-2">
+              <a href="signin.php" class="step-link text-decoration-none">
+                Mag-<strong>Sign In</strong> sa iyong account sa eBarangay Mo website.
+              </a>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step2.png" alt="Step 2" class="step-icon me-2">
+              <span>Pumunta sa <strong>“Request a Service”</strong> tab at piliin ang <strong>“Equipment Borrowing”</strong> mula sa listahan ng serbisyo.</span>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step3.png" alt="Step 3" class="step-icon me-2">
+              <span>Ilagay ang iyong personal na impormasyon sa application form.</span>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step4.png" alt="Step 4" class="step-icon me-2">
+              <span>Piliin ang paraan ng pagbabayad (kung kinakailangan).</span>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step5.png" alt="Step 5" class="step-icon me-2">
+              <span>Tiyaking tama ang iyong mga detalye at i-click ang <strong>“Submit”</strong> na button.</span>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step6.png" alt="Step 6" class="step-icon me-2">
+              <span>Maghintay ng notification para sa verification at pagproseso ng iyong aplikasyon.</span>
+            </li>
+            <li class="step-item d-flex mb-1">
+              <img src="images/flowchart_step7.png" alt="Step 7" class="step-icon me-2">
+              <span>Kunin ang kagamitan na nais hiramin kapag nakatanggap ng abiso o sa takdang petsa ng pag-claim.</span>
+            </li>
+          </ol>
+        </div>
       </div>
+
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
       </div>
@@ -347,35 +437,53 @@ include 'includes/header.php';
 
 <!-- Cash Incentives Modal -->
 <div class="modal fade" id="cashModal" tabindex="-1" aria-labelledby="cashModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 40px; height: 40px; object-fit: contain; margin-right: 15px;">
         <h5 class="modal-title" id="cashModalLabel">Cash Incentives</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
-        <h6>Narito ang flowchart na nagpapakita ng mga hakbang sa pag-apply sa Cash Incentives program.</br></br></h6>
-        <div class="flowchart-wrapper d-flex">
-        <!-- Flowchart Image -->
-          <div class="cash-incentives-image">
-            <img src="images/flowchart_steps.png" alt="Flowchart Steps" class="img-fluid barangay-clearance-image">
-          </div>
 
-          <!-- Instruction Text Steps -->
-          <div class="flowchart-text">
-            <ol class="flowchart-barangay-clearance">
-              <li><a href="signin.php" class="step-link">Mag-<strong>Sign In</strong> sa iyong account sa eBarangay Mo website.</a></li>
-              <li>Pumunta sa <strong>“Request a Service”</strong> tab at piliin ang <strong>“Cash Incentives"</strong> mula sa listahan ng serbisyo.</li>
-              <li>Ilagay ang iyong personal na impormasyon sa application form.</li>
-              <li>Piliin ang paraan ng pagbabayad (kung kinakailangan).</li>
-              <li>Tiyaking tama ang iyong mga detalye at i-click</br>ang <strong>“Submit”</strong> na button.</li>
-              <li>Maghintay ng notification para sa verification at pagproseso ng iyong aplikasyon.</li>
-              <li>Alamin ang susunod na hakbang sa iyong aplikasyon na makikita sa <strong>“Notification”</strong> tab ng iyong account.</li>
-            </ol>
-          </div>
+      <div class="modal-body">
+        <h6 class="mb-4">Narito ang flowchart na nagpapakita ng mga hakbang sa pag-apply sa Cash Incentives program:</h6>
+
+        <div class="flowchart-text">
+          <ol class="flowchart-steps ps-0">
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step1.png" alt="Step 1" class="step-icon me-2">
+              <a href="signin.php" class="step-link text-decoration-none">
+                Mag-<strong>Sign In</strong> sa iyong account sa eBarangay Mo website.
+              </a>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step2.png" alt="Step 2" class="step-icon me-2">
+              <span>Pumunta sa <strong>“Request a Service”</strong> tab at piliin ang <strong>“Cash Incentives”</strong> mula sa listahan ng serbisyo.</span>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step3.png" alt="Step 3" class="step-icon me-2">
+              <span>Ilagay ang iyong personal na impormasyon sa application form.</span>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step4.png" alt="Step 4" class="step-icon me-2">
+              <span>Piliin ang paraan ng pagbabayad (kung kinakailangan).</span>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step5.png" alt="Step 5" class="step-icon me-2">
+              <span>Tiyaking tama ang iyong mga detalye at i-click ang <strong>“Submit”</strong> na button.</span>
+            </li>
+            <li class="step-item d-flex mb-3">
+              <img src="images/flowchart_step6.png" alt="Step 6" class="step-icon me-2">
+              <span>Maghintay ng notification para sa verification at pagproseso ng iyong aplikasyon.</span>
+            </li>
+            <li class="step-item d-flex mb-1">
+              <img src="images/flowchart_step7.png" alt="Step 7" class="step-icon me-2">
+              <span>Alamin ang susunod na hakbang sa iyong aplikasyon na makikita sa <strong>“Notification”</strong> tab ng iyong account.</span>
+            </li>
+          </ol>
         </div>
       </div>
+
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
       </div>

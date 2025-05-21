@@ -4,29 +4,6 @@
     <div class="card-body">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="text-success fw-bold mb-0">Home</h5>
-        <button class="btn btn-outline-success btn-sm">
-          <i class="bi bi-pencil"></i> Edit
-        </button>
-      </div>
-      <div class="row">
-        <div class="col-md-4">
-          <ul class="list-unstyled">
-            <li>• Home Masthead</li>
-            <li>• Announcement</li>
-          </ul>
-        </div>
-        <div class="col-md-4">
-          <ul class="list-unstyled">
-            <li>• Mission and Vision</li>
-            <li>• Services</li>
-          </ul>
-        </div>
-        <div class="col-md-4">
-          <ul class="list-unstyled">
-            <li>• News and Updates</li>
-            <li>• About</li>
-          </ul>
-        </div>
       </div>
     </div>
   </div>
@@ -36,29 +13,15 @@
     <div class="card-body">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="text-success fw-bold mb-0">About</h5>
-        <button class="btn btn-outline-success btn-sm">
-          <i class="bi bi-pencil"></i> Edit
-        </button>
       </div>
-      <div class="row">
-        <div class="col-md-4">
-          <ul class="list-unstyled">
-            <li>• About Masthead</li>
-            <li>• Description</li>
-          </ul>
-        </div>
-        <div class="col-md-4">
-          <ul class="list-unstyled">
-            <li>• Officials</li>
-            <li>• Mission and Vision</li>
-          </ul>
-        </div>
-        <div class="col-md-4">
-          <ul class="list-unstyled">
-            <li>• Citizen’s Charter</li>
-            <li>• Barangay Map</li>
-          </ul>
-        </div>
+    </div>
+  </div>
+
+  <!-- About Section -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="text-success fw-bold mb-0">Services</h5>
       </div>
     </div>
   </div>
@@ -68,13 +31,7 @@
     <div class="card-body">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="text-success fw-bold mb-0">Transparency Seal</h5>
-        <button class="btn btn-outline-success btn-sm">
-          <i class="bi bi-pencil"></i> Edit
-        </button>
       </div>
-      <ul class="list-unstyled ps-3">
-        <li>• Symbolism</li>
-      </ul>
     </div>
   </div>
 
@@ -82,14 +39,8 @@
   <div class="card shadow-sm mb-4">
     <div class="card-body">
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="text-success fw-bold mb-0">Others</h5>
-        <button class="btn btn-outline-success btn-sm">
-          <i class="bi bi-pencil"></i> Edit
-        </button>
+        <h5 class="text-success fw-bold mb-0">Footer</h5>
       </div>
-      <ul class="list-unstyled ps-3">
-        <li>• Agency Footer</li>
-      </ul>
     </div>
   </div>
 </div>

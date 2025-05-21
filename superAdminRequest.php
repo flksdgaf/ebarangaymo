@@ -940,20 +940,6 @@ document.addEventListener('DOMContentLoaded', () => {
       bsAddModal.show();
     });
   });
-
-  // ——— Auto‐print iframe logic —————————————————————————————————————————————
-  // const newTid = <?= json_encode($newTid) ?>;
-  // if (newTid) {
-  //   const iframe = document.createElement('iframe');
-  //   iframe.style.display = 'none';
-  //   iframe.src = `functions/generateResidencyCertificate.php?transaction_id=${newTid}`;
-  //   iframe.onload = () => {
-  //     iframe.contentWindow.focus();
-  //     iframe.contentWindow.print();
-  //     setTimeout(() => document.body.removeChild(iframe), 1000);
-  //   };
-  //   document.body.appendChild(iframe);
-  // }
   
   // ——— View / Edit Details modal logic ——————————————————————————————————————
   const viewModalEl   = document.getElementById('viewDetailsModal');
@@ -1136,20 +1122,3 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 </script>
-
-
-
-<!-- // Grab the new transaction ID from PHP
-    const newTid = <?= json_encode($newTid) ?>;
-    if (newTid) {
-      // Open the certificate in a new tab/window
-      const win = window.open(
-        `functions/generateResidencyCertificate.php?transaction_id=${newTid}`,
-        '_blank',
-        'width=800,height=600'
-      );
-      // Once it's loaded, trigger print
-      win.addEventListener('load', () => {
-        win.print();
-      });
-    } -->

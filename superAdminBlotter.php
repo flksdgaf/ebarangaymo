@@ -349,46 +349,65 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
   `;
 
+  // Helper to disable/enable remove buttons depending on count
+  function updateRemoveButtons(wrapperEl, entrySelector) {
+    const entries = wrapperEl.querySelectorAll(entrySelector);
+    const disable = entries.length <= 1;
+    entries.forEach(entry => {
+      const btn = entry.querySelector('.remove-entry');
+      btn.disabled = disable;
+      // Optionally, change opacity so it looks disabled:
+      btn.style.opacity = disable ? '0.5' : '1';
+      btn.style.pointerEvents = disable ? 'none' : 'auto';
+    });
+  }
+
   // Utility to add / remove entries
-  function setupDynamicList(addBtnId, wrapperEl, entryHtml) {
+  function setupDynamicList(addBtnId, wrapperEl, entryHtml, entrySelector) {
     // Delegate remove clicks
     wrapperEl.addEventListener('click', e => {
       if (e.target.matches('.remove-entry')) {
-        e.target.closest('.input-group').remove();
+        // only remove if more than 1
+        if (wrapperEl.querySelectorAll(entrySelector).length > 1) {
+          e.target.closest('.input-group').remove();
+          updateRemoveButtons(wrapperEl, entrySelector);
+        }
       }
     });
 
-    // “Add” button
+    // Add button
     document.getElementById(addBtnId).addEventListener('click', () => {
       const temp = document.createElement('div');
       temp.innerHTML = entryHtml.trim();
       wrapperEl.appendChild(temp.firstChild);
+      updateRemoveButtons(wrapperEl, entrySelector);
     });
   }
 
   // Initialize dynamic lists
-  setupDynamicList('addComplainantBtn', complainantsWrapper, complainantTemplate);
-  setupDynamicList('addRespondentBtn',  respondentsWrapper,  respondentTemplate);
+  setupDynamicList('addComplainantBtn', complainantsWrapper, complainantTemplate, '.complaint-entry');
+  setupDynamicList('addRespondentBtn',  respondentsWrapper,  respondentTemplate, '.respondent-entry');
 
   // Reset form & wrappers each time modal opens
   addBlotterBtn.addEventListener('click', () => {
-    // clear all fields
-    document.getElementById('addBlotterForm').reset();
+    const form = document.getElementById('addBlotterForm');
+    form.reset();
 
-    // re-populate with exactly one blank row each
     complainantsWrapper.innerHTML = complainantTemplate.trim();
     respondentsWrapper.innerHTML  = respondentTemplate.trim();
 
-      // INJECT adminRedirect FLAG
-      const form = document.getElementById('addBlotterForm');
-      // remove any old flags just in case
-      const old = form.querySelector('input[name="superAdminRedirect"]');
-      if (old) old.remove();
-      const flag = document.createElement('input');
-      flag.type  = 'hidden';
-      flag.name  = 'superAdminRedirect';
-      flag.value = '1';
-      form.prepend(flag);
+    // hide/remove any old redirect flag and inject a fresh one
+    const old = form.querySelector('input[name="superAdminRedirect"]');
+    if (old) old.remove();
+    const flag = document.createElement('input');
+    flag.type  = 'hidden';
+    flag.name  = 'superAdminRedirect';
+    flag.value = '1';
+    form.prepend(flag);
+
+    // ensure exactly one entry and disable its remove button
+    updateRemoveButtons(complainantsWrapper, '.complaint-entry');
+    updateRemoveButtons(respondentsWrapper,  '.respondent-entry');
 
     addBlotterBs.show();
   });

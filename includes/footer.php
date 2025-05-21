@@ -55,13 +55,13 @@
             <div class="col-12 col-md-4 text-md-start text-center mb-3 p-5">
                 <h5 class="">Government Directory</h5>
                 <ul class="list-unstyled">
-                    <li><a href="#" class="text-decoration-none text-dark gov-link">Office of the President</a></li>
-                    <li><a href="https://main.ovp.gov.ph/" class="text-decoration-none text-dark gov-link">Office of the Vice President</a></li>
-                    <li><a href="https://legacy.senate.gov.ph/" class="text-decoration-none text-dark gov-link">Senate of the Philippines</a></li>
-                    <li><a href="https://www.congress.gov.ph/" class="text-decoration-none text-dark gov-link">House of Representatives</a></li>
-                    <li><a href="https://sc.judiciary.gov.ph/" class="text-decoration-none text-dark gov-link">Supreme Court</a></li>
-                    <li><a href="https://ca.judiciary.gov.ph/" class="text-decoration-none text-dark gov-link">Court of Appeals</a></li>
-                    <li><a href="https://sb.judiciary.gov.ph/" class="text-decoration-none text-dark gov-link">Sandiganbayan</a></li>
+                    <li><a href="https://op-proper.gov.ph" target="_blank" class="text-decoration-none text-dark gov-link">Office of the President</a></li>
+                    <li><a href="https://main.ovp.gov.ph/" target="_blank" class="text-decoration-none text-dark gov-link">Office of the Vice President</a></li>
+                    <li><a href="https://legacy.senate.gov.ph/" target="_blank" class="text-decoration-none text-dark gov-link">Senate of the Philippines</a></li>
+                    <li><a href="https://www.congress.gov.ph/" target="_blank" class="text-decoration-none text-dark gov-link">House of Representatives</a></li>
+                    <li><a href="https://sc.judiciary.gov.ph/" target="_blank" class="text-decoration-none text-dark gov-link">Supreme Court</a></li>
+                    <li><a href="https://ca.judiciary.gov.ph/" target="_blank" class="text-decoration-none text-dark gov-link">Court of Appeals</a></li>
+                    <li><a href="https://sb.judiciary.gov.ph/" target="_blank" class="text-decoration-none text-dark gov-link">Sandiganbayan</a></li>
                 </ul>
             </div>
         </div>

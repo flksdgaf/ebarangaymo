@@ -177,7 +177,7 @@ if ($transactionId) {
                 <div class="col-md-8">
                     <input type="text" id="fullname" name="fullname"
                         class="form-control custom-input"
-                        disabled
+                        readonly
                         value="<?php echo htmlspecialchars($fullName); ?>">
                 </div>
                 </div>
@@ -221,7 +221,7 @@ if ($transactionId) {
                 <div class="col-md-8">
                     <input type="date" id="birthday" name="birthday"
                         class="form-control custom-input"
-                        disabled
+                        readonly
                         value="<?php echo date('Y-m-d', strtotime($birthdate)); ?>">
                 </div>
                 </div>

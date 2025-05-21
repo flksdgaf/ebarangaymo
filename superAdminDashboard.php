@@ -424,7 +424,7 @@ if ($queryString) {
               </div>
             </div>
             <div class="modal-footer border-0">
-              <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">
+              <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">
                 Close
               </button>
             </div>

@@ -107,7 +107,7 @@ $stmt->close();
         <div class="dropdown-menu p-3" aria-labelledby="filterDropdown" style="min-width:260px; --bs-body-font-size:.75rem; font-size:.75rem;">
           <form method="get" class="mb-0" id="filterForm">
             <!-- reset to first page on filter change -->
-            <input type="hidden" name="page"     value="adminKatarungangPambarangay">
+            <input type="hidden" name="page"     value="superAdminKatarungangPambarangay">
             <input type="hidden" name="page_num" value="1">
             <!-- preserve existing search term -->
             <?php if ($search !== ''): ?>
@@ -128,7 +128,7 @@ $stmt->close();
             </div>
 
             <div class="d-flex">
-              <a href="?page=adminKatarungangPambarangay&page_num=1" class="btn btn-sm btn-outline-secondary me-2">Reset</a>
+              <a href="?page=superAdminKatarungangPambarangay&page_num=1" class="btn btn-sm btn-outline-secondary me-2">Reset</a>
               <button type="submit" class="btn btn-sm btn-success flex-grow-1">Apply</button>
             </div>
           </form>
@@ -136,7 +136,7 @@ $stmt->close();
       </div>
 
       <form method="get" id="searchForm" class="d-flex ms-auto me-2">
-        <input type="hidden" name="page"     value="adminKatarungangPambarangay">
+        <input type="hidden" name="page"     value="superAdminKatarungangPambarangay">
         <input type="hidden" name="page_num" value="1">
         <?php if ($status !== 'all'): ?>
           <input type="hidden" name="status" value="<?= htmlspecialchars($status) ?>">
@@ -157,11 +157,11 @@ $stmt->close();
       <table class="table table-hover align-middle">
         <thead class="table-light">
           <tr>
-            <th class="text-nowrap">Case No.</th>
-            <th class="text-nowrap">Summon ID</th>
-            <th class="text-nowrap">Blotter ID</th>
-            <th class="text-nowrap">Subject</th>
-            <th class="text-nowrap">Status</th>
+            <th>Case No.</th>
+            <th>Summon ID</th>
+            <th>Blotter ID</th>
+            <th>Subject</th>
+            <th>Status</th>
           </tr>
         </thead>
         <tbody>
@@ -169,14 +169,10 @@ $stmt->close();
             <?php foreach ($cases as $c): ?>
             <tr>
               <td><?= htmlspecialchars($c['case_no']) ?></td>
-              <td><?= htmlspecialchars($c['smn_id'])   ?></td>
-              <td><?= htmlspecialchars($c['blt_id'])   ?></td>
-              <td><?= htmlspecialchars($c['subject'])  ?></td>
-              <td>
-                <span class="badge bg-info text-dark">
-                  <?= htmlspecialchars($c['status']) ?>
-                </span>
-              </td>
+              <td><?= htmlspecialchars($c['smn_id']) ?></td>
+              <td><?= htmlspecialchars($c['blt_id']) ?></td>
+              <td><?= htmlspecialchars($c['subject']) ?></td>
+              <td><?= htmlspecialchars($c['status']) ?></td>
             </tr>
             <?php endforeach; ?>
           <?php else: ?>
@@ -184,39 +180,55 @@ $stmt->close();
           <?php endif; ?>
         </tbody>
       </table>
-
-      <!-- Pagination -->
-      <?php if ($totalPages > 1): ?>
-      <nav class="mt-3">
-        <ul class="pagination justify-content-center pagination-sm">
-          <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
-            <a class="page-link" href="?<?= http_build_query(array_merge($_GET, ['page_num' => $page - 1])) ?>">Previous</a>
-          </li>
-          <?php
-          $range = 2;
-          $dots  = false;
-          for ($i = 1; $i <= $totalPages; $i++) {
-            if ($i === 1 || $i === $totalPages || ($i >= $page - $range && $i <= $page + $range)) {
-              $active = $i === $page ? 'active' : '';
-              echo "<li class='page-item {$active}'>
-                      <a class='page-link' href='?" .
-                        http_build_query(array_merge($_GET, ['page_num' => $i])) .
-                      "'>{$i}</a>
-                    </li>";
-              $dots = true;
-            } elseif ($dots) {
-              echo "<li class='page-item disabled'><span class='page-link'>…</span></li>";
-              $dots = false;
-            }
-          }
-          ?>
-          <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
-            <a class="page-link" href="?<?= http_build_query(array_merge($_GET, ['page_num' => $page + 1])) ?>">Next</a>
-          </li>
-        </ul>
-      </nav>
-      <?php endif; ?>
     </div>
+
+    <!-- Pagination -->
+    <?php if ($totalPages > 1): ?>
+    <nav class="mt-3">
+      <ul class="pagination justify-content-center pagination-sm">
+        <li class="page-item<?= $page<=1?' disabled':'' ?>">
+          <a class="page-link"
+             href="?<?= http_build_query([
+               'page'=>'superAdminKatarungangPambarangay',
+               'status'=>$status,
+               'search'=>$search,
+               'page_num'=>$page-1
+             ]) ?>">Previous</a>
+        </li>
+        <?php
+        $range = 2; $dots = false;
+        for ($i = 1; $i <= $totalPages; $i++) {
+          if ($i===1 || $i===$totalPages || ($i>=$page-$range && $i<=$page+$range)) {
+            $active = $i===$page ? ' active' : '';
+            echo "<li class='page-item{$active}'>
+                    <a class='page-link' href='?".
+                    http_build_query([
+                      'page'=>'superAdminKatarungangPambarangay',
+                      'status'=>$status,
+                      'search'=>$search,
+                      'page_num'=>$i
+                    ]).
+                    "'>{$i}</a>
+                  </li>";
+            $dots = true;
+          } elseif ($dots) {
+            echo "<li class='page-item disabled'><span class='page-link'>…</span></li>";
+            $dots = false;
+          }
+        }
+        ?>
+        <li class="page-item<?= $page>=$totalPages?' disabled':'' ?>">
+          <a class="page-link"
+             href="?<?= http_build_query([
+               'page'=>'superAdminKatarungangPambarangay',
+               'status'=>$status,
+               'search'=>$search,
+               'page_num'=>$page+1
+             ]) ?>">Next</a>
+        </li>
+      </ul>
+    </nav>
+    <?php endif; ?>
   </div>
 </div>
 

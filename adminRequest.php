@@ -605,16 +605,268 @@ $result = $st->get_result();
     </div>
 
     <!-- Payment Method -->
-  <div class="mb-3">
-    <label class="form-label">Payment Method</label>
-    <select name="payment_method" class="form-select" required>
-      <option value="GCash">GCash</option>
-      <option value="Brgy Payment Device">Brgy Payment Device</option>
-      <option value="Over-the-Counter">Over-the-Counter</option>
-    </select>
-  </div>
+    <div class="mb-3">
+      <label class="form-label">Payment Method</label>
+      <select name="payment_method" class="form-select" required>
+        <option value="GCash">GCash</option>
+        <option value="Brgy Payment Device">Brgy Payment Device</option>
+        <option value="Over-the-Counter">Over-the-Counter</option>
+      </select>
+    </div>
   </template>
 
+  <template data-type="Indigency">
+    <!-- core hidden value -->
+    <input type="hidden" name="request_type" value="Indigency">
+
+    <!-- Full Name -->
+    <div class="mb-3">
+      <label class="form-label">Name</label>
+      <input name="name" type="text" class="form-control" required>
+    </div>
+
+    <!-- Age & Civil Status -->
+    <div class="row mb-3">
+      <div class="col">
+        <label class="form-label">Age</label>
+        <input name="age" type="number" class="form-control" min="0" required>
+      </div>
+      <div class="col">
+        <label class="form-label">Civil Status</label>
+        <select name="civil_status" class="form-select" required>
+          <option value="" selected>Select…</option>
+          <option>Single</option>
+          <option>Married</option>
+          <option>Divorced</option>
+          <option>Separated</option>
+          <option>Widowed</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Purok -->
+    <div class="mb-3">
+      <label class="form-label">Purok</label>
+      <input name="purok" type="text" class="form-control" required>
+    </div>
+
+    <!-- Preferred Claim Date -->
+    <div class="mb-3">
+      <label class="form-label">Claim Date</label>
+      <input name="claim_date" type="date" class="form-control" required>
+    </div>
+
+    <!-- Purpose -->
+    <div class="mb-3">
+      <label class="form-label">Purpose</label>
+      <textarea name="purpose" class="form-control" rows="2" required></textarea>
+    </div>
+
+    <!-- Payment Method -->
+    <div class="mb-3">
+      <label class="form-label">Payment Method</label>
+      <select name="payment_method" class="form-select" required>
+        <option value="GCash">GCash</option>
+        <option value="Brgy Payment Device">Brgy Payment Device</option>
+        <option value="Over-the-Counter">Over-the-Counter</option>
+      </select>
+    </div>
+  </template>
+
+  <template data-type="Good Moral">
+    <!-- core hidden value -->
+    <input type="hidden" name="request_type" value="Good Moral">
+
+    <!-- Full Name -->
+    <div class="mb-3">
+      <label class="form-label">Name</label>
+      <input name="name" type="text" class="form-control" required>
+    </div>
+
+    <!-- Age & Civil Status -->
+    <div class="row mb-3">
+      <div class="col">
+        <label class="form-label">Age</label>
+        <input name="age" type="number" class="form-control" min="0" required>
+      </div>
+      <div class="col">
+        <label class="form-label">Civil Status</label>
+        <select name="civil_status" class="form-select" required>
+          <option value="" selected>Select…</option>
+          <option>Single</option>
+          <option>Married</option>
+          <option>Divorced</option>
+          <option>Separated</option>
+          <option>Widowed</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Purok -->
+    <div class="mb-3">
+      <label class="form-label">Purok</label>
+      <input name="purok" type="text" class="form-control" required>
+    </div>
+
+    <!-- Preferred Claim Date -->
+    <div class="mb-3">
+      <label class="form-label">Claim Date</label>
+      <input name="claim_date" type="date" class="form-control" required>
+    </div>
+
+    <!-- Purpose -->
+    <div class="mb-3">
+      <label class="form-label">Purpose</label>
+      <textarea name="purpose" class="form-control" rows="2" required></textarea>
+    </div>
+
+    <!-- Payment Method -->
+    <div class="mb-3">
+      <label class="form-label">Payment Method</label>
+      <select name="payment_method" class="form-select" required>
+        <option value="GCash">GCash</option>
+        <option value="Brgy Payment Device">Brgy Payment Device</option>
+        <option value="Over-the-Counter">Over-the-Counter</option>
+      </select>
+    </div>
+  </template>
+
+  <template data-type="Guardianship">
+    <!-- core hidden value -->
+    <input type="hidden" name="request_type" value="Guardianship">
+
+    <!-- Guardian Full Name -->
+    <div class="mb-3">
+      <label class="form-label">Guardian Name</label>
+      <input name="full_name" type="text" class="form-control" required>
+    </div>
+
+    <!-- Age & Civil Status -->
+    <div class="row mb-3">
+      <div class="col">
+        <label class="form-label">Age</label>
+        <input name="age" type="number" class="form-control" min="0" required>
+      </div>
+      <div class="col">
+        <label class="form-label">Civil Status</label>
+        <select name="civil_status" class="form-select" required>
+          <option value="" selected>Select…</option>
+          <option>Single</option>
+          <option>Married</option>
+          <option>Divorced</option>
+          <option>Separated</option>
+          <option>Widowed</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Purok -->
+    <div class="mb-3">
+      <label class="form-label">Purok</label>
+      <input name="purok" type="text" class="form-control" required>
+    </div>
+
+    <!-- Child Name -->
+    <div class="mb-3">
+      <label class="form-label">Child's Name</label>
+      <input name="child_name" type="text" class="form-control" required>
+    </div>
+
+    <!-- Preferred Claim Date -->
+    <div class="mb-3">
+      <label class="form-label">Claim Date</label>
+      <input name="claim_date" type="date" class="form-control" required>
+    </div>
+
+    <!-- Purpose -->
+    <div class="mb-3">
+      <label class="form-label">Purpose</label>
+      <textarea name="purpose" class="form-control" rows="2" required></textarea>
+    </div>
+
+    <!-- Payment Method -->
+    <div class="mb-3">
+      <label class="form-label">Payment Method</label>
+      <select name="payment_method" class="form-select" required>
+        <option value="GCash">GCash</option>
+        <option value="Brgy Payment Device">Brgy Payment Device</option>
+        <option value="Over-the-Counter">Over-the-Counter</option>
+      </select>
+    </div>
+  </template>
+
+  <template data-type="Solo Parent">
+    <!-- core hidden value -->
+    <input type="hidden" name="request_type" value="Solo Parent">
+
+    <!-- Full Name -->
+    <div class="mb-3">
+      <label class="form-label">Name</label>
+      <input name="name" type="text" class="form-control" required>
+    </div>
+
+    <!-- Age & Civil Status -->
+    <div class="row mb-3">
+      <div class="col">
+        <label class="form-label">Age</label>
+        <input name="age" type="number" class="form-control" min="0" required>
+      </div>
+      <div class="col">
+        <label class="form-label">Civil Status</label>
+        <select name="civil_status" class="form-select" required>
+          <option value="" selected>Select…</option>
+          <option>Separated</option>
+          <option>Widowed</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Purok -->
+    <div class="mb-3">
+      <label class="form-label">Purok</label>
+      <input name="purok" type="text" class="form-control" required>
+    </div>
+
+    <!-- Child Name & Age -->
+    <div class="row mb-3">
+      <div class="col">
+        <label class="form-label">Child's Name</label>
+        <input name="child_name" type="text" class="form-control" required>
+      </div>
+      <div class="col">
+        <label class="form-label">Child's Age</label>
+        <input name="child_age" type="number" class="form-control" min="0" required>
+      </div>
+    </div>
+
+    <!-- Years as Solo Parent -->
+    <div class="mb-3">
+      <label class="form-label">Years as Solo Parent</label>
+      <input name="years_solo_parent" type="number" class="form-control" min="0" required>
+    </div>
+
+    <!-- Purpose -->
+    <div class="mb-3">
+      <label class="form-label">Purpose</label>
+      <textarea name="purpose" class="form-control" rows="2" required></textarea>
+    </div>
+
+    <!-- Claim Date -->
+    <div class="mb-3">
+      <label class="form-label">Claim Date</label>
+      <input name="claim_date" type="date" class="form-control" required>
+    </div>
+
+    <!-- Payment Method -->
+    <div class="mb-3">
+      <label class="form-label">Payment Method</label>
+      <select name="payment_method" class="form-select" required>
+        <option value="GCash">GCash</option>
+        <option value="Brgy Payment Device">Brgy Payment Device</option>
+        <option value="Over-the-Counter">Over-the-Counter</option>
+      </select>
+    </div>
+  </template>
 
   <!-- View Details Modal -->
   <div class="modal fade" id="viewDetailsModal" tabindex="-1" aria-labelledby="viewDetailsModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
@@ -679,26 +931,16 @@ document.addEventListener('DOMContentLoaded', () => {
       addFormElem.action = {
         'Barangay ID':'functions/serviceBarangayID_submit.php',
         'Business Permit':'functions/serviceBusinessPermit_submit.php',
-        'Residency':'functions/serviceResidency_submit.php'
+        'Residency':'functions/serviceResidency_submit.php',
+        'Indigency':'functions/serviceIndigency_submit.php',
+        'Good Moral':'functions/serviceGoodMoral_submit.php',
+        'Guardianship':'functions/serviceGuardianship_submit.php',
+        'Solo Parent':'functions/serviceSoloParent_submit.php'
       }[type] || addFormElem.action;
       bsAddModal.show();
     });
   });
-
-  // ——— Auto‐print iframe logic —————————————————————————————————————————————
-  // const newTid = <?= json_encode($newTid) ?>;
-  // if (newTid) {
-  //   const iframe = document.createElement('iframe');
-  //   iframe.style.display = 'none';
-  //   iframe.src = `functions/generateResidencyCertificate.php?transaction_id=${newTid}`;
-  //   iframe.onload = () => {
-  //     iframe.contentWindow.focus();
-  //     iframe.contentWindow.print();
-  //     setTimeout(() => document.body.removeChild(iframe), 1000);
-  //   };
-  //   document.body.appendChild(iframe);
-  // }
-
+  
   // ——— View / Edit Details modal logic ——————————————————————————————————————
   const viewModalEl   = document.getElementById('viewDetailsModal');
   const bsViewModal   = new bootstrap.Modal(viewModalEl);
@@ -802,7 +1044,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           };
 
-
           // Save Changes
           saveBtn.onclick = () => {
             const payload = { transaction_id: tid };
@@ -840,6 +1081,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 'width=800,height=600'
               );
               certWin.addEventListener('load', () => certWin.print());
+            } else if (type === 'Indigency') {
+              const certWin = window.open(
+                `functions/generateIndigencyCertificate.php?transaction_id=${tid}`,
+                '_blank',
+                'width=800,height=600'
+              );
+              certWin.addEventListener('load', () => certWin.print());
+            } else if (type === 'Good Moral') {
+              const certWin = window.open(
+                `functions/generateGoodMoralCertificate.php?transaction_id=${tid}`,
+                '_blank',
+                'width=800,height=600'
+              );
+              certWin.addEventListener('load', () => certWin.print());
+            } else if (type === 'Guardianship') {
+              const certWin = window.open(
+                `functions/generateGuardianshipCertificate.php?transaction_id=${tid}`,
+                '_blank',
+                'width=800,height=600'
+              )
+              certWin.addEventListener('load', () => certWin.print());
+            } else if (type === 'Solo Parent') {
+              const certWin = window.open(
+                `functions/generateSoloParentCertificate.php?transaction_id=${tid}`,
+                '_blank',
+                'width=800,height=600'
+              );
+              certWin.addEventListener('load', () => certWin.print());
             } else {
               alert('Certificate is not yet available.');
             }
@@ -853,20 +1122,3 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 </script>
-
-
-
-<!-- // Grab the new transaction ID from PHP
-    const newTid = <?= json_encode($newTid) ?>;
-    if (newTid) {
-      // Open the certificate in a new tab/window
-      const win = window.open(
-        `functions/generateResidencyCertificate.php?transaction_id=${newTid}`,
-        '_blank',
-        'width=800,height=600'
-      );
-      // Once it's loaded, trigger print
-      win.addEventListener('load', () => {
-        win.print();
-      });
-    } -->

@@ -15,6 +15,10 @@ $whereClauses = [];
 $bindTypes    = '';
 $bindParams   = [];
 
+// ── ALWAYS HIDE Completed Transactions ─────────────────────────────────────────
+$whereClauses[] = "NOT (payment_status = 'Paid' AND document_status = 'Released')";
+
+
 // ── 1) GLOBAL SEARCH ─────────────────────────────────────────────────────────────
 $search = trim($_GET['search'] ?? '');
 if ($search !== '') {
@@ -282,7 +286,7 @@ $result = $st->get_result();
             <th class="text-nowrap">Payment Method</th>
             <th class="text-nowrap">Payment Status</th>
             <th class="text-nowrap">Document Status</th>
-            <th class="text-nowrap">Created At</th>
+            <th class="text-nowrap">Date Created</th>
           </tr>
         </thead>
         <tbody>

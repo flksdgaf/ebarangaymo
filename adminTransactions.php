@@ -2,41 +2,100 @@
 require 'functions/dbconn.php';
 $userId = (int)$_SESSION['loggedInUserID'];
 
-// only show Paid + Released
-$stmt = $conn->prepare(
-  "SELECT 
-     transaction_id,
-     full_name,
-     request_type,
-     payment_method,
-     payment_status,
-     document_status,
-     DATE_FORMAT(created_at, '%M %d, %Y') AS created_at
-   FROM view_general_requests
-   WHERE payment_status = ? 
-     AND document_status = ?
-   ORDER BY created_at DESC"
-);
-$paid    = 'Paid';
-$released= 'Released';
-$stmt->bind_param('ss', $paid, $released);
+// ── 0) FILTER + SEARCH SETUP ───────────────────────────────────────────────────
+$search      = trim($_GET['search']      ?? '');
+$date_from   = $_GET['date_from']        ?? '';
+$date_to     = $_GET['date_to']          ?? '';
+$requestType = $_GET['request_type']     ?? '';
+
+$whereClauses = [];
+$bindTypes    = '';
+$bindParams   = [];
+
+// Global search on ID, name, or request type
+if ($search !== '') {
+  $whereClauses[]   = "(transaction_id LIKE ? OR full_name LIKE ? OR request_type LIKE ?)";
+  $bindTypes       .= 'sss';
+  $term             = "%{$search}%";
+  $bindParams[]     = $term;
+  $bindParams[]     = $term;
+  $bindParams[]     = $term;
+}
+
+// Filter by request type
+if ($requestType) {
+  $whereClauses[] = "request_type = ?";
+  $bindTypes     .= 's';
+  $bindParams[]   = $requestType;
+}
+
+// Date range on created_at (optional)
+if ($date_from && $date_to) {
+  $whereClauses[] = 'DATE(created_at) BETWEEN ? AND ?';
+  $bindTypes     .= 'ss';
+  $bindParams[]   = $date_from;
+  $bindParams[]   = $date_to;
+} elseif ($date_from) {
+  $whereClauses[] = 'DATE(created_at) >= ?';
+  $bindTypes     .= 's';
+  $bindParams[]   = $date_from;
+} elseif ($date_to) {
+  $whereClauses[] = 'DATE(created_at) <= ?';
+  $bindTypes     .= 's';
+  $bindParams[]   = $date_to;
+}
+
+// ── NEW: only show fully completed transactions ───────────────────────────────
+$whereClauses[] = "payment_status = 'Paid'";
+$whereClauses[] = "document_status = 'Released'";
+
+// build WHERE SQL
+$whereSQL = $whereClauses
+  ? 'WHERE ' . implode(' AND ', $whereClauses)
+  : '';
+
+// ── FETCH WITH DYNAMIC WHERE ────────────────────────────────────────────────────
+$sql = "
+  SELECT
+    transaction_id,
+    full_name,
+    request_type,
+    amount AS amount_paid,
+    claim_date AS issued_date
+  FROM view_general_requests
+  {$whereSQL}
+  ORDER BY claim_date ASC
+";
+
+$stmt = $conn->prepare($sql);
+
+if ($bindTypes) {
+  // bind dynamic params
+  $refs = [];
+  foreach ($bindParams as $i => $v) {
+    $refs[$i] = & $bindParams[$i];
+  }
+  array_unshift($refs, $bindTypes);
+  call_user_func_array([$stmt, 'bind_param'], $refs);
+}
+
 $stmt->execute();
 $result = $stmt->get_result();
 ?>
 <div class="container py-3">
   <div class="card shadow-sm p-3">
+    <!-- Filter & Search UI here… (unchanged) -->
+
+    <!-- RESULTS TABLE -->
     <div class="table-responsive admin-table" style="height:500px;overflow-y:auto;">
-      <table class="table table-hover align-middle text-center">
+      <table class="table table-hover align-middle text-start">
         <thead class="table-light">
           <tr>
             <th>Transaction ID</th>
             <th>Full Name</th>
             <th>Request Type</th>
-            <th>Payment Method</th>
-            <th>Payment Status</th>
-            <th>Document Status</th>
-            <th>Created At</th>
-            <th></th>
+            <th>Amount Paid</th>
+            <th>Issued Date</th>
           </tr>
         </thead>
         <tbody>
@@ -44,22 +103,43 @@ $result = $stmt->get_result();
             <?php while ($row = $result->fetch_assoc()): ?>
               <tr>
                 <td><?= htmlspecialchars($row['transaction_id']) ?></td>
-                <td><?= htmlspecialchars($row['full_name']) ?></td>
-                <td><?= htmlspecialchars($row['request_type']) ?></td>
-                <td><?= htmlspecialchars($row['payment_method']) ?></td>
-                <td><?= htmlspecialchars($row['payment_status']) ?></td>
-                <td><?= htmlspecialchars($row['document_status']) ?></td>
-                <td><?= htmlspecialchars($row['created_at']) ?></td>
+                <td><?= htmlspecialchars($row['full_name'])       ?></td>
+                <td><?= htmlspecialchars($row['request_type'])     ?></td>
+                <td><?= number_format($row['amount_paid'], 2)     ?></td>
+                <td><?= htmlspecialchars($row['issued_date'])      ?></td>
               </tr>
             <?php endwhile; ?>
           <?php else: ?>
-            <tr><td colspan="8">No requests found.</td></tr>
+            <tr>
+              <td colspan="5" class="text-center">No completed transactions found.</td>
+            </tr>
           <?php endif; ?>
-          <?php $stmt->close(); $conn->close(); ?>
         </tbody>
       </table>
     </div>
   </div>
 </div>
 
-<!-- your modal + script unchanged -->
+<?php
+$stmt->close();
+$conn->close();
+?>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const form      = document.getElementById('searchForm');
+  const input     = document.getElementById('searchInput');
+  const btn       = document.getElementById('searchBtn');
+  const icon      = document.getElementById('searchIcon');
+  const hasSearch = <?= json_encode(!empty($search)) ?>;
+
+  btn.addEventListener('click', () => {
+    if (hasSearch) {
+      input.value = '';
+      icon.textContent = 'search';
+    }
+    form.submit();
+  });
+});
+</script>

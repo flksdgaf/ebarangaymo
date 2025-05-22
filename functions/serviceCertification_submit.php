@@ -23,6 +23,9 @@ $type = $_POST['certification_type'];
 $map  = [
   'Residency' => ['table'=>'residency_requests','prefix'=>'RES-', 'amount'=>130],
   'Indigency' => ['table'=>'indigency_requests','prefix'=>'IND-', 'amount'=>130],
+  'Good Moral' => ['table'=>'good_moral_requests','prefix'=>'GM-', 'amount'=>130],
+  'Solo Parent' => ['table'=>'solo_parent_requests','prefix'=>'SP-', 'amount'=>130],
+  'Guardianship' => ['table'=>'guardianship_requests','prefix'=>'GU-', 'amount'=>130],
   // add more if you have Good Moral, etc.
 ];
 

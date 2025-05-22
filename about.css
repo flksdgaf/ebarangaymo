@@ -105,3 +105,23 @@ html {
     font-weight: 500;
     background: linear-gradient(to right, #0D2C15, #2A9245);
 }
+
+
+@media (max-width: 768px) {
+    .about-page-container {
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+
+    p {
+        text-align: justify;
+    }
+
+    .tagline {
+        font-size: 20px;
+    }
+
+    h5 {
+        font-size: 18px;
+    }
+}

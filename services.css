@@ -52,12 +52,53 @@
     font-size: 50px;
 }
 
-/* .katarungang-pambarangay {
-    background-color: #61AD41;
-} */
+@media (max-width: 768px) {
+    .services-desc {
+        text-align: justify;
+    }
 
-/* .environmental-services {
-    background-color: #13411F;
-} */
+    .icon {
+        flex: 0 0 auto;
+        font-size: 40px;
+        align-items: center;
+        text-align: center;
+        justify-content: center;
+    }
 
+    .cash_icon {
+        flex: 0 0 auto;
+        font-size: 32px;
+        align-items: center;
+        text-align: center;
+        justify-content: center;
+    }
 
+    .barangay-id .icon,
+    .business-permit .icon {
+        align-items: center;
+        padding: 0px 5px;
+    }
+
+    .barangay-clearance .icon {
+        padding: 0px 12px;
+    }
+
+    .certification .icon,
+    .cash-incentives .cash_icon {
+        padding: 0px 7px;
+    }
+
+    .equipment-borrowing .icon {
+        padding: 0px 9px;
+    }
+
+    .barangay-id-desc,
+    .barangay-clearance-desc,
+    .certification-desc,
+    .business-permit-desc,
+    .equipment-borrowing-desc,
+    .cash-incentives-desc {
+        font-size: 15px;
+    }
+
+}

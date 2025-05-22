@@ -127,6 +127,12 @@ body {
     transform: translateY(-75%);
 }
 
+@media (max-width: 768px) {
+    .carousel-inner img {
+        height: auto; /* Let it scale naturally */
+    }
+}
+
 .gradient-text {
     background: linear-gradient(to bottom, #2A9245, #0D2C15);
     -webkit-background-clip: text;

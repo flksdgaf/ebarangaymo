@@ -2,6 +2,7 @@
 session_start();
 $page = 'login'; 
 include 'includes/header.php';
+include 'functions/dbconn.php';
 
 // Retrieve and clear error message if any.
 $loginError = "";
@@ -9,6 +10,9 @@ if(isset($_SESSION['login_error'])){
     $loginError = $_SESSION['login_error'];
     unset($_SESSION['login_error']);
 }
+
+$info = $conn->query("SELECT logo, name, address FROM barangay_info WHERE id=1")->fetch_assoc();
+$logoUrl = 'images/' . $info['logo'];
 ?>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
@@ -23,11 +27,11 @@ if(isset($_SESSION['login_error'])){
     <!-- Left Column -->
     <div class="col-md-6 d-flex flex-column align-items-center justify-content-center text-center left-column">
       <div class="logo-wrapper d-flex justify-content-center">
-        <img src="images/magang_logo.png" alt="Brgy. Magang Logo" class="login-logo">
+        <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Brgy. Magang Logo" class="login-logo">
         <img src="images/good_governance_logo.png" alt="Good Governance Logo" class="login-logo">
       </div>
-      <h3 class="fw-bold">Barangay Magang</h3>
-      <p class="text-uppercase pt-0 magang-address">Daet, Camarines Norte</p>
+      <h3 class="fw-bold"><?= htmlspecialchars($info['name']) ?></h3>
+      <p class="text-uppercase pt-0 magang-address"><?= htmlspecialchars($info['address']) ?></p>
     </div>
 
     <!-- Right Column -->
@@ -63,7 +67,24 @@ if(isset($_SESSION['login_error'])){
       </form>
     </div>
     </div>
-  <!-- </div> -->
+    
+  <!-- Error Modal -->
+  <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="errorModalLabel">Login Error</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <?php echo htmlspecialchars($loginError); ?>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- If there is an error, trigger the modal using JavaScript -->
   <?php if(!empty($loginError)) { ?>

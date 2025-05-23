@@ -1,12 +1,19 @@
 <!-- Sidebar (Bootstrap-based) -->
+ <?php 
+include 'functions/dbconn.php'; 
+
+$info = $conn->query("SELECT logo, name, address FROM barangay_info WHERE id=1")->fetch_assoc();
+$logoUrl = 'images/' . $info['logo'];
+?>
+
 <nav id="sidebar" class="sidebar">
     <div class="text-center mb-4 mt-3">
         <div class="d-flex justify-content-center align-items-center gap-2">
             <img src="images/good_governance_logo.png" alt="Good Governance Logo" style="width: 50px;">
-            <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 50px;">
+            <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Barangay Magang Logo" style="width: 50px;">
         </div>
         <h1 class="mt-3 mb-1">eBarangay Mo</h1>
-        <h2 class="text-uppercase">Barangay Services Portal of  Brgy. Magang, Daet, Camarines Norte</h2>
+        <h2 class="text-uppercase">Barangay Services Portal of <?= htmlspecialchars($info['name']) ?>, <?= htmlspecialchars($info['address']) ?></h2>
         <hr class="custom-hr">
 
         <button class="btn btn-sm" id="close-btn">

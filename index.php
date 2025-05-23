@@ -2,6 +2,15 @@
 include 'functions/dbconn.php'; 
 $page = 'index';
 include 'includes/header.php'; 
+
+$info = $conn->query("SELECT logo, name, address FROM barangay_info WHERE id=1")->fetch_assoc();
+$logoUrl = 'images/' . $info['logo'];
+
+$res = $conn->query("SELECT * FROM announcements ORDER BY created_at DESC");
+$slides = $res->fetch_all(MYSQLI_ASSOC);
+
+$ress = $conn->query("SELECT * FROM news_updates ORDER BY date DESC");
+$news = $ress->fetch_all(MYSQLI_ASSOC);
 ?>
 
 <!-- BANNER SECTION -->
@@ -15,13 +24,13 @@ include 'includes/header.php';
       <!-- DESKTOP VIEW -->
       <div class="row align-items-center justify-content-center d-none d-md-flex">
         <div class="col-md-3 offset-md-1 text-end">
-          <img src="images/magang_logo.png" alt="Barangay Logo" class="img-fluid" style="max-width: 110px;">
+          <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Barangay Logo" class="img-fluid" style="max-width: 110px;">
         </div>
         <div class="col-md-6 text-start">
           <h6 class="mb-2">Republic of the Philippines</h6>
           <hr class="my-1" style="width: 55%; border-top: 2px solid white; opacity: 1; margin-left: 0;">
-          <h2 class="fw-bold my-0" aria-label="Barangay Name">BARANGAY MAGANG</h2>
-          <p class="mt-0 mb-0" aria-label="Barangay Address">Daet, Camarines Norte, Philippines</p>
+          <h2 class="fw-bold my-0" aria-label="Barangay Name"><?= htmlspecialchars($info['name']) ?></h2>
+          <p class="mt-0 mb-0" aria-label="Barangay Address"><?= htmlspecialchars($info['address']) ?></p>
         </div>
       </div>
     </div>
@@ -29,13 +38,13 @@ include 'includes/header.php';
     <!-- MOBILE VIEW -->
     <div class="d-flex d-md-none flex-column align-items-center">
       <div class="d-flex justify-content-center gap-3 mb-3">
-        <img src="images/magang_logo.png" alt="Brgy. Magang Logo" class="img-fluid">
+        <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Brgy. Magang Logo" class="img-fluid">
       </div>
       <div class="text-center">
         <h6 class="mb-1 small">Republic of the Philippines</h6>
         <hr class="my-1" style="width: 100%; border-top: 2px solid white; opacity: 1; margin: 0;">
-        <h3 class="fw-bold my-0">BARANGAY MAGANG</h3>
-        <p class="mt-0 mb-0">Daet, Camarines Norte, Philippines</p>
+        <h3 class="fw-bold my-0"><?= htmlspecialchars($info['name']) ?></h3>
+        <p class="mt-0 mb-0"><?= htmlspecialchars($info['address']) ?></p>
       </div>
     </div>
   </div>
@@ -47,7 +56,7 @@ include 'includes/header.php';
     <div class="carousel-blur-bg"></div> 
 
     <div class="carousel-container">
-        <div id="carouselExampleIndicators" class="carousel slide">
+        <!-- <div id="carouselExampleIndicators" class="carousel slide">
             <div class="carousel-indicators">
                 <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
                 <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="1" aria-label="Slide 2"></button>
@@ -75,6 +84,40 @@ include 'includes/header.php';
                 <span class="carousel-control-next-icon" aria-hidden="true"></span>
                 <span class="visually-hidden">Next</span>
             </button>
+        </div> -->
+        <div id="carouselExampleIndicators" class="carousel slide" data-bs-ride="carousel">
+          <div class="carousel-indicators">
+            <?php foreach($slides as $i=>$s): ?>
+              <button type="button"
+                      data-bs-target="#carouselExampleIndicators"
+                      data-bs-slide-to="<?=$i?>"
+                      class="<?=$i===0?'active':''?>"
+                      aria-current="<?=$i===0?'true':''?>"
+                      aria-label="Slide <?=($i+1)?>"></button>
+            <?php endforeach; ?>
+          </div>
+          <div class="carousel-inner">
+            <?php foreach($slides as $i=>$s): ?>
+              <div class="carousel-item <?=$i===0?'active':''?>">
+                <img src="announcements/<?=htmlspecialchars($s['image_file'])?>"
+                    class="d-block w-100 carousel-image"
+                    alt="<?=htmlspecialchars($s['title'])?>">
+                <!-- <div class="carousel-caption d-none d-md-block">
+                  <h5><?=htmlspecialchars($s['title'])?></h5>
+                </div> -->
+              </div>
+            <?php endforeach; ?>
+          </div>
+          <button class="carousel-control-prev" type="button"
+                  data-bs-target="#carouselExampleIndicators"
+                  data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+          </button>
+          <button class="carousel-control-next" type="button"
+                  data-bs-target="#carouselExampleIndicators"
+                  data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+          </button>
         </div>
     </div>
 </div>
@@ -492,14 +535,14 @@ include 'includes/header.php';
 </div>
 
 <!-- NEWS AND UPDATES SECTION -->
-<div class="container-fluid px-4 mt-5 mb-5 new-updates-container">
+<!-- <div class="container-fluid px-4 mt-5 mb-5 new-updates-container">
     <div class="row align-items-center">
-        <!-- Title Section -->
+
         <div class="col-md-5">
             <h1 class="gradient-text">NEWS AND UPDATES</h1>
         </div>
 
-        <!-- Scrollable Content Section -->
+
         <div class="col-md-7 news-scrollable">
             <div class="scrollable-content d-flex flex-row">
                 <div class="news-card">
@@ -520,6 +563,29 @@ include 'includes/header.php';
             </div>
         </div>
     </div>
+</div> -->
+
+<div class="container-fluid px-4 mt-5 mb-5 new-updates-container">
+  <div class="row align-items-center">
+    <div class="col-md-5">
+      <h1 class="gradient-text">NEWS AND UPDATES</h1>
+    </div>
+    <div class="col-md-7 news-scrollable">
+      <div class="scrollable-content d-flex flex-row">
+        <?php foreach($news as $n): ?>
+          <a href="<?=htmlspecialchars($n['link'])?>" target="_blank" class="news-card text-dark text-decoration-none">
+            <div class="news-card__img">
+              <img src="news/<?=htmlspecialchars($n['cover_file'])?>" alt="News Image">
+            </div>
+            <div class="news-card__content">
+              <p><?=date('F j, Y', strtotime($n['date']))?></p>
+              <p><?=htmlspecialchars($n['headline'])?></p>
+            </div>
+          </a>
+        <?php endforeach; ?>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ABOUT SECTION -->

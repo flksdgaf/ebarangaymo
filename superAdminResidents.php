@@ -6,16 +6,58 @@ require_once 'functions/dbconn.php';
 $purokNum = isset($_GET['purok']) && in_array((int)$_GET['purok'], [1,2,3,4,5,6])
             ? (int)$_GET['purok']
             : 1;
+
+// --- Search setup ---
+$search = trim($_GET['search'] ?? '');
+
+// Build WHERE clauses
+$where = [];
+$params = [];
+$types = '';
+
+// columns you want to search
+$searchCols = [
+  'r.account_ID',
+  'r.full_name',
+  'r.house_number',
+  'r.relationship_to_head',
+  'r.registry_number',
+  'r.total_population',
+  'ua.role',
+  'r.remarks'
+];
+
+
+// Global search 
+if ($search !== '') {
+    // build a placeholder for each column
+    $likes = [];
+    foreach ($searchCols as $col) {
+        $likes[]    = "$col LIKE ?";
+        $types     .= 's';
+        $params[]   = "%{$search}%";
+    }
+    $where[] = '(' . implode(' OR ', $likes) . ')';
+}
+
+$whereSQL = $where
+    ? 'WHERE ' . implode(' AND ', $where)
+    : '';            
+
 $tableName = "purok{$purokNum}_rbi";
 
 // Fetch all columns plus role from user_accounts
 $sql = "
   SELECT r.*, ua.role
-  FROM `$tableName` AS r
+  FROM `{$tableName}` AS r
   LEFT JOIN user_accounts AS ua
     ON r.account_ID = ua.account_id
+  {$whereSQL}
 ";
 $stmt = $conn->prepare($sql);
+if ($whereSQL) {
+    $stmt->bind_param($types, ...$params);
+}
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -39,7 +81,23 @@ $stmt->close();
           </option>
         <?php endfor; ?>
       </select>
+
+      <!-- Search Form -->
+      <form id="searchForm" method="get" class="d-flex ms-auto me-2">
+        <input type="hidden" name="page"     value="superAdminResidents">
+        <input type="hidden" name="purok"    value="<?= $purokNum ?>">
+        <input type="hidden" name="page_num" value="1">
+        <div class="input-group input-group-sm w-100">
+          <input name="search" id="searchInput" type="text" class="form-control" placeholder="Search..." value="<?= htmlspecialchars($search) ?>">
+          <button type="button" class="btn btn-outline-secondary" id="searchBtn">
+            <span class="material-symbols-outlined" id="searchIcon">
+              <?= !empty($search) ? 'close' : 'search' ?>
+            </span>
+          </button>
+        </div>
+      </form>
     </div>
+    
     <div class="table-responsive admin-table" style="height:500px;overflow-y:auto;">
       <table class="table table-hover align-middle resident-table">
         <thead class="table-light">
@@ -396,4 +454,25 @@ $stmt->close();
       });
     });
   });
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Purok filter
+  document.getElementById('purokFilter').addEventListener('change', function() {
+    const url = new URL(window.location.href);
+    url.searchParams.set('purok', this.value);
+    window.location.href = url;
+  });
+
+  // Search handler
+  const form = document.getElementById('searchForm');
+  const input = document.getElementById('searchInput');
+  const btn   = document.getElementById('searchBtn');
+  let hasSearch = <?= json_encode($search !== '') ?>;
+  btn.addEventListener('click', () => {
+    if (hasSearch) input.value = '';
+    form.submit();
+  });
+});
 </script>

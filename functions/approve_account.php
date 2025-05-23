@@ -145,5 +145,19 @@ $p->close();
 // $r->close();
 
 // 6) Redirect
-header("Location: ../adminpanel.php?page=adminVerifications");
+// header("Location: ../adminPanel.php?page=adminVerifications");
+// exit;
+
+$map = [
+  'superAdmin' => '/superAdminPanel.php?page=adminVerifications',
+  'admin'      => '/adminPanel.php?page=adminVerifications',
+  'user'       => '/userPanel.php?page=adminVerifications',
+];
+
+$key = $_POST['redirectTo'] ?? 'user';
+if (!isset($map[$key])) {
+  $key = 'user';  // fallback
+}
+
+header("Location: " . $map[$key]);
 exit;

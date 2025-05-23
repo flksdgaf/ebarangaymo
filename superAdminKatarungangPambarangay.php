@@ -135,6 +135,11 @@ $stmt->close();
         </div>
       </div>
 
+      <!-- View Case button -->
+      <button type="button" class="btn btn-sm btn-success ms-3" id="viewCaseBtn">
+        <i class="bi bi-plus-lg me-1"></i> View Cases
+      </button>
+
       <form method="get" id="searchForm" class="d-flex ms-auto me-2">
         <input type="hidden" name="page"     value="superAdminKatarungangPambarangay">
         <input type="hidden" name="page_num" value="1">
@@ -232,6 +237,102 @@ $stmt->close();
   </div>
 </div>
 
+<!-- View Case Modal -->
+<div class="modal fade" id="viewCaseModal" tabindex="-1" aria-labelledby="viewCaseModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="viewCaseModalLabel">Katarungang Pambarangay</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Status Pills -->
+        <div class="d-flex mb-3">
+          <span class="me-2 align-self-center fw-bold">Status:</span>
+          <?php foreach (['Punong Barangay','Unang Patawag','Pangalawang Patawag','Pangatlong Patawag','Cleared'] as $s): ?>
+            <button type="button" class="btn btn-sm btn-outline-secondary me-1"><?= $s ?></button>
+          <?php endforeach; ?>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mb-3" id="caseTab" role="tablist">
+          <?php 
+            $tabs = ['Summon Info','Date/Time','Subject','Blotter Info'];
+            foreach ($tabs as $i => $t): 
+              $active = $i===0 ? 'active' : '';
+          ?>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link <?= $active ?>"
+                      id="tab-<?= $i ?>"
+                      data-bs-toggle="tab"
+                      data-bs-target="#panel-<?= $i ?>"
+                      type="button"
+                      role="tab"
+                      aria-selected="<?= $i===0 ? 'true':'false' ?>">
+                <?= $t ?>
+              </button>
+            </li>
+          <?php endforeach; ?>
+        </ul>
+
+        <div class="tab-content">
+          <!-- Summon Info -->
+          <div class="tab-pane fade show active" id="panel-0" role="tabpanel">
+            <div class="row mb-3">
+              <label class="col-sm-3 col-form-label fw-bold">Summon ID:</label>
+              <div class="col-sm-9">
+                <select id="modalSummonId" class="form-select">
+                <?php foreach ($allSummons as $s): ?>
+                  <option value="<?= $s['id'] ?>"><?= htmlspecialchars($s['transaction_id']) ?></option>
+                <?php endforeach; ?>
+              </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Date/Time panel -->
+          <div class="tab-pane fade" id="panel-1" role="tabpanel">
+            <div class="row mb-3">
+              <label class="col-sm-3 col-form-label fw-bold">Date:</label>
+              <div class="col-sm-3">
+                <input type="date" id="modalDate" class="form-control">
+              </div>
+              <label class="col-sm-2 col-form-label fw-bold">Time:</label>
+              <div class="col-sm-4">
+                <input type="time" id="modalTime" class="form-control">
+              </div>
+            </div>
+          </div>
+
+          <!-- Subject panel -->
+          <div class="tab-pane fade" id="panel-2" role="tabpanel">
+            <div class="mb-3">
+              <label class="form-label fw-bold">Subject</label>
+              <textarea id="modalSubject" class="form-control" rows="3" readonly></textarea>
+            </div>
+          </div>
+
+          <!-- Complainants table body -->
+          <tbody id="modalComplaintsBody">
+            <!-- rows injected by JS -->
+          </tbody>
+
+          <!-- Respondents table body -->
+          <tbody id="modalRespondentsBody">
+            <!-- rows injected by JS -->
+          </tbody>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">
+          <i class="bi bi-printer me-1"></i> Print
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <?php
 $conn->close();
 ?>
@@ -254,5 +355,59 @@ document.addEventListener('DOMContentLoaded', () => {
     // submit the form (GET)
     form.submit();
   });
+
+  // Open the modal when the View Cases button is clicked
+  document.getElementById('viewCaseBtn').addEventListener('click', () => {
+    new bootstrap.Modal(document.getElementById('viewCaseModal')).show();
+  });
+
+  // when Summon ID changes, fetch its details
+  document.getElementById('modalSummonId').addEventListener('change', async function() {
+    const summonId = this.value;
+    const form    = new URLSearchParams({ summon_id: summonId });
+
+    try {
+      const resp = await fetch('functions/get_case_details.php', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/x-www-form-urlencoded' },
+        body: form
+      });
+      const data = await resp.json();
+      if (data.error) throw new Error(data.error);
+
+      // populate date/time
+      document.getElementById('modalDate').value    = data.date_summon || '';
+      document.getElementById('modalTime').value    = data.time_summon || '';
+      // subject
+      document.getElementById('modalSubject').textContent = data.subject || '';
+
+      // rebuild complainants table
+      const cBody = document.getElementById('modalComplaintsBody');
+      cBody.innerHTML = '';
+      (JSON.parse(data.complainants) || []).forEach(c => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${c.name}</td><td>${c.address}</td><td>${c.age}</td>`;
+        cBody.appendChild(tr);
+      });
+
+      // rebuild respondents table
+      const rBody = document.getElementById('modalRespondentsBody');
+      rBody.innerHTML = '';
+      (JSON.parse(data.respondents) || []).forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${r.name}</td><td>${r.address}</td><td>${r.age}</td>`;
+        rBody.appendChild(tr);
+      });
+    } catch (err) {
+      alert('Failed to load case details: ' + err.message);
+    }
+  });
+
+  // Trigger initial load if you want the first option’s data to appear immediately:
+  const selectEl = document.getElementById('modalSummonId');
+  if (selectEl.value) {
+    selectEl.dispatchEvent(new Event('change'));
+  }
+
 });
 </script>

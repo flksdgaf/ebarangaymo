@@ -153,21 +153,63 @@ if ($queryString) {
 
 <!-- MAIN CONTENT -->
 <div class="container-fluid p-3">
-  <div class="row g-3 mb-4">
-    <?php
-      $stats = [
-        ['icon' => 'group', 'label' => 'Users', 'count' => 3],
-        ['icon' => 'description', 'label' => 'Service Requests', 'count' => 1],
-        ['icon' => 'visibility', 'label' => 'Page Views', 'count' => 0],
-        ['icon' => 'person_add', 'label' => 'Account Requests', 'count' => 0],
-      ];
+  <?php
+  // Fetch live counts for dashboard stats
+  // 1. Total registered users
+  $userCount = $conn->query("SELECT COUNT(*) FROM user_accounts")->fetch_row()[0] ?? 0;
 
-    foreach ($stats as $stat): ?>
+  // 2. Total service requests across multiple tables
+  $serviceTables = [
+      'barangay_id_requests',
+      'blotter_records',
+      'business_permit_requests',
+      'good_moral_requests',
+      'guardianship_requests',
+      'indigency_requests',
+      'residency_requests',
+      'solo_parent_requests',
+      'summon_records'
+  ];
+  $serviceCount = 0;
+  foreach ($serviceTables as $tbl) {
+      $cnt = $conn->query("SELECT COUNT(*) FROM {$tbl}")->fetch_row()[0] ?? 0;
+      $serviceCount += $cnt;
+  }
+
+  // 3. Total pending account requests
+  $pendingRequests = $conn->query("SELECT COUNT(*) FROM pending_accounts")->fetch_row()[0] ?? 0;
+
+  // 4. Total residents across purok RBI tables
+  $purokTables = [
+      'purok1_rbi',
+      'purok2_rbi',
+      'purok3_rbi',
+      'purok4_rbi',
+      'purok5_rbi',
+      'purok6_rbi'
+  ];
+  $residentsCount = 0;
+  foreach ($purokTables as $tbl) {
+      $cnt = $conn->query("SELECT COUNT(*) FROM {$tbl}")->fetch_row()[0] ?? 0;
+      $residentsCount += $cnt;
+  }
+
+  // Build stats array dynamically
+  $stats = [
+      ['icon' => 'group',       'label' => 'Users',            'count' => $userCount],
+      ['icon' => 'description', 'label' => 'Service Requests', 'count' => $serviceCount],
+      ['icon' => 'apartment',  'label' => 'Residents',        'count' => $residentsCount],
+      ['icon' => 'person_add',  'label' => 'Account Requests', 'count' => $pendingRequests],
+  ];
+  ?>
+  
+  <div class="row g-3 mb-4">
+    <?php foreach ($stats as $stat): ?>
       <div class="col-md-3 col-sm-6">
         <div class="card shadow-sm text-center p-3">
           <span class="material-symbols-outlined fs-1 text-success"><?= $stat['icon'] ?></span>
-          <h2 class="fw-bold"><?= $stat['count'] ?></h2>
-          <p class="text-muted"><?= $stat['label'] ?></p>
+          <h2 class="fw-bold"><?= number_format($stat['count']) ?></h2>
+          <p class="text-muted"><?= htmlspecialchars($stat['label']) ?></p>
         </div>
       </div>
     <?php endforeach; ?>

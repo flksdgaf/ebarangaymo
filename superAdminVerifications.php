@@ -48,6 +48,7 @@ if ($result) {
                       <input type="hidden" name="account_ID" value="<?php echo $row['account_ID'] ?>">
                       <input type="hidden" name="name"       value="<?php echo htmlspecialchars($row['full_name']) ?>">
                       <input type="hidden" name="purok"      value="<?php echo htmlspecialchars($row['purok']) ?>">
+                      <input type="hidden" name="redirectTo" value="superAdmin">
                       <button type="submit" class="btn btn-sm btn-success">
                         Approve
                       </button>

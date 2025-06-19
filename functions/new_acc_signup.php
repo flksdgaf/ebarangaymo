@@ -16,7 +16,7 @@ $fn = trim($_POST['firstname']   ?? '');
 $mn = trim($_POST['middlename']  ?? '');
 $ln = trim($_POST['lastname']    ?? '');
 $sn = trim($_POST['suffix']      ?? '');
-$sx = $_POST['sex']              ?? '';
+// $sx = $_POST['sex']              ?? '';
 $bd = $_POST['birthdate']        ?? '';
 
 // Build the optional pieces
@@ -24,17 +24,17 @@ $suffixPart = $sn ? " {$sn}" : '';
 $middlePart = $mn ? " {$mn}" : '';
 
 // Always put the comma immediately after last name (+ suffix), then a space
-$full_name = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+$full_name = "{$ln}, {$fn}{$middlePart}{$suffixPart}";
 
 // Step 2 inputs
-$cs = $_POST['civilstatus']          ?? '';
-$bt = $_POST['bloodtype']            ?? '';
-$br = trim($_POST['birthreg']        ?? '');
-if ($br === '') {
-    $br = 'Unknown';
-}
-$ed = $_POST['educationalattainment']?? '';
-$oc = trim($_POST['occupation']      ?? '');
+// $cs = $_POST['civilstatus']          ?? '';
+// $bt = $_POST['bloodtype']            ?? '';
+// $br = trim($_POST['birthreg']        ?? '');
+// if ($br === '') {
+//     $br = 'Unknown';
+// }
+// $ed = $_POST['educationalattainment']?? '';
+// $oc = trim($_POST['occupation']      ?? '');
 $pu = $_POST['purok']                ?? '';
 
 // Step 3 & 4 file fields
@@ -68,29 +68,23 @@ if (
 ) {
   // Pending table insert
   $stmt1 = $conn->prepare("
-    INSERT INTO pending_accounts
-      (account_ID, full_name, birthdate, sex,
-       civil_status, blood_type, birth_registration_number,
-       highest_educational_attainment, occupation, purok,
-       valid_ID, front_ID, back_ID, profile_picture)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    INSERT INTO pending_accounts (account_ID, full_name, birthdate, purok, valid_ID, front_ID, back_ID, profile_picture)
+    VALUES (?,?,?,?,?,?,?,?)
   ");
   $stmt1->bind_param(
-    "isssssssssssss",
-    $account_id, $full_name, $bd, $sx,
-    $cs, $bt, $br,
-    $ed, $oc, $pu,
-    $validID,
-    $frontName, $backName, $profileName
-  );
+    "isssssss",
+    $account_id, $full_name, $bd, $pu, $validID, $frontName, $backName, $profileName
+   );
 
   // User-accounts insert
   $stmt2 = $conn->prepare("
-    INSERT INTO user_accounts
-      (account_id, username, password)
+    INSERT INTO user_accounts (account_id, username, password)
     VALUES (?,?,?)
   ");
-  $stmt2->bind_param("iss", $account_id, $username, $pwd_hash);
+  $stmt2->bind_param(
+    "iss", 
+    $account_id, $username, $pwd_hash
+  );
 
   if ($stmt1->execute() && $stmt2->execute()) {
     header("Location: ../underreview.php");

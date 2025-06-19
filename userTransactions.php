@@ -129,11 +129,9 @@ $st->execute();
 $result = $st->get_result();
 ?>
 
-<div class="container py-3">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="fw-bold">Transaction History</h4>
-  </div>
+<title>eBarangay Mo | Transactions</title>
 
+<div class="container py-3">
   <div class="card shadow-sm p-3">
     <div class="table-responsive" style="height:500px; overflow-y:auto;">
       <table class="table align-middle text-start table-hover">

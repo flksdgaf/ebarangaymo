@@ -38,8 +38,12 @@ if(isset($_POST['username']) && isset($_POST['password'])) {
                     header("Location: ../adminPanel.php");
                 } elseif($row['role'] === 'Resident') {
                     header("Location: ../userPanel.php");
+                } elseif($row['role'] === 'Approved') {
+                    header("Location: ../approved_user.php");
                 } elseif($row['role'] === 'Pending') {
                     header("Location: ../underreview.php");
+                } elseif($row['role'] === 'Declined') {
+                    header("Location: ../declined_user.php");
                 }
                 exit();
             } else {

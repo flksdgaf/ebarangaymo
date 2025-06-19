@@ -1,3 +1,5 @@
+<title>eBarangay Mo | Services</title>
+
 <div class="container py-4">
   <!-- Services Offered -->
   <div class="container-fluid mt-5 mb-5 services-container">

@@ -82,6 +82,9 @@ if ($bindTypes) {
 $stmt->execute();
 $result = $stmt->get_result();
 ?>
+
+<title>eBarangay Mo | Transaction History</title>
+
 <div class="container py-3">
   <div class="card shadow-sm p-3">
     <!-- Filter & Search UI here… (unchanged) -->

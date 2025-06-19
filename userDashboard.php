@@ -62,6 +62,7 @@ $result = $st->get_result();
 
 </style>
 
+<title>eBarangay Mo | Dashboard</title>
 <!-- CAROUSEL SECTION -->
 <div class="row g-3 py-5 px-5">
     <div class="col-md-12">

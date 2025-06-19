@@ -92,6 +92,8 @@ $st->execute();
 $result = $st->get_result();
 ?>
 
+<title>eBarangay Mo | Blotter</title>
+
 <div class="container py-3">
    <?php if ($newTid): ?>
     <div class="alert alert-success alert-dismissible fade show" role="alert">

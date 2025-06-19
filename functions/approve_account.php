@@ -24,9 +24,7 @@ $map = [
 
 // 1) Fetch pending data
 $q = $conn->prepare("
-  SELECT full_name, birthdate, sex, civil_status, blood_type,
-         birth_registration_number, highest_educational_attainment,
-         occupation, purok, profile_picture
+  SELECT full_name, birthdate, purok, profile_picture
   FROM pending_accounts
   WHERE account_ID = ?
 ");
@@ -65,32 +63,22 @@ if ($existingPurok) {
   $oldTable = $map[$existingPurok];
   if ($existingPurok !== $newPurok) {
     // Cross-purok: delete old record, then insert fresh into new
-    // $d = $conn->prepare("DELETE FROM `$oldTable` WHERE full_name = ?");
-    // $d->bind_param("s", $name);
-    // $d->execute();
-    // $d->close();
+    $d = $conn->prepare("DELETE FROM `$oldTable` WHERE full_name = ?");
+    $d->bind_param("s", $name);
+    $d->execute();
+    $d->close();
 
     // then fall through to INSERT into newTable
   } else {
     // Same purok: attach—UPDATE all columns
     $u = $conn->prepare("
-      UPDATE `$newTable`
-         SET account_ID = ?,
-             birthdate = ?, sex = ?, civil_status = ?, blood_type = ?,
-             birth_registration_number = ?, highest_educational_attainment = ?,
-             occupation = ?, profile_picture = ?
-       WHERE full_name = ?
+      UPDATE `$newTable` SET account_ID = ?, birthdate = ?, profile_picture = ?
+      WHERE full_name = ?
     ");
     $u->bind_param(
-      "isssssssss",
+      "isss",
       $accountId,
       $pending['birthdate'],
-      $pending['sex'],
-      $pending['civil_status'],
-      $pending['blood_type'],
-      $pending['birth_registration_number'],
-      $pending['highest_educational_attainment'],
-      $pending['occupation'],
       $pending['profile_picture'],
       $name
     );
@@ -105,23 +93,14 @@ if ($existingPurok) {
 
 // INSERT into newPurok table
 $i = $conn->prepare("
-  INSERT INTO `$newTable`
-    (account_ID, full_name, birthdate, sex,
-     civil_status, blood_type, birth_registration_number,
-     highest_educational_attainment, occupation, profile_picture)
-  VALUES (?,?,?,?,?,?,?,?,?,?)
+  INSERT INTO `$newTable` (account_ID, full_name, birthdate, profile_picture)
+  VALUES (?,?,?,?)
 ");
 $i->bind_param(
-  "isssssssss",
+  "isss",
   $accountId,
   $pending['full_name'],
   $pending['birthdate'],
-  $pending['sex'],
-  $pending['civil_status'],
-  $pending['blood_type'],
-  $pending['birth_registration_number'],
-  $pending['highest_educational_attainment'],
-  $pending['occupation'],
   $pending['profile_picture']
 );
 $i->execute();
@@ -131,7 +110,7 @@ $i->close();
 promote_and_delete:
 
 // 4) Promote in user_accounts
-$p = $conn->prepare("UPDATE user_accounts SET role='Resident' WHERE account_id = ?");
+$p = $conn->prepare("UPDATE user_accounts SET role='Approved' WHERE account_id = ?");
 $p->bind_param("i", $accountId);
 $p->execute();
 if ($p->error) die("Role update failed: ".$p->error);
@@ -145,19 +124,19 @@ $p->close();
 // $r->close();
 
 // 6) Redirect
-// header("Location: ../adminPanel.php?page=adminVerifications");
-// exit;
-
-$map = [
-  'superAdmin' => '/superAdminPanel.php?page=adminVerifications',
-  'admin'      => '/adminPanel.php?page=adminVerifications',
-  'user'       => '/userPanel.php?page=adminVerifications',
-];
-
-$key = $_POST['redirectTo'] ?? 'user';
-if (!isset($map[$key])) {
-  $key = 'user';  // fallback
-}
-
-header("Location: " . $map[$key]);
+header("Location: ../adminPanel.php?page=adminVerifications");
 exit;
+
+// $map = [
+//   'superAdmin' => '/superAdminPanel.php?page=adminVerifications',
+//   'admin'      => '/adminPanel.php?page=adminVerifications',
+//   'user'       => '/userPanel.php?page=adminVerifications',
+// ];
+
+// $key = $_POST['redirectTo'] ?? 'user';
+// if (!isset($map[$key])) {
+//   $key = 'user';  // fallback
+// }
+
+// header("Location: " . $map[$key]);
+// exit;

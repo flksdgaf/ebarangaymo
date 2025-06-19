@@ -108,7 +108,7 @@ document.addEventListener("DOMContentLoaded", function () {
         // }
 
         // If on the final review step (Step 5)
-        if (currentStep === 4) {
+        if (currentStep === 3) {
             // Show the confirmation modal
             let confirmModal = new bootstrap.Modal(document.getElementById("confirmationModal"));
             confirmModal.show();
@@ -120,7 +120,7 @@ document.addEventListener("DOMContentLoaded", function () {
             steps[currentStep].classList.add("active-step");
             dots[currentStep].classList.add("active-dot");
 
-            if (currentStep === 4) {
+            if (currentStep === 3) {
                 populateSummary();
             }
             updateNavigation();
@@ -149,19 +149,15 @@ document.addEventListener("DOMContentLoaded", function () {
             subHeader.textContent = "Fill out personal information.";
             cancelBtn.textContent = "Cancel";
             nextBtn.textContent = "Next";
-        } else if (currentStep === 1) {
-            subHeader.textContent = "Fill out personal information.";
-            cancelBtn.textContent = "Back";
-            nextBtn.textContent = "Next";
-        } else if (currentStep === 2) {
+        }  else if (currentStep === 1) {
             subHeader.textContent = "Upload any of your available valid ID.";
             cancelBtn.textContent = "Back";
             nextBtn.textContent = "Next";
-        } else if (currentStep === 3) {
+        } else if (currentStep === 2) {
             subHeader.textContent = "Upload a profile picture and set up unique credentials to secure your account.";
             cancelBtn.textContent = "Back";
             nextBtn.textContent = "Next";
-        } else if (currentStep === 4) {
+        } else if (currentStep === 3) {
             subHeader.textContent = "Review your filled-out information.";
             cancelBtn.textContent = "Back";
             nextBtn.textContent = "Finish";
@@ -253,33 +249,33 @@ function populateSummary() {
   const mn = document.getElementById("middlename").value.trim();
   const ln = document.getElementById("lastname").value.trim();
   const sn = document.getElementById("suffix").value.trim();
-  const sx = document.getElementById("sex").value;
   const bd = document.getElementById("birthdate").value;
+  //   const sx = document.getElementById("sex").value;
   // Build the optional pieces
   const suffixPart = sn ? ` ${sn}` : "";
   const middlePart = mn ? ` ${mn}` : "";
 
   // Always put the comma *after* last name (or last name + suffix), then a space
-  const fullName = `${ln}${suffixPart}, ${fn}${middlePart}`;
+  const fullName = `${ln}, ${fn}${middlePart}${suffixPart}`;
 
   // Step 2
-  const cs = document.getElementById("civilstatus").value;
-  const bt = document.getElementById("bloodtype").value;
-  let br = document.getElementById("birthreg").value.trim();
-  if (!br) br = "Unknown";
-  const ed = document.getElementById("educationalattainment").value;
-  const oc = document.getElementById("occupation").value;
+//   const cs = document.getElementById("civilstatus").value;
+//   const bt = document.getElementById("bloodtype").value;
+//   let br = document.getElementById("birthreg").value.trim();
+//   if (!br) br = "Unknown";
+//   const ed = document.getElementById("educationalattainment").value;
+//   const oc = document.getElementById("occupation").value;
   const pu = document.getElementById("purok").value;
 
   // Inject into the review
   document.getElementById("summaryFullName").value       = fullName;
   document.getElementById("summaryBirthdate").value      = bd;
-  document.getElementById("summarySex").value            = sx;
-  document.getElementById("summaryCivilStatus").value    = cs;
-  document.getElementById("summaryBloodType").value      = bt;
-  document.getElementById("summaryBirthReg").value       = br;
-  document.getElementById("summaryEducation").value      = ed;
-  document.getElementById("summaryOccupation").value     = oc;
+//   document.getElementById("summarySex").value            = sx;
+//   document.getElementById("summaryCivilStatus").value    = cs;
+//   document.getElementById("summaryBloodType").value      = bt;
+//   document.getElementById("summaryBirthReg").value       = br;
+//   document.getElementById("summaryEducation").value      = ed;
+//   document.getElementById("summaryOccupation").value     = oc;
   document.getElementById("summaryPurok").value          = pu;
 
 }

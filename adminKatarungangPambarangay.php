@@ -89,6 +89,8 @@ $cases = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
 ?>
 
+<title>eBarangay Mo | Katarungang Pambarangay</title>
+
 <div class="container py-3">
   <!-- <?php if ($newCase): ?>
     <div class="alert alert-success alert-dismissible fade show" role="alert">

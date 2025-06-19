@@ -151,6 +151,8 @@ if ($queryString) {
 }
 ?>
 
+<title>eBarangay Mo | Dashboard</title>
+
 <!-- MAIN CONTENT -->
 <div class="container-fluid p-3">
   <?php

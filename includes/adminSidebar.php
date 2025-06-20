@@ -38,7 +38,7 @@ $logoUrl = 'images/' . $info['logo'];
             Request
             </a>
         </li>
-        <li>
+        <!-- <li>
             <a href="adminPanel.php?page=adminBlotter" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminBlotter') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">edit_document</span>
             Blotter Record
@@ -54,6 +54,12 @@ $logoUrl = 'images/' . $info['logo'];
             <a href="adminPanel.php?page=adminKatarungangPambarangay" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminKatarungangPambarangay') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">balance</span>
             Katarungang Pambarangay
+            </a>
+        </li> -->
+        <li>
+            <a href="adminPanel.php?page=adminComplaints" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminComplaints') ? 'active' : '' ?>">
+            <span class="material-symbols-outlined me-2">release_alert</span>
+            Complaints
             </a>
         </li>
         <li>

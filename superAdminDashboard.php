@@ -4,15 +4,11 @@ $userId = (int)$_SESSION['loggedInUserID'];
 
 // PAGINATION SETUP
 $page_num = isset($_GET['page_num']) && is_numeric($_GET['page_num']) ? (int)$_GET['page_num'] : 1;
-$limit    = 10; 
-$offset   = ($page_num - 1) * $limit;
+$limit = 10; 
+$offset = ($page_num - 1) * $limit;
 
 // PULL IN FILTERS
 $request_type = $_GET['request_type'] ?? '';
-$date_from = $_GET['date_from'] ?? '';
-$date_to = $_GET['date_to'] ?? '';
-$claim_from = $_GET['claim_from'] ?? '';
-$claim_to = $_GET['claim_to'] ?? '';
 $payment_method = $_GET['payment_method'] ?? '';
 $payment_status = $_GET['payment_status'] ?? '';
 $document_status = $_GET['document_status'] ?? '';
@@ -25,14 +21,7 @@ $bindParams   = [];
 
 // GLOBAL FULL-TEXT SEARCH
 if ($search !== '') {
-  $whereClauses[] = "(
-    transaction_id LIKE ? OR
-    full_name        LIKE ? OR
-    request_type     LIKE ? OR
-    payment_method   LIKE ? OR
-    payment_status   LIKE ? OR
-    document_status  LIKE ?
-  )";
+  $whereClauses[] = "(transaction_id LIKE ? OR full_name LIKE ? OR request_type LIKE ? OR payment_method LIKE ? OR payment_status LIKE ? OR document_status LIKE ?)";
   $bindTypes .= 'ssssss';
   $term = "%{$search}%";
   $bindParams = array_merge($bindParams, array_fill(0, 6, $term));
@@ -41,73 +30,51 @@ if ($search !== '') {
 // INDIVIDUAL FILTERS
 if ($request_type) {
   $whereClauses[] = 'request_type = ?';
-  $bindTypes    .= 's';
-  $bindParams[]  = $request_type;
+  $bindTypes .= 's';
+  $bindParams[] = $request_type;
 }
 if ($payment_method) {
   $whereClauses[] = 'payment_method = ?';
-  $bindTypes    .= 's';
-  $bindParams[]  = $payment_method;
+  $bindTypes .= 's';
+  $bindParams[] = $payment_method;
 }
 if ($payment_status) {
   $whereClauses[] = 'payment_status = ?';
-  $bindTypes    .= 's';
-  $bindParams[]  = $payment_status;
+  $bindTypes .= 's';
+  $bindParams[] = $payment_status;
 }
 if ($document_status) {
   $whereClauses[] = 'document_status = ?';
-  $bindTypes    .= 's';
-  $bindParams[]  = $document_status;
+  $bindTypes .= 's';
+  $bindParams[] = $document_status;
 }
 
-$whereClauses[] = "NOT (payment_status = 'Paid' AND document_status = 'Released')";
-
-// DATE RANGE
-if ($date_from && $date_to) {
-  $whereClauses[] = 'DATE(created_at) BETWEEN ? AND ?';
-  $bindTypes    .= 'ss';
-  $bindParams[]  = $date_from;
-  $bindParams[]  = $date_to;
-} elseif ($date_from) {
-  $whereClauses[] = 'DATE(created_at) >= ?';
-  $bindTypes    .= 's';
-  $bindParams[]  = $date_from;
-} elseif ($date_to) {
-  $whereClauses[] = 'DATE(created_at) <= ?';
-  $bindTypes    .= 's';
-  $bindParams[]  = $date_to;
+// Purok filter for pie chart
+$allPuroks      = ['purok1_rbi','purok2_rbi','purok3_rbi','purok4_rbi','purok5_rbi','purok6_rbi'];
+$selectedPurok  = $_GET['purok'] ?? ''; 
+if (in_array($selectedPurok, $allPuroks)) {
+    // only the selected purok
+    $purokTables = [ $selectedPurok ];
+} else {
+    // default: all puroks
+    $purokTables = $allPuroks;
 }
 
-// CLAIM DATE RANGE
-if ($claim_from && $claim_to) {
-  $whereClauses[] = 'DATE(claim_date) BETWEEN ? AND ?';
-  $bindTypes    .= 'ss';
-  $bindParams[]  = $claim_from;
-  $bindParams[]  = $claim_to;
-} elseif ($claim_from) {
-  $whereClauses[] = 'DATE(claim_date) >= ?';
-  $bindTypes    .= 's';
-  $bindParams[]  = $claim_from;
-} elseif ($claim_to) {
-  $whereClauses[] = 'DATE(claim_date) <= ?';
-  $bindTypes    .= 's';
-  $bindParams[]  = $claim_to;
-}
+// EXCLUDE PAID AND RELEASED (NOT FINAL)
+// $whereClauses[] = "NOT (payment_status = 'Paid' AND document_status = 'Released')";
 
-$whereSQL = $whereClauses
-  ? 'WHERE ' . implode(' AND ', $whereClauses)
-  : '';
+// Only show rows from the current week 
+$whereClauses[] = "YEAR(created_at) = YEAR(CURDATE()) AND WEEK(created_at,1) = WEEK(CURDATE(),1)";
+
+// BUILD WHERE CLAUSE
+$whereSQL = $whereClauses ? 'WHERE ' . implode(' AND ', $whereClauses) : '';
   
 // COUNT TOTAL WITH FILTERS
-$countSql = "SELECT COUNT(*) FROM view_general_requests {$whereSQL}";
+$countSql = "SELECT COUNT(*) FROM view_dashboard {$whereSQL}";
 $cst = $conn->prepare($countSql);
 if (! empty($bindTypes)) {
   $cst->bind_param($bindTypes, ...$bindParams);
 }
-
-// if ($whereClauses) {
-//   $cst->bind_param($bindTypes, ...$bindParams);
-// }
 
 $cst->execute();
 $total = $cst->get_result()->fetch_row()[0];
@@ -116,10 +83,7 @@ $cst->close();
 $pages = max(1, ceil($total / $limit));
 
 // FETCH PAGE WITH FILTERS
-$sql = "
-    SELECT transaction_id, full_name, request_type, DATE_FORMAT(created_at, '%M %d, %Y') AS formatted_date, claim_date, payment_method, payment_status, document_status
-    FROM view_general_requests {$whereSQL} ORDER BY created_at DESC LIMIT ? OFFSET ?
-  ";
+$sql = "SELECT transaction_id, full_name, request_type, payment_method, payment_status, document_status FROM view_dashboard {$whereSQL} ORDER BY created_at DESC LIMIT ? OFFSET ?";
 $st = $conn->prepare($sql);
 
 // BIND FILTERS & PAGINATION
@@ -154,21 +118,20 @@ if ($queryString) {
 <!-- MAIN CONTENT -->
 <div class="container-fluid p-3">
   <?php
-  // Fetch live counts for dashboard stats
-  // 1. Total registered users
+  // TOTAL USERS
   $userCount = $conn->query("SELECT COUNT(*) FROM user_accounts")->fetch_row()[0] ?? 0;
 
-  // 2. Total service requests across multiple tables
+  // TOTAL SERVICES
   $serviceTables = [
       'barangay_id_requests',
-      'blotter_records',
       'business_permit_requests',
       'good_moral_requests',
       'guardianship_requests',
       'indigency_requests',
       'residency_requests',
       'solo_parent_requests',
-      'summon_records'
+      // 'blotter_records',
+      // 'summon_records'
   ];
   $serviceCount = 0;
   foreach ($serviceTables as $tbl) {
@@ -176,43 +139,106 @@ if ($queryString) {
       $serviceCount += $cnt;
   }
 
-  // 3. Total pending account requests
+  // 3. TOTAL PENDING ACCOUNT REQUESTS
   $pendingRequests = $conn->query("SELECT COUNT(*) FROM pending_accounts")->fetch_row()[0] ?? 0;
 
-  // 4. Total residents across purok RBI tables
-  $purokTables = [
-      'purok1_rbi',
-      'purok2_rbi',
-      'purok3_rbi',
-      'purok4_rbi',
-      'purok5_rbi',
-      'purok6_rbi'
-  ];
+  // 4. TOTAL RESIDENTS (always show all)
   $residentsCount = 0;
-  foreach ($purokTables as $tbl) {
+  foreach ($allPuroks as $tbl) {
       $cnt = $conn->query("SELECT COUNT(*) FROM {$tbl}")->fetch_row()[0] ?? 0;
       $residentsCount += $cnt;
   }
 
-  // Build stats array dynamically
+  // AGE GROUP COUNTS
+  $ageGroups = [
+    'Children (<18)' => 0,
+    'Adults (18–59)' => 0,
+    'Senior Citizens (60+)' => 0,
+  ];
+  
+  function getAge($birthdate) {
+      $dob = new DateTime($birthdate);
+      return $dob->diff(new DateTime())->y;
+  }
+  foreach ($purokTables as $tbl) {
+      $res = $conn->query("SELECT birthdate FROM {$tbl}");
+      while ($r = $res->fetch_assoc()) {
+          $age = getAge($r['birthdate']);
+          if ($age < 18) {
+            $ageGroups['Children (<18)']++;
+          } elseif ($age < 60) {
+            $ageGroups['Adults (18–59)']++;
+          } else {
+            $ageGroups['Senior Citizens (60+)']++;
+          }
+      }
+  }
+
+  // BUILD STATS ARRAY FOR DASHBOARD
   $stats = [
-      ['icon' => 'group',       'label' => 'Users',            'count' => $userCount],
+      ['icon' => 'group', 'label' => 'Users', 'count' => $userCount],
       ['icon' => 'description', 'label' => 'Service Requests', 'count' => $serviceCount],
-      ['icon' => 'apartment',  'label' => 'Residents',        'count' => $residentsCount],
-      ['icon' => 'person_add',  'label' => 'Account Requests', 'count' => $pendingRequests],
+      ['icon' => 'diversity_3', 'label' => 'Residents', 'count' => $residentsCount],
+      ['icon' => 'person_add', 'label' => 'Account Requests', 'count' => $pendingRequests],
   ];
   ?>
   
-  <div class="row g-3 mb-4">
+  <div class="row g-4 mb-4">
     <?php foreach ($stats as $stat): ?>
       <div class="col-md-3 col-sm-6">
         <div class="card shadow-sm text-center p-3">
-          <span class="material-symbols-outlined fs-1 text-success"><?= $stat['icon'] ?></span>
+          <span class="material-symbols-outlined fs-2 text-success"><?= $stat['icon'] ?></span>
           <h2 class="fw-bold"><?= number_format($stat['count']) ?></h2>
           <p class="text-muted"><?= htmlspecialchars($stat['label']) ?></p>
         </div>
       </div>
     <?php endforeach; ?>
+
+    <!-- New Card #1: Pie Chart with Purok Filter -->
+    <div class="col-md-6 col-sm-12">
+      <div class="card shadow-sm p-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="card-title mb-0 fs-5 text-muted">Residents by Age Group</h5>
+
+          <form method="get" class="d-flex align-items-center" style="gap:.5rem">
+            <?php 
+              foreach ($_GET as $k => $v) {
+                if ($k !== 'purok') {
+                  echo "<input type='hidden' name='".htmlspecialchars($k)."' value='".htmlspecialchars($v)."'>";
+                }
+              }
+            ?>
+
+            <select name="purok" class="form-select form-select-sm" style="font-size:.875rem" onchange="this.form.submit()">
+              <option value="">All</option>
+              <option value="purok1_rbi" <?= $selectedPurok==='purok1_rbi'?'selected':'' ?>>Purok 1</option>
+              <option value="purok2_rbi" <?= $selectedPurok==='purok2_rbi'?'selected':'' ?>>Purok 2</option>
+              <option value="purok3_rbi" <?= $selectedPurok==='purok3_rbi'?'selected':'' ?>>Purok 3</option>
+              <option value="purok4_rbi" <?= $selectedPurok==='purok4_rbi'?'selected':'' ?>>Purok 4</option>
+              <option value="purok5_rbi" <?= $selectedPurok==='purok5_rbi'?'selected':'' ?>>Purok 5</option>
+              <option value="purok6_rbi" <?= $selectedPurok==='purok6_rbi'?'selected':'' ?>>Purok 6</option>
+            </select>
+          </form>
+        </div>
+
+        <?php if (array_sum($ageGroups) > 0): ?>
+          <canvas id="agePieChart" style="max-height:200px;"></canvas>
+        <?php else: ?>
+          <p class="text-center text-muted my-5">
+            No resident data for <?= $selectedPurok ? preg_replace('/^purok(\d+)_rbi$/i','Purok $1',$selectedPurok) : 'any purok' ?> yet.
+          </p>
+        <?php endif; ?>
+      </div>
+    </div>
+
+    <!-- New Card #2 (spans 6 cols on md+) -->
+    <!-- <div class="col-md-6 col-sm-12">
+      <div class="card shadow-sm text-center p-3">
+        <span class="material-symbols-outlined fs-1 text-success">insights</span>
+        <h2 class="fw-bold"><?= number_format($newMetric2) ?></h2>
+        <p class="text-muted">New Metric 2</p>
+      </div>
+    </div> -->
   </div>
 
   <!-- Recent Requests Table -->
@@ -221,6 +247,7 @@ if ($queryString) {
       <div class="d-flex align-items-center mb-3">
         <div class="dropdown">
           <button class="btn btn-sm btn-outline-success dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <span class="material-symbols-outlined me-1" style="font-size:1rem; vertical-align:middle;">filter_list</span>
             Filter
           </button>
           <div class="dropdown-menu p-3" aria-labelledby="filterDropdown" style="min-width:260px; --bs-body-font-size:.75rem; font-size:.75rem;">
@@ -234,42 +261,12 @@ if ($queryString) {
                   <option value="">All</option>
                   <option <?= $request_type ==='Barangay ID'?'selected':'' ?> value="Barangay ID">Barangay ID</option>
                   <option <?= $request_type ==='Business Permit'?'selected':'' ?> value="Business Permit">Business Permit</option>
-                  <option <?= $request_type==='Good Moral'?'selected':''?> value="Good Moral">Good Moral</option>
-                  <option <?= $request_type==='Guardianship'?'selected':''?> value="Guardianship">Guardianship</option>
-                  <option <?= $request_type==='Indigency'?'selected':''?> value="Indigency">Indigency</option>
-                  <option <?= $request_type==='Residency'?'selected':''?> value="Residency">Residency</option>
-                  <option <?= $request_type==='Solo Parent'?'selected':''?> value="Solo Parent">Solo Parent</option>
+                  <option <?= $request_type ==='Good Moral'?'selected':''?> value="Good Moral">Good Moral</option>
+                  <option <?= $request_type ==='Guardianship'?'selected':''?> value="Guardianship">Guardianship</option>
+                  <option <?= $request_type ==='Indigency'?'selected':''?> value="Indigency">Indigency</option>
+                  <option <?= $request_type ==='Residency'?'selected':''?> value="Residency">Residency</option>
+                  <option <?= $request_type ==='Solo Parent'?'selected':''?> value="Solo Parent">Solo Parent</option>
                   </select>
-              </div>
-
-              <!-- Date Created -->
-              <div class="mb-2">
-                <label class="form-label mb-1">Date Created</label>
-                <div class="d-flex gap-1">
-                  <div class="flex-grow-1">
-                    <small class="text-muted">From</small>
-                    <input type="date" name="date_from" class="form-control form-control-sm" style="font-size:.75rem;" value="<?= htmlspecialchars($date_from) ?>">
-                  </div>
-                  <div class="flex-grow-1">
-                    <small class="text-muted">To</small>
-                    <input type="date" name="date_to" class="form-control form-control-sm" style="font-size:.75rem;" value="<?= htmlspecialchars($date_to) ?>">
-                  </div>
-                </div>
-              </div>
-
-              <!-- Claim Date -->
-              <div class="mb-2">
-                <label class="form-label mb-1">Claim Date</label>
-                <div class="d-flex gap-1">
-                  <div class="flex-grow-1">
-                    <small class="text-muted">From</small>
-                    <input type="date" name="claim_from" class="form-control form-control-sm me-1" style="font-size:.75rem;" value="<?= htmlspecialchars($claim_from) ?>">
-                  </div>
-                  <div class="flex-grow-1">
-                    <small class="text-muted">To</small>
-                    <input type="date" name="claim_to" class="form-control form-control-sm" style="font-size:.75rem;" value="<?= htmlspecialchars($claim_to) ?>">
-                  </div>
-                </div>
               </div>
 
               <!-- Payment Method -->
@@ -322,9 +319,7 @@ if ($queryString) {
             'payment_method','payment_status','document_status'
           ] as $f):
               if (!empty($_GET[$f])): ?>
-            <input type="hidden"
-                  name="<?= $f ?>"
-                  value="<?= htmlspecialchars($_GET[$f]) ?>">
+            <input type="hidden" name="<?= $f ?>" value="<?= htmlspecialchars($_GET[$f]) ?>">
           <?php endif; endforeach; ?>
 
           <div class="input-group input-group-sm">
@@ -372,16 +367,7 @@ if ($queryString) {
                   default: $docClass = ''; break;
                 }
               ?>
-              <tr class="clickable-row"
-                  data-transaction_id="<?= $txn?>"
-                  data-full_name="<?= $name?>"
-                  data-request_type="<?= $req?>"
-                  data-created_at="<?= htmlspecialchars($row['formatted_date'])?>"
-                  data-claim_date="<?= htmlspecialchars($row['claim_date'] ?: '—')?>"
-                  data-payment_method="<?= $pm?>"
-                  data-payment_status="<?= $ps?>"
-                  data-document_status="<?= $ds?>"
-                  style="cursor:pointer">
+              <tr>
                 <td><?= $txn ?></td>
                 <td><?= $name ?></td>
                 <td><?= $req ?></td>
@@ -395,83 +381,6 @@ if ($queryString) {
             <?php endif; ?>
           </tbody>
         </table>
-      </div>
-
-      <!-- Details Modal -->
-      <div class="modal fade" id="rowModal" tabindex="-1" aria-labelledby="rowModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-          <form class="modal-content shadow-lg">
-            <div class="modal-header bg-dark text-white">
-              <h5 class="modal-title" id="rowModalLabel">
-                <i class="bi bi-card-list me-2"></i>Request Details
-              </h5>
-            </div>
-            <div class="modal-body">
-              <!-- Section: User & Request -->
-              <div class="mb-4">
-                <h6 class="fw-bold fs-5">Basic Information</h6>
-                <div class="row g-2">
-                  <label for="modal-transaction_id" class="col-sm-4 col-form-label">Transaction No.</label>
-                  <div class="col-sm-8">
-                    <input type="text" readonly class="form-control" id="modal-transaction_id">
-                  </div>
-
-                  <label for="modal-full_name" class="col-sm-4 col-form-label">Name</label>
-                  <div class="col-sm-8">
-                    <input type="text" readonly class="form-control" id="modal-full_name">
-                  </div>
-
-                  <label for="modal-request_type" class="col-sm-4 col-form-label">Request Type</label>
-                  <div class="col-sm-8">
-                    <input type="text" readonly class="form-control" id="modal-request_type">
-                  </div>
-                </div>
-              </div>
-
-              <!-- Section: Dates -->
-              <div class="mb-4">
-                <h6 class="fw-bold fs-5">Dates</h6>
-                <div class="row g-2">
-                  <label for="modal-created_at" class="col-sm-4 col-form-label">Date Created</label>
-                  <div class="col-sm-8">
-                    <input type="date" readonly class="form-control" id="modal-created_at">
-                  </div>
-
-                  <label for="modal-claim_date" class="col-sm-4 col-form-label">Claim Date</label>
-                  <div class="col-sm-8">
-                    <input type="date" readonly class="form-control" id="modal-claim_date">
-                  </div>
-                </div>
-              </div>
-
-              <!-- Section: Payment & Status -->
-              <div>
-                <h6 class="fw-bold fs-5">Payment & Status</h6>
-                <div class="row g-2">
-                  <label for="modal-payment_method" class="col-sm-4 col-form-label">Payment Method</label>
-                  <div class="col-sm-8">
-                    <input type="text" readonly class="form-control" id="modal-payment_method">
-                  </div>
-
-                  <label for="modal-payment_status" class="col-sm-4 col-form-label">Payment Status</label>
-                  <div class="col-sm-8">
-                    <input type="text" readonly class="form-control" id="modal-payment_status">
-                  </div>
-
-                  <label for="modal-document_status" class="col-sm-4 col-form-label">Document Status</label>
-                  <div class="col-sm-8">
-                    <input type="text" readonly class="form-control" id="modal-document_status">
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="modal-footer border-0">
-              <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">
-                Close
-              </button>
-            </div>
-          </form>
-        </div>
       </div>
 
       <!-- Pagination Controls -->
@@ -519,38 +428,35 @@ if ($queryString) {
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   // Search/clear logic
-  const form       = document.getElementById('searchForm');
-  const input      = document.getElementById('searchInput');
-  const btn        = document.getElementById('searchBtn');
+  const form = document.getElementById('searchForm');
+  const input = document.getElementById('searchInput');
+  const btn = document.getElementById('searchBtn');
   const hasSearch  = <?= $search !== '' ? 'true' : 'false' ?>;
+  
   btn.addEventListener('click', () => {
     if (hasSearch) input.value = '';
     form.submit();
   });
 
-  // Modal populator
-  const modalEl   = document.getElementById('rowModal');
-  const bsModal   = new bootstrap.Modal(modalEl);
-  const dataKeys  = ['transaction_id','full_name','request_type','created_at','claim_date','payment_method','payment_status','document_status'];
-
-  document.querySelector('tbody').addEventListener('click', e => {
-    const tr = e.target.closest('tr.clickable-row');
-    if (!tr) return;
-
-    dataKeys.forEach(key => {
-      const input = document.getElementById(`modal-${key}`);
-      // For date inputs, convert to YYYY-MM-DD
-      if (input.type === 'date') {
-        // expecting dataset value in ISO (YYYY-MM-DD) or fallback to today
-        input.value = tr.dataset[key] && !isNaN(Date.parse(tr.dataset[key]))
-          ? new Date(tr.dataset[key]).toISOString().substr(0,10)
-          : '';
-      } else {
-        input.value = tr.dataset[key] || '';
+  const ctx = document.getElementById('agePieChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels: <?= json_encode(array_keys($ageGroups)) ?>,
+      datasets: [{data: <?= json_encode(array_values($ageGroups)) ?>,
+      backgroundColor: [
+          '#198754',  
+          '#20c997',  
+          '#28a745' 
+        ]
+      }]
+    },
+    options: {responsive: true,
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: { callbacks: { label: ctx => ctx.label + ': ' + ctx.formattedValue } }
       }
-    });
-
-    bsModal.show();
+    }
   });
 });
 </script>

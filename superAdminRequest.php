@@ -156,6 +156,7 @@ $result = $st->get_result();
     <div class="d-flex align-items-center mb-3">
       <div class="dropdown">
         <button class="btn btn-sm btn-outline-success dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+          <span class="material-symbols-outlined me-1" style="font-size:1rem; vertical-align:middle;">filter_list</span>
           Filter
         </button>
         <div class="dropdown-menu p-3" aria-labelledby="filterDropdown" style="min-width:260px; --bs-body-font-size:.75rem; font-size:.75rem;">
@@ -170,6 +171,7 @@ $result = $st->get_result();
                 <option value="">All</option>
                 <option <?= $request_type==='Barangay ID'?'selected':''?> value="Barangay ID">Barangay ID</option>
                 <option <?= $request_type==='Business Permit'?'selected':''?> value="Business Permit">Business Permit</option>
+                <!-- <option <?= $request_type==='Equipment Borrowing'?'selected':''?> value="Equipment Borrowing">Equipment Borrowing</option> -->
                 <option <?= $request_type==='Good Moral'?'selected':''?> value="Good Moral">Good Moral</option>
                 <option <?= $request_type==='Guardianship'?'selected':''?> value="Guardianship">Guardianship</option>
                 <option <?= $request_type==='Indigency'?'selected':''?> value="Indigency">Indigency</option>
@@ -240,7 +242,7 @@ $result = $st->get_result();
           <i class="bi bi-plus-lg me-1"></i> Add New Request
         </button>
         <ul class="dropdown-menu" aria-labelledby="addRequestDropdown">
-          <?php foreach (['Barangay ID','Business Permit','Good Moral','Guardianship','Indigency','Residency','Solo Parent'] as $type): ?>
+          <?php foreach (['Barangay ID','Business Permit','Good Moral','Guardianship','Indigency','Residency','Solo Parent'] as $type): ?> <!-- 'Equipment Borrowing' -->
             <li>
               <button
                 type="button"
@@ -922,7 +924,7 @@ document.addEventListener('DOMContentLoaded', () => {
       addBodyElem.appendChild(
         document.querySelector(`template[data-type="${type}"]`).content.cloneNode(true)
       );
-      if (['Barangay ID','Business Permit','Good Moral','Guardianship','Indigency','Residency','Solo Parent']
+      if (['Barangay ID','Business Permit','Good Moral','Guardianship','Indigency','Residency','Solo Parent'] //'Equipment Borrowing'
           .includes(type)) {
         const flag = document.createElement('input');
         flag.type = 'hidden'; flag.name = 'superAdminRedirect'; flag.value = '1';
@@ -935,7 +937,8 @@ document.addEventListener('DOMContentLoaded', () => {
         'Indigency':'functions/serviceIndigency_submit.php',
         'Good Moral':'functions/serviceGoodMoral_submit.php',
         'Guardianship':'functions/serviceGuardianship_submit.php',
-        'Solo Parent':'functions/serviceSoloParent_submit.php'
+        'Solo Parent':'functions/serviceSoloParent_submit.php',
+        // 'Equipment Borrowing':'functions/serviceEquipmentBorrowing_submit.php'
       }[type] || addFormElem.action;
       bsAddModal.show();
     });

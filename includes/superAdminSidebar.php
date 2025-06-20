@@ -6,7 +6,7 @@
             <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 50px;">
         </div>
         <h1 class="mt-1 mb-1">Barangay Magang</h1>
-        <h2 class="text-uppercase">Daet, Camarines Norte</h2>
+        <h2 class="text-uppercase">Daet, Camarines Norte, Philippines</h2>
         <hr class="custom-hr">
 
         <button class="btn btn-sm" id="close-btn">
@@ -31,7 +31,7 @@
             Request
             </a>
         </li>
-        <li>
+        <!-- <li>
             <a href="superAdminPanel.php?page=superAdminBlotter" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminBlotter') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">edit_document</span>
             Blotter Record
@@ -42,11 +42,17 @@
             <span class="material-symbols-outlined me-2">event</span>
             Summon
             </a>
-        </li>
-        <li>
+        </li> -->
+        <!-- <li>
             <a href="superAdminPanel.php?page=superAdminKatarungangPambarangay" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminKatarungangPambarangay') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">balance</span>
             Katarungang Pambarangay
+            </a>
+        </li> -->
+        <li>
+            <a href="superAdminPanel.php?page=superAdminComplaints" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminComplaints') ? 'active' : '' ?>">
+            <span class="material-symbols-outlined me-2">release_alert</span>
+            Complaints
             </a>
         </li>
         <li>
@@ -79,12 +85,13 @@
             Device Status
             </a>
         </li>
-        <!-- <li>
+        <li>
             <a href="superAdminPanel.php?page=superAdminLogs" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminLogs') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">badge</span>
             Logs
             </a>
-        </li>    -->
+        </li>   
+        <!-- SUPER ADMIN SETTINGS (NOT YET SURE IF NEEDED) -->
         <!-- <li>
             <a href="superAdminPanel.php?page=superAdminSettings" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminSettings') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">settings</span>

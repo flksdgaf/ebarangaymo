@@ -28,8 +28,9 @@ $conn->close();
 
 ?>
 
-<div class="container-fluid p-3">
+<title>eBarangay Mo | Device Status</title>
 
+<div class="container-fluid p-3">
   <div class="row g-3">
     <div class="col-12">
       <div class="card p-3 shadow-sm mb-3">

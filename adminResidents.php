@@ -69,6 +69,8 @@ while ($row = $result->fetch_assoc()) {
 $stmt->close();
 ?>
 
+<title>eBarangay Mo | Residents</title>
+
 <div class="container py-3">
   <!-- Table -->
   <div class="card shadow-sm p-3">
@@ -297,14 +299,14 @@ $stmt->close();
         { key:'full_name',                      label:'Full Name',                      type:'text',   readonly:true, editable:true },
         { key:'birthdate',                      label:'Birthdate',                      type:'date',   readonly:true, editable:true },
         { key:'sex',                            label:'Sex',                            type:'select', readonly:true, editable:true,
-            options:['Male','Female','Prefer not to say'] },
+            options:['Male','Female','Prefer not to say','Unknown'] },
         { key:'civil_status',                   label:'Civil Status',                   type:'select', readonly:true, editable:true,
-            options:['Single','Married','Separated','Widowed'] },
+            options:['Single','Married','Separated','Widowed','Unknown'] },
         { key:'blood_type',                     label:'Blood Type',                     type:'select', readonly:true, editable:true,
             options:['A','B','AB','O','Unknown'] },
         { key:'birth_registration_number',      label:'Birth Reg. No.',                 type:'text',   readonly:true, editable:true },
         { key:'highest_educational_attainment', label:'Highest Educational Attainment', type:'select', readonly:true, editable:true,
-            options:['Kindergarten','Elementary','High School','Senior High School','College','College Graduate','Vocational','None'] },
+            options:['Kindergarten','Elementary','High School','Senior High School','Undergraduate','College Graduate','Post-Graduate','Vocational','None','Unknown'] },
         { key:'occupation',                     label:'Occupation',                     type:'text',   readonly:true, editable:true },
         { key:'house_number',                   label:'House No.',                       type:'number', readonly:true, editable:true },
         { key:'relationship_to_head',           label:'Relationship to Head',           type:'text',   readonly:true, editable:true },

@@ -20,26 +20,41 @@ include 'includes/header.php';
             <!-- Step 1: Personal Information -->
             <div class="step active-step">
                 <div class="row mb-3">
-                    <label class="col-md-4 text-start fw-bold">First Name</label>
-                    <div class="col-md-8"><input type="text" id="firstname" name="firstname" class="form-control custom-input" required></div>
+                    <label class="col-md-3 text-start fw-bold">First Name</label>
+                    <div class="col-md-9"><input type="text" id="firstname" name="firstname" class="form-control custom-input" required></div>
                 </div>
                 <div class="row mb-3">
-                    <label class="col-md-4 text-start fw-bold">Middle Name</label>
-                    <div class="col-md-8"><input type="text" id="middlename" name="middlename" class="form-control custom-input" placeholder="(Optional)"></div>
+                    <label class="col-md-3 text-start fw-bold">Middle Name</label>
+                    <div class="col-md-9"><input type="text" id="middlename" name="middlename" class="form-control custom-input" placeholder="(Optional)"></div>
                 </div>
                 <div class="row mb-3">
-                    <label class="col-md-4 text-start fw-bold">Last Name</label>
-                    <div class="col-md-8"><input type="text" id="lastname" name="lastname" class="form-control custom-input" required></div>
+                    <label class="col-md-3 text-start fw-bold">Last Name</label>
+                    <div class="col-md-9"><input type="text" id="lastname" name="lastname" class="form-control custom-input" required></div>
                 </div>
                 <div class="row mb-3">
-                    <label class="col-md-4 text-start fw-bold">Suffix</label>
-                    <div class="col-md-8"><input type="text" id="suffix" name="suffix" class="form-control custom-input" placeholder="(Optional)"></div>
+                    <label class="col-md-3 text-start fw-bold">Suffix</label>
+                    <div class="col-md-9"><input type="text" id="suffix" name="suffix" class="form-control custom-input" placeholder="(Optional)"></div>
                 </div>
                 <div class="row mb-3">
-                    <label class="col-md-4 text-start fw-bold">Birthdate</label>
-                    <div class="col-md-8"><input type="date" id="birthdate" name="birthdate" class="form-control custom-input" required></div>
+                    <label class="col-md-3 text-start fw-bold">Birthdate</label>
+                    <div class="col-md-9"><input type="date" id="birthdate" name="birthdate" class="form-control custom-input" required></div>
                 </div>
+
                 <div class="row mb-3">
+                    <label class="col-md-3 text-start fw-bold">Purok</label>
+                    <div class="col-md-9">
+                        <select id="purok" name="purok" class="form-control custom-input" required>
+                            <option value="">Click to select your Purok</option>
+                            <option value="Purok 1">Purok 1</option>
+                            <option value="Purok 2">Purok 2</option>
+                            <option value="Purok 3">Purok 3</option>
+                            <option value="Purok 4">Purok 4</option>
+                            <option value="Purok 5">Purok 5</option>
+                            <option value="Purok 6">Purok 6</option>
+                        </select>
+                    </div>
+                </div>
+                <!-- <div class="row mb-3">
                     <label class="col-md-4 text-start fw-bold">Sex</label>
                     <div class="col-md-8">
                         <select id="sex" name="sex" class="form-control custom-input" required>
@@ -49,11 +64,11 @@ include 'includes/header.php';
                             <option value="Prefer not to say">Prefer not to say</option>
                         </select>
                     </div>
-                </div>
+                </div> -->
             </div>
 
             <!-- Step 2: More Personal Information -->
-            <div class="step">
+            <!-- <div class="step">
                 <div class="row mb-3">
                     <label class="col-md-6 text-start fw-bold">Civil Status</label>
                     <div class="col-md-6">
@@ -122,7 +137,7 @@ include 'includes/header.php';
                     </div>
                 </div>
 
-                <!-- <div class="row mb-3">
+                <div class="row mb-3">
                     <label class="col-md-4 text-start fw-bold">Street/Subdivision</label>
                     <div class="col-md-8"><input type="text" id="subdivision" name="subdivision" class="form-control custom-input" required></div>
                 </div>
@@ -133,8 +148,8 @@ include 'includes/header.php';
                 <div class="row mb-3">
                     <label class="col-md-4 text-start fw-bold">Zip Code</label>
                     <div class="col-md-8"><input type="text" id="zip" name="zip" class="form-control custom-input" required></div>
-                </div> -->
-            </div>
+                </div>
+            </div> -->
 
             <!-- Step 3: Upload Valid ID -->
             <div class="step">
@@ -142,7 +157,7 @@ include 'includes/header.php';
                     <label class="col-md-4 text-start fw-bold">Select Valid ID</label>
                     <div class="col-md-8">
                         <select id="validID" name="validID" class="form-control custom-input" required>
-                            <option value="">Select a valid ID</option>
+                            <option value="">Click to select a valid ID</option>
                             <option value="Philippine Passport">Philippine Passport</option>
                             <option value="Driver’s License">Driver’s License</option>
                             <option value="SSS ID">SSS ID</option>
@@ -220,64 +235,64 @@ include 'includes/header.php';
             <div class="step">
                 <!-- Full Name -->
                 <div class="row mb-3">
-                    <label class="col-md-4 text-start fw-bold">Full Name</label>
-                    <div class="col-md-8">
+                    <label class="col-md-3 text-start fw-bold">Full Name</label>
+                    <div class="col-md-9">
                     <input type="text" id="summaryFullName" class="form-control custom-input" readonly>
                     </div>
                 </div>
                 <!-- Birthdate -->
                 <div class="row mb-3">
-                    <label class="col-md-4 text-start fw-bold">Birthdate</label>
-                    <div class="col-md-8">
+                    <label class="col-md-3 text-start fw-bold">Birthdate</label>
+                    <div class="col-md-9">
                     <input type="text" id="summaryBirthdate" class="form-control custom-input" readonly>
                     </div>
                 </div>
                 <!-- Sex -->
-                <div class="row mb-3">
+                <!-- <div class="row mb-3">
                     <label class="col-md-4 text-start fw-bold">Sex</label>
                     <div class="col-md-8">
                     <input type="text" id="summarySex" class="form-control custom-input" readonly>
                     </div>
-                </div>
+                </div> -->
                 <!-- Civil Status -->
-                <div class="row mb-3">
+                <!-- <div class="row mb-3">
                     <label class="col-md-4 text-start fw-bold">Civil Status</label>
                     <div class="col-md-8">
                     <input type="text" id="summaryCivilStatus" class="form-control custom-input" readonly>
                     </div>
-                </div>
+                </div> -->
                 <!-- Blood Type -->
-                <div class="row mb-3">
+                <!-- <div class="row mb-3">
                     <label class="col-md-4 text-start fw-bold">Blood Type</label>
                     <div class="col-md-8">
                     <input type="text" id="summaryBloodType" class="form-control custom-input" readonly>
                     </div>
-                </div>
+                </div> -->
                 <!-- Birth Registration Number -->
-                <div class="row mb-3">
+                <!-- <div class="row mb-3">
                     <label class="col-md-4 text-start fw-bold">Birth Reg. No.</label>
                     <div class="col-md-8">
                     <input type="text" id="summaryBirthReg" class="form-control custom-input" readonly>
                     </div>
-                </div>
+                </div> -->
                 <!-- Educational Attainment -->
-                <div class="row mb-3">
+                <!-- <div class="row mb-3">
                     <label class="col-md-4 text-start fw-bold">Education</label>
                     <div class="col-md-8">
                     <input type="text" id="summaryEducation" class="form-control custom-input" readonly>
                     </div>
-                </div>
+                </div> -->
                 <!-- Occupation -->
-                <div class="row mb-3">
+                <!-- <div class="row mb-3">
                     <label class="col-md-4 text-start fw-bold">Occupation</label>
                     <div class="col-md-8">
                     <input type="text" id="summaryOccupation" class="form-control custom-input" readonly>
                     </div>
-                </div>
+                </div> -->
                 <!-- Purok -->
                 <div class="row mb-3">
-                    <label class="col-md-4 text-start fw-bold">Purok</label>
-                    <div class="col-md-8">
+                    <label class="col-md-3 text-start fw-bold">Purok</label>
+                    <div class="col-md-9">
                     <input type="text" id="summaryPurok" class="form-control custom-input" readonly>
                     </div>
                 </div>
@@ -286,7 +301,6 @@ include 'includes/header.php';
             <!-- Navigation Dots -->
             <div class="text-center mt-2">
                 <span class="dot active-dot"></span>
-                <span class="dot"></span>
                 <span class="dot"></span>
                 <span class="dot"></span>
                 <span class="dot"></span>

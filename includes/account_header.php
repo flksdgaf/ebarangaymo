@@ -105,7 +105,6 @@ $stmt->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - eBarangayMo</title>
     <!-- CUSTOM CSS -->
     <link rel="stylesheet" href="panels.css">
     <link rel="stylesheet" href="includes/sidebar.css">

@@ -8,9 +8,10 @@ session_start();
 $pageTitles = [
     // Admin
     'adminDashboard' => 'Dashboard',
-    'adminRequest' => 'Service Requests',
+    'adminRequest' => 'Service Records',
     'adminBlotter' => 'Blotter Records',
     'adminSummon' => 'Summon Records',
+    'adminComplaints' => 'Complaint Records',
     'adminKatarungangPambarangay' => 'Katarungang Pambarangay',
     'adminResidents' => 'Residents Records',
     'adminVerifications' => 'Account Verifications',
@@ -21,9 +22,10 @@ $pageTitles = [
     
     // Super Admin
     'superAdminDashboard' => 'Dashboard',
-    'superAdminRequest' => 'Service Requests',
+    'superAdminRequest' => 'Service Records',
     'superAdminBlotter' => 'Blotter Records',
     'superAdminSummon' => 'Summon',
+    'superAdminComplaints' => 'Complaint Records',
     'superAdminKatarungangPambarangay' => 'Katarungang Pambarangay',
     'superAdminResidents' => 'Residents Records',
     'superAdminVerifications' => 'Account Verifications',
@@ -120,6 +122,7 @@ $stmt->close();
     <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous" defer></script> -->
     <!-- FONT AWESOME -->
     <script src="https://kit.fontawesome.com/e30afd7a6b.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 </head>
 <body>

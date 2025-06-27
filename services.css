@@ -12,18 +12,21 @@
     padding: 50px 20px;
     display: flex;         
     align-items: center;
+    border-radius: 10px;
 }
 
 .barangay-clearance {
     background-color: #61AD41;
     display: flex;         
     align-items: center;
+    border-radius: 10px;
 }
 
 .certification {
     background-color: #13411F;
     display: flex;         
     align-items: center;
+    border-radius: 10px;
 }
 
 .business-permit {
@@ -31,6 +34,7 @@
     padding: 50px 20px;
     display: flex;         
     align-items: center;
+    border-radius: 10px;
 }
 
 .equipment-borrowing {
@@ -38,6 +42,7 @@
     padding: 50px 20px;
     display: flex;         
     align-items: center;
+    border-radius: 10px;
 }
 
 .cash-incentives {
@@ -45,12 +50,32 @@
     padding: 50px 20px;
     display: flex;         
     align-items: center;
+    border-radius: 10px;
 }
 
 .cash_icon {
     flex: 0 0 auto;
     font-size: 50px;
 }
+
+.barangay-id-button .barangay-id,
+.barangay-clearance-button .barangay-clearance,
+.certification-button .certification,
+.business-permit-button .business-permit,
+.equipment-borrowing-button .equipment-borrowing {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.barangay-id-button:hover .barangay-id,
+.barangay-clearance-button:hover .barangay-clearance,
+.certification-button:hover .certification,
+.business-permit-button:hover .business-permit,
+.equipment-borrowing-button:hover .equipment-borrowing {
+  transform: scale(1.03);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  z-index: 1;
+}
+
 
 @media (max-width: 768px) {
     .services-desc {

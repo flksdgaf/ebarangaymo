@@ -52,39 +52,10 @@ $news = $ress->fetch_all(MYSQLI_ASSOC);
 
 
 <!-- CAROUSEL SECTION -->
-<div class="carousel-wrapper">
+<div class="carousel-wrapper mb-5">
     <div class="carousel-blur-bg"></div> 
 
     <div class="carousel-container">
-        <!-- <div id="carouselExampleIndicators" class="carousel slide">
-            <div class="carousel-indicators">
-                <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
-                <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="1" aria-label="Slide 2"></button>
-                <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="2" aria-label="Slide 3"></button>
-            </div>
-
-            <div class="carousel-inner">
-                <div class="carousel-item active">
-                    <img src="images/carousel.png" class="d-block w-100 carousel-image" alt="...">
-                </div>
-                <div class="carousel-item">
-                    <img src="images/carousel.png" class="d-block w-100 carousel-image" alt="...">
-                </div>
-                <div class="carousel-item">
-                    <img src="images/carousel.png" class="d-block w-100 carousel-image" alt="...">
-                </div>
-            </div>
-
-            <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
-                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Previous</span>
-            </button>
-
-            <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
-                <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Next</span>
-            </button>
-        </div> -->
         <div id="carouselExampleIndicators" class="carousel slide" data-bs-ride="carousel">
           <div class="carousel-indicators">
             <?php foreach($slides as $i=>$s): ?>
@@ -122,80 +93,67 @@ $news = $ress->fetch_all(MYSQLI_ASSOC);
     </div>
 </div>
 
+<!-- <div class="blob-outer-container">
+    <div class="blob-inner-container">
+        <div class="blob"></div>
+    </div>
+</div> -->
+
 <!-- SERVICE SECTION -->
-<div class="container-fluid mt-5 mb-5 services-container">
-  <h1 class="text-center gradient-text text-uppercase">Services Offered</h1>
-    <div class="container mt-5">
-        <div class="row row-cols-1 row-cols-md-2 g-3">
-            <div class="col d-flex">
-                <button type="button" class="service-card light-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#barangayIDModal">
-                    <i class="fas fa-id-card icon"></i>
-                    <div>
-                        <h4>Barangay ID</h4>
-                        <p>
-                          Opisyal na identification card na inilalaan ng barangay.
-                        </p>
-                    </div>
-                </button>
-            </div>
-            <div class="col d-flex">
-                  <button type="button" class="service-card mid-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#barangayClearanceModal">
-                    <i class="fas fa-file-alt icon"></i>
-                    <div>
-                        <h4>Barangay Clearance</h4>
-                        <p>
-                          Patunay na ang residente ay walang nakabinbing isyu.
-                        </p>
-                    </div>
-                  </button>
-            </div>
-            <div class="col d-flex">
-                <button type="button" class="service-card dark-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#certificationModal">
-                    <i class="fas fa-certificate icon"></i>
-                    <div>
-                        <h4>Certification</h4>
-                        <p>
-                          Patunay ng pagkakakilanlan, paninirahan, o katayuan ng residente.
-                        </p>
-                    </div>
-                </button>
-            </div>
-            <div class="col d-flex">
-                <button type="button" class="service-card light-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#businessPermitModal">
-                    <i class="fas fa-store icon"></i>
-                    <div>
-                        <h4>Business Permit</h4>
-                        <p>
-                          Pahintulot para mag‑operate sa loob ng barangay.
-                        </p>
-                    </div>
-                </button>
-            </div>
-            <div class="col d-flex">
-                <button type="button" class="service-card mid-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#equipmentModal">
-                    <i class="fas fa-chair icon"></i>
-                    <div>
-                        <h4>Equipment Borrowing</h4>
-                        <p>
-                          Paghiram ng mga barangay equipments.
-                        </p>
-                    </div>
-                </button>
-            </div>
-            <div class="col d-flex">
-                <button type="button" class="service-card dark-green w-100 border-0" data-bs-toggle="modal" data-bs-target="#cashModal">
-                    <i class="fas fa-money-bill cash_icon"></i>
-                    <div>
-                        <h4>Cash Incentives</h4>
-                        <p>
-                          Insentibong salapi para sa mga natatanging mag-aaral.
-                        </p>
-                    </div>
-                </button>
-            </div>
-        </div>
+<div class="container-fluid mt-5 mb-5 pt-5 pb-2 services-container">
+  <h1 class="text-center gradient-text text-uppercase autoShow">Services Offered</h1>
+  <div class="container mt-5">
+    <!-- All buttons in one column, centered -->
+    <div class="row gy-3">
+      <div class="col-12 d-flex justify-content-center buttonReveal">
+        <button type="button" class="service-card light-green border-0" style="width: 280px;" data-bs-toggle="modal" data-bs-target="#barangayIDModal">
+          <i class="fas fa-id-card icon"></i>
+          <div>
+            <h4>Barangay ID</h4>
+            <p>Opisyal na identification card na inilalaan ng barangay.</p>
+          </div>
+        </button>
       </div>
+      <div class="col-12 d-flex justify-content-center buttonReveal">
+        <button type="button" class="service-card mid-green border-0" style="width: 280px;" data-bs-toggle="modal" data-bs-target="#barangayClearanceModal">
+          <i class="fas fa-file-alt icon"></i>
+          <div>
+            <h4>Barangay Clearance</h4>
+            <p>Patunay na ang residente ay walang nakabinbing isyu.</p>
+          </div>
+        </button>
+      </div>
+      <div class="col-12 d-flex justify-content-center buttonReveal">
+        <button type="button" class="service-card dark-green border-0" style="width: 280px;" data-bs-toggle="modal" data-bs-target="#certificationModal">
+          <i class="fas fa-certificate icon"></i>
+          <div>
+            <h4>Certification</h4>
+            <p>Patunay ng pagkakakilanlan, paninirahan, o katayuan ng residente.</p>
+          </div>
+        </button>
+      </div>
+      <div class="col-12 d-flex justify-content-center buttonReveal">
+        <button type="button" class="service-card light-green border-0" style="width: 280px;" data-bs-toggle="modal" data-bs-target="#businessPermitModal">
+          <i class="fas fa-store icon"></i>
+          <div>
+            <h4>Business Permit</h4>
+            <p>Pahintulot para mag​‑operate sa loob ng barangay.</p>
+          </div>
+        </button>
+      </div>
+      <div class="col-12 d-flex justify-content-center buttonReveal">
+        <button type="button" class="service-card mid-green border-0" style="width: 280px;" data-bs-toggle="modal" data-bs-target="#equipmentModal">
+          <i class="fas fa-chair icon"></i>
+          <div>
+            <h4>Equipment Borrowing</h4>
+            <p>Paghiram ng mga barangay equipments.</p>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
+
 
 <!-- Barangay ID Modal -->
 <div class="modal fade" id="barangayIDModal" tabindex="-1" aria-labelledby="barangayIDModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
@@ -251,8 +209,6 @@ $news = $ress->fetch_all(MYSQLI_ASSOC);
   </div>
 </div>
 
-
-<!-- Barangay Clearance Modal -->
 <!-- Barangay Clearance Modal -->
 <div class="modal fade" id="barangayClearanceModal" tabindex="-1" aria-labelledby="barangayClearanceModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog modal-dialog-scrollable modal-lg">
@@ -308,7 +264,6 @@ $news = $ress->fetch_all(MYSQLI_ASSOC);
     </div>
   </div>
 </div>
-
 
 <!-- Barangay Certification Modal -->
 <div class="modal fade" id="certificationModal" tabindex="-1" aria-labelledby="barangayCertificationModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
@@ -478,95 +433,9 @@ $news = $ress->fetch_all(MYSQLI_ASSOC);
   </div>
 </div>
 
-<!-- Cash Incentives Modal -->
-<div class="modal fade" id="cashModal" tabindex="-1" aria-labelledby="cashModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-  <div class="modal-dialog modal-dialog-scrollable modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 40px; height: 40px; object-fit: contain; margin-right: 15px;">
-        <h5 class="modal-title" id="cashModalLabel">Cash Incentives</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-
-      <div class="modal-body">
-        <h6 class="mb-4">Narito ang flowchart na nagpapakita ng mga hakbang sa pag-apply sa Cash Incentives program:</h6>
-
-        <div class="flowchart-text">
-          <ol class="flowchart-steps ps-0">
-            <li class="step-item d-flex mb-3">
-              <img src="images/flowchart_step1.png" alt="Step 1" class="step-icon me-2">
-              <a href="signin.php" class="step-link text-decoration-none">
-                Mag-<strong>Sign In</strong> sa iyong account sa eBarangay Mo website.
-              </a>
-            </li>
-            <li class="step-item d-flex mb-3">
-              <img src="images/flowchart_step2.png" alt="Step 2" class="step-icon me-2">
-              <span>Pumunta sa <strong>“Request a Service”</strong> tab at piliin ang <strong>“Cash Incentives”</strong> mula sa listahan ng serbisyo.</span>
-            </li>
-            <li class="step-item d-flex mb-3">
-              <img src="images/flowchart_step3.png" alt="Step 3" class="step-icon me-2">
-              <span>Ilagay ang iyong personal na impormasyon sa application form.</span>
-            </li>
-            <li class="step-item d-flex mb-3">
-              <img src="images/flowchart_step4.png" alt="Step 4" class="step-icon me-2">
-              <span>Piliin ang paraan ng pagbabayad (kung kinakailangan).</span>
-            </li>
-            <li class="step-item d-flex mb-3">
-              <img src="images/flowchart_step5.png" alt="Step 5" class="step-icon me-2">
-              <span>Tiyaking tama ang iyong mga detalye at i-click ang <strong>“Submit”</strong> na button.</span>
-            </li>
-            <li class="step-item d-flex mb-3">
-              <img src="images/flowchart_step6.png" alt="Step 6" class="step-icon me-2">
-              <span>Maghintay ng notification para sa verification at pagproseso ng iyong aplikasyon.</span>
-            </li>
-            <li class="step-item d-flex mb-1">
-              <img src="images/flowchart_step7.png" alt="Step 7" class="step-icon me-2">
-              <span>Alamin ang susunod na hakbang sa iyong aplikasyon na makikita sa <strong>“Notification”</strong> tab ng iyong account.</span>
-            </li>
-          </ol>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- NEWS AND UPDATES SECTION -->
-<!-- <div class="container-fluid px-4 mt-5 mb-5 new-updates-container">
-    <div class="row align-items-center">
-
-        <div class="col-md-5">
-            <h1 class="gradient-text">NEWS AND UPDATES</h1>
-        </div>
-
-
-        <div class="col-md-7 news-scrollable">
-            <div class="scrollable-content d-flex flex-row">
-                <div class="news-card">
-                    <img src="images/news_1.png" alt="News Image">
-                    <p>February 12, 2025</p>
-                    <p>Camarines Norte Sets Highest Number of SGLGB Passers</p>
-                </div>
-                <div class="news-card">
-                    <img src="images/news_2.png" alt="News Image">
-                    <p">February 15, 2025</p>
-                    <p>Barangay Magang Wins in Search for Child Friendly Barangay 2024</p>
-                </div>
-                <div class="news-card">
-                    <img src="images/news_3.png" alt="News Image">
-                    <p">February 20, 2025</p>
-                    <p>Philsys On-going Registration</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div> -->
-
-<div class="container-fluid px-4 mt-5 mb-5 new-updates-container">
-  <div class="row align-items-center">
+<!-- NEWS & UPDATES -->
+<div class="container-fluid px-4 mt-5 mb-5 pt-5 new-updates-container">
+  <div class="row align-items-center autoShow">
     <div class="col-md-5">
       <h1 class="gradient-text">NEWS AND UPDATES</h1>
     </div>
@@ -578,8 +447,8 @@ $news = $ress->fetch_all(MYSQLI_ASSOC);
               <img src="news/<?=htmlspecialchars($n['cover_file'])?>" alt="News Image">
             </div>
             <div class="news-card__content">
-              <p><?=date('F j, Y', strtotime($n['date']))?></p>
-              <p><?=htmlspecialchars($n['headline'])?></p>
+              <p class="news-date"><?=date('F j, Y', strtotime($n['date']))?></p>
+              <p class="news-title"><?=htmlspecialchars($n['headline'])?></p>
             </div>
           </a>
         <?php endforeach; ?>
@@ -589,13 +458,13 @@ $news = $ress->fetch_all(MYSQLI_ASSOC);
 </div>
 
 <!-- ABOUT SECTION -->
-<div class="container-fluid">
+<div class="mb-5 container-fluid autoShow autoShow">
     <div class="row align-items-center">
         <!-- About Text -->
         <div class="col-md-6">
             <div class="p-4 text-white rounded about-text">
                 <h1 class="fw-bold">ABOUT</h1>
-                <p class="mt-3">
+                <p class="mt-3" style="text-align: justify;">
                     <strong>eBarangay Mo</strong> ay isang digital platform na dinisenyo upang gawing mas 
                     maayos ang mga serbisyo ng barangay, na nagbibigay sa mga residente ng madaling access 
                     sa kanilang mga kahilingan, aplikasyon, at balita sa komunidad. Pinapabuti nito ang 
@@ -606,22 +475,22 @@ $news = $ress->fetch_all(MYSQLI_ASSOC);
         </div>
         
         <!-- About Image -->
-        <div class="col-md-6 text-center">
-            <div class="about-image-container">
-                <img src="images/about_image.png" alt="eBarangay Mo Platform" class="img-fluid">
-            </div>
+      <div class="col-md-6 text-center">
+        <div class="about-image-container">
+          <img src="images/about_image.png" alt="eBarangay Mo Platform" class="img-fluid fade-right-scroll">
         </div>
+      </div>
     </div>
 </div>
 
 <!-- INSTRUCTION SECTION -->
-<div class="container text-center py-5 instruction-container">
+<div class="container text-center py-5 mt-5 mb-5 instruction-container autoShow">
     <h1 class="gradient-text">SIGN UP NOW</h1>
-    <p class="steps">Follow these four simple steps:</p>
+    <p class="mb-5 steps">Follow these four simple steps:</p>
 
     <div class="row text-center mt-4">
         <!-- Step 1 -->
-        <div class="col-md-3">
+        <div class="col-md-3 fadeUp">
             <img src="images/step_1.png" alt="Visit the Website" class="img-fluid mx-auto d-block w-75">
             <h4 class="mt-3 fw-bold">Visit the Website</h4>
             <hr class="underline">
@@ -629,7 +498,7 @@ $news = $ress->fetch_all(MYSQLI_ASSOC);
         </div>
 
         <!-- Step 2 -->
-        <div class="col-md-3">
+        <div class="col-md-3 fadeUp">
             <img src="images/step_2.png" alt="Register an Account" class="img-fluid mx-auto d-block w-75">
             <h4 class="mt-3 fw-bold">Register an Account</h4>
             <hr class="underline">
@@ -637,7 +506,7 @@ $news = $ress->fetch_all(MYSQLI_ASSOC);
         </div>
 
         <!-- Step 3 -->
-        <div class="col-md-3">
+        <div class="col-md-3 fadeUp">
             <img src="images/step_3.png" alt="Wait for Verification" class="img-fluid mx-auto d-block w-75">
             <h4 class="mt-3 fw-bold">Wait for Verification</h4>
             <hr class="underline">
@@ -645,7 +514,7 @@ $news = $ress->fetch_all(MYSQLI_ASSOC);
         </div>
 
         <!-- Step 4 -->
-        <div class="col-md-3">
+        <div class="col-md-3 fadeUp">
             <img src="images/step_4.png" alt="Avail Barangay Services" class="img-fluid mx-auto d-block w-75">
             <h4 class="mt-3 fw-bold">Avail Barangay Services</h4>
             <hr class="underline">

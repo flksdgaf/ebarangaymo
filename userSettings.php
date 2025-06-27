@@ -262,7 +262,7 @@ $stmt->close();
               <label class="col-sm-3 col-form-label">Sex</label>
               <div class="col-sm-9">
                 <select name="sex" class="form-select">
-                  <?php foreach (['Male','Female','Prefer not to say','Unknown'] as $sexOption): ?>
+                  <?php foreach (['Male', 'Female', 'Prefer not to say', 'Unknown'] as $sexOption): ?>
                     <option value="<?= $sexOption ?>" <?= $profile['sex'] === $sexOption ? 'selected' : '' ?>><?= $sexOption ?></option>
                   <?php endforeach; ?>
                 </select>

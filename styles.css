@@ -236,12 +236,12 @@ body {
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    padding: 20px;
+    padding: 30px;
     border-radius: 10px;
     color: white;
     width: 100%;
     min-height: 120px;
-    max-width: 500px;
+    max-width: 600px;
     margin: 0 auto; 
     text-decoration: none;
     gap: 20px; 
@@ -277,6 +277,16 @@ body {
     font-weight: 400;
     margin: 0;
     text-align: left;
+}
+
+.service-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.service-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  z-index: 1;
 }
 
 /* Responsive tweaks */
@@ -395,6 +405,7 @@ body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  /* border: 3px solid #13411F; */
 }
 
 .news-card__img {
@@ -415,16 +426,17 @@ body {
   text-align: start;
 }
 
-.news-date {
-  font-size: 0.875rem;
-  color: #666;
+.news-card__content .news-date {
+  font-size: 15px;
+  font-weight: 500;
+  color: #98C93C;
   margin-bottom: 0.5rem;
 }
 
-.news-title {
-  font-size: 1rem;
-  font-weight: 500;
-  color: #333;
+.news-card__content .news-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1E1E1E;
   margin: 0;
 }
 
@@ -624,4 +636,127 @@ transition: opacity 0.3s ease;
 
 .nav-item.dropdown .nav-link.dropdown-toggle::after {
   display: none;
+}
+
+
+
+/* PAGE ANIMATION */
+.autoShow {
+    animation: text-appear both;
+    animation-timeline: view();
+    animation-range: entry 20% cover 100vh;
+}
+
+@keyframes text-appear {
+    from {
+        opacity: 0;
+        transform: translateY(100px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.buttonReveal {
+    animation: buttonReveal both;
+    animation-timeline: view(80% 10%);
+}
+
+@keyframes buttonReveal {
+    from {
+        filter: saturate(0) contrast(4) brightness(.1) blur(5px);
+        opacity: 0;
+        scale: .95;
+        translate: 0 4rem;
+    }
+    to {
+        filter: none;
+        opacity: 1;
+        scale: 1;
+        translate: 0 0;
+    }
+}
+
+
+.fadeUp {
+    animation: fadeUp both;
+    animation-timeline: view();
+    animation-range: entry 0% 50%
+}
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.5);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes fadeRightIn {
+  from {
+    opacity: 0;
+    transform: translateX(60px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Enable Scroll Timeline */
+.fade-right-scroll {
+  animation: fadeRightIn linear both;
+  animation-timeline: view();
+  animation-range: cover 20% cover 40%;
+}
+
+
+/* Background Animation */
+.blob-outer-container {
+    position: fixed;
+    height: 100%;
+    width: 100%;
+    z-index: 0;
+    inset: 0;
+    margin: auto;
+    filter: blur(100px);
+    /*opacity: 0.5;*/
+}
+
+.blob-inner-container {
+    border-radius: 99999px;
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 100vw;
+    height: 100vh;
+    min-width: 1000px;
+    overflow: hidden;
+    background-color: #fff;
+    transform: scale(0.8);
+}
+
+.blob {
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    inset: 0;
+    margin: auto;
+    background: conic-gradient(from 0deg, #13411F, #2A9245, #38BF3E, #13411F, #2A9245);
+    animation: spinBlob 8s linear infinite;
+    opacity: 80%;
+}
+
+@keyframes spinBlob {
+    0% {
+        transform: rotate(0deg) scale(2);
+    }
+
+    100% {
+        transform: rotate(1turn) scale(2);
+    }
 }

@@ -54,22 +54,22 @@ include 'includes/header.php';
 
     <!-- BARANGAY OFFICIALS SECTION -->
     <div id="officials" class="container custom-padding">
-        <div>
+        <div class="autoShow">
             <h2 class="text-uppercase fw-bold gradient-text">Barangay Officials</h2>
             <p>Ipinapakilala ng seksyong ito ang mga opisyal na halal ng Barangay Magang, Daet, Camarines Norte. Sila ang inatasang pamunuan ang barangay, magpatupad ng mga patakaran, at tiyakin ang maayos na paghahatid ng mahahalagang serbisyo para sa kapakanan at kaunlaran ng komunidad.</p>
         </div>
 
-        <div>
+        <div class="autoShow">
             <img src="images/barangay_officials.png" alt="Barangay Officials" class="w-100">
         </div>
     </div>
 
     <!-- MISSION VISION SECTION -->
     <div id="mission-vision" class="container custom-padding">
-        <h2 class="text-uppercase fw-bold gradient-text mb-4">Mission and Vision</h2>
+        <h2 class="text-uppercase fw-bold gradient-text mb-4 autoShow">Mission and Vision</h2>
         <div class="row justify-content-center align-items-stretch g-4 text-center">
             <!-- Mission Card -->
-            <div class="col-lg-5 col-md-6 d-flex">
+            <div class="col-lg-5 col-md-6 d-flex fadeUp">
                 <div class="card-custom mission-shape w-100 d-flex flex-column justify-content-center">
                     <h4 class="section-title mb-3">MISSION</h4>
                     <p class="mb-0">
@@ -79,7 +79,7 @@ include 'includes/header.php';
             </div>
 
             <!-- Vision Card -->
-            <div class="col-lg-5 col-md-6 d-flex">
+            <div class="col-lg-5 col-md-6 d-flex fadeUp">
                 <div class="card-custom vision-shape w-100 d-flex flex-column justify-content-center">
                     <h4 class="section-title mb-3">VISION</h4>
                     <p class="mb-0">
@@ -92,24 +92,24 @@ include 'includes/header.php';
 
     <!-- CITIZENS CHARTER SECTION -->
     <div id="citizens-charter" class="container custom-padding">
-        <div>
+        <div class="autoShow">
             <h2 class="text-uppercase fw-bold gradient-text">Citizen's Charter</h2>
             <p>Inilalahad ng Citizen’s Charter ang pangako ng Barangay Magang na magbigay ng serbisyong mabilis, transparent, at may pananagutan. Gabay ito para sa mga residente upang malaman ang mga serbisyong iniaalok, hakbang‑hakbang na proseso, mga kinakailangang dokumento, oras ng pag‑proseso, at impormasyon sa pakikipag‑ugnayan. Sumasalamin ang charter na ito sa aming dedikasyon sa pagprotekta sa karapatan ng bawat mamamayan at sa pagbibigay ng de‑kalidad na serbisyo.</p>
         </div>
 
-        <div>
+        <div class="autoShow">
             <img src="images/citizens_charter.png" alt="Barangay Magang Citizens Charter" class="w-100">
         </div>
     </div>
 
     <!-- BARANGAY MAP SECTION -->
     <div id="barangay-map" class="container custom-padding">
-        <div>
+        <div class="autoShow">
             <h2 class="text-uppercase fw-bold gradient-text">Barangay Map</h2>
             <p>Ang mapang ito ay nagsisilbing visual na gabay para sa mga residente, bisita, at sa maayos na pagpaplano ng mga serbisyo sa loob ng komunidad.</p>
         </div>
 
-        <div>
+        <div class="autoShow">
             <img src="images/barangay_map.png" alt="Barangay Magang Spot Map" class="w-100">
         </div>
     </div>
@@ -117,9 +117,9 @@ include 'includes/header.php';
     <!-- CONTACT US SECTION -->
     <div id="contact-us" class="container custom-padding">
         <div>
-            <div class="col-lg-10">
+            <div class="col-lg-10 autoShow">
                 <h2 class="text-uppercase fw-bold gradient-text">Contact Us</h2>
-                <p>Kung mayroon kayong mga tanong o kailangan ng tulong, mangyaring i-fill out ang form sa ibaba at agad naming susagutin o tutulungan kayo sa lalong madaling panahon.</p>
+                <p>Kung mayroon mang katanungan o kailangan ng tulong, mangyaring i-fill out ang form sa ibaba at agad susagutin o tutulungan sa lalong madaling panahon.</p>
                 <form action="contact_process.php" method="post">
                     <div class="mb-3">
                         <label for="name" class="form-label">Name</label>

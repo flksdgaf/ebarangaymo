@@ -1,12 +1,6 @@
 <?php
 // functions/account_request_type.php
 header('Content-Type: application/json; charset=utf-8');
-
-// 2) Log errors instead of printing them
-ini_set('display_errors', '1');
-ini_set('log_errors', '1');
-error_reporting(E_ALL);
-
 require __DIR__ . '/dbconn.php';
 session_start();
 
@@ -29,7 +23,7 @@ if ($result) {
         $rows[] = $r;
     }
 }
-// STEP 8: ECHO JSON with partial output on error
+
 $data = ['view' => $view, 'data' => $rows];
 $options = JSON_PRETTY_PRINT
          | JSON_UNESCAPED_UNICODE

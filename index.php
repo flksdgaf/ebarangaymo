@@ -154,6 +154,7 @@ $news = $ress->fetch_all(MYSQLI_ASSOC);
   </div>
 </div>
 
+<div id="servicesTrigger" style="height: 1px;"></div>
 
 <!-- Barangay ID Modal -->
 <div class="modal fade" id="barangayIDModal" tabindex="-1" aria-labelledby="barangayIDModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
@@ -433,14 +434,17 @@ $news = $ress->fetch_all(MYSQLI_ASSOC);
   </div>
 </div>
 
+<!-- <div id="backToTopTrigger" style="position: relative; height: 1px;"></div> -->
+
 <!-- NEWS & UPDATES -->
 <div class="container-fluid px-4 mt-5 mb-5 pt-5 new-updates-container">
+<div id="newsTrigger" style="height: 1px;"></div>
   <div class="row align-items-center autoShow">
     <div class="col-md-5">
       <h1 class="gradient-text">NEWS AND UPDATES</h1>
     </div>
     <div class="col-md-7 news-scrollable">
-      <div class="scrollable-content d-flex flex-row">
+      <div class="scrollable-content d-flex flex-row ps-1">
         <?php foreach($news as $n): ?>
           <a href="<?=htmlspecialchars($n['link'])?>" target="_blank" class="news-card text-dark text-decoration-none">
             <div class="news-card__img">
@@ -458,9 +462,8 @@ $news = $ress->fetch_all(MYSQLI_ASSOC);
 </div>
 
 <!-- ABOUT SECTION -->
-<div class="mb-5 container-fluid autoShow autoShow">
+<div class="mb-5 pb-1 container-fluid autoShow autoShow">
     <div class="row align-items-center">
-        <!-- About Text -->
         <div class="col-md-6">
             <div class="p-4 text-white rounded about-text">
                 <h1 class="fw-bold">ABOUT</h1>
@@ -474,7 +477,6 @@ $news = $ress->fetch_all(MYSQLI_ASSOC);
             </div>
         </div>
         
-        <!-- About Image -->
       <div class="col-md-6 text-center">
         <div class="about-image-container">
           <img src="images/about_image.png" alt="eBarangay Mo Platform" class="img-fluid fade-right-scroll">
@@ -522,6 +524,35 @@ $news = $ress->fetch_all(MYSQLI_ASSOC);
         </div>
     </div>
 </div>
+
+<div id="bottomTrigger" style="height: 1px;"></div>
+
+<!-- Back to Top Button -->
+<button id="backToTopBtn" title="Go to top">
+  <i class="fas fa-chevron-up"></i>
+</button>
+
+<script>
+  const backToTopBtn = document.getElementById("backToTopBtn");
+  const servicesTrigger = document.getElementById("servicesTrigger");
+
+  window.addEventListener("scroll", () => {
+    const triggerTop = servicesTrigger.getBoundingClientRect().top;
+    const triggerOffset = triggerTop + window.scrollY;
+
+    if (window.scrollY >= triggerOffset - 100) {
+      backToTopBtn.style.display = "block";
+    } else {
+      backToTopBtn.style.display = "none";
+    }
+  });
+
+  backToTopBtn.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+</script>
+
+
 
 
 <script src="js/carousel.js"></script>

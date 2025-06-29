@@ -140,6 +140,37 @@ include 'includes/header.php';
     </div>
 </div>
 
+<!-- Back to Top Button -->
+<button id="backToTopBtn" title="Back to top">
+  <i class="fas fa-chevron-up"></i>
+</button>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const backToTopBtn = document.getElementById("backToTopBtn");
+  const officialsTrigger = document.getElementById("officials");
+
+  window.addEventListener("scroll", function () {
+    if (!officialsTrigger) return;
+    
+    const triggerTop = officialsTrigger.getBoundingClientRect().top + window.scrollY;
+    const scrollY = window.scrollY || document.documentElement.scrollTop;
+
+    if (scrollY >= triggerTop - 100) {
+      backToTopBtn.style.display = "block";
+    } else {
+      backToTopBtn.style.display = "none";
+    }
+  });
+
+  backToTopBtn.addEventListener("click", function () {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+});
+</script>
+
+
 <?php
     include 'includes/footer.php';
 ?>

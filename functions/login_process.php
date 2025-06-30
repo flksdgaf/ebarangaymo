@@ -2,7 +2,7 @@
 // functions/login_process.php
 session_start();
 include 'dbconn.php';
-$admin_roles = ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper', 'Brgy Kagawad', 'Brgy Lupon'];
+$admin_roles = ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper', 'Brgy Kagawad'];
 
 if(isset($_POST['username']) && isset($_POST['password'])) {
     // Sanitize and validate the input
@@ -36,6 +36,8 @@ if(isset($_POST['username']) && isset($_POST['password'])) {
                     header("Location: ../superAdminPanel.php");
                 } elseif (in_array($row['role'], $admin_roles)) {
                     header("Location: ../adminPanel.php");
+                // } elseif($row['role'] === 'Brgy Kagawad') {
+                //     header("Location: ../adminPanel.php");
                 } elseif($row['role'] === 'Resident') {
                     header("Location: ../userPanel.php");
                 } elseif($row['role'] === 'Approved') {

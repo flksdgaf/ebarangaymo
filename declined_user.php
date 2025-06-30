@@ -94,12 +94,7 @@ $declinedAt = formatDateTime($timeDeclined ?? '');
                         <th class="text-start pe-3">Account ID:</th>
                         <td class="text-start"><?php echo htmlspecialchars($accountId) ?></td>
                         </tr>
-                        <?php endif; ?>
-                        <?php if (!empty($birthFmt)): ?>
-                        <tr>
-                        <th class="text-start pe-3">Birthdate:</th>
-                        <td class="text-start"><?php echo htmlspecialchars($birthFmt) ?></td>
-                        </tr>
+                        
                         <?php endif; ?>
                         <?php if (!empty($declinedAt)): ?>
                         <tr>

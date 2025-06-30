@@ -1,3 +1,31 @@
+<?php
+// userServices.php
+
+require 'functions/dbconn.php';
+$userId = (int)$_SESSION['loggedInUserID'];
+
+// 1) Find the purok table
+$purokTable = null;
+for ($i = 1; $i <= 6; $i++) {
+    $tbl = "purok{$i}_rbi";
+    $chk = $conn->prepare("SELECT remarks FROM {$tbl} WHERE account_ID = ?");
+    $chk->bind_param('i', $userId);
+    $chk->execute();
+    $res = $chk->get_result();
+    if ($res->num_rows) {
+        $row = $res->fetch_assoc();
+        $userRemark = strtolower(trim($row['remarks'] ?? ''));
+        $purokTable = $tbl;
+        $chk->close();
+        break;
+    }
+    $chk->close();
+}
+if (!$purokTable) {
+    $userRemark = '';
+}
+?>
+
 <title>eBarangay Mo | Services</title>
 
 <div class="container py-4">
@@ -64,4 +92,47 @@
       </div>
   </div>
 </div>
+
+<!-- 2) Modal for blocked users -->
+<div class="modal fade" id="remarkModal" tabindex="-1" aria-labelledby="remarkModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+        <div class="modal-header bg-warning text-dark">
+            <h5 class="modal-title" id="remarkModalLabel">Service Request Unavailable</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+            <p id="remarkModalBody"></p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
+        </div>
+        </div>
+    </div>
+</div>
+
+<!-- 3) Embed the remark into JS -->
+<script>
+    const userRemark = <?= json_encode($userRemark) ?>;
+    const blockedRemarks = {
+        'on hold': 'Your account is currently on hold and cannot request services.',
+        'transferred': 'Your record shows a “transferred” status. You cannot request services here.',
+        'deceased': 'Our records show your account as “deceased.” No service requests are allowed.'
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.service-card').forEach(card => {
+        card.addEventListener('click', e => {
+            if (userRemark && blockedRemarks[userRemark]) {
+            // Prevent the link
+            e.preventDefault();
+            // Fill and show the modal
+            document.getElementById('remarkModalBody').textContent = blockedRemarks[userRemark];
+            new bootstrap.Modal(document.getElementById('remarkModal')).show();
+            }
+            // else, do nothing and let the link proceed
+        });
+        });
+    });
+</script>
 

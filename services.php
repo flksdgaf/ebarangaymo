@@ -19,7 +19,7 @@ include 'includes/header.php';
     </div>
 </div>
 
-<div class="container my-5">
+<div class="container pt-5 mt-3 pb-5 mb-3">
     <h4 class="gradient-text fw-bold text-success">BARANGAY SERVICES</h4>
     <p class="services-desc mb-4">
         Tingnan ang iba't ibang serbisyong iniaalok ng Barangay Magang—mula sa permit at sertipiko hanggang sa mga programang pangkomunidad—upang mas mapadali at maging maginhawa ang pag‑avail ng serbisyo para sa lahat ng residente.
@@ -28,8 +28,8 @@ include 'includes/header.php';
     <div class="row g-4">
         <!-- BARANGAY ID -->
         <div class="col-md-6">
-            <a href="#" class="text-decoration-none br-10px">
-                <div class="barangay-id d-flex p-3 rounded text-white">
+            <a href="signin.php" class="barangay-id-button text-decoration-none br-10px">
+                <div class="barangay-id d-flex p-4 text-white">
                 <div class="me-3">
                     <i class="fas fa-id-card icon"></i>
                 </div>
@@ -45,8 +45,8 @@ include 'includes/header.php';
 
         <!-- BARANGAY CLEARANCE -->
         <div class="col-md-6">
-            <a href="#" class="text-decoration-none">
-                <div class="barangay-clearance d-flex p-3 rounded text-white">
+            <a href="signin.php" class="barangay-clearance-button text-decoration-none">
+                <div class="barangay-clearance d-flex p-4 text-white">
                     <div class="me-3">
                         <i class="fas fa-file-alt icon"></i>  
                     </div>
@@ -62,8 +62,8 @@ include 'includes/header.php';
 
         <!-- CERTIFICATION -->
         <div class="col-md-6">
-            <a href="#" class="text-decoration-none">
-                <div class="certification d-flex p-3 rounded text-white">
+            <a href="signin.php" class="certification-button text-decoration-none">
+                <div class="certification d-flex p-4 text-white">
                     <div class="me-3">
                         <i class="fas fa-certificate icon"></i> 
                     </div>
@@ -79,8 +79,8 @@ include 'includes/header.php';
 
         <!-- BUSINESS PERMIT -->
         <div class="col-md-6">
-            <a href="#" class="text-decoration-none">
-                <div class="business-permit d-flex p-3 rounded text-white">
+            <a href="signin.php" class="business-permit-button text-decoration-none">
+                <div class="business-permit d-flex p-4 text-white">
                     <div class="me-3">
                         <i class="fas fa-store icon"></i> 
                     </div>
@@ -96,32 +96,15 @@ include 'includes/header.php';
 
         <!-- EQUIPMENT BORROWING -->
         <div class="col-md-6">
-            <a href="#" class="text-decoration-none">
-                <div class="equipment-borrowing d-flex p-3 rounded text-white">
+            <a href="signin.php" class="equipment-borrowing-button text-decoration-none">
+                <div class="equipment-borrowing d-flex p-4 text-white">
                     <div class="me-3">
                         <i class="fas fa-chair icon"></i>
                     </div>
                     <div>
                         <h5 class="fw-bold mb-1">Equipment Borrowing</h5>
                         <p class="equipment-borrowing-desc mb-0">
-                            Pagpapahiram ng kagamitan mula sa barangay para sa pansamantalang gamit, ayon sa itinakdang alituntunin at iskedyul.
-                        </p>
-                    </div>
-                </div>
-            </a>
-        </div>
-
-        <!-- CASH INCENTIVES -->
-        <div class="col-md-6">
-            <a href="#" class="text-decoration-none">
-                <div class="cash-incentives d-flex p-3 rounded text-white">
-                    <div class="me-3">
-                        <i class="fas fa-money-bill cash_icon"></i>
-                    </div>
-                    <div>
-                        <h5 class="fw-bold mb-1">Cash Incentives</h5>
-                        <p class="cash-incentives-desc mb-0">
-                            Pagbibigay ng insentibong pera bilang pagkilala at parangal sa mga mag-aaral na may natatanging tagumpay sa akademiko.
+                            Pagpapahiram ng kagamitan ng  barangay para sa pansamantalang gamit.
                         </p>
                     </div>
                 </div>

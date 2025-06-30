@@ -23,7 +23,7 @@ include 'includes/header.php';
 <div class="container my-5">
     <div class="row align-items-center">
         <!-- Image column -->
-        <div class="col-md-4 text-center mb-4 mb-md-0">
+        <div class="col-md-4 text-center mb-4 mb-md-0 fadeUp">
             <img src="images/transparency_seal.png" alt="Philippine Transparency Seal" class="img-fluid" style="max-width: 100%;">
         </div>
         <!-- Text column -->

@@ -64,6 +64,7 @@ $result = $stmt->get_result();
 // Build PHP array for JS
 $allRows = [];
 while ($row = $result->fetch_assoc()) {
+    $row['purok'] = $purokNum;
     $allRows[] = $row;
 }
 $stmt->close();
@@ -111,7 +112,7 @@ $stmt->close();
             <th class="text-nowrap">Relationship to Head</th>
             <th class="text-nowrap">Registry No.</th>
             <th class="text-nowrap">Total Population</th>
-            <th class="text-nowrap">Role</th>
+            <th class="text-nowrap">Account Role</th>
             <th class="text-nowrap">Remarks</th>
           </tr>
         </thead>
@@ -122,7 +123,8 @@ $stmt->close();
             <?php foreach ($allRows as $row):
               // map enum to CSS color
               switch($row['remarks']) {
-                case 'Missing': $bgColor = 'yellow'; break;
+                case 'On Hold': $bgColor = 'yellow'; break;
+                case 'Transferred': $bgColor = 'orange'; break;
                 case 'Deceased':    $bgColor = 'red';    break;
                 default:        $bgColor = '';
               }
@@ -141,7 +143,7 @@ $stmt->close();
                   <?php if ($row['role'] !== null): ?>
                     <select class="form-select form-select-sm role-select" style="width:137px; background-image: none; padding-right: 0.5rem;">
                       <?php 
-                      $roles = ['Resident','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Staff'];
+                      $roles = ['Resident','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad', 'Brgy Lupon'];
                       foreach ($roles as $r): ?>
                         <option value="<?= $r ?>"
                           <?= $row['role'] === $r ? 'selected' : '' ?>>
@@ -154,9 +156,10 @@ $stmt->close();
                   <?php endif; ?>
                 </td>
                 <td style="<?= $cellStyle ?>">
-                  <select class="form-select form-select-sm remarks-select" style="width:91px; background-image: none; padding-right: 0.5rem;">
+                  <select class="form-select form-select-sm remarks-select" style="width:101px; background-image: none; padding-right: 0.5rem;">
                     <option value="">None</option>
-                    <option value="Missing"  <?= $row['remarks']==='Missing'  ? 'selected' : '' ?>>Missing</option>
+                    <option value="On Hold"  <?= $row['remarks']==='On Hold'  ? 'selected' : '' ?>>On Hold</option>
+                    <option value="Transferred"  <?= $row['remarks']==='Transferred'  ? 'selected' : '' ?>>Transferred</option>
                     <option value="Deceased" <?= $row['remarks']==='Deceased' ? 'selected' : '' ?>>Deceased</option>
                   </select>
                 </td>
@@ -216,7 +219,8 @@ $stmt->close();
 
   // map remarks to colors in JS
   const remarkColor = {
-    'Missing':  'yellow',
+    'On Hold':  'yellow',
+    'Transferred': 'orange',
     'Deceased': 'red'
   };
 
@@ -293,26 +297,21 @@ $stmt->close();
         form.appendChild(picDiv);
       }
 
-      // our schema
       const fields = [
+        { key:'purok',                          label:'Purok',                          type:'select', readonly:true, editable:true, options:['1','2','3','4','5','6'] },
         { key:'account_ID',                     label:'Account ID',                     type:'text',   readonly:true },
         { key:'full_name',                      label:'Full Name',                      type:'text',   readonly:true, editable:true },
-        { key:'birthdate',                      label:'Birthdate',                      type:'date',   readonly:true, editable:true },
-        { key:'sex',                            label:'Sex',                            type:'select', readonly:true, editable:true,
-            options:['Male','Female','Prefer not to say','Unknown'] },
-        { key:'civil_status',                   label:'Civil Status',                   type:'select', readonly:true, editable:true,
-            options:['Single','Married','Separated','Widowed','Unknown'] },
-        { key:'blood_type',                     label:'Blood Type',                     type:'select', readonly:true, editable:true,
-            options:['A','B','AB','O','Unknown'] },
+        { key:'birthdate',                      label:'Birthdate',                      type:'date',   readonly:true },
+        { key:'sex',                            label:'Sex',                            type:'select', readonly:true, editable:true, options:['Male','Female','Prefer not to say','Unknown'] },
+        { key:'civil_status',                   label:'Civil Status',                   type:'select', readonly:true, editable:true, options:['Single','Married','Widowed','Separated','Divorced','Unknown'] },
+        { key:'blood_type',                     label:'Blood Type',                     type:'select', readonly:true, editable:true, options:['A+','A-','B+','B-','AB+','AB-','O+','O-','Unknown'] },
         { key:'birth_registration_number',      label:'Birth Reg. No.',                 type:'text',   readonly:true, editable:true },
-        { key:'highest_educational_attainment', label:'Highest Educational Attainment', type:'select', readonly:true, editable:true,
-            options:['Kindergarten','Elementary','High School','Senior High School','Undergraduate','College Graduate','Post-Graduate','Vocational','None','Unknown'] },
+        { key:'highest_educational_attainment', label:'Highest Educational Attainment', type:'select', readonly:true, editable:true, options:['Kindergarten','Elementary','High School','Senior High School','Undergraduate','College Graduate','Post-Graduate','Vocational','None','Unknown'] },
         { key:'occupation',                     label:'Occupation',                     type:'text',   readonly:true, editable:true },
-        { key:'house_number',                   label:'House No.',                       type:'number', readonly:true, editable:true },
+        { key:'house_number',                   label:'House No.',                      type:'number', readonly:true, editable:true },
         { key:'relationship_to_head',           label:'Relationship to Head',           type:'text',   readonly:true, editable:true },
         { key:'registry_number',                label:'Registry No.',                   type:'number', readonly:true, editable:true },
         { key:'total_population',               label:'Total Population',               type:'number', readonly:true, editable:true },
-        // note: role & remarks stay readonly
         { key:'role',                           label:'Role',                           type:'text',   readonly:true },
         { key:'remarks',                        label:'Remarks',                        type:'text',   readonly:true }
       ];
@@ -335,12 +334,11 @@ $stmt->close();
           f.options.forEach(opt => {
             const o = document.createElement('option');
             o.value = o.textContent = opt;
-            if (data[f.key] === opt) o.selected = true;
+            if (String(data[f.key]) === opt) o.selected = true;
             input.appendChild(o);
           });
           input.disabled = true;
-        }
-        else {
+        } else {
           input = document.createElement('input');
           input.className = 'form-control';
           input.type      = f.type;
@@ -348,7 +346,6 @@ $stmt->close();
           input.disabled  = true;
 
           if (f.key === 'remarks') {
-          // if DB returned null/empty, show “None”
             input.value = data.remarks ? data.remarks : 'None';
           } else {
             input.value = data[f.key] ?? '';
@@ -379,7 +376,7 @@ $stmt->close();
         //   .forEach(k => document.getElementById(`field_${k}`).disabled = false);
 
           // enable only editable controls
-       ['full_name','birthdate','house_number','relationship_to_head','registry_number','total_population',
+       ['purok','full_name','house_number','relationship_to_head','registry_number','total_population',
         'sex','civil_status','blood_type', 'birth_registration_number','highest_educational_attainment', 'occupation'
        ].forEach(k => {
          const el = document.getElementById(`field_${k}`);
@@ -397,10 +394,18 @@ $stmt->close();
       confirmSaveModal.hide();
 
       // gather payload
+      const originalPurok = currentData.purok;
+      const newPurok = document.getElementById('field_purok').value;
       const payload = new URLSearchParams({ 
         account_id: currentData.account_ID,
-        purok:       purokNum
+        original_purok: originalPurok,
+        new_purok: newPurok
       });
+      
+      if (currentData.profile_picture) {
+        payload.append('profile_picture', currentData.profile_picture);
+      }
+
       ['full_name','birthdate','sex','civil_status','blood_type',
       'birth_registration_number','highest_educational_attainment',
       'occupation','house_number','relationship_to_head',
@@ -416,7 +421,16 @@ $stmt->close();
         headers: {'Content-Type':'application/x-www-form-urlencoded'},
         body: payload
       });
-      const json = await resp.json();
+
+      let text = await resp.text();
+      console.log('Raw response:', text);
+      let json;
+      try {
+        json = JSON.parse(text);
+      } catch(e) {
+        return alert('Invalid JSON response, see console for raw output');
+      }
+
       if (!json.success) {
         return alert('Save failed: ' + (json.error||'unknown'));
       }

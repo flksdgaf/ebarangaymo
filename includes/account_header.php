@@ -39,6 +39,7 @@ $pageTitles = [
     'userDashboard' => 'Dashboard',
     'userRequest' => 'My Requests',
     'userServices' => 'Barangay Services',
+    'userSettings' => 'Account Settings',
     'userTransactions' => 'Transaction History',
     'serviceBarangayID' => 'Barangay ID',
     'serviceCertification' => 'Certification'
@@ -100,6 +101,15 @@ if (isset($result) && $result->num_rows === 1) {
     $fullName = $row['full_name'];
 }
 $stmt->close();
+
+$role = $_SESSION['loggedInUserRole'] ?? '';
+$admin_roles = ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper', 'Brgy Kagawad', 'Brgy Lupon'];
+
+if (in_array($role, $admin_roles)) {
+    $settingsHref = 'adminPanel.php?page=adminSettings';
+} else {
+    $settingsHref = 'userPanel.php?page=userSettings';
+}
 ?>
 
 <!DOCTYPE html>
@@ -135,7 +145,7 @@ $stmt->close();
             </div>
             <div class="d-none d-md-block flex-grow-1"></div>
             <div class="dropdown">
-                <img src="<?php echo htmlspecialchars($profilePic); ?>" class="rounded-circle" width="40" height="40" style="object-fit: cover; margin-right: 8px; border: 2px solid #000000;">
+                <img src="../<?php echo htmlspecialchars($profilePic); ?>?v=<?php echo time() ?>" class="rounded-circle" width="40" height="40" style="object-fit: cover; margin-right: 8px; border: 2px solid #000000;">
                 <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="adminDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     <!-- Text for large screens -->
                     <span class="d-none d-md-inline"><?php echo htmlspecialchars($fullName); ?> - <?php echo htmlspecialchars($_SESSION['loggedInUserRole']); ?></span>
@@ -143,8 +153,8 @@ $stmt->close();
                     <span class="d-md-none icon"><i class="fas fa-user"></i></span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
-                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#myProfileModal"><i class="fas fa-cog me-2"></i>My Profile</a></li>
-                    <li><a class="dropdown-item" href="adminPanel.php?page=adminSettings"><i class="fas fa-user-cog me-2"></i>Account Settings</a></li>                    
+                    <li><a class="dropdown-item" href="" data-bs-toggle="modal" data-bs-target="#myProfileModal"><i class="fas fa-cog me-2"></i>My Profile</a></li>
+                    <li><a class="dropdown-item" href="<?php echo htmlspecialchars($settingsHref); ?>"><i class="fas fa-user-cog me-2"></i>Account Settings</a></li>                    
                     <li><a class="dropdown-item" href="functions/logout.php"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
                 </ul>
             </div>

@@ -50,7 +50,7 @@ if ($document_status) {
 }
 
 // Purok filter for pie chart
-$allPuroks      = ['purok1_rbi','purok2_rbi','purok3_rbi','purok4_rbi','purok5_rbi','purok6_rbi'];
+$allPuroks = ['purok1_rbi','purok2_rbi','purok3_rbi','purok4_rbi','purok5_rbi','purok6_rbi'];
 $selectedPurok  = $_GET['purok'] ?? ''; 
 if (in_array($selectedPurok, $allPuroks)) {
     // only the selected purok
@@ -340,7 +340,7 @@ if ($queryString) {
               <th>Transaction No.</th>
               <th>Name</th>
               <th>Request</th>
-              <th>Payment Method</th>
+              <!-- <th>Payment Method</th> -->
               <th>Payment Status</th>
               <th>Document Status</th>
             </tr>
@@ -349,12 +349,12 @@ if ($queryString) {
             <?php if ($result->num_rows > 0): ?>
               <?php while ($row = $result->fetch_assoc()): 
                 // extract and escape
-                $txn   = htmlspecialchars($row['transaction_id']);
-                $name  = htmlspecialchars($row['full_name']);
-                $req   = htmlspecialchars($row['request_type']);
-                $pm    = htmlspecialchars($row['payment_method']);
-                $ps    = htmlspecialchars($row['payment_status']);
-                $ds    = htmlspecialchars($row['document_status']);
+                $txn = htmlspecialchars($row['transaction_id']);
+                $name = htmlspecialchars($row['full_name']);
+                $req = htmlspecialchars($row['request_type']);
+                // $pm = htmlspecialchars($row['payment_method']);
+                $ps = htmlspecialchars($row['payment_status']);
+                $ds = htmlspecialchars($row['document_status']);
                 
                 // badge classes
                 $payClass = $ps === 'Paid' ? 'paid-status' : 'unpaid-status';
@@ -371,7 +371,7 @@ if ($queryString) {
                 <td><?= $txn ?></td>
                 <td><?= $name ?></td>
                 <td><?= $req ?></td>
-                <td><?= $pm ?></td>
+                <!-- <td><?= $pm ?></td> -->
                 <td><span class="badge <?= $payClass ?>"><?= $ps ?></span></td>
                 <td><span class="badge <?= $docClass ?>"><?= $ds ?></span></td>
               </tr>
@@ -400,7 +400,7 @@ if ($queryString) {
 
           <?php
           $start = max(1, $page_num-2);
-          $end   = min($pages, $page_num+2);
+          $end = min($pages, $page_num+2);
           for ($i=$start; $i<=$end; $i++): ?>
             <li class="page-item<?= $i==$page_num?' active':'' ?>">
               <a class="page-link" href="?<?= $queryString ?>page_num=<?= $i ?>"><?= $i ?></a>

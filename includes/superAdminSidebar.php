@@ -70,7 +70,7 @@
         <li>
             <a href="superAdminPanel.php?page=superAdminTransactions" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminTransactions') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">receipt_long</span>
-            Transaction History
+            Transaction Reports
             </a>
         </li>
         <li>

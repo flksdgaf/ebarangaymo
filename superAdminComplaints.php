@@ -1,53 +1,52 @@
 <?php
 require 'functions/dbconn.php';
-$userId = (int)$_SESSION['loggedInUserID'];
+$userId = (int) $_SESSION['loggedInUserID'];
 ?>
-
 <div class="container-fluid p-3">
-  <!-- Pane selectors -->
-  <div class="d-flex mb-4">
-    <button id="pane-blotter" class="btn btn-sm btn-outline-success me-2" type="button">Blotter</button>
-    <button id="pane-summon" class="btn btn-sm btn-outline-success me-2" type="button">Summon</button>
-    <button id="pane-katarungang" class="btn btn-sm btn-outline-success" type="button">Katarungang Pambarangay</button>
-  </div>
+  <ul class="nav nav-tabs" id="complaintTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="blotter-tab" data-bs-toggle="tab" data-bs-target="#blotter-pane" type="button" role="tab">
+        Blotter
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="summon-tab" data-bs-toggle="tab" data-bs-target="#summon-pane" type="button" role="tab">
+        Complaint
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="katarungan-tab" data-bs-toggle="tab" data-bs-target="#katarungan-pane" type="button" role="tab">
+        Katarungang Pambarangay
+      </button>
+    </li>
+  </ul>
 
-  <!-- Pane content containers -->
-  <div id="content-blotter" class="complaint-pane mb-3">
-    <!-- <div class="card p-3 shadow-sm">
-      <p class="mb-0 text-muted">Blotter content will go here.</p>
-    </div> -->
-    <?php include 'examples.php' ?>
-  </div>
-  <div id="content-summon" class="complaint-pane mb-3 d-none">
-    <div class="card p-3 shadow-sm">
-      <p class="mb-0 text-muted">Summon content will go here.</p>
+  <div class="tab-content mt-3">
+    <div class="tab-pane fade show active" id="blotter-pane" role="tabpanel">
+      <?php include 'superAdminBlotter.php'; ?>
     </div>
-  </div>
-  <div id="content-katarungang" class="complaint-pane mb-3 d-none">
-    <div class="card p-3 shadow-sm">
-      <p class="mb-0 text-muted">Katarungang Pambarangay content will go here.</p>
+    <div class="tab-pane fade" id="summon-pane" role="tabpanel">
+      <?php include 'superAdminSummon.php'; ?>
+    </div>
+    <div class="tab-pane fade" id="katarungan-pane" role="tabpanel">
+      <?php include 'superAdminKatarungangPambarangay.php'; ?>
     </div>
   </div>
 </div>
 
 <script>
-// simple tab switching
-document.querySelectorAll('[id^="pane-"]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    // deactivate buttons
-    document.querySelectorAll('[id^="pane-"]').forEach(b => b.classList.remove('btn-success'));
-    document.querySelectorAll('[id^="pane-"]').forEach(b => b.classList.add('btn-outline-success'));
-    // hide all panes
-    document.querySelectorAll('.complaint-pane').forEach(p => p.classList.add('d-none'));
+document.addEventListener('DOMContentLoaded', ()=>{
+  const params = new URLSearchParams(window.location.search);
 
-    // activate this button + show its pane
-    btn.classList.remove('btn-outline-success');
-    btn.classList.add('btn-success');
-    const suffix = btn.id.replace('pane-','');
-    document.getElementById('content-' + suffix).classList.remove('d-none');
-  });
+  // decide which pane had activity
+  let pane = 'blotter';
+  if (params.has('summon_search') || params.has('summon_page')) pane = 'summon';
+  if (params.has('katarungan_search') || params.has('katarungan_page')) pane = 'katarungan';
+
+  // show that pane
+  const trigger = document.getElementById(`${pane}-tab`);
+  if (trigger) {
+    bootstrap.Tab.getOrCreateInstance(trigger).show();
+  }
 });
-
-// initialize first pane
-document.getElementById('pane-blotter').click();
 </script>

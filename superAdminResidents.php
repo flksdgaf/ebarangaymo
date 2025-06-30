@@ -69,12 +69,11 @@ while ($row = $result->fetch_assoc()) {
 $stmt->close();
 ?>
 
-<div class="container py-3">
-  <!-- Table -->
+<div class="container-fluid p-3">
   <div class="card shadow-sm p-3">
     <!-- Filter -->
     <div class="d-flex justify-content-end mb-3">
-      <select id="purokFilter" class="form-select w-auto">
+      <select id="purokFilter" class="form-select form-select-sm w-auto">
         <?php for ($i = 1; $i <= 6; $i++): ?>
           <option value="<?= $i ?>" <?= $i === $purokNum ? 'selected' : '' ?>>
             Purok <?= $i ?>
@@ -89,7 +88,7 @@ $stmt->close();
         <input type="hidden" name="page_num" value="1">
         <div class="input-group input-group-sm w-100">
           <input name="search" id="searchInput" type="text" class="form-control" placeholder="Search..." value="<?= htmlspecialchars($search) ?>">
-          <button type="button" class="btn btn-outline-secondary" id="searchBtn">
+          <button type="button" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" id="searchBtn">
             <span class="material-symbols-outlined" id="searchIcon">
               <?= !empty($search) ? 'close' : 'search' ?>
             </span>

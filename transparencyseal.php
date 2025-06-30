@@ -3,6 +3,8 @@ $page = 'index';
 include 'includes/header.php'; 
 ?>
 
+<link rel="stylesheet" href="transparencyseal.css">
+
 <!-- BANNER SECTION -->
 <div class="container-fluid px-0">
     <!-- Background image with overlay -->

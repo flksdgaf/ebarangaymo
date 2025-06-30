@@ -7,7 +7,7 @@ $res = $conn->query("SELECT * FROM announcements ORDER BY created_at DESC");
 $announcements = $res->fetch_all(MYSQLI_ASSOC);
 ?>
 
-<div class="container py-3">
+<div class="container-fluid p-3">
   <div class="accordion" id="adminAccordion">
 
     <div class="accordion-item">

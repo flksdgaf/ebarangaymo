@@ -38,7 +38,7 @@ $reportTypes = ['Barangay ID','Barangay Clearance','Certification','Business Per
                     <input type="date" id="collectionTo" name="date_to" class="form-control" required>
                   </div>
                   <div class="col-md-3 text-end">
-                    <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">CSV</button>
+                    <!-- <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">CSV</button> -->
                     <button type="submit" name="format" value="pdf" class="btn btn-success">PDF</button>
                   </div>
                 </div>
@@ -81,7 +81,7 @@ $reportTypes = ['Barangay ID','Barangay Clearance','Certification','Business Per
                     <input type="date" id="receiptTo" name="date_to" class="form-control" required>
                   </div>
                   <div class="col-md-3 text-end">
-                    <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">CSV</button>
+                    <!-- <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">CSV</button> -->
                     <button type="submit" name="format" value="pdf" class="btn btn-success">PDF</button>
                   </div>
                 </div>
@@ -102,7 +102,7 @@ $reportTypes = ['Barangay ID','Barangay Clearance','Certification','Business Per
                 data-bs-target="#collapseBlotter"
                 aria-expanded="false"
                 aria-controls="collapseBlotter">
-          Blotter Reports
+          Respondent Reports
         </button>
       </h2>
       <div id="collapseBlotter" class="accordion-collapse collapse"
@@ -122,7 +122,7 @@ $reportTypes = ['Barangay ID','Barangay Clearance','Certification','Business Per
                     <input type="date" id="blotterTo" name="date_to" class="form-control" required>
                   </div>
                   <div class="col-md-6 text-end">
-                    <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">CSV</button>
+                    <!-- <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">CSV</button> -->
                     <button type="submit" name="format" value="pdf" class="btn btn-success">PDF</button>
                   </div>
                 </div>
@@ -162,7 +162,7 @@ $reportTypes = ['Barangay ID','Barangay Clearance','Certification','Business Per
                     <input type="date" id="complaintTo" name="date_to" class="form-control" required>
                   </div>
                   <div class="col-md-6 text-end">
-                    <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">CSV</button>
+                    <!-- <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">CSV</button> -->
                     <button type="submit" name="format" value="pdf" class="btn btn-success">PDF</button>
                   </div>
                 </div>
@@ -202,7 +202,7 @@ $reportTypes = ['Barangay ID','Barangay Clearance','Certification','Business Per
                     <input type="date" id="kataTo" name="date_to" class="form-control" required>
                   </div>
                   <div class="col-md-6 text-end">
-                    <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">CSV</button>
+                    <!-- <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">CSV</button> -->
                     <button type="submit" name="format" value="pdf" class="btn btn-success">PDF</button>
                   </div>
                 </div>

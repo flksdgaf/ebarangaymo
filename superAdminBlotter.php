@@ -305,14 +305,14 @@ $stmt->close();
                 </td>
                 <td class="text-center">
                   <!-- Edit -->
-                  <a href="edit_blotter.php?transaction_id=<?= $tid ?>" class="btn btn-sm btn-success" title="Edit <?= $tid ?>">
+                  <button class="btn btn-sm btn-success">
                     <span class="material-symbols-outlined" style="font-size: 12px;">
                       stylus
                     </span>
-                  </a>
+                  </button>
 
                   <!-- Delete -->
-                  <button class="btn btn-sm btn-danger" title="Delete <?= $tid ?>" onclick="if (confirm('Delete blotter <?= $tid ?>? This cannot be undone.')) {window.location.href='delete_blotter.php?transaction_id=<?= $tid ?>';}">
+                  <button class="btn btn-sm btn-danger">
                     <span class="material-symbols-outlined" style="font-size: 12px;">
                       delete
                     </span>

@@ -16,6 +16,7 @@ $pageTitles = [
     'adminResidents' => 'Residents Records',
     'adminVerifications' => 'Account Verifications',
     'adminTransactions' => 'Transaction Reports',
+    'adminHistory' => 'Transaction History',
     'adminLogs' => 'Activity Logs',
     'adminWebsite' => 'Website Configuration',
     'adminDeviceStatus' => 'Device Status',

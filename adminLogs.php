@@ -102,7 +102,7 @@ $result = $stmt->get_result();
         </button>
         <div class="dropdown-menu p-3" aria-labelledby="filterDropdown" style="min-width:260px; --bs-body-font-size:.75rem; font-size:.75rem;">
           <form method="get" id="filterForm" class="mb-0">
-            <input type="hidden" name="page" value="superAdminLogs">
+            <input type="hidden" name="page" value="adminLogs">
 
             <!-- Role Dropdown -->
             <div class="mb-2">
@@ -150,7 +150,7 @@ $result = $stmt->get_result();
             </div>
 
             <div class="d-flex">
-              <a href="?page=superAdminLogs" class="btn btn-sm btn-outline-secondary me-2">Reset</a>
+              <a href="?page=adminLogs" class="btn btn-sm btn-outline-secondary me-2">Reset</a>
               <button type="submit" class="btn btn-sm btn-success flex-grow-1">Apply</button>
             </div>
           </form>
@@ -158,7 +158,7 @@ $result = $stmt->get_result();
       </div>
 
       <form method="get" id="searchForm" class="d-flex ms-auto me-2">
-        <input type="hidden" name="page" value="superAdminLogs">
+        <input type="hidden" name="page" value="adminLogs">
         <input type="hidden" name="page_num" value="1">
 
         <?php foreach (['role','action','date_from','date_to'] as $f): 

@@ -35,7 +35,7 @@ $logoUrl = 'images/' . $info['logo'];
         <li>
             <a href="adminPanel.php?page=adminRequest" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminRequest') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">description</span>
-            Request
+            Document Request
             </a>
         </li>
         <li>
@@ -57,9 +57,15 @@ $logoUrl = 'images/' . $info['logo'];
             </a>
         </li>
         <li>
+            <a href="adminPanel.php?page=adminHistory" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminHistory') ? 'active' : '' ?>">
+            <span class="material-symbols-outlined me-2">history</span>
+            Transaction History
+            </a>
+        </li>
+        <li>
             <a href="adminPanel.php?page=adminTransactions" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminTransactions') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">receipt_long</span>
-            Transaction Reports
+            Generate Reports
             </a>
         </li>
         <li>
@@ -77,7 +83,7 @@ $logoUrl = 'images/' . $info['logo'];
         <li>
             <a href="adminPanel.php?page=adminLogs" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminLogs') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">badge</span>
-            Logs
+            Activity Logs
             </a>
         </li>
     </ul>

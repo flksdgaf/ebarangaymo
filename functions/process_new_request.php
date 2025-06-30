@@ -10,8 +10,10 @@ if (!isset($_SESSION['auth']) || $_SESSION['auth'] !== true) {
 $role = $_SESSION['loggedInUserRole'] ?? '';
 if ($role === 'SuperAdmin') {
     $redirectBase = 'superAdminPanel.php';
+    $redirectPage = 'superAdminRequest';
 } else {
     $redirectBase = 'adminPanel.php';
+    $redirectPage = 'adminRequest';
 }
 
 $userId = $_SESSION['loggedInUserID'];
@@ -20,27 +22,29 @@ $requestType = $_POST['request_type'] ?? '';
 switch($requestType) {
   case 'Barangay ID':
     // 1) Collect posted fields
-    $fn = trim($_POST['first_name'] ?? '');
-    $mn = trim($_POST['middle_name'] ?? '');
-    $ln = trim($_POST['last_name'] ?? '');
-    $sn = trim($_POST['suffix'] ?? '');
+    // $fn = trim($_POST['first_name'] ?? '');
+    // $mn = trim($_POST['middle_name'] ?? '');
+    // $ln = trim($_POST['last_name'] ?? '');
+    // $sn = trim($_POST['suffix'] ?? '');
 
     // Build the optional pieces
-    $suffixPart = $sn ? " {$sn}" : '';
-    $middlePart = $mn ? " {$mn}" : '';
+    // $suffixPart = $sn ? " {$sn}" : '';
+    // $middlePart = $mn ? " {$mn}" : '';
     $transactionType = $_POST['transaction_type'];
     
     // Assemble full name as “Last, First Middle Suffix”
-    $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+    // $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+    $fullName = trim($_POST['full_name'] ?? '');
     $purok = $_POST['purok'];
     $birthDate = $_POST['dob'];
-    $birthPlace = "{$_POST['birth_municipality']}, {$_POST['birth_province']}";
+    // $birthPlace = "{$_POST['birth_municipality']}, {$_POST['birth_province']}";
+    $birthPlace = trim($_POST['birth_place'] ?? '');
     $civilStatus = $_POST['civil_status'];
     $religion = $_POST['religion'] === 'Other' ? $_POST['religion_other'] : $_POST['religion'];
-    $height = (float)$_POST['height_ft'];
-    $weight = (float)$_POST['weight_kg'];
-    $contactPerson = $_POST['emergency_name'];
-    $contactNo = $_POST['emergency_phone'];
+    $height = (float)$_POST['height'];
+    $weight = (float)$_POST['weight'];
+    $contactPerson = $_POST['emergency_contact_person'];
+    $contactNo = $_POST['emergency_contact_number'];
     $claimDate = $_POST['claim_date'];
     $paymentMethod = $_POST['payment_method'];
 
@@ -75,7 +79,7 @@ switch($requestType) {
     $ins->close();
 
     // ACTIVITY LOGGING 
-    $admin_roles = ['SuperAdmin','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Staff'];
+    $admin_roles = ['SuperAdmin','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Lupon'];
     if (in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
         $logStmt = $conn->prepare("INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description) VALUES (?,?,?,?,?,?)");    
         $admin_id = $_SESSION['loggedInUserID'];
@@ -91,19 +95,20 @@ switch($requestType) {
     }
     
     // 5) Redirect back to the appropriate panel
-    header("Location: ../{$redirectBase}?page=superAdminRequest&transaction_id={$transactionId}");
+    header("Location: ../{$redirectBase}?page={$redirectPage}&transaction_id={$transactionId}");
     exit();
     break;
 
   case 'Business Permit':
     // 1) Collect posted fields (owner name)
-    $fn = trim($_POST['first_name'] ?? '');
-    $mn = trim($_POST['middle_name'] ?? '');
-    $ln = trim($_POST['last_name'] ?? '');
-    $sn = trim($_POST['suffix'] ?? '');
-    $middlePart = $mn ? " {$mn}" : '';
-    $suffixPart = $sn ? " {$sn}" : '';
-    $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+    // $fn = trim($_POST['first_name'] ?? '');
+    // $mn = trim($_POST['middle_name'] ?? '');
+    // $ln = trim($_POST['last_name'] ?? '');
+    // $sn = trim($_POST['suffix'] ?? '');
+    // $middlePart = $mn ? " {$mn}" : '';
+    // $suffixPart = $sn ? " {$sn}" : '';
+    // $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+    $fullName = trim($_POST['full_name'] ?? '');
 
     // 2) Other form inputs
     $transactionType = $_POST['transaction_type'] ?? '';
@@ -116,7 +121,7 @@ switch($requestType) {
     $fullAddress = trim($_POST['full_address'] ?? '');
     $claimDate = $_POST['claim_date'] ?? '';
     $paymentMethod = $_POST['payment_method'] ?? '';
-    $amount = (float)$_POST['amount'] ?? 0.0;
+    // $amount = (float)$_POST['amount'] ?? 0.0;
 
     // 3) Generate next transaction_id
     $stmt = $conn->prepare("SELECT transaction_id FROM business_permit_requests ORDER BY id DESC LIMIT 1");
@@ -140,7 +145,7 @@ switch($requestType) {
     $ins->close();
 
     // 5) Activity logging
-    $admin_roles = ['SuperAdmin','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Staff'];
+    $admin_roles = ['SuperAdmin','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Lupon'];
     if (in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
       $logStmt = $conn->prepare("INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description) VALUES (?,?,?,?,?,?)");
       $admin_id = $_SESSION['loggedInUserID'];
@@ -156,27 +161,28 @@ switch($requestType) {
     }
 
     // 6) Redirect back to superAdminPanel with new ID
-    header("Location: ../{$redirectBase}?page=superAdminRequest&transaction_id={$transactionId}");
+    header("Location: ../{$redirectBase}?page={$redirectPage}&transaction_id={$transactionId}");
     exit();
     break;
 
   case 'Good Moral':
     // 1) Collect posted fields
-    $fn = trim($_POST['first_name'] ?? '');
-    $mn = trim($_POST['middle_name'] ?? '');
-    $ln = trim($_POST['last_name'] ?? '');
-    $sn = trim($_POST['suffix'] ?? '');
-    $middlePart = $mn ? " {$mn}" : '';
-    $suffixPart = $sn ? " {$sn}" : '';
-    $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+    // $fn = trim($_POST['first_name'] ?? '');
+    // $mn = trim($_POST['middle_name'] ?? '');
+    // $ln = trim($_POST['last_name'] ?? '');
+    // $sn = trim($_POST['suffix'] ?? '');
+    // $middlePart = $mn ? " {$mn}" : '';
+    // $suffixPart = $sn ? " {$sn}" : '';
+    // $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+    $fullName = trim($_POST['full_name'] ?? '');
 
     $civilStatus = $_POST['civil_status'] ?? '';
     $sex = $_POST['sex'] ?? '';
     $age = (int)($_POST['age'] ?? 0);
-    $barangay = $_POST['barangay'] ?? '';
     $purok = $_POST['purok'] ?? '';
+    // $barangay = $_POST['barangay'] ?? '';
     $subdivision = trim($_POST['subdivision'] ?? '');
-    $fullAddress = "{$subdivision}, {$purok}, {$barangay}";
+    // $fullAddress = "{$subdivision}, {$purok}, {$barangay}";
     $purpose = trim($_POST['purpose'] ?? '');
     $paymentMethod = $_POST['payment_method'] ?? '';
     $claimDate = $_POST['claim_date'] ?? '';
@@ -195,14 +201,14 @@ switch($requestType) {
     $stmt->close();
 
     // 3) Insert into good_moral_requests
-    $sql = "INSERT INTO good_moral_requests (account_id, transaction_id, full_name, civil_status, sex, age, full_address, purpose, claim_date, payment_method) VALUES (?,?,?,?,?,?,?,?,?,?)";
+    $sql = "INSERT INTO good_moral_requests (account_id, transaction_id, full_name, civil_status, sex, age, purok, subdivision, purpose, claim_date, payment_method) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
     $ins = $conn->prepare($sql);
-    $ins->bind_param('issssissss', $userId, $transactionId, $fullName, $civilStatus, $sex, $age, $fullAddress, $purpose, $claimDate, $paymentMethod);
+    $ins->bind_param('issssisssss', $userId, $transactionId, $fullName, $civilStatus, $sex, $age, $purok, $subdivision, $purpose, $claimDate, $paymentMethod);
     $ins->execute();
     $ins->close();
 
     // 4) Activity logging
-    $admin_roles = ['SuperAdmin','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Staff'];
+    $admin_roles = ['SuperAdmin','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Lupon'];
     if (in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
       $logStmt = $conn->prepare("INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description) VALUES (?,?,?,?,?,?)");
       $admin_id = $_SESSION['loggedInUserID'];
@@ -218,23 +224,27 @@ switch($requestType) {
     }
 
     // 5) Redirect back to superAdminPanel
-    header("Location: ../{$redirectBase}?page=superAdminRequest&transaction_id={$transactionId}");
+    header("Location: ../{$redirectBase}?page={$redirectPage}&transaction_id={$transactionId}");
     exit();
     break;
 
   case 'Guardianship':
     // 1) Collect posted fields & assemble full name
-    $fn = trim($_POST['guardian_first_name'] ?? '');
-    $mn = trim($_POST['guardian_middle_name'] ?? '');
-    $ln = trim($_POST['guardian_last_name'] ?? '');
-    $sn = trim($_POST['guardian_suffix'] ?? '');
-    $middlePart = $mn ? " {$mn}" : '';
-    $suffixPart = $sn ? " {$sn}" : '';
-    $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+    // $fn = trim($_POST['guardian_first_name'] ?? '');
+    // $mn = trim($_POST['guardian_middle_name'] ?? '');
+    // $ln = trim($_POST['guardian_last_name'] ?? '');
+    // $sn = trim($_POST['guardian_suffix'] ?? '');
+    // $middlePart = $mn ? " {$mn}" : '';
+    // $suffixPart = $sn ? " {$sn}" : '';
+    // $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+    $fullName = trim($_POST['full_name'] ?? '');
 
-    $civilStatus = $_POST['guardian_civil_status'] ?? '';
-    $age = (int)($_POST['guardian_age'] ?? 0);
-    $purok = $_POST['guardian_purok'] ?? '';
+    // $civilStatus = $_POST['guardian_civil_status'] ?? '';
+    $civilStatus = $_POST['civil_status'] ?? '';
+    // $age = (int)($_POST['guardian_age'] ?? 0);
+    $age = (int)($_POST['age'] ?? 0);
+    // $purok = $_POST['guardian_purok'] ?? '';
+    $purok = $_POST['purok'] ?? '';
     $childName = trim($_POST['child_name'] ?? '');
     $purpose = trim($_POST['purpose'] ?? '');
     $claimDate = $_POST['claim_date'] ?? '';
@@ -261,7 +271,7 @@ switch($requestType) {
     $ins->close();
 
     // 4) Activity logging
-    $admin_roles = ['SuperAdmin','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Staff'];
+    $admin_roles = ['SuperAdmin','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Lupon'];
     if (in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
       $logStmt = $conn->prepare("INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description) VALUES (?,?,?,?,?,?)");
       $admin_id = $_SESSION['loggedInUserID'];
@@ -277,26 +287,27 @@ switch($requestType) {
     }
 
     // 5) Redirect back
-    header("Location: ../{$redirectBase}?page=superAdminRequest&transaction_id={$transactionId}");
+    header("Location: ../{$redirectBase}?page={$redirectPage}&transaction_id={$transactionId}");
     exit();
     break;
 
   case 'Indigency':
     // 1) Collect posted fields & assemble full name
-    $fn = trim($_POST['first_name'] ?? '');
-    $mn = trim($_POST['middle_name'] ?? '');
-    $ln = trim($_POST['last_name'] ?? '');
-    $sn = trim($_POST['suffix'] ?? '');
-    $middlePart = $mn ? " {$mn}" : '';
-    $suffixPart = $sn ? " {$sn}" : '';
-    $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+    // $fn = trim($_POST['first_name'] ?? '');
+    // $mn = trim($_POST['middle_name'] ?? '');
+    // $ln = trim($_POST['last_name'] ?? '');
+    // $sn = trim($_POST['suffix'] ?? '');
+    // $middlePart = $mn ? " {$mn}" : '';
+    // $suffixPart = $sn ? " {$sn}" : '';
+    // $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+    $fullName = trim($_POST['full_name'] ?? '');
 
     // 2) Other form inputs
     $civilStatus = $_POST['civil_status'] ?? '';
     $age = (int) ($_POST['age'] ?? 0);
-    $barangay = $_POST['barangay'] ?? '';
+    // $barangay = $_POST['barangay'] ?? '';
     $purok = $_POST['purok'] ?? '';
-    $subdivision = trim($_POST['subdivision'] ?? '');
+    // $subdivision = trim($_POST['subdivision'] ?? '');
     $purpose = trim($_POST['purpose'] ?? '');
     $claimDate = $_POST['claim_date'] ?? '';
 
@@ -321,7 +332,7 @@ switch($requestType) {
     $ins->close();
 
     // 5) ACTIVITY LOGGING
-    $admin_roles = ['SuperAdmin','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Staff'];
+    $admin_roles = ['SuperAdmin','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Lupon'];
     if (in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
       $logStmt = $conn->prepare("INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description) VALUES (?,?,?,?,?,?)");
       $admin_id = $_SESSION['loggedInUserID'];
@@ -337,26 +348,27 @@ switch($requestType) {
     }
 
     // 6) Redirect back to the appropriate panel
-    header("Location: ../{$redirectBase}?page=superAdminRequest&transaction_id={$transactionId}");
+    header("Location: ../{$redirectBase}?page={$redirectPage}&transaction_id={$transactionId}");
     exit();
     break;
 
   case 'Residency':
     // 1) Collect posted fields & assemble full name
-    $fn = trim($_POST['first_name'] ?? '');
-    $mn = trim($_POST['middle_name'] ?? '');
-    $ln = trim($_POST['last_name'] ?? '');
-    $sn = trim($_POST['suffix'] ?? '');
-    $middlePart = $mn ? " {$mn}" : '';
-    $suffixPart = $sn ? " {$sn}" : '';
-    $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+    // $fn = trim($_POST['first_name'] ?? '');
+    // $mn = trim($_POST['middle_name'] ?? '');
+    // $ln = trim($_POST['last_name'] ?? '');
+    // $sn = trim($_POST['suffix'] ?? '');
+    // $middlePart = $mn ? " {$mn}" : '';
+    // $suffixPart = $sn ? " {$sn}" : '';
+    // $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+    $fullName = trim($_POST['full_name'] ?? '');
 
     // 2) Other form inputs
     $civilStatus = $_POST['civil_status'] ?? '';
     $age = (int) ($_POST['age'] ?? 0);
-    $barangay = $_POST['barangay'] ?? '';
+    // $barangay = $_POST['barangay'] ?? '';
     $purok = $_POST['purok'] ?? '';
-    $subdivision = trim($_POST['subdivision'] ?? '');
+    // $subdivision = trim($_POST['subdivision'] ?? '');
     $yearsResiding = (int) ($_POST['residing_years'] ?? 0);
     $purpose = trim($_POST['purpose'] ?? '');
     $paymentMethod = $_POST['payment_method'] ?? '';
@@ -383,7 +395,7 @@ switch($requestType) {
     $ins->close();
 
     // 5) ACTIVITY LOGGING
-    $admin_roles = ['SuperAdmin','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Staff'];
+    $admin_roles = ['SuperAdmin','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Lupon'];
     if (in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
       $logStmt = $conn->prepare("INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description) VALUES (?,?,?,?,?,?)");
       $admin_id = $_SESSION['loggedInUserID'];
@@ -399,30 +411,32 @@ switch($requestType) {
     }
 
     // 6) Redirect back to superAdminPanel
-    header("Location: ../{$redirectBase}?page=superAdminRequest&transaction_id={$transactionId}");
+    header("Location: ../{$redirectBase}?page={$redirectPage}&transaction_id={$transactionId}");
     exit();
     break;
 
   case 'Solo Parent':
     // 1) Collect posted fields & assemble full name
-    $fn = trim($_POST['first_name'] ?? '');
-    $mn = trim($_POST['middle_name'] ?? '');
-    $ln = trim($_POST['last_name'] ?? '');
-    $sn = trim($_POST['suffix'] ?? '');
-    $middlePart = $mn ? " {$mn}" : '';
-    $suffixPart = $sn ? " {$sn}" : '';
-    $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+    // $fn = trim($_POST['first_name'] ?? '');
+    // $mn = trim($_POST['middle_name'] ?? '');
+    // $ln = trim($_POST['last_name'] ?? '');
+    // $sn = trim($_POST['suffix'] ?? '');
+    // $middlePart = $mn ? " {$mn}" : '';
+    // $suffixPart = $sn ? " {$sn}" : '';
+    // $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+    $fullName = trim($_POST['full_name'] ?? '');
 
     // 2) Other form inputs
     $civilStatus = $_POST['civil_status'] ?? '';
     $age = (int) ($_POST['age'] ?? 0);
-    $barangay = $_POST['barangay'] ?? '';
+    // $barangay = $_POST['barangay'] ?? '';
     $purok = $_POST['purok'] ?? '';
-    $subdivision = trim($_POST['subdivision'] ?? '');
+    // $subdivision = trim($_POST['subdivision'] ?? '');
     $yearsSoloParent = (int) ($_POST['years_solo_parent'] ?? 0);
     $childName = trim($_POST['child_name'] ?? '');
     $childSex = $_POST['child_sex'] ?? '';
-    $childAge = (int) ($_POST['child_age'] ?? 0);
+    // $childAge = (int) ($_POST['child_age'] ?? 0);
+    $childAge = trim($_POST['child_age'] ?? '');
     $purpose = trim($_POST['purpose'] ?? '');
     $paymentMethod = $_POST['payment_method'] ?? '';
     $claimDate = $_POST['claim_date'] ?? '';
@@ -441,14 +455,14 @@ switch($requestType) {
     $stmt->close();
 
     // 4) Insert into solo_parent_requests
-    $sql = "INSERT INTO solo_parent_requests (account_id, transaction_id, full_name, civil_status, age, purok, years_solo_parent, child_name, child_age, purpose, payment_method, claim_date) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+    $sql = "INSERT INTO solo_parent_requests (account_id, transaction_id, full_name, civil_status, age, purok, years_solo_parent, child_name, child_age, child_sex, purpose, payment_method, claim_date) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
     $ins = $conn->prepare($sql);
-    $ins->bind_param('isssisisisss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $yearsSoloParent, $childName, $childAge, $purpose, $paymentMethod, $claimDate);
+    $ins->bind_param('isssisisissss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $yearsSoloParent, $childName, $childAge, $childSex, $purpose, $paymentMethod, $claimDate);
     $ins->execute();
     $ins->close();
 
     // 5) ACTIVITY LOGGING
-    $admin_roles = ['SuperAdmin','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Staff'];
+    $admin_roles = ['SuperAdmin','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Lupon'];
     if (in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
       $logStmt = $conn->prepare("INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description) VALUES (?,?,?,?,?,?)");
       $admin_id = $_SESSION['loggedInUserID'];
@@ -464,7 +478,7 @@ switch($requestType) {
     }
 
     // 6) Redirect back to superAdminPanel
-    header("Location: ../{$redirectBase}?page=superAdminRequest&transaction_id={$transactionId}");
+    header("Location: ../{$redirectBase}?page={$redirectPage}&transaction_id={$transactionId}");
     exit();
     break;
 

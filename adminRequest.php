@@ -1,33 +1,29 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 require 'functions/dbconn.php';
 $userId = (int)$_SESSION['loggedInUserID'];
-$newTid    = $_GET['transaction_id'] ?? '';
+$newTid = $_GET['transaction_id'] ?? '';
 
-// ── 0) FILTER SETUP ──────────────────────────────────────────────────────────
-$request_type    = $_GET['request_type']    ?? '';
-$date_from       = $_GET['date_from']       ?? '';
-$date_to         = $_GET['date_to']         ?? '';
-$payment_method  = $_GET['payment_method']  ?? '';
-$payment_status  = $_GET['payment_status']  ?? '';
+// FILTER SETUP
+$request_type = $_GET['request_type'] ?? '';
+$date_from = $_GET['date_from'] ?? '';
+$date_to = $_GET['date_to'] ?? '';
+$payment_method = $_GET['payment_method'] ?? '';
+$payment_status = $_GET['payment_status'] ?? '';
 $document_status = $_GET['document_status'] ?? '';
 
 $whereClauses = [];
-$bindTypes    = '';
-$bindParams   = [];
+$bindTypes = '';
+$bindParams = [];
 
-// ── 1) GLOBAL SEARCH ─────────────────────────────────────────────────────────────
+// GLOBAL SEARCH
 $search = trim($_GET['search'] ?? '');
 if ($search !== '') {
-  $whereClauses[] = "("
-    . "transaction_id   LIKE ? OR "
-    . "full_name        LIKE ? OR "
-    . "request_type     LIKE ? OR "
-    . "payment_method   LIKE ? OR "
-    . "payment_status   LIKE ? OR "
-    . "document_status  LIKE ?"
-    . ")";
+  $whereClauses[] = "(transaction_id LIKE ? OR full_name LIKE ? OR request_type LIKE ? OR payment_method LIKE ? OR payment_status LIKE ? OR document_status LIKE ?)";
   $bindTypes .= str_repeat('s', 6);
-  $term = "{$search}%";
+  $term = "%{$search}%";
   for ($i = 0; $i < 6; $i++) {
     $bindParams[] = $term;
   }
@@ -35,42 +31,40 @@ if ($search !== '') {
 
 if ($request_type) {
   $whereClauses[] = 'request_type = ?';
-  $bindTypes    .= 's';
-  $bindParams[]  = $request_type;
+  $bindTypes .= 's';
+  $bindParams[] = $request_type;
 }
 if ($payment_method) {
   $whereClauses[] = 'payment_method = ?';
-  $bindTypes    .= 's';
-  $bindParams[]  = $payment_method;
+  $bindTypes .= 's';
+  $bindParams[] = $payment_method;
 }
 if ($payment_status) {
   $whereClauses[] = 'payment_status = ?';
-  $bindTypes    .= 's';
-  $bindParams[]  = $payment_status;
+  $bindTypes .= 's';
+  $bindParams[] = $payment_status;
 }
 if ($document_status) {
   $whereClauses[] = 'document_status = ?';
-  $bindTypes    .= 's';
-  $bindParams[]  = $document_status;
+  $bindTypes .= 's';
+  $bindParams[] = $document_status;
 }
 if ($date_from && $date_to) {
   $whereClauses[] = 'DATE(created_at) BETWEEN ? AND ?';
-  $bindTypes    .= 'ss';
-  $bindParams[]  = $date_from;
-  $bindParams[]  = $date_to;
+  $bindTypes .= 'ss';
+  $bindParams[] = $date_from;
+  $bindParams[] = $date_to;
 } elseif ($date_from) {
   $whereClauses[] = 'DATE(created_at) >= ?';
-  $bindTypes    .= 's';
-  $bindParams[]  = $date_from;
+  $bindTypes .= 's';
+  $bindParams[] = $date_from;
 } elseif ($date_to) {
   $whereClauses[] = 'DATE(created_at) <= ?';
-  $bindTypes    .= 's';
-  $bindParams[]  = $date_to;
+  $bindTypes .= 's';
+  $bindParams[] = $date_to;
 }
 
-$whereSQL = $whereClauses
-  ? 'WHERE ' . implode(' AND ', $whereClauses)
-  : '';
+$whereSQL = $whereClauses ? 'WHERE ' . implode(' AND ', $whereClauses) : '';
 
 $limit = 10; // records per page
 $page = isset($_GET['page_num']) ? max((int)$_GET['page_num'], 1) : 1;
@@ -80,12 +74,12 @@ $countSQL = "SELECT COUNT(*) AS total FROM view_general_requests {$whereSQL}";
 $countStmt = $conn->prepare($countSQL);
 
 if ($whereClauses) {
-    $refs = [];
-    foreach ($bindParams as $i => $v) {
-        $refs[$i] = & $bindParams[$i];
-    }
-    array_unshift($refs, $bindTypes);
-    call_user_func_array([$countStmt, 'bind_param'], $refs);
+  $refs = [];
+  foreach ($bindParams as $i => $v) {
+    $refs[$i] = & $bindParams[$i];
+  }
+  array_unshift($refs, $bindTypes);
+  call_user_func_array([$countStmt, 'bind_param'], $refs);
 }
 
 $countStmt->execute();
@@ -97,12 +91,7 @@ $countStmt->close();
 // If there’s a new transaction, fetch its request_type
 $newType = '';
 if ($newTid) {
-  $q = $conn->prepare("
-    SELECT request_type
-      FROM view_general_requests
-     WHERE transaction_id = ?
-     LIMIT 1
-  ");
+  $q = $conn->prepare("SELECT request_type FROM view_general_requests WHERE transaction_id = ? LIMIT 1");
   $q->bind_param('s', $newTid);
   $q->execute();
   $r = $q->get_result()->fetch_assoc();
@@ -112,20 +101,8 @@ if ($newTid) {
   $q->close();
 }
 
-// ── 2) LIST + FILTERED QUERY ─────────────────────────────────────────────────
-$sql = "
-  SELECT transaction_id,
-         full_name,
-         request_type,
-         payment_method,
-         payment_status,
-         document_status,
-         DATE_FORMAT(created_at, '%M %d, %Y') AS formatted_date
-    FROM view_general_requests
-    {$whereSQL}
-    ORDER BY created_at DESC
-    LIMIT ? OFFSET ?
-";
+// LIST + FILTERED QUERY 
+$sql = "SELECT transaction_id, full_name, request_type, payment_method, payment_status, document_status, DATE_FORMAT(created_at, '%b %e, %Y') AS formatted_date FROM view_general_requests {$whereSQL} ORDER BY created_at ASC LIMIT ? OFFSET ?";
 $st = $conn->prepare($sql);
 
 $types = $bindTypes . 'ii';
@@ -143,13 +120,24 @@ $st->execute();
 $result = $st->get_result();
 ?>
 
-<title>eBarangay Mo | Requests</title>
-
-<div class="container py-3">
+<div class="container-fluid p-3">
   <?php if ($newTid && $newType): ?>
     <div class="alert alert-success alert-dismissible fade show" role="alert">
-      <?= htmlspecialchars($newType) ?> request 
-      <strong><?= htmlspecialchars($newTid) ?></strong> added successfully!
+      <?= htmlspecialchars($newType) ?> request <strong><?= htmlspecialchars($newTid) ?></strong> added successfully!
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <?php endif; ?>
+
+  <?php if (isset($_GET['updated']) && $_GET['updated'] == 1): ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <strong>Success!</strong> Request updated successfully.
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <?php endif; ?>
+
+  <?php if (isset($_GET['nochange']) && $_GET['nochange'] == 1): ?>
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+      <strong>No changes detected.</strong> No fields were updated.
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
   <?php endif; ?>
@@ -158,6 +146,7 @@ $result = $st->get_result();
     <div class="d-flex align-items-center mb-3">
       <div class="dropdown">
         <button class="btn btn-sm btn-outline-success dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+          <span class="material-symbols-outlined me-1" style="font-size:1rem; vertical-align:middle;">filter_list</span>
           Filter
         </button>
         <div class="dropdown-menu p-3" aria-labelledby="filterDropdown" style="min-width:260px; --bs-body-font-size:.75rem; font-size:.75rem;">
@@ -172,6 +161,7 @@ $result = $st->get_result();
                 <option value="">All</option>
                 <option <?= $request_type==='Barangay ID'?'selected':''?> value="Barangay ID">Barangay ID</option>
                 <option <?= $request_type==='Business Permit'?'selected':''?> value="Business Permit">Business Permit</option>
+                <!-- <option <?= $request_type==='Equipment Borrowing'?'selected':''?> value="Equipment Borrowing">Equipment Borrowing</option> -->
                 <option <?= $request_type==='Good Moral'?'selected':''?> value="Good Moral">Good Moral</option>
                 <option <?= $request_type==='Guardianship'?'selected':''?> value="Guardianship">Guardianship</option>
                 <option <?= $request_type==='Indigency'?'selected':''?> value="Indigency">Indigency</option>
@@ -199,9 +189,9 @@ $result = $st->get_result();
               <label class="form-label mb-1">Payment Method</label>
               <select name="payment_method" class="form-select form-select-sm" style="font-size:.75rem;">
                 <option value="">All</option>
-                <option <?= $payment_method==='GCash'?'selected':''?>          value="GCash">GCash</option>
+                <option <?= $payment_method==='GCash'?'selected':''?> value="GCash">GCash</option>
                 <option <?= $payment_method==='Brgy Payment Device'?'selected':''?> value="Brgy Payment Device">Brgy Payment Device</option>
-                <option <?= $payment_method==='Over-the-Counter'?'selected':''?>    value="Over-the-Counter">Over-the-Counter</option>
+                <option <?= $payment_method==='Over-the-Counter'?'selected':''?> value="Over-the-Counter">Over-the-Counter</option>
               </select>
             </div>
 
@@ -210,7 +200,7 @@ $result = $st->get_result();
               <label class="form-label mb-1">Payment Status</label>
               <select name="payment_status" class="form-select form-select-sm" style="font-size:.75rem;">
                 <option value="">All</option>
-                <option <?= $payment_status==='Paid'?'selected':''?>   value="Paid">Paid</option>
+                <option <?= $payment_status==='Paid'?'selected':''?> value="Paid">Paid</option>
                 <option <?= $payment_status==='Unpaid'?'selected':''?> value="Unpaid">Unpaid</option>
               </select>
             </div>
@@ -221,10 +211,10 @@ $result = $st->get_result();
               <select name="document_status" class="form-select form-select-sm" style="font-size:.75rem;">
                 <option value="">All</option>
                 <option <?= $document_status==='For Verification'?'selected':''?> value="For Verification">For Verification</option>
-                <option <?= $document_status==='Processing'?'selected':''?>       value="Processing">Processing</option>
+                <option <?= $document_status==='Processing'?'selected':''?> value="Processing">Processing</option>
                 <option <?= $document_status==='Ready To Release'?'selected':''?> value="Ready To Release">Ready To Release</option>
-                <option <?= $document_status==='Released'?'selected':''?>         value="Released">Released</option>
-                <option <?= $document_status==='Rejected'?'selected':''?>         value="Rejected">Rejected</option>
+                <option <?= $document_status==='Released'?'selected':''?> value="Released">Released</option>
+                <option <?= $document_status==='Rejected'?'selected':''?> value="Rejected">Rejected</option>
               </select>
             </div>
 
@@ -239,24 +229,922 @@ $result = $st->get_result();
       <!-- Add New Request button -->
       <div class="dropdown ms-3">
         <button class="btn btn-sm btn-success dropdown-toggle" type="button" id="addRequestDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+          <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">add</span>
           <i class="bi bi-plus-lg me-1"></i> Add New Request
         </button>
         <ul class="dropdown-menu" aria-labelledby="addRequestDropdown">
-          <?php foreach (['Barangay ID','Business Permit','Good Moral','Guardianship','Indigency','Residency','Solo Parent'] as $type): ?>
+          <?php foreach (['Barangay ID','Business Permit','Good Moral','Guardianship','Indigency','Residency','Solo Parent'] as $type): ?> <!-- 'Equipment Borrowing' -->
             <li>
-              <button
-                type="button"
-                class="dropdown-item request-trigger"
-                data-type="<?= $type ?>"
-              ><?= $type ?></button>
+              <button type="button" class="dropdown-item request-trigger" data-type="<?= $type ?>"><?= $type ?></button>
             </li>
           <?php endforeach; ?>
         </ul>
       </div>
 
+      <!-- Add New Request Modal -->
+      <div class="modal fade" id="addRequestModal" data-bs-backdrop="static" data-bs-keyboard="false"tabindex="-1" aria-labelledby="addRequestModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width:90vw;"> <!-- modal-dialog-scrollable -->
+          <div class="modal-content">
+            <div class="modal-header text-white" style="background-color: #13411F;">
+              <h5 class="modal-title" id="addRequestModalLabel">New Request</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addRequestForm" method="POST" action="functions/process_new_request.php" enctype="multipart/form-data">
+              <div class="modal-body">
+                <input type="hidden" name="request_type" id="modalRequestType" value="">
+                <!-- Dynamic fields get injected here -->
+                <div class="row g-3" id="dynamicFields"></div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-success">Create Request</button>
+              </div>
+            </form>
+            
+            <!-- BARANGAY ID TEMPLATE -->
+            <template id="tpl-Barangay ID">
+              <div class="row gy-2">
+                <!-- Section Title: Personal Details -->
+                <div class="col-12">
+                  <h6 class="fw-bold">Personal Details</h6>
+                  <hr class="my-2">
+                </div>
+                
+                <!-- Type of Transaction -->
+                <div class="col-12 d-flex align-items-center">
+                  <span class="form-label fw-bold mb-0 me-4">Type of Transaction:</span>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="transaction_type" id="txNew" value="New Application" required>
+                    <label class="form-check-label mb-0" for="txNew">New Application</label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="transaction_type" id="txRenewal" value="Renewal">
+                    <label class="form-check-label mb-0" for="txRenewal">Renewal</label>
+                  </div>
+                </div>
+
+                <!-- Full Name -->
+                <!-- <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">First Name</label>
+                  <input name="first_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
+                  <input name="middle_name" type="text" class="form-control form-control-sm">
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Last Name</label>
+                  <input name="last_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>          
+                  <input name="suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
+                </div> -->
+
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Full Name</label>
+                  <input name="full_name" type="text" class="form-control form-control-sm" required>
+                </div>
+
+                <!-- Purok, Birthday & Birth Place -->
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Purok</label>
+                  <div class="d-flex gap-2">
+                    <select name="purok" class="form-select form-select-sm" required>
+                      <option value="">Select</option>
+                      <option>Purok 1</option>
+                      <option>Purok 2</option>
+                      <option>Purok 3</option>
+                      <option>Purok 4</option>
+                      <option>Purok 5</option>
+                      <option>Purok 6</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Birthday</label>
+                  <input name="dob" type="date" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-bold">Birth Place</label>
+                  <div class="row">
+                    <div class="col">
+                      <input type="text" name="birth_place" class="form-control form-control-sm" placeholder="Municipality / Province" required/>
+                    </div>
+                    <!-- <div class="col">
+                      <input type="text" name="birth_municipality" class="form-control form-control-sm" placeholder="Locality / Municipality" required/>
+                    </div>
+                    <div class="col">
+                      <input type="text" name="birth_province" class="form-control form-control-sm" placeholder="Province" required/>
+                    </div> -->
+                  </div>
+                </div>
+
+                <!-- Civil Status, Religion, Height & Weight-->
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Civil Status</label>
+                  <select name="civil_status" class="form-select form-select-sm" required>
+                    <option value="">Select…</option>
+                    <option>Single</option>
+                    <option>Married</option>
+                    <option>Divorced</option>
+                    <option>Separated</option>
+                    <option>Widowed</option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Religion</label>
+                  <select name="religion" id="religionSelect" class="form-select form-select-sm" required>
+                    <option value="">Select…</option>
+                    <option>Roman Catholic</option>
+                    <option>Islam</option>
+                    <option>Iglesia ni Cristo</option>
+                    <option value="Other">Others</option>
+                  </select>
+                  <!-- This appears only when “Others” is selected -->
+                  <input name="religion_other" id="religionOtherInput" type="text" class="form-control form-control-sm mt-2 d-none" placeholder="Please specify religion">
+                </div>
+                <div class="col-12 col-md-2">
+                  <label class="form-label fw-bold">Height (ft)</label>
+                  <input name="height" type="decimal" min="0" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-2">
+                  <label class="form-label fw-bold">Weight (kg)</label>
+                  <input name="weight" type="decimal" min="0" class="form-control form-control-sm" required>
+                </div>
+
+                <!-- Emergency Contact Person Name & Number -->
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-bold">Emergency Contact Person</label>
+                  <input name="emergency_contact_person" type="text" class="form-control form-control-sm" required>
+                </div>     
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-bold">Emergency Contact Number</label>
+                  <input name="emergency_contact_number" type="tel" class="form-control form-control-sm" required>
+                </div>    
+
+                <!-- Formal Picture -->
+                <div class="col-12 col-md-6">
+                  <div class="form-check d-inline-block">
+                    <input class="form-check-input" type="checkbox" id="requirePhotoCheck">
+                    <label class="form-check-label fs-6" for="requirePhotoCheck"></label>
+                  </div>
+                  <label class="form-label fw-bold">1×1 Formal Picture</label>
+                  <input id="photoInput" name="photo" type="file" accept="image/*" class="form-control form-control-sm" disabled>
+                  <!-- this will display the existing filename -->
+                  <div id="currentPhotoName" class="form-text text-muted d-none"></div>
+                </div>
+
+                <!-- Section Title: Payment Details -->
+                <div class="col-12 mt-3">
+                  <h6 class="fw-bold">Payment Details</h6>
+                  <hr class="my-2">
+                </div>
+
+                <!-- Payment Method & Preferred Claim Date -->  
+                <div class="row gy-2">
+                  <div class="col-12 col-md-6">
+                    <label class="form-label fw-bold">Payment Method</label>
+                    <select name="payment_method" id="paymentMethodSelect" class="form-select form-select-sm" required>
+                      <option value="">Select…</option>
+                      <option value="GCash">GCash</option>
+                      <option value="Brgy Payment Device">Brgy Payment Device</option>
+                      <option value="Over-the-Counter">Over-the-Counter</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label class="form-label fw-bold">Preferred Claim Date</label>
+                    <input name="claim_date" type="date" class="form-control form-control-sm" required>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <!-- BUSINESS PERMIT TEMPLATE -->
+            <template id="tpl-Business Permit">
+              <div class="row gy-2">
+                <!-- Section Title -->
+                <div class="col-12">
+                  <h6 class="fw-bold">Business Permit Details</h6>
+                  <hr class="my-2">
+                </div>
+
+                <!-- Type of Transaction -->
+                <div class="col-12 d-flex align-items-center">
+                  <span class="form-label fw-bold mb-0 me-4">Type of Transaction:</span>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="transaction_type" id="bpNew" value="New Application" required>
+                    <label class="form-check-label mb-0" for="bpNew">New Application</label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="transaction_type" id="bpRenewal" value="Renewal">
+                    <label class="form-check-label mb-0" for="bpRenewal">Renewal</label>
+                  </div>
+                </div>
+
+                <!-- Full Name -->
+                <!-- <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">First Name</label>
+                  <input name="first_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
+                  <input name="middle_name" type="text" class="form-control form-control-sm">
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Last Name</label>
+                  <input name="last_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
+                  <input name="suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
+                </div> -->
+
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Full Name</label>
+                  <input name="full_name" type="text" class="form-control form-control-sm" required>
+                </div>
+
+                <!-- Barangay, Purok, Age, & Civil Status -->
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Barangay</label>
+                  <input name="barangay" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-2">
+                  <label class="form-label fw-bold">Purok</label>
+                  <select name="purok" class="form-select form-select-sm" required>
+                    <option value="">Select…</option>
+                    <option>Purok 1</option>
+                    <option>Purok 2</option>
+                    <option>Purok 3</option>
+                    <option>Purok 4</option>
+                    <option>Purok 5</option>
+                    <option>Purok 6</option>
+                  </select>
+                </div>
+                <!-- <div class="col-12 col-ms-3">
+                  <label class="form-label fw-bold">Age</label>
+                  <input name="age" type="number" min="0" class="form-control form-control-sm" required>
+                </div> -->
+                 <div class="col-12 col-md-2">
+                  <label class="form-label fw-bold">Age</label>
+                  <input name="age" type="number" min="0" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-2">
+                  <label class="form-label fw-bold">Civil Status</label>
+                  <select name="civil_status" class="form-select form-select-sm" required>
+                    <option value="">Select…</option>
+                    <option>Single</option>
+                    <option>Married</option>
+                    <option>Divorced</option>
+                    <option>Separated</option>
+                    <option>Widowed</option>
+                  </select>
+                </div>
+
+                <!-- Name of Business & Type of Business -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-bold">Name of Business</label>
+                  <input name="name_of_business" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-bold">Type of Business</label>
+                  <input name="type_of_business" type="text" class="form-control form-control-sm" required>
+                </div>
+
+                <!-- Business Address -->
+                <div class="col-12">
+                  <label class="form-label fw-bold">Business Full Address</label>
+                  <div class="d-flex gap-2">
+                    <input name="full_address" type="text" class="form-control form-control-sm" required>
+                  </div>
+                </div>
+
+                <!-- Section Title: Payment Details -->
+                <div class="col-12 mt-5">
+                  <h6 class="fw-bold">Payment Details</h6>
+                  <hr class="my-2">
+                </div>
+
+                <!-- Payment Method & Preferred Claim Date -->
+                <div class="row gy-2">
+                  <div class="col-12 col-md-6">
+                    <label class="form-label fw-bold">Payment Method</label>
+                    <select name="payment_method" id="paymentMethodSelect" class="form-select form-select-sm" required>
+                      <option value="">Select…</option>
+                      <option value="GCash">GCash</option>
+                      <option value="Brgy Payment Device">Brgy Payment Device</option>
+                      <option value="Over-the-Counter">Over-the-Counter</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label class="form-label fw-bold">Preferred Claim Date</label>
+                    <input name="claim_date" type="date" class="form-control form-control-sm" required>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <!-- GOOD MORAL TEMPLATE -->
+            <template id="tpl-Good Moral">
+              <div class="row gy-2">
+                <!-- Section Title: Personal Details -->
+                <div class="col-12">
+                  <h6 class="fw-bold">Personal Details</h6>
+                  <hr class="my-2">
+                </div>
+
+                <!-- Row 1: Full Name & Civil Status -->
+                <!-- <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">First Name</label>
+                  <input name="first_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
+                  <input name="middle_name" type="text" class="form-control form-control-sm">
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Last Name</label>
+                  <input name="last_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
+                  <input name="suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
+                </div> -->
+
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Full Name</label>
+                  <input name="full_name" type="text" class="form-control form-control-sm" required>
+                </div>
+
+                <!-- Row 2: Civil Status, Sex & Age -->
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Civil Status</label>
+                  <select name="civil_status" class="form-select form-select-sm" required>
+                    <option value="">Select…</option>
+                    <option>Single</option>
+                    <option>Married</option>
+                    <option>Divorced</option>
+                    <option>Separated</option>
+                    <option>Widowed</option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Sex</label>
+                  <select name="sex" class="form-select form-select-sm" required>
+                    <option value="">Select…</option>
+                    <option>Male</option>
+                    <option>Female</option>
+                    <option>Others</option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-2">
+                  <label class="form-label fw-bold">Age</label>
+                  <input name="age" type="number" min="0" class="form-control form-control-sm" required>
+                </div>
+
+                <!-- Full Address -->
+                <div class="col-12">
+                  <label class="form-label fw-bold">Full Address</label>
+                  <div class="row">
+                    <!-- Barangay (read‑only) -->
+                    <!-- <div class="col-12 col-md-3">
+                      <input name="barangay" type="text" value="Brgy. Magang" readonly class="form-control form-control-sm"/>
+                    </div> -->
+
+                    <!-- Purok selector -->
+                    <div class="col-12 col-md-2">
+                      <select name="purok" class="form-select form-select-sm" required>
+                        <option value="">Purok</option>
+                        <option>Purok 1</option>
+                        <option>Purok 2</option>
+                        <option>Purok 3</option>
+                        <option>Purok 4</option>
+                        <option>Purok 5</option>
+                        <option>Purok 6</option>
+                      </select>
+                    </div>
+
+                    <!-- Subdivision / Street / Lot / Block -->
+                    <div class="col-12 col-md-4">
+                      <input name="subdivision" type="text" class="form-control form-control-sm" placeholder="Subdivision / Street / Lot / Block" required/>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Purpose -->
+                <div class="col-12">
+                  <label class="form-label fw-bold">Purpose</label>
+                  <textarea name="purpose" class="form-control form-control-sm" rows="2" placeholder="State the purpose of Good Moral" required></textarea>
+                </div>
+
+                <!-- Section Title: Payment Details -->
+                <div class="col-12 mt-5">
+                  <h6 class="fw-bold">Payment Details</h6>
+                  <hr class="my-2">
+                </div>
+
+                <!-- Payment Method & Preferred Claim Date -->
+                <div class="row gy-2">
+                  <div class="col-12 col-md-6">
+                    <label class="form-label fw-bold">Payment Method</label>
+                    <select name="payment_method" class="form-select form-select-sm" required>
+                      <option value="">Select…</option>
+                      <option>GCash</option>
+                      <option>Brgy Payment Device</option>
+                      <option>Over-the-Counter</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label class="form-label fw-bold">Preferred Claim Date</label>
+                    <input name="claim_date" type="date" class="form-control form-control-sm" required >
+                  </div>
+                </div>
+              </div>
+            </template> 
+
+            <!-- GUARDIANSHIP TEMPLATE -->
+            <template id="tpl-Guardianship">
+              <div class="row gy-2">
+                <div class="col-12">
+                  <h6 class="fw-bold">Guardian Details</h6>
+                  <hr class="my-2">
+                </div>
+                <!-- Row 1: Guardian Full Name, Civil Status, Age -->
+                <!-- <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">First Name</label>
+                  <input name="guardian_first_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
+                  <input name="guardian_middle_name" type="text" class="form-control form-control-sm">
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Last Name</label>
+                  <input name="guardian_last_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
+                  <input name="guardian_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
+                </div> -->
+
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Full Name</label>
+                  <input name="full_name" type="text" class="form-control form-control-sm" required>
+                </div>
+
+                <div class="col-6 col-md-3">
+                  <label class="form-label fw-bold">Civil Status</label>
+                  <!-- <select name="guardian_civil_status" class="form-select form-select-sm" required> -->
+                  <select name="civil_status" class="form-select form-select-sm" required>
+                    <option value="">Select…</option>
+                    <option>Single</option>
+                    <option>Married</option>
+                    <option>Divorced</option>
+                    <option>Separated</option>
+                    <option>Widowed</option>
+                  </select>
+                </div>
+                <div class="col-6 col-md-2">
+                  <label class="form-label fw-bold">Age</label>
+                  <!-- <input name="guardian_age" type="number" min="0" class="form-control form-control-sm" required> -->
+                  <input name="age" type="number" min="0" class="form-control form-control-sm" required>
+                </div>
+
+                <!-- Row 2: Guardian Full Address & Child's Name -->
+                <!-- <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Guardian Full Address</label>
+                  <div class="d-flex gap-3">
+                    <input name="guardian_barangay" type="text" value="Brgy. Magang" readonly class="form-control form-control-sm">
+                    <select name="guardian_purok" class="form-select form-select-sm" required>
+                      <option value="">Purok…</option>
+                      <option>Purok 1</option>
+                      <option>Purok 2</option>
+                      <option>Purok 3</option>
+                      <option>Purok 4</option>
+                      <option>Purok 5</option>
+                      <option>Purok 6</option>
+                    </select>
+                  </div>
+                </div> -->
+
+                <div class="col-12 col-md-2">
+                  <label class="form-label fw-bold">Purok</label>
+                  <div class="d-flex gap-3">
+                    <!-- <input name="guardian_barangay" type="text" value="Brgy. Magang" readonly class="form-control form-control-sm"> -->
+                    <!-- <select name="guardian_purok" class="form-select form-select-sm" required>
+                      <option value="">Purok…</option>
+                      <option>Purok 1</option>
+                      <option>Purok 2</option>
+                      <option>Purok 3</option>
+                      <option>Purok 4</option>
+                      <option>Purok 5</option>
+                      <option>Purok 6</option>
+                    </select> -->
+                    <select name="purok" class="form-select form-select-sm" required>
+                      <option value="">Purok…</option>
+                      <option>Purok 1</option>
+                      <option>Purok 2</option>
+                      <option>Purok 3</option>
+                      <option>Purok 4</option>
+                      <option>Purok 5</option>
+                      <option>Purok 6</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <h6 class="fw-bold">Child's Details</h6>
+                  <hr class="my-2">
+                </div>
+
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Child's Name</label>
+                  <input name="child_name" type="text" class="form-control form-control-sm" required>
+                </div>
+
+                <!-- Row 3: Purpose -->
+                <div class="col-12">
+                  <label class="form-label fw-bold">Purpose</label>
+                  <textarea name="purpose" class="form-control form-control-sm" rows="2" placeholder="State the purpose of guardianship" required></textarea>
+                </div>
+
+                <!-- Section Title: Payment Details -->
+                <div class="col-12 mt-5">
+                  <h6 class="fw-bold">Payment Details</h6>
+                  <hr class="my-2">
+                </div>
+
+                <!-- Payment Method & Preferred Claim Date -->
+                <div class="row gy-2">
+                  <div class="col-12 col-md-6">
+                    <label class="form-label fw-bold">Payment Method</label>
+                    <select name="payment_method" class="form-select form-select-sm" required>
+                      <option value="">Select…</option>
+                      <option>GCash</option>
+                      <option>Brgy Payment Device</option>
+                      <option>Over-the-Counter</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label class="form-label fw-bold">Preferred Claim Date</label>
+                    <input name="claim_date" type="date" class="form-control form-control-sm" required >
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <!-- INDIGENCY TEMPLATE -->
+            <template id="tpl-Indigency">
+              <div class="row gy-2">
+                <div class="col-12">
+                  <h6 class="fw-bold">Indigency Details</h6>
+                  <hr class="my-2">
+                </div>
+
+                <!-- Row 1: First, Middle, Last, Suffix -->
+                <!-- <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">First Name</label>
+                  <input name="first_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
+                  <input name="middle_name" type="text" class="form-control form-control-sm">
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Last Name</label>
+                  <input name="last_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
+                  <input name="suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
+                </div> -->
+
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Full Name</label>
+                  <input name="full_name" type="text" class="form-control form-control-sm" required>
+                </div>
+
+                <!-- Row 2: Civil Status & Age -->
+                <div class="col-6 col-md-3">
+                  <label class="form-label fw-bold">Civil Status</label>
+                  <select name="civil_status" class="form-select form-select-sm" required>
+                    <option value="">Select…</option>
+                    <option>Single</option>
+                    <option>Married</option>
+                    <option>Divorced</option>
+                    <option>Separated</option>
+                    <option>Widowed</option>
+                  </select>
+                </div>
+                <div class="col-6 col-md-2">
+                  <label class="form-label fw-bold">Age</label>
+                  <input name="age" type="number" min="0" class="form-control form-control-sm" required>
+                </div>
+
+                <!-- Row 3: Full Address -->
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-bold">Purok</label>
+                  <div class="row gx-2">
+                    <!-- Barangay (read‑only) -->
+                    <!-- <div class="col-12 col-md-3">
+                      <input name="barangay" type="text" value="Brgy. Magang" readonly class="form-control form-control-sm"/>
+                    </div> -->
+
+                    <!-- Purok selector -->
+                    <div class="col-12 col-md-6">
+                      <select name="purok" class="form-select form-select-sm" required>
+                        <option value="">Purok…</option>
+                        <option>Purok 1</option>
+                        <option>Purok 2</option>
+                        <option>Purok 3</option>
+                        <option>Purok 4</option>
+                        <option>Purok 5</option>
+                        <option>Purok 6</option>
+                      </select>
+                    </div>
+
+                    <!-- Subdivision / Street / Lot / Block -->
+                    <!-- <div class="col-12 col-md-7">
+                      <input name="subdivision" type="text" class="form-control form-control-sm" placeholder="Subdivision / Street / Lot / Block"/>
+                    </div> -->
+                  </div>
+                </div>
+
+                <!-- Row 4: Purpose -->
+                <div class="col-12">
+                  <label class="form-label fw-bold">Purpose</label>
+                  <textarea name="purpose" class="form-control form-control-sm" rows="2" placeholder="State the purpose of indigency" required></textarea>
+                </div>
+
+                <!-- Row 5: Claim Date -->
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-bold">Preferred Claim Date</label>
+                  <input name="claim_date" type="date" class="form-control form-control-sm" required>
+                </div>
+              </div>
+            </template>
+
+            <!-- RESIDENCY TEMPLATE -->
+            <template id="tpl-Residency">
+              <div class="row gy-2">
+                <div class="col-12">
+                  <h6 class="fw-bold">Residency Details</h6>
+                  <hr class="my-2">
+                </div>
+
+                <!-- Row 1: First, Middle, Last, Suffix -->
+                <!-- <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">First Name</label>
+                  <input name="first_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
+                  <input name="middle_name" type="text" class="form-control form-control-sm">
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Last Name</label>
+                  <input name="last_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
+                  <input name="suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
+                </div> -->
+
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Full Name</label>
+                  <input name="full_name" type="text" class="form-control form-control-sm" required>
+                </div>
+
+                <!-- Row 2: Civil Status & Age -->
+                <div class="col-6 col-md-3">
+                  <label class="form-label fw-bold">Civil Status</label>
+                  <select name="civil_status" class="form-select form-select-sm" required>
+                    <option value="">Select…</option>
+                    <option>Single</option>
+                    <option>Married</option>
+                    <option>Divorced</option>
+                    <option>Separated</option>
+                    <option>Widowed</option>
+                  </select>
+                </div>
+                <div class="col-6 col-md-1">
+                  <label class="form-label fw-bold">Age</label>
+                  <input name="age" type="number" min="0" class="form-control form-control-sm" required>
+                </div>
+
+                <!-- Row 3: Full Address & Years Residing -->
+                <div class="col-12 col-md-2">
+                  <label class="form-label fw-bold">Purok</label>
+                  <div class="d-flex gap-2">
+                    <!-- <input name="barangay" type="text" value="Brgy. Magang" readonly class="form-control form-control-sm"> -->
+                    <select name="purok" class="form-select form-select-sm" required>
+                      <option value="">Purok…</option>
+                      <option>Purok 1</option>
+                      <option>Purok 2</option>
+                      <option>Purok 3</option>
+                      <option>Purok 4</option>
+                      <option>Purok 5</option>
+                      <option>Purok 6</option>
+                    </select>
+                    <!-- <input name="subdivision" type="text" class="form-control form-control-sm" placeholder="Subdivision / Street / Lot / Block"> -->
+                  </div>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Years Residing Here</label>
+                  <input name="residing_years" type="number" min="0" class="form-control form-control-sm" placeholder="e.g. 5" required>
+                </div>
+
+                <!-- Row 4: Purpose -->
+                <div class="col-12">
+                  <label class="form-label fw-bold">Purpose</label>
+                  <textarea name="purpose" class="form-control form-control-sm" rows="2" placeholder="State the purpose of residency" required></textarea>
+                </div>
+
+                <!-- Section Title: Payment Details -->
+                <div class="col-12 mt-4">
+                  <h6 class="fw-bold">Payment Details</h6>
+                  <hr class="my-2">
+                </div>
+
+                <!-- Row 5: Payment Method & Preferred Claim Date -->
+                <div class="row gy-2">
+                  <div class="col-12 col-md-6">
+                    <label class="form-label fw-bold">Payment Method</label>
+                    <select name="payment_method" class="form-select form-select-sm" required>
+                      <option value="">Select…</option>
+                      <option>GCash</option>
+                      <option>Brgy Payment Device</option>
+                      <option>Over-the-Counter</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label class="form-label fw-bold">Preferred Claim Date</label>
+                    <input name="claim_date" type="date" class="form-control form-control-sm" required >
+                  </div>
+                </div>
+              </div>
+            </template>
+            
+            <!-- SOLO PARENT TEMPLATE -->
+            <template id="tpl-Solo Parent">
+              <div class="row gy-2">
+                <div class="col-12">
+                  <h6 class="fw-bold">Solo Parent Details</h6>
+                  <hr class="my-2">
+                </div>
+
+                <!-- Row 1: First, Middle, Last, Suffix -->
+                <!-- <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">First Name</label>
+                  <input name="first_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
+                  <input name="middle_name" type="text" class="form-control form-control-sm">
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Last Name</label>
+                  <input name="last_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
+                  <input name="suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
+                </div> -->
+
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Full Name</label>
+                  <input name="full_name" type="text" class="form-control form-control-sm" required>
+                </div>
+
+                <!-- Row 2: Civil Status & Age -->
+                <div class="col-6 col-md-3">
+                  <label class="form-label fw-bold">Civil Status</label>
+                  <select name="civil_status" class="form-select form-select-sm" required>
+                    <option value="">Select…</option>
+                    <option>Separated</option>
+                    <option>Widowed</option>
+                  </select>
+                </div>
+                <div class="col-6 col-md-2">
+                  <label class="form-label fw-bold">Age</label>
+                  <input name="age" type="number" min="0" class="form-control form-control-sm" required>
+                </div>
+
+                <!-- Row 3: Full Address & Years as Solo Parent -->
+                <div class="col-12 col-md-2">
+                  <label class="form-label fw-bold">Purok</label>
+                  <div class="d-flex gap-2">
+                    <!-- <input name="barangay" type="text" value="Brgy. Magang" readonly class="form-control form-control-sm"> -->
+                    <select name="purok" class="form-select form-select-sm" required>
+                      <option value="">Purok…</option>
+                      <option>Purok 1</option>
+                      <option>Purok 2</option>
+                      <option>Purok 3</option>
+                      <option>Purok 4</option>
+                      <option>Purok 5</option>
+                      <option>Purok 6</option>
+                    </select>
+                    <!-- <input name="subdivision" type="text" class="form-control form-control-sm" placeholder="Subdivision / Street / Lot / Block"> -->
+                  </div>
+                </div>
+                <div class="col-12 col-md-2">
+                  <label class="form-label fw-bold">Years as Solo Parent</label>
+                  <input name="years_solo_parent" type="number" min="0" class="form-control form-control-sm" placeholder="e.g. 2" required>
+                </div>
+
+                <!-- Row 4: Child’s Name, Sex & Age -->
+                <div class="col-12 col-md-5">
+                  <label class="form-label fw-bold">Child’s Full Name</label>
+                  <input name="child_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <!-- <div class="col-6 col-md-3">
+                  <label class="form-label fw-bold">Child’s Sex</label>
+                  <select name="child_sex" class="form-select form-select-sm" required>
+                    <option value="">Select…</option>
+                    <option>Male</option>
+                    <option>Female</option>
+                    <option>Others</option>
+                  </select>
+                </div> -->
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Child’s Sex</label>
+                  <input name="child_sex" type="text" class="form-control form-control-sm" required>
+                </div>
+
+                <!-- <div class="col-6 col-md-4">
+                  <label class="form-label fw-bold">Child’s Age</label>
+                  <input name="child_age" type="number" min="0" class="form-control form-control-sm" required>
+                </div> -->
+
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-bold">Child’s Age</label>
+                  <input name="child_age" type="text" class="form-control form-control-sm" required>
+                </div>
+
+                <!-- Row 5: Purpose -->
+                <div class="col-12">
+                  <label class="form-label fw-bold">Purpose</label>
+                  <textarea name="purpose" class="form-control form-control-sm" rows="2" placeholder="State the purpose of solo parent" required></textarea>
+                </div>
+
+                <!-- Section Title: Payment Details -->
+                <div class="col-12 mt-4">
+                  <h6 class="fw-bold">Payment Details</h6>
+                  <hr class="my-2">
+                </div>
+
+                <!-- Row 6: Payment Method & Preferred Claim Date -->
+                <div class="row gy-2">
+                  <div class="col-12 col-md-6">
+                    <label class="form-label fw-bold">Payment Method</label>
+                    <select name="payment_method" class="form-select form-select-sm" required>
+                      <option value="">Select…</option>
+                      <option>GCash</option>
+                      <option>Brgy Payment Device</option>
+                      <option>Over-the-Counter</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label class="form-label fw-bold">Preferred Claim Date</label>
+                    <input name="claim_date" type="date" class="form-control form-control-sm" required >
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit Request Modal -->
+      <div class="modal fade" id="editRequestModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="editRequestModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width:90vw;">
+          <div class="modal-content">
+            <div class="modal-header text-white" style="background-color: #13411F;">
+              <h5 class="modal-title" id="editRequestModalLabel">Edit Request</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editRequestForm" method="POST" action="functions/process_edit_request.php" enctype="multipart/form-data">
+              <div class="modal-body">
+                <!-- carry over the request type and transaction ID -->
+                <input type="hidden" name="request_type" id="editModalRequestType" value="">
+                <input type="hidden" name="transaction_id" id="editModalTransactionId" value="">
+                
+                <!-- Dynamic fields get injected here -->
+                <div class="row g-3" id="dynamicEditFields"></div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-success">Save Changes</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
       <form method="get" id="searchForm" class="d-flex ms-auto me-2">
       <!-- preserve pagination & filters -->
-      <input type="hidden" name="page"     value="adminRequest">
+      <input type="hidden" name="page" value="adminRequest">
       <input type="hidden" name="page_num" value="1">
       <?php foreach (['request_type','date_from','date_to','payment_method','payment_status','document_status'] as $f): 
           if (!empty($_GET[$f])): ?>
@@ -265,7 +1153,7 @@ $result = $st->get_result();
 
       <div class="input-group input-group-sm">
           <input name="search" id="searchInput" type="text" class="form-control" placeholder="Search…" value="<?= htmlspecialchars($search) ?>">
-          <button type="button" class="btn btn-outline-secondary" id="searchBtn">
+          <button type="button" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" id="searchBtn">
           <span class="material-symbols-outlined" id="searchIcon">
               <?= !empty($search) ? 'close' : 'search' ?>
           </span>
@@ -274,30 +1162,53 @@ $result = $st->get_result();
       </form>
     </div>
 
-    <div class="table-responsive admin-table" style="height:500px; overflow-y:auto;">
+    <div class="table-responsive admin-table">
       <table class="table table-hover align-middle text-start">
         <thead class="table-light">
           <tr>
             <th class="text-nowrap">Transaction No.</th>
             <th class="text-nowrap">Name</th>
             <th class="text-nowrap">Request</th>
-            <th class="text-nowrap">Payment Method</th>
             <th class="text-nowrap">Payment Status</th>
             <th class="text-nowrap">Document Status</th>
-            <th class="text-nowrap">Created At</th>
+            <th class="text-nowrap">Date Created</th>
+            <th class="text-nowrap text-center">Action</th>
           </tr>
         </thead>
         <tbody>
           <?php if ($result->num_rows): ?>
-            <?php while ($row = $result->fetch_assoc()): ?>
-              <tr data-id="<?= htmlspecialchars($row['transaction_id']) ?>" data-type="<?= htmlspecialchars($row['request_type']) ?>" style="cursor:pointer;"> 
-                <td><?= htmlspecialchars($row['transaction_id']) ?></td>
+            <?php while ($row = $result->fetch_assoc()):
+              $tid = htmlspecialchars($row['transaction_id']);
+            ?>
+              <tr data-id="<?= $tid ?>">
+                <td><?= $tid ?></td>
                 <td><?= htmlspecialchars($row['full_name']) ?></td>
                 <td><?= htmlspecialchars($row['request_type']) ?></td>
-                <td><?= htmlspecialchars($row['payment_method']) ?></td>
                 <td><?= htmlspecialchars($row['payment_status']) ?></td>
                 <td><?= htmlspecialchars($row['document_status']) ?></td>
-                <td><?= $row['formatted_date'] ?></td>
+                <td><?= htmlspecialchars($row['formatted_date']) ?></td>
+                <td>
+                  <!-- Print Button -->
+                  <button type="button" class="btn btn-sm btn-warning btn-print" title="Print <?= $tid ?>">
+                    <span class="material-symbols-outlined" style="font-size: 13px;">
+                      print
+                    </span>
+                  </button>
+
+                  <!-- Edit Button -->
+                  <button type="button" class="btn btn-sm btn-success btn-edit" title="Edit <?= $tid ?>">
+                    <span class="material-symbols-outlined" style="font-size: 13px;">
+                      stylus
+                    </span>
+                  </button>
+
+                  <!-- Delete Button -->
+                  <button class="btn btn-sm btn-danger delete-btn" title="Delete <?= $tid ?>">
+                    <span class="material-symbols-outlined" style="font-size: 13px;">
+                      delete
+                    </span>
+                  </button>
+                </td>
               </tr>
             <?php endwhile; ?>
           <?php else: ?>
@@ -319,11 +1230,7 @@ $result = $st->get_result();
           $dots = false;
 
           for ($i = 1; $i <= $totalPages; $i++) {
-            if (
-              $i == 1 ||
-              $i == $totalPages ||
-              ($i >= $page - $range && $i <= $page + $range)
-            ) {
+            if ($i == 1 || $i == $totalPages || ($i >= $page - $range && $i <= $page + $range)) {
               $active = $i == $page ? 'active' : '';
               echo "<li class='page-item {$active}'>
                       <a class='page-link' href='?" . http_build_query(array_merge($_GET, ['page_num' => $i])) . "'>$i</a>
@@ -345,552 +1252,6 @@ $result = $st->get_result();
       <?php endif; ?>
     </div>
   </div>
-
-  <!-- Universal “Add New Request” Modal -->
-  <div class="modal fade" id="addRequestModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-      <div class="modal-content shadow-sm">
-        <div class="modal-header bg-dark text-white">
-          <h5 class="modal-title">
-            <i class="bi bi-plus-lg me-2"></i>
-            <span id="addRequestModalTitle">New Request</span>
-          </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-        </div>
-        <form id="addRequestForm" action="functions/serviceBarangayID_submit.php" method="POST" enctype="multipart/form-data">
-          <div class="modal-body" id="addRequestModalBody">
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-success">Submit</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- Templates for Barangay ID -->
-  <template data-type="Barangay ID">
-    <!-- core hidden value -->
-    <input type="hidden" name="request_type" value="Barangay ID">
-
-    <!-- Type of Transaction -->
-    <div class="mb-3">
-      <label class="form-label">Type of Transaction</label>
-      <select name="transactiontype" class="form-select" required>
-        <option value="New Application">New Application</option>
-        <option value="Renewal">Renewal</option>
-      </select>
-    </div>
-
-    <!-- Full Name -->
-    <div class="mb-3">
-      <label class="form-label">Full Name</label>
-      <input name="fullname" type="text" class="form-control" required>
-    </div>
-
-    <!-- Full Address -->
-    <div class="mb-3">
-      <label class="form-label">Full Address</label>
-      <input name="address" type="text" class="form-control" required>
-    </div>
-
-    <!-- Height & Weight -->
-    <div class="row mb-3">
-      <div class="col">
-        <label class="form-label">Height (cm)</label>
-        <input name="height" type="number" class="form-control" min="0" required>
-      </div>
-      <div class="col">
-        <label class="form-label">Weight (kg)</label>
-        <input name="weight" type="number" class="form-control" min="0" required>
-      </div>
-    </div>
-
-    <!-- Birthdate & Birthplace -->
-    <div class="row mb-3">
-      <div class="col">
-        <label class="form-label">Birthday</label>
-        <input name="birthday" type="date" class="form-control" required>
-      </div>
-      <div class="col">
-        <label class="form-label">Birthplace</label>
-        <input name="birthplace" type="text" class="form-control" required>
-      </div>
-    </div>
-
-    <!-- Civil Status & Religion -->
-    <div class="row mb-3">
-      <div class="col">
-        <label class="form-label">Civil Status</label>
-        <select name="civilstatus" class="form-select" required>
-          <option value="">Select…</option>
-          <option>Single</option>
-          <option>Married</option>
-          <option>Divorced</option> 
-          <option>Separated</option>
-          <option>Widowed</option>
-        </select>
-      </div>
-      <div class="col">
-        <label class="form-label">Religion</label>
-        <input name="religion" type="text" class="form-control" required>
-      </div>
-    </div>
-
-    <!-- Contact Person -->
-    <div class="mb-3">
-      <label class="form-label">Contact Person</label>
-      <input name="contactperson" type="text" class="form-control" required>
-    </div>
-
-    <!-- Formal Picture -->
-    <div class="mb-3">
-      <label class="form-label">1x1 Formal Picture</label>
-      <input name="brgyIDpicture" type="file" class="form-control" accept="image/*" required>
-    </div>
-
-    <!-- Preferred Claim Date -->
-    <div class="mb-3">
-      <label class="form-label">Preferred Claim Date</label>
-      <input name="claimdate" type="date" class="form-control" required>
-    </div>
-
-    <!-- Payment Method -->
-    <div class="mb-3">
-      <label class="form-label">Payment Method</label>
-      <select name="paymentMethod" class="form-select" required>
-        <option value="GCash">GCash</option>
-        <option value="Brgy Payment Device">Brgy Payment Device</option>
-        <option value="Over-the-Counter">Over-the-Counter</option>
-      </select>
-    </div>
-  </template>
-  
-  <!-- Templates for Business Permit -->
-  <template data-type="Business Permit">
-    <!-- core hidden value -->
-    <input type="hidden" name="request_type" value="Business Permit">
-
-    <!-- Transaction Type -->
-    <div class="mb-3">
-      <label class="form-label">Transaction Type</label>
-      <select name="transactiontype" class="form-select" required>
-        <option value="New Application">New Application</option>
-        <option value="Renewal">Renewal</option>
-      </select>
-    </div>
-
-    <!-- Full Name -->
-    <div class="mb-3">
-      <label class="form-label">Full Name</label>
-      <input name="fullname" type="text" class="form-control" required>
-    </div>
-
-    <!-- Full Address -->
-    <div class="mb-3">
-      <label class="form-label">Full Address</label>
-      <input name="address" type="text" class="form-control" required>
-    </div>
-
-    <!-- Civil Status -->
-    <div class="mb-3">
-      <label class="form-label">Civil Status</label>
-      <select name="civilstatus" class="form-select" required>
-        <option value="">Select…</option>
-        <option>Single</option>
-        <option>Married</option>
-        <option>Divorced</option>
-        <option>Separated</option>
-        <option>Widowed</option>
-      </select>
-    </div>
-
-    <!-- Purok & Barangay -->
-    <div class="row mb-3">
-      <div class="col">
-        <label class="form-label">Purok</label>
-        <input name="purok" type="text" class="form-control" required>
-      </div>
-      <div class="col">
-        <label class="form-label">Barangay</label>
-        <input name="barangay" type="text" class="form-control" required>
-      </div>
-    </div>
-
-    <!-- Age & Preferred Claim Date -->
-    <div class="row mb-3">
-      <div class="col">
-        <label class="form-label">Age</label>
-        <input name="age" type="number" class="form-control" min="0" required>
-      </div>
-      <div class="col">
-        <label class="form-label">Preferred Claim Date</label>
-        <input name="claimdate" type="date" class="form-control" required>
-      </div>
-    </div>
-
-    <!-- Business Name & Type of Business -->
-    <div class="row mb-3">
-      <div class="col">
-        <label class="form-label">Name of Business</label>
-        <input name="business_name" type="text" class="form-control" required>
-      </div>
-      <div class="col">
-        <label class="form-label">Type of Business</label>
-        <input name="business_type" type="text" class="form-control" required>
-      </div>
-    </div>
-
-    <!-- Payment Method -->
-    <div class="mb-3">
-      <label class="form-label">Payment Method</label>
-      <select name="paymentMethod" class="form-select" required>
-        <option value="GCash">GCash</option>
-        <option value="Brgy Payment Device">Brgy Payment Device</option>
-        <option value="Over-the-Counter">Over-the-Counter</option>
-      </select>
-    </div>
-  </template>
-
-  <template data-type="Residency">
-    <!-- core hidden value -->
-    <input type="hidden" name="request_type" value="Residency">
-
-    <!-- Full Name -->
-    <div class="mb-3">
-      <label class="form-label">Name</label>
-      <input name="name" type="text" class="form-control" required>
-    </div>
-
-    <!-- Age & Civil Status -->
-    <div class="row mb-3">
-      <div class="col">
-        <label class="form-label">Age</label>
-        <input name="age" type="number" class="form-control" min="0" required>
-      </div>
-      <div class="col">
-        <label class="form-label">Civil Status</label>
-        <select name="civil_status" class="form-select" required>
-          <option value="" selected>Select…</option>
-          <option>Single</option>
-          <option>Married</option>
-          <option>Divorced</option>
-          <option>Separated</option>
-          <option>Widowed</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Purok & Residing Years -->
-    <div class="row mb-3">
-      <div class="col">
-        <label class="form-label">Purok</label>
-        <input name="purok" type="text" class="form-control" required>
-      </div>
-      <div class="col">
-        <label class="form-label">Years Residing Here</label>
-        <input name="residing_years" type="number" class="form-control" min="0" required>
-      </div>
-    </div>
-
-    <!-- Preferred Claim Date -->
-    <div class="mb-3">
-      <label class="form-label">Claim Date</label>
-      <input name="claim_date" type="date" class="form-control" required>
-    </div>
-
-    <!-- Purpose -->
-    <div class="mb-3">
-      <label class="form-label">Purpose</label>
-      <textarea name="purpose" class="form-control" rows="2" required></textarea>
-    </div>
-
-    <!-- Payment Method -->
-    <div class="mb-3">
-      <label class="form-label">Payment Method</label>
-      <select name="payment_method" class="form-select" required>
-        <option value="GCash">GCash</option>
-        <option value="Brgy Payment Device">Brgy Payment Device</option>
-        <option value="Over-the-Counter">Over-the-Counter</option>
-      </select>
-    </div>
-  </template>
-
-  <template data-type="Indigency">
-    <!-- core hidden value -->
-    <input type="hidden" name="request_type" value="Indigency">
-
-    <!-- Full Name -->
-    <div class="mb-3">
-      <label class="form-label">Name</label>
-      <input name="name" type="text" class="form-control" required>
-    </div>
-
-    <!-- Age & Civil Status -->
-    <div class="row mb-3">
-      <div class="col">
-        <label class="form-label">Age</label>
-        <input name="age" type="number" class="form-control" min="0" required>
-      </div>
-      <div class="col">
-        <label class="form-label">Civil Status</label>
-        <select name="civil_status" class="form-select" required>
-          <option value="" selected>Select…</option>
-          <option>Single</option>
-          <option>Married</option>
-          <option>Divorced</option>
-          <option>Separated</option>
-          <option>Widowed</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Purok -->
-    <div class="mb-3">
-      <label class="form-label">Purok</label>
-      <input name="purok" type="text" class="form-control" required>
-    </div>
-
-    <!-- Preferred Claim Date -->
-    <div class="mb-3">
-      <label class="form-label">Claim Date</label>
-      <input name="claim_date" type="date" class="form-control" required>
-    </div>
-
-    <!-- Purpose -->
-    <div class="mb-3">
-      <label class="form-label">Purpose</label>
-      <textarea name="purpose" class="form-control" rows="2" required></textarea>
-    </div>
-
-    <!-- Payment Method -->
-    <div class="mb-3">
-      <label class="form-label">Payment Method</label>
-      <select name="payment_method" class="form-select" required>
-        <option value="GCash">GCash</option>
-        <option value="Brgy Payment Device">Brgy Payment Device</option>
-        <option value="Over-the-Counter">Over-the-Counter</option>
-      </select>
-    </div>
-  </template>
-
-  <template data-type="Good Moral">
-    <!-- core hidden value -->
-    <input type="hidden" name="request_type" value="Good Moral">
-
-    <!-- Full Name -->
-    <div class="mb-3">
-      <label class="form-label">Name</label>
-      <input name="name" type="text" class="form-control" required>
-    </div>
-
-    <!-- Age & Civil Status -->
-    <div class="row mb-3">
-      <div class="col">
-        <label class="form-label">Age</label>
-        <input name="age" type="number" class="form-control" min="0" required>
-      </div>
-      <div class="col">
-        <label class="form-label">Civil Status</label>
-        <select name="civil_status" class="form-select" required>
-          <option value="" selected>Select…</option>
-          <option>Single</option>
-          <option>Married</option>
-          <option>Divorced</option>
-          <option>Separated</option>
-          <option>Widowed</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Purok -->
-    <div class="mb-3">
-      <label class="form-label">Purok</label>
-      <input name="purok" type="text" class="form-control" required>
-    </div>
-
-    <!-- Preferred Claim Date -->
-    <div class="mb-3">
-      <label class="form-label">Claim Date</label>
-      <input name="claim_date" type="date" class="form-control" required>
-    </div>
-
-    <!-- Purpose -->
-    <div class="mb-3">
-      <label class="form-label">Purpose</label>
-      <textarea name="purpose" class="form-control" rows="2" required></textarea>
-    </div>
-
-    <!-- Payment Method -->
-    <div class="mb-3">
-      <label class="form-label">Payment Method</label>
-      <select name="payment_method" class="form-select" required>
-        <option value="GCash">GCash</option>
-        <option value="Brgy Payment Device">Brgy Payment Device</option>
-        <option value="Over-the-Counter">Over-the-Counter</option>
-      </select>
-    </div>
-  </template>
-
-  <template data-type="Guardianship">
-    <!-- core hidden value -->
-    <input type="hidden" name="request_type" value="Guardianship">
-
-    <!-- Guardian Full Name -->
-    <div class="mb-3">
-      <label class="form-label">Guardian Name</label>
-      <input name="full_name" type="text" class="form-control" required>
-    </div>
-
-    <!-- Age & Civil Status -->
-    <div class="row mb-3">
-      <div class="col">
-        <label class="form-label">Age</label>
-        <input name="age" type="number" class="form-control" min="0" required>
-      </div>
-      <div class="col">
-        <label class="form-label">Civil Status</label>
-        <select name="civil_status" class="form-select" required>
-          <option value="" selected>Select…</option>
-          <option>Single</option>
-          <option>Married</option>
-          <option>Divorced</option>
-          <option>Separated</option>
-          <option>Widowed</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Purok -->
-    <div class="mb-3">
-      <label class="form-label">Purok</label>
-      <input name="purok" type="text" class="form-control" required>
-    </div>
-
-    <!-- Child Name -->
-    <div class="mb-3">
-      <label class="form-label">Child's Name</label>
-      <input name="child_name" type="text" class="form-control" required>
-    </div>
-
-    <!-- Preferred Claim Date -->
-    <div class="mb-3">
-      <label class="form-label">Claim Date</label>
-      <input name="claim_date" type="date" class="form-control" required>
-    </div>
-
-    <!-- Purpose -->
-    <div class="mb-3">
-      <label class="form-label">Purpose</label>
-      <textarea name="purpose" class="form-control" rows="2" required></textarea>
-    </div>
-
-    <!-- Payment Method -->
-    <div class="mb-3">
-      <label class="form-label">Payment Method</label>
-      <select name="payment_method" class="form-select" required>
-        <option value="GCash">GCash</option>
-        <option value="Brgy Payment Device">Brgy Payment Device</option>
-        <option value="Over-the-Counter">Over-the-Counter</option>
-      </select>
-    </div>
-  </template>
-
-  <template data-type="Solo Parent">
-    <!-- core hidden value -->
-    <input type="hidden" name="request_type" value="Solo Parent">
-
-    <!-- Full Name -->
-    <div class="mb-3">
-      <label class="form-label">Name</label>
-      <input name="name" type="text" class="form-control" required>
-    </div>
-
-    <!-- Age & Civil Status -->
-    <div class="row mb-3">
-      <div class="col">
-        <label class="form-label">Age</label>
-        <input name="age" type="number" class="form-control" min="0" required>
-      </div>
-      <div class="col">
-        <label class="form-label">Civil Status</label>
-        <select name="civil_status" class="form-select" required>
-          <option value="" selected>Select…</option>
-          <option>Separated</option>
-          <option>Widowed</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Purok -->
-    <div class="mb-3">
-      <label class="form-label">Purok</label>
-      <input name="purok" type="text" class="form-control" required>
-    </div>
-
-    <!-- Child Name & Age -->
-    <div class="row mb-3">
-      <div class="col">
-        <label class="form-label">Child's Name</label>
-        <input name="child_name" type="text" class="form-control" required>
-      </div>
-      <div class="col">
-        <label class="form-label">Child's Age</label>
-        <input name="child_age" type="number" class="form-control" min="0" required>
-      </div>
-    </div>
-
-    <!-- Years as Solo Parent -->
-    <div class="mb-3">
-      <label class="form-label">Years as Solo Parent</label>
-      <input name="years_solo_parent" type="number" class="form-control" min="0" required>
-    </div>
-
-    <!-- Purpose -->
-    <div class="mb-3">
-      <label class="form-label">Purpose</label>
-      <textarea name="purpose" class="form-control" rows="2" required></textarea>
-    </div>
-
-    <!-- Claim Date -->
-    <div class="mb-3">
-      <label class="form-label">Claim Date</label>
-      <input name="claim_date" type="date" class="form-control" required>
-    </div>
-
-    <!-- Payment Method -->
-    <div class="mb-3">
-      <label class="form-label">Payment Method</label>
-      <select name="payment_method" class="form-select" required>
-        <option value="GCash">GCash</option>
-        <option value="Brgy Payment Device">Brgy Payment Device</option>
-        <option value="Over-the-Counter">Over-the-Counter</option>
-      </select>
-    </div>
-  </template>
-
-  <!-- View Details Modal -->
-  <div class="modal fade" id="viewDetailsModal" tabindex="-1" aria-labelledby="viewDetailsModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-      <form class="modal-content shadow-lg">
-        <div class="modal-header bg-dark text-white">
-          <h5 class="modal-title fw-bold fs-5" id="viewDetailsModalLabel">
-            <i class="bi bi-card-list me-2"></i>Request Details
-          </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body" id="viewDetailsBody">
-          <!-- JS will inject labeled inputs here -->
-        </div>
-        <div class="modal-footer border-0">
-          <button type="button" class="btn btn-secondary rounded-pill" id="cancelBtn" data-bs-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-success rounded-pill" id="editDetailsBtn">Edit</button>
-          <button type="button" class="btn btn-primary rounded-pill" id="printCertificateBtn">Generate Certificate</button>
-        </div>
-      </form>
-    </div>
-  </div>
 </div>
 
 <?php
@@ -900,227 +1261,184 @@ $conn->close();
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  // ——— Search & “Add New” modal logic (unchanged) —————————————————————————
-  const searchForm     = document.getElementById('searchForm');
-  const searchInput    = document.getElementById('searchInput');
-  const searchBtn      = document.getElementById('searchBtn');
-  const addModalEl     = document.getElementById('addRequestModal');
-  const bsAddModal     = new bootstrap.Modal(addModalEl);
-  const addTitleElem   = document.getElementById('addRequestModalTitle');
-  const addBodyElem    = document.getElementById('addRequestModalBody');
-  const addFormElem    = document.getElementById('addRequestForm');
-  const hasSearch      = <?= json_encode(!empty($search)) ?>;
+  let originalData = {};
+  // Search 
+  const searchForm = document.getElementById('searchForm');
+  const searchInput = document.getElementById('searchInput');
+  const searchBtn = document.getElementById('searchBtn');
+  const hasSearch = <?= json_encode(!empty($search)) ?>;
 
   searchBtn.addEventListener('click', () => {
     if (hasSearch) searchInput.value = '';
     searchForm.submit();
   });
 
+  const dynamicFields = document.getElementById('dynamicFields');
+
   document.querySelectorAll('.request-trigger').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const type = btn.dataset.type;
-      addTitleElem.textContent = `${type} Form`;
-      addBodyElem.innerHTML = '';
-      addBodyElem.appendChild(
-        document.querySelector(`template[data-type="${type}"]`).content.cloneNode(true)
-      );
-      if (['Barangay ID','Business Permit','Good Moral','Guardianship','Indigency','Residency','Solo Parent']
-          .includes(type)) {
-        const flag = document.createElement('input');
-        flag.type = 'hidden'; flag.name = 'adminRedirect'; flag.value = '1';
-        addBodyElem.prepend(flag);
+    btn.addEventListener('click', e => {
+      const type = e.currentTarget.dataset.type;
+      document.getElementById('addRequestModalLabel').textContent = type + ' Request';
+      document.getElementById('modalRequestType').value = type;
+
+      // inject the template
+      dynamicFields.innerHTML = '';
+      const tpl = document.getElementById('tpl-' + type);
+      if (tpl) {
+        dynamicFields.appendChild(tpl.content.cloneNode(true));
+      } else {
+        dynamicFields.innerHTML = '<div class="col-12 text-muted">No extra fields required.</div>';
       }
-      addFormElem.action = {
-        'Barangay ID':'functions/serviceBarangayID_submit.php',
-        'Business Permit':'functions/serviceBusinessPermit_submit.php',
-        'Residency':'functions/serviceResidency_submit.php',
-        'Indigency':'functions/serviceIndigency_submit.php',
-        'Good Moral':'functions/serviceGoodMoral_submit.php',
-        'Guardianship':'functions/serviceGuardianship_submit.php',
-        'Solo Parent':'functions/serviceSoloParent_submit.php'
-      }[type] || addFormElem.action;
-      bsAddModal.show();
+
+      const sel = dynamicFields.querySelector('#religionSelect');
+      const other = dynamicFields.querySelector('#religionOtherInput');
+      if (sel && other) {
+        sel.addEventListener('change', () => {
+          other.classList.toggle('d-none', sel.value !== 'Other');
+        });
+      }
+
+      const chk = dynamicFields.querySelector('#requirePhotoCheck');
+      const photo = dynamicFields.querySelector('#photoInput');
+      if (chk && photo) {
+        chk.addEventListener('change', () => {
+          photo.disabled = !chk.checked;
+        });
+      }
+
+      new bootstrap.Modal(document.getElementById('addRequestModal')).show();
     });
   });
-  
-  // ——— View / Edit Details modal logic ——————————————————————————————————————
-  const viewModalEl   = document.getElementById('viewDetailsModal');
-  const bsViewModal   = new bootstrap.Modal(viewModalEl);
-  const bodyContainer = document.getElementById('viewDetailsBody');
-  const editBtn       = document.getElementById('editDetailsBtn');
-  const cancelBtn     = document.getElementById('cancelBtn');
 
-  // create “Save Changes” button ahead of time
-  const saveBtn = document.createElement('button');
-  saveBtn.type = 'button';
-  saveBtn.id = 'saveDetailsBtn';
-  saveBtn.className = 'btn btn-success rounded-pill';
-  saveBtn.textContent = 'Save Changes';
+  // Show Edit Modal on “Edit” button click
+  const dynamicEditFields = document.getElementById('dynamicEditFields');
+  document.querySelectorAll('.btn-edit').forEach(btn => {
+    btn.addEventListener('click', e => {
+      // find the row and extract ID + Request Type
+      const tr = e.currentTarget.closest('tr');
+      const tid = tr.dataset.id;
+      // assuming the “Request” column is the 3rd <td>
+      const type = tr.children[2].textContent.trim();
 
-  // at top of your script, after you create saveBtn...
-  saveBtn.style.display = 'none';          // hide by default
-  cancelBtn.insertAdjacentElement('afterend', saveBtn);  // insert once
+      // set hidden fields
+      document.getElementById('editModalTransactionId').value = tid;
+      document.getElementById('editModalRequestType').value = type;
+      // update title
+      document.getElementById('editRequestModalLabel').textContent = `${type} Request`;
 
-  let inEditMode = false;
+      // inject the correct template
+      dynamicEditFields.innerHTML = '';
+      const tpl = document.getElementById('tpl-' + type);
+      if (tpl) {
+        dynamicEditFields.appendChild(tpl.content.cloneNode(true));
 
-  function labelize(key) {
-    return key.replace(/_/g,' ')
-              .replace(/\b\w/g, c => c.toUpperCase());
-  }
+        // 1) Grab the freshly injected elements
+        const chkEdit = dynamicEditFields.querySelector('#requirePhotoCheck');
+        const photoEdit = dynamicEditFields.querySelector('#photoInput');
 
-  document.querySelectorAll('tbody tr[data-id]').forEach(row => {
-    row.addEventListener('click', () => {
-      const tid  = row.dataset.id;
-      const type = row.dataset.type;
-      inEditMode = false;
+        // 2) Clone to nuke old listeners (optional, but safe)
+        let realChk = chkEdit;
+        if (chkEdit) {
+          const newChk = chkEdit.cloneNode();
+          chkEdit.parentNode.replaceChild(newChk, chkEdit);
+          realChk = newChk;
+        }
 
-      fetch(`functions/getRequestDetails.php?transaction_id=${tid}`)
-        .then(r => r.json())
-        .then(json => {
-          if (json.error) throw json.error;
-          bodyContainer.innerHTML = '';
+        // 3) **Re‑attach** your toggle listener to the “real” checkbox
+        if (realChk && photoEdit) {
+          // ensure initial state matches the checkbox
+          photoEdit.disabled = !realChk.checked;
 
-          // header
-          const h5 = document.createElement('h5');
-          h5.className = 'mb-3';
-          h5.textContent = `${json.request_type} Details`;
-          bodyContainer.appendChild(h5);
+          realChk.addEventListener('change', () => {
+            photoEdit.disabled = !realChk.checked;
+          });
+        }
 
-          // fields
-          Object.entries(json.details).forEach(([key,val]) => {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'mb-2';
-            const label = document.createElement('label');
-            label.className = 'form-label fw-semibold';
-            label.textContent = labelize(key);
-            const input = document.createElement('input');
-            input.className = 'form-control';
-            input.type = 'text';
-            input.value = val ?? '';
-            input.dataset.field = key;
-            input.readOnly = true;
-            if (key === 'transaction_id') {
-              input.classList.add('bg-light');
+        fetch(`functions/fetch_request_data.php`
+          + `?transaction_id=${encodeURIComponent(tid)}`
+          + `&request_type=${encodeURIComponent(type)}`)
+        .then(res => res.json())
+        .then(data => {
+
+          originalData = JSON.parse(JSON.stringify(data));
+
+          Object.entries(data).forEach(([rawKey, val]) => {
+            // 1) Normalize column → form name
+            let key = rawKey;
+            if (key === 'birth_date') key = 'dob';
+            if (key === 'formal_picture') key = 'photo'; 
+
+            // 2) Handle radio groups
+            const radios = dynamicEditFields.querySelectorAll(`input[type="radio"][name="${key}"]`);
+            if (radios.length) {
+              radios.forEach(radio => {
+                radio.checked = (radio.value === val);
+              });
+              return;
             }
-            wrapper.append(label, input);
-            bodyContainer.appendChild(wrapper);
+
+            // 3) Handle the "require photo" checkbox + file input
+            if (rawKey === 'formal_picture') {
+              const chk = dynamicEditFields.querySelector('#requirePhotoCheck');
+              const photo = dynamicEditFields.querySelector('#photoInput');
+              const nameEl = dynamicEditFields.querySelector('#currentPhotoName');
+
+              const hasPic = Boolean(val);
+              chk.checked = hasPic;
+              photo.disabled = !hasPic;
+
+              if (hasPic) {
+                // show and populate the filename
+                nameEl.textContent = `Current file: ${val}`;
+                nameEl.classList.remove('d-none');
+              } else {
+                // hide if no file
+                nameEl.classList.add('d-none');
+              }
+              return;
+            }
+
+            // 4) All other inputs/selects/textareas
+            const field = dynamicEditFields.querySelector(`[name="${key}"]`);
+            if (!field) return;
+            field.value = val;
+            field.dispatchEvent(new Event('change'));
           });
 
-          // reset footer buttons
-          editBtn.textContent   = 'Edit';
-          editBtn.className     = 'btn btn-success rounded-pill';
-          cancelBtn.textContent = 'Close';
-          cancelBtn.className   = 'btn btn-secondary rounded-pill';
-          saveBtn.style.display = 'none';          // ensure hidden on open
-
-          // Edit / Cancel toggle
-          editBtn.onclick = () => {
-            inEditMode = !inEditMode;
-
-            if (inEditMode) {
-              // switch to “Cancel” + show Save
-              editBtn.textContent     = 'Cancel';
-              editBtn.className       = 'btn btn-danger rounded-pill';
-              cancelBtn.style.display = 'none';
-              saveBtn.style.display   = '';
-
-              bodyContainer.querySelectorAll('input').forEach(inp => {
-                if (inp.dataset.field !== 'transaction_id') {
-                  inp.readOnly = false;
-                  inp.classList.remove('bg-light');
-                }
-              });
-            } else {
-              // back to view-only
-              editBtn.textContent     = 'Edit';
-              editBtn.className       = 'btn btn-success rounded-pill';
-              saveBtn.style.display   = 'none';
-              cancelBtn.style.display = '';
-
-              bodyContainer.querySelectorAll('input').forEach(inp => {
-                inp.readOnly = true;
-                if (inp.dataset.field === 'transaction_id') {
-                  inp.classList.add('bg-light');
-                }
-              });
-            }
-          };
-
-          // Save Changes
-          saveBtn.onclick = () => {
-            const payload = { transaction_id: tid };
-            bodyContainer.querySelectorAll('input').forEach(inp => {
-              if (inp.dataset.field !== 'transaction_id') {
-                payload[inp.dataset.field] = inp.value;
-              }
-            });
-            fetch('functions/updateRequestDetails.php', {
-              method: 'POST',
-              headers: { 'Content-Type':'application/json' },
-              body: JSON.stringify(payload)
-            })
-            .then(r => r.json())
-            .then(resp => {
-              if (resp.success) {
-                bsViewModal.hide();
-                location.reload();
-              } else {
-                alert('Save failed: ' + (resp.error||'Unknown'));
-              }
-            })
-            .catch(err => alert('Error saving: ' + err));
-          };
-
-          bsViewModal.show();
-
-          // DI PA FINAL
-          const printBtn = document.getElementById('printCertificateBtn');
-          printBtn.onclick = () => {
-            if (type === 'Residency') {
-              const certWin = window.open(
-                `functions/generateResidencyCertificate.php?transaction_id=${tid}`,
-                '_blank',
-                'width=800,height=600'
-              );
-              certWin.addEventListener('load', () => certWin.print());
-            } else if (type === 'Indigency') {
-              const certWin = window.open(
-                `functions/generateIndigencyCertificate.php?transaction_id=${tid}`,
-                '_blank',
-                'width=800,height=600'
-              );
-              certWin.addEventListener('load', () => certWin.print());
-            } else if (type === 'Good Moral') {
-              const certWin = window.open(
-                `functions/generateGoodMoralCertificate.php?transaction_id=${tid}`,
-                '_blank',
-                'width=800,height=600'
-              );
-              certWin.addEventListener('load', () => certWin.print());
-            } else if (type === 'Guardianship') {
-              const certWin = window.open(
-                `functions/generateGuardianshipCertificate.php?transaction_id=${tid}`,
-                '_blank',
-                'width=800,height=600'
-              )
-              certWin.addEventListener('load', () => certWin.print());
-            } else if (type === 'Solo Parent') {
-              const certWin = window.open(
-                `functions/generateSoloParentCertificate.php?transaction_id=${tid}`,
-                '_blank',
-                'width=800,height=600'
-              );
-              certWin.addEventListener('load', () => certWin.print());
-            } else {
-              alert('Certificate is not yet available.');
-            }
-          };
+          // show the modal
+          new bootstrap.Modal(document.getElementById('editRequestModal')).show();
         })
-        .catch(err => {
-          console.error(err);
-          alert('Failed to load details: ' + err);
-        });
+        .catch(err => console.error('Fetch error:', err));
+      } else {
+        dynamicEditFields.innerHTML = '<div class="col-12 text-muted">No fields for this request type.</div>';
+      }
+
+      
     });
   });
+
+  // intercept the Edit form submit and compare against originalData
+  const editForm = document.getElementById('editRequestForm');
+  editForm.addEventListener('submit', e => {
+    const formData = new FormData(editForm);
+    let changed = false;
+
+    Object.entries(originalData).forEach(([col, orig]) => {
+      // normalize column names to form names
+      let name = col === 'birth_date' ? 'dob' : col;
+      if (col === 'formal_picture') name = 'photo';
+
+      const curr = formData.get(name) || '';
+      if (String(curr) !== String(orig)) {
+        changed = true;
+      }
+    });
+
+    if (!changed) {
+      e.preventDefault();
+      new bootstrap.Modal(document.getElementById('noChangesModal')).show();
+    }
+  });
+
 });
 </script>

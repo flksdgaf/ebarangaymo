@@ -93,11 +93,6 @@ $news = $ress->fetch_all(MYSQLI_ASSOC);
     </div>
 </div>
 
-<!-- <div class="blob-outer-container">
-    <div class="blob-inner-container">
-        <div class="blob"></div>
-    </div>
-</div> -->
 
 <!-- SERVICE SECTION -->
 <div class="container-fluid mt-5 mb-5 pt-5 pb-2 services-container">
@@ -434,7 +429,6 @@ $news = $ress->fetch_all(MYSQLI_ASSOC);
   </div>
 </div>
 
-<!-- <div id="backToTopTrigger" style="position: relative; height: 1px;"></div> -->
 
 <!-- NEWS & UPDATES -->
 <div class="container-fluid px-4 mt-5 mb-5 pt-5 new-updates-container">

@@ -1,6 +1,7 @@
 <?php
 // DB credentials
 require_once 'dbconn.php';
+date_default_timezone_set('Asia/Manila');
 
 // Atomically get next ID starting at 100000001
 function getNextAccountId($conn) {
@@ -60,6 +61,7 @@ $time = time();
 $frontName   = $time . "_front_"  . basename($front['name']);
 $backName    = $time . "_back_"   . basename($back['name']);
 $profileName = $time . "_prof_"   . basename($profile['name']);
+$now = date('Y-m-d H:i:s');
 
 if (
   move_uploaded_file($front['tmp_name'],   $dirs['front']   . $frontName)  &&
@@ -68,12 +70,12 @@ if (
 ) {
   // Pending table insert
   $stmt1 = $conn->prepare("
-    INSERT INTO pending_accounts (account_ID, full_name, birthdate, purok, valid_ID, front_ID, back_ID, profile_picture)
-    VALUES (?,?,?,?,?,?,?,?)
+    INSERT INTO pending_accounts (account_ID, full_name, birthdate, purok, valid_ID, front_ID, back_ID, profile_picture, time_creation)
+    VALUES (?,?,?,?,?,?,?,?,?)
   ");
   $stmt1->bind_param(
-    "isssssss",
-    $account_id, $full_name, $bd, $pu, $validID, $frontName, $backName, $profileName
+    "issssssss",
+    $account_id, $full_name, $bd, $pu, $validID, $frontName, $backName, $profileName, $now
    );
 
   // User-accounts insert

@@ -40,11 +40,12 @@ $userRec = $stmt->get_result()->fetch_assoc() ?: [];
 $stmt->close();
 
 $map = [
-  'Residency' => ['table'=>'residency_requests','prefix'=>'RES-'],
-  'Indigency' => ['table'=>'indigency_requests','prefix'=>'IND-'],
-  // …etc for Good Moral, Solo Parent, Guardianship
+  'Residency'    => ['table'=>'residency_requests',    'prefix'=>'RES-'],
+  'Indigency'    => ['table'=>'indigency_requests',    'prefix'=>'IND-'],
+  'Good Moral'   => ['table'=>'good_moral_requests',   'prefix'=>'GM-' ],
+  'Solo Parent'  => ['table'=>'solo_parent_requests',  'prefix'=>'SP-' ],
+  'Guardianship' => ['table'=>'guardianship_requests', 'prefix'=>'GUA-'],
 ];
-// figure out which table this tid lives in
 $chosenPayment = '';
 if ($transactionId) {
     // first, find the cert type for this tid
@@ -66,6 +67,7 @@ if ($transactionId) {
 
 ?>
 
+<title> eBarangay Mo | Certification Services</title>
 <link rel="stylesheet" href="serviceCertification.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
@@ -119,18 +121,33 @@ if ($transactionId) {
         <form id="certForm" action="functions/serviceCertification_submit.php" method="POST" enctype="multipart/form-data">
             <div class="step <?php echo $transactionId ? 'completed' : 'active-step'; ?>">
                 <!-- TYPE OF CERTIFICATION -->
-                <div class="row mb-3">
-                    <label for="certType" class="col-md-2 text-start fw-bold">Type of Certification</label>
-                    <div class="col-md-10 position-relative"> <!-- position-relative to contain the dropdown -->
-                        <input type="text" id="certType" name="certification_type" class="form-control" placeholder="Click to select or type" autocomplete="off" required>
-                        <ul id="certTypeList" class="list-group position-absolute w-100 shadow-sm bg-white" style="max-height: 150px; overflow-y: auto; display: none; z-index: 1000;">
-                        <!-- JS will populate these <li> items -->
-                        </ul>
+                <div class="row mb-3 mt-3">
+                    <div class="col-md-6">
+                        <div class="row">
+                            <label for="certType" class="col-sm-5 text-start fw-bold">Type of Certification</label>
+                            <div class="col-sm-7 position-relative"> <!-- position-relative to contain the dropdown -->
+                                <input type="text" id="certType" name="certification_type" class="form-control" placeholder="Click to select or type" autocomplete="off" required>
+                                <ul id="certTypeList" class="list-group position-absolute w-100 shadow-sm bg-white" style="max-height: 150px; overflow-y: auto; display: none; z-index: 1000;">
+                                <!-- JS will populate these <li> items -->
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="row">
+                            <label for="forSelect" class="col-sm-3 text-start fw-bold">Request For</label>
+                            <div class="col-sm-9">
+                                <select id="forSelect" name="request_for" class="form-select">
+                                <option value="myself" selected>Myself</option>
+                                <option value="other">Other Individual</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- break line for your future instructions -->
-                <div class="row mb-4">
+                <div class="row mb-3">
                     <div class="col-12"><hr></div>
                 </div>
 

@@ -117,11 +117,11 @@ if ($p->error) die("Role update failed: ".$p->error);
 $p->close();
 
 // 5) Remove from pending_accounts
-// $r = $conn->prepare("DELETE FROM pending_accounts WHERE account_ID = ?");
-// $r->bind_param("i", $accountId);
-// $r->execute();
-// if ($r->error) die("Delete pending failed: ".$r->error);
-// $r->close();
+$r = $conn->prepare("DELETE FROM pending_accounts WHERE account_ID = ?");
+$r->bind_param("i", $accountId);
+$r->execute();
+if ($r->error) die("Delete pending failed: ".$r->error);
+$r->close();
 
 // 6) Redirect
 header("Location: ../adminPanel.php?page=adminVerifications");

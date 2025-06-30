@@ -266,3 +266,13 @@ h4 {
 .download-btn {
   margin-bottom: 25px;
 }
+
+.bg-e9ecef { 
+    background-color: #e9ecef !important; 
+}
+
+.select-readonly {
+  background: #e9ecef;
+  pointer-events: none;
+  touch-action: none;
+}

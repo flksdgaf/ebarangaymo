@@ -24,6 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
     setupPaymentControls(); // ADDED
 
     const currentUser = window.currentUser;
+    const forSelect       = document.getElementById('forSelect');
 
     (function(){
         const options = [
@@ -68,41 +69,44 @@ document.addEventListener("DOMContentLoaded", function () {
     // configuration for each cert type
     const certConfigs = {
         residency: [
-        { id: 'name',            label: 'Name',            type: 'text',     disabled: true },
+        { id: 'full_name',       label: 'Full Name',       type: 'text',     disabled: true },
         { id: 'age',             label: 'Age',             type: 'number',   disabled: true },
-        { id: 'civil_status',    label: 'Civil Status',    type: 'text',     disabled: true },
-        { id: 'purok',           label: 'Purok',           type: 'text',     disabled: true },
-        { id: 'years_residing',  label: 'Years Residing',  type: 'number' },
+        { id: 'civil_status',    label: 'Civil Status',    type: 'select',   options: ['Single','Married','Widowed','Separated','Divorced','Unknown']   },
+        { id: 'purok',           label: 'Purok',           type: 'select',   options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6']     },
+        { id: 'residing_years',  label: 'Years Residing',  type: 'number' },
+        { id: 'claim_date',      label: 'Claim Date',      type: 'date'   },
+        { id: 'purpose',         label: 'Purpose',         type: 'text'   }
+        ],
+        indigency: [
+        { id: 'full_name',       label: 'Full Name',       type: 'text',     disabled: true },
+        { id: 'age',             label: 'Age',             type: 'number',   disabled: true },
+        { id: 'civil_status',    label: 'Civil Status',    type: 'select',   options: ['Single','Married','Widowed','Separated','Divorced','Unknown']   },
+        { id: 'purok',           label: 'Purok',           type: 'select',   options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6']     },
         { id: 'claim_date',      label: 'Claim Date',      type: 'date' },
         { id: 'purpose',         label: 'Purpose',         type: 'text' }
         ],
-        indigency: [
-        { id: 'name',         label: 'Name',         type: 'text',   disabled: true },
-        { id: 'age',          label: 'Age',          type: 'number' },
-        { id: 'civil_status', label: 'Civil Status', type: 'select', options: ['Single','Married','Separated','Widowed'] },
-        { id: 'purok',        label: 'Purok',        type: 'text' },
-        { id: 'claim_date',   label: 'Claim Date',   type: 'date' },
-        { id: 'purpose',      label: 'Purpose',      type: 'text' }
-        ],
         'good moral': [
-        { id: 'name',        label: 'Name',         type: 'text',   disabled: true },
-        { id: 'age',         label: 'Age',          type: 'number' },
-        { id: 'civil_status',label: 'Civil Status', type: 'select', options: ['Single','Married','Separated','Widowed'] },
-        { id: 'purok',       label: 'Purok',        type: 'text' },
-        { id: 'purpose',     label: 'Purpose',      type: 'text' },
-        { id: 'claim_date',  label: 'Claim Date',   type: 'date' }
+        { id: 'full_name',       label: 'Full Name',       type: 'text',     disabled: true },
+        { id: 'age',             label: 'Age',             type: 'number',   disabled: true },
+        { id: 'civil_status',    label: 'Civil Status',    type: 'select',   options: ['Single','Married','Widowed','Separated','Divorced','Unknown']   },
+        { id: 'purok',           label: 'Purok',           type: 'select',   options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6']     },
+        { id: 'claim_date',      label: 'Claim Date',      type: 'date' },
+        { id: 'purpose',         label: 'Purpose',         type: 'text' }
         ],
         'solo parent': [
-        { id: 'name',  label: 'Name', type: 'text', disabled: true },
-        { id: 'age',   label: 'Age',  type: 'number' },
-        { id: 'purok', label: 'Purok', type: 'text' },
-        { id: 'claim_date', label: 'Claim Date', type: 'date' }
+        { id: 'full_name',       label: 'Full Name',       type: 'text',     disabled: true },
+        { id: 'age',             label: 'Age',             type: 'number',   disabled: true },
+        { id: 'civil_status',    label: 'Civil Status',    type: 'select',   options: ['Single','Married','Widowed','Separated','Divorced','Unknown']   },
+        { id: 'purok',           label: 'Purok',           type: 'select',   options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6']     },
+        // { id: 'claim_date',      label: 'Claim Date',      type: 'date' }
         ],
         guardianship: [
-        { id: 'name',  label: 'Name', type: 'text', disabled: true },
-        { id: 'age',   label: 'Age',  type: 'number' },
-        { id: 'purok', label: 'Purok', type: 'text' },
-        { id: 'claim_date', label: 'Claim Date', type: 'date' }
+        { id: 'full_name',       label: 'Full Name',       type: 'text',     disabled: true },
+        { id: 'age',             label: 'Age',             type: 'number',   disabled: true },
+        { id: 'civil_status',    label: 'Civil Status',    type: 'select',   options: ['Single','Married','Widowed','Separated','Divorced','Unknown']   },
+        { id: 'purok',           label: 'Purok',           type: 'select',   options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6']     },
+        // { id: 'claim_date',      label: 'Claim Date',      type: 'date'   },
+        // { id: 'purpose',         label: 'Purpose',         type: 'text'   }
         ]
     };
 
@@ -119,74 +123,221 @@ document.addEventListener("DOMContentLoaded", function () {
         return Math.floor(diff / (1000*60*60*24*365.25));
     }
 
-    
-    function renderCertFields(value) {
+    // after your existing renderCertFields definition:
+    function renderChildSections(type) {
+        const wrapper = document.createElement('div');
+        wrapper.id = 'childSection';
+
+        if (type === 'guardianship') {
+            wrapper.innerHTML = `
+            <div id="guardianChildren"></div>
+            <button type="button" id="addGuardianChild" class="btn btn-sm btn-outline-primary mb-3"> + Add Child </button>
+
+            <div class="row mb-3">
+                <label class="col-sm-2 fw-bold">Claim Date:</label>
+                <div class="col-sm-10">
+                <input type="date" name="claim_date" class="form-control" required>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <label class="col-sm-2 fw-bold">Purpose:</label>
+                <div class="col-sm-10">
+                <input type="text" name="purpose" class="form-control" required>
+                </div>
+            </div>
+            `;
+            certFieldsHolder.appendChild(wrapper);
+
+            const container = wrapper.querySelector('#guardianChildren');
+            const addBtn    = wrapper.querySelector('#addGuardianChild');
+            //let idx = 0;
+
+            function addChild() {
+                //idx++;
+                const row = document.createElement('div');
+                row.className = 'row mb-3';
+                row.innerHTML = `
+                    <label class="col-sm-2 col-form-label fw-bold">Child's Name:</label>
+                    <div class="col-sm-9">
+                        <input type="text" name="child_name[]" class="form-control" required>
+                    </div>
+                    <div class="col-sm-1">
+                        <button type="button" class="btn btn-outline-danger btn-sm remove-child">DELETE</button>
+                    </div>`;
+                container.appendChild(row);
+                row.querySelector('.remove-child').onclick = () => row.remove();
+            }
+            
+            addBtn.onclick = addChild;
+            addChild();  // initial
+
+        } else if (type === 'solo parent') {
+            wrapper.innerHTML = `
+            <div id="soloChildren"></div>
+            <button type="button" id="addSoloChild" class="btn btn-sm btn-outline-primary mb-3"> + Add Child </button>
+            
+            <div class="row mb-3">
+                <label class="col-sm-2 fw-bold">Years as Solo Parent:</label>
+                <div class="col-sm-10">
+                <input type="number" name="years_solo_parent" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <label class="col-sm-2 fw-bold">Claim Date:</label>
+                <div class="col-sm-10">
+                <input type="date" name="claim_date" class="form-control" required>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <label class="col-sm-2 fw-bold">Purpose:</label>
+                <div class="col-sm-10">
+                <input type="text" name="purpose" class="form-control" required>
+                </div>
+            </div>
+            `;
+            certFieldsHolder.appendChild(wrapper);
+
+            const container = wrapper.querySelector('#soloChildren');
+            const addBtn    = wrapper.querySelector('#addSoloChild');
+            function addChild() {
+                const row = document.createElement('div');
+                row.className = 'row mb-3';
+                row.innerHTML = `
+                    <label class="col-sm-2 col-form-label fw-bold"> Child's Name:</label>
+                    <div class="col-sm-4">
+                        <input type="text" name="child_name[]" class="form-control" required>
+                    </div>
+
+                    <label class="col-sm-1 col-form-label fw-bold">Age:</label>
+                    <div class="col-sm-1">
+                        <input type="number" name="child_age[]" class="form-control" required>
+                    </div>
+
+                    <label class="col-sm-1 col-form-label fw-bold">Sex:</label>
+                    <div class="col-sm-2">
+                        <select name="child_sex[]" class="form-select" required>
+                            <option value="">–</option>
+                            <option>Male</option>
+                            <option>Female</option>
+                        </select>
+                    </div>
+
+                    <div class="col-sm-1">
+                        <button type="button" class="btn btn-outline-danger btn-sm remove-child">DELETE</button>
+                    </div>`;
+                container.appendChild(row);
+                row.querySelector('.remove-child').onclick = () => row.remove();
+            }
+            addBtn.onclick = addChild;
+            addChild();  // initial
+        }
+    }
+
+    function renderCertFields(value, mode = forSelect.value) {
         const key = value.trim().toLowerCase();
         const cfg = certConfigs[key] || [];
         certFieldsHolder.innerHTML = '';
 
         cfg.forEach(f => {
-            // determine the value & disabled-state
+            // Determine initial value
             let val = '';
-            let isDisabled = !!f.disabled;
-
-            if (f.id === 'name') {
-            const raw = currentUser.full_name || '';
-            val = invertName(raw);
-            }
-            else if (f.id === 'age') {
-            val = computeAge(currentUser.birthdate);
-            }
-            else if (f.id === 'civil_status') {
-            val = currentUser.civil_status || '';
-            }
-            else if (f.id === 'purok') {
-            val = currentUser.purok || '';
+            if (mode === 'myself') {
+            if (f.id === 'full_name')              val = invertName(currentUser.full_name);
+            else if (f.id === 'age')          val = computeAge(currentUser.birthdate);
+            else if (f.id === 'civil_status') val = currentUser.civil_status;
+            else if (f.id === 'purok')        val = currentUser.purok;
             }
 
-            // build each row
+            // Determine readonly only for those four in 'myself'
+            const isReadOnly = mode === 'myself' && ['full_name','age','civil_status','purok'].includes(f.id);
+
+            // Build the row
             const row = document.createElement('div');
             row.className = 'row mb-3';
 
-            let innerHtml;
-            if (f.type === 'select') {
-            // selects remain disabled initially
-            innerHtml = `
-                <label class="col-sm-2 col-form-label fw-bold">${f.label}:</label>
-                <div class="col-sm-10">
-                <select id="${f.id}" name="${f.id}" class="form-select" ${isDisabled ? 'disabled' : ''}>
-                    ${f.options.map(o=>`<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join('')}
-                </select>
-                </div>
+            // Shared label
+            let inner = `
+            <label class="col-sm-2 col-form-label fw-bold">${f.label}:</label>
+            <div class="col-sm-10">
             `;
+
+            if (f.type === 'select') {
+                let attrs = '';
+                if (isReadOnly) {
+                    attrs = 'class="form-select select-readonly"';  // no disabled
+                } else {
+                    attrs = 'class="form-select"';
+                }
+                inner += `<select
+                    id="${f.id}"
+                    name="${f.id}"
+                    ${attrs}
+                    required>
+                    ${f.options.map(o => `
+                        <option value="${o}" ${val===o?'selected':''}>${o}</option>`
+                    ).join('')}
+                    </select>`;
             } else {
-            // use readonly for inputs instead of disabled
-            innerHtml = `
-                <label class="col-sm-2 col-form-label fw-bold">${f.label}:</label>
-                <div class="col-sm-10">
-                <input
+            // Render an <input>
+                inner += `<input
                     type="${f.type}"
                     id="${f.id}"
                     name="${f.id}"
-                    class="form-control"
+                    class="form-control${isReadOnly ? ' bg-e9ecef' : ''}"
                     value="${val}"
-                    ${isDisabled ? 'readonly' : ''}
+                    ${isReadOnly ? 'readonly' : ''}
                     required
-                >
-                </div>
-            `;
+                    >`;
             }
+            inner += `</div>`;
 
-            row.innerHTML = innerHtml;
+            row.innerHTML = inner;
             certFieldsHolder.appendChild(row);
         });
+
+        // then at the end:
+        if (key === 'guardianship' || key === 'solo parent') {
+            renderChildSections(key);
+        }
+
+        if (mode === 'other') {
+            const authRow = document.createElement('div');
+            authRow.className = 'row mb-3';
+            authRow.innerHTML = `
+                <label class="col-sm-2 col-form-label fw-bold">Authorization Letter:</label>
+                <div class="col-sm-10">
+                <input 
+                    type="file" 
+                    name="authorization_letter" 
+                    class="form-control" 
+                    accept="image/*,.pdf"
+                    required
+                >
+                </div>`;
+            certFieldsHolder.appendChild(authRow);
+        }
     }
 
+    function refreshFields() {
+        renderCertFields(certInput.value, forSelect.value);
+    }
+
+    // initial
+    refreshFields();
+
      // wire it up:
-    certInput.addEventListener('input',  () => renderCertFields(certInput.value));
-    certInput.addEventListener('change', () => renderCertFields(certInput.value));
-    renderCertFields(certInput.value);
-    certInput.addEventListener('blur', () => renderCertFields(certInput.value));
+    certInput.addEventListener('input', refreshFields);
+    certInput.addEventListener('change', refreshFields);
+    certInput.addEventListener('blur', refreshFields);
+    forSelect.addEventListener('change', refreshFields);
+
+    // certInput.addEventListener('input',  () => renderCertFields(certInput.value));
+    // certInput.addEventListener('change', () => renderCertFields(certInput.value));
+    // renderCertFields(certInput.value);
+    // certInput.addEventListener('blur', () => renderCertFields(certInput.value));
 
     nextBtn.addEventListener('click', () => {
         let isValid = true;
@@ -294,41 +445,66 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    
     function populateSummary() {
         const container = document.getElementById('summaryContainer');
         container.innerHTML = '';
 
-        // wrap everything in a Bootstrap container
+        const certTypeKey = certInput.value.trim().toLowerCase();
         let html = '<div class="container-fluid"><div class="row">';
 
-        // helper to append a label/value pair
-        const appendPair = (label, value) => {
+        // helper to append a row
+        function appendPair(label, value) {
             html += `
             <div class="col-sm-3 mb-2"><strong>${label}</strong></div>
             <div class="col-sm-9 mb-2">${value}</div>
             `;
-        };
+        }
 
-        // 1) Certification type
-        appendPair('Type of Certification:', certInput.value.trim() || '—');
+        // 1) Type + For
+        appendPair('Type of Certification:', certInput.value || '—');
+        appendPair('Requesting For:', forSelect.value === 'myself' ? 'Myself' : 'Others');
 
-        // 2) All the fields you rendered under #certFields
-        certFieldsHolder.querySelectorAll('.row').forEach(row => {
-            const label   = row.querySelector('label').textContent;
-            const control = row.querySelector('input, select');
-            let value     = control ? control.value.trim() : '';
-            if (!value) value = '—';
-            appendPair(label, value);
+        // 2) The four “core” fields
+        ['full_name','age','civil_status','purok'].forEach(fieldName => {
+            const ctrl = document.querySelector(`[name="${fieldName}"]`);
+            appendPair(
+            ctrl.closest('.row').querySelector('label').textContent,
+            ctrl.value || '—'
+            );
         });
 
-        // 3) Payment Method
+        // 3) If guardianship, combine child_name[] into one line
+        if (certTypeKey === 'guardianship') {
+            const names = Array
+            .from(document.querySelectorAll('input[name="child_name[]"]'))
+            .map(i => i.value.trim())
+            .filter(v => v);
+            appendPair('Child Name(s):', names.length ? names.join(', ') : '—');
+        } else if (certTypeKey === 'solo parent') {
+            const names = Array.from(document.querySelectorAll('input[name="child_name[]"]')).map(i => i.value.trim()).filter(v => v);
+            const ages  = Array.from(document.querySelectorAll('input[name="child_age[]"]')).map(i => i.value.trim()).filter(v => v);
+            const sexes = Array.from(document.querySelectorAll('select[name="child_sex[]"]')).map(s => s.value.trim()).filter(v => v);
+
+            appendPair('Child Name(s):', names.length ? names.join(', ') : '—');
+            appendPair('Child Age(s):',  ages.length  ? ages.join(', ')  : '—');
+            appendPair('Child Sex(es):', sexes.length ? sexes.join(', ') : '—');
+            appendPair('Years as a Solo Parent:', document.querySelector('[name="years_solo_parent"]').value || '—');
+        }
+
+        // Now Claim Date 
+        const cd = document.querySelector('[name="claim_date"]');
+        appendPair('Claim Date:', cd.value || '—');
+
+        // Now Purpose
+        const pu = document.querySelector('[name="purpose"]');
+        appendPair('Purpose:', pu.value.trim() || '—');
+
+        // Finally, Payment Method
         appendPair('Payment Method:', hiddenPaymentInput.value || '—');
 
         html += '</div></div>';
         container.innerHTML = html;
     }
-
 
     // ADDED: handle payment method UI
     function setupPaymentControls() {

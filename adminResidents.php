@@ -3,9 +3,7 @@
 require_once 'functions/dbconn.php';
 
 // Determine purok (default=1)
-$purokNum = isset($_GET['purok']) && in_array((int)$_GET['purok'], [1,2,3,4,5,6])
-            ? (int)$_GET['purok']
-            : 1;
+$purokNum = isset($_GET['purok']) && in_array((int)$_GET['purok'], [1,2,3,4,5,6]) ? (int)$_GET['purok'] : 1;
 
 // --- Search setup ---
 $search = trim($_GET['search'] ?? '');
@@ -40,20 +38,12 @@ if ($search !== '') {
     $where[] = '(' . implode(' OR ', $likes) . ')';
 }
 
-$whereSQL = $where
-    ? 'WHERE ' . implode(' AND ', $where)
-    : '';            
+$whereSQL = $where ? 'WHERE ' . implode(' AND ', $where) : '';            
     
 $tableName = "purok{$purokNum}_rbi";
 
 // Fetch all columns plus role from user_accounts
-$sql = "
-  SELECT r.*, ua.role
-  FROM `{$tableName}` AS r
-  LEFT JOIN user_accounts AS ua
-    ON r.account_ID = ua.account_id
-  {$whereSQL}
-";
+$sql = "SELECT r.*, ua.role FROM `{$tableName}` AS r LEFT JOIN user_accounts AS ua ON r.account_ID = ua.account_id {$whereSQL}";
 $stmt = $conn->prepare($sql);
 if ($whereSQL) {
     $stmt->bind_param($types, ...$params);
@@ -72,12 +62,11 @@ $stmt->close();
 
 <title>eBarangay Mo | Residents</title>
 
-<div class="container py-3">
-  <!-- Table -->
+<div class="container-fluid p-3">
   <div class="card shadow-sm p-3">
     <!-- Filter -->
     <div class="d-flex justify-content-end mb-3">
-      <select id="purokFilter" class="form-select w-auto">
+      <select id="purokFilter" class="form-select form-select-sm w-auto">
         <?php for ($i = 1; $i <= 6; $i++): ?>
           <option value="<?= $i ?>" <?= $i === $purokNum ? 'selected' : '' ?>>
             Purok <?= $i ?>
@@ -87,12 +76,12 @@ $stmt->close();
 
       <!-- Search Form -->
       <form id="searchForm" method="get" class="d-flex ms-auto me-2">
-        <input type="hidden" name="page"     value="adminResidents">
-        <input type="hidden" name="purok"    value="<?= $purokNum ?>">
+        <input type="hidden" name="page" value="adminResidents">
+        <input type="hidden" name="purok" value="<?= $purokNum ?>">
         <input type="hidden" name="page_num" value="1">
         <div class="input-group input-group-sm w-100">
           <input name="search" id="searchInput" type="text" class="form-control" placeholder="Search..." value="<?= htmlspecialchars($search) ?>">
-          <button type="button" class="btn btn-outline-secondary" id="searchBtn">
+          <button type="button" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" id="searchBtn">
             <span class="material-symbols-outlined" id="searchIcon">
               <?= !empty($search) ? 'close' : 'search' ?>
             </span>
@@ -125,8 +114,8 @@ $stmt->close();
               switch($row['remarks']) {
                 case 'On Hold': $bgColor = 'yellow'; break;
                 case 'Transferred': $bgColor = 'orange'; break;
-                case 'Deceased':    $bgColor = 'red';    break;
-                default:        $bgColor = '';
+                case 'Deceased': $bgColor = 'red';    break;
+                default: $bgColor = '';
               }
               $cellStyle = $bgColor ? "background-color:{$bgColor}!important;" : '';
               $escapedName = htmlspecialchars($row['full_name'], ENT_QUOTES);
@@ -143,7 +132,7 @@ $stmt->close();
                   <?php if ($row['role'] !== null): ?>
                     <select class="form-select form-select-sm role-select" style="width:137px; background-image: none; padding-right: 0.5rem;">
                       <?php 
-                      $roles = ['Resident','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad', 'Brgy Lupon'];
+                      $roles = ['Resident','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Lupon'];
                       foreach ($roles as $r): ?>
                         <option value="<?= $r ?>"
                           <?= $row['role'] === $r ? 'selected' : '' ?>>
@@ -158,8 +147,8 @@ $stmt->close();
                 <td style="<?= $cellStyle ?>">
                   <select class="form-select form-select-sm remarks-select" style="width:101px; background-image: none; padding-right: 0.5rem;">
                     <option value="">None</option>
-                    <option value="On Hold"  <?= $row['remarks']==='On Hold'  ? 'selected' : '' ?>>On Hold</option>
-                    <option value="Transferred"  <?= $row['remarks']==='Transferred'  ? 'selected' : '' ?>>Transferred</option>
+                    <option value="On Hold" <?= $row['remarks']==='On Hold' ? 'selected' : '' ?>>On Hold</option>
+                    <option value="Transferred" <?= $row['remarks']==='Transferred' ? 'selected' : '' ?>>Transferred</option>
                     <option value="Deceased" <?= $row['remarks']==='Deceased' ? 'selected' : '' ?>>Deceased</option>
                   </select>
                 </td>
@@ -219,7 +208,7 @@ $stmt->close();
 
   // map remarks to colors in JS
   const remarkColor = {
-    'On Hold':  'yellow',
+    'On Hold': 'yellow',
     'Transferred': 'orange',
     'Deceased': 'red'
   };
@@ -232,13 +221,23 @@ $stmt->close();
       window.location.href = url;
     });
 
+    // Search handler
+    const Sform = document.getElementById('searchForm');
+    const input = document.getElementById('searchInput');
+    const btn = document.getElementById('searchBtn');
+    let hasSearch = <?= json_encode($search !== '') ?>;
+    btn.addEventListener('click', () => {
+      if (hasSearch) input.value = '';
+      Sform.submit();
+    });
+
     // --- Remarks dropdown handler
     document.querySelectorAll('.remarks-select').forEach(sel => {
       sel.addEventListener('change', async function() {
-        const row    = this.closest('tr');
-        const name   = row.dataset.name;
+        const row = this.closest('tr');
+        const name = row.dataset.name;
         const remark = this.value;
-        const color  = remarkColor[remark] || '';
+        const color = remarkColor[remark] || '';
 
         // update backgrounds
         row.querySelectorAll('td').forEach(td => td.style.backgroundColor = color);
@@ -255,8 +254,8 @@ $stmt->close();
     // --- Role dropdown handler
     document.querySelectorAll('.role-select').forEach(sel => {
       sel.addEventListener('change', async function() {
-        const tr      = this.closest('tr');
-        const acct    = tr.children[0].textContent.trim();
+        const tr = this.closest('tr');
+        const acct = tr.children[0].textContent.trim();
         const newRole = this.value;
         await fetch('functions/update_role.php', {
           method: 'POST',
@@ -267,22 +266,22 @@ $stmt->close();
     });
 
     // --- Details / Edit Modal setup ---
-    const modalEl       = document.getElementById('residentDetailsModal');
-    const modal         = new bootstrap.Modal(modalEl);
-    const form          = document.getElementById('residentDetailsForm');
-    const editSaveBtn   = document.getElementById('detailsEditSaveBtn');
-    let   currentData   = null;
-    let   isEditing     = false;
+    const modalEl = document.getElementById('residentDetailsModal');
+    const modal = new bootstrap.Modal(modalEl);
+    const form = document.getElementById('residentDetailsForm');
+    const editSaveBtn = document.getElementById('detailsEditSaveBtn');
+    let currentData = null;
+    let isEditing = false;
 
     // Confirmation modal
     const confirmSaveModalEl = document.getElementById('confirmSaveModal');
-    const confirmSaveModal   = new bootstrap.Modal(confirmSaveModalEl);
-    const confirmSaveBtn     = document.getElementById('confirmSaveBtn');
+    const confirmSaveModal = new bootstrap.Modal(confirmSaveModalEl);
+    const confirmSaveBtn = document.getElementById('confirmSaveBtn');
 
     // Build form fields (readonly by default)
     function buildForm(data) {
       currentData = data;
-      isEditing   = false;
+      isEditing = false;
       editSaveBtn.textContent = 'Edit';
       
       form.innerHTML = '';
@@ -341,9 +340,9 @@ $stmt->close();
         } else {
           input = document.createElement('input');
           input.className = 'form-control';
-          input.type      = f.type;
-          input.value     = data[f.key] ?? '';
-          input.disabled  = true;
+          input.type = f.type;
+          input.value = data[f.key] ?? '';
+          input.disabled = true;
 
           if (f.key === 'remarks') {
             input.value = data.remarks ? data.remarks : 'None';
@@ -352,7 +351,7 @@ $stmt->close();
           }
         }
 
-        input.id   = `field_${f.key}`;
+        input.id = `field_${f.key}`;
         input.name = f.key;
 
         wr.appendChild(lbl);
@@ -470,25 +469,4 @@ $stmt->close();
       });
     });
   });
-</script>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  // Purok filter
-  document.getElementById('purokFilter').addEventListener('change', function() {
-    const url = new URL(window.location.href);
-    url.searchParams.set('purok', this.value);
-    window.location.href = url;
-  });
-
-  // Search handler
-  const form = document.getElementById('searchForm');
-  const input = document.getElementById('searchInput');
-  const btn   = document.getElementById('searchBtn');
-  let hasSearch = <?= json_encode($search !== '') ?>;
-  btn.addEventListener('click', () => {
-    if (hasSearch) input.value = '';
-    form.submit();
-  });
-});
 </script>

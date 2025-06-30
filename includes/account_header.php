@@ -31,9 +31,10 @@ $pageTitles = [
     'superAdminVerifications' => 'Account Verifications',
     'superAdminTransactions' => 'Transaction Reports', 
     'superAdminLogs' => 'Activity Logs',
-    'superAdminWebsite' => 'Website Management',
+    'superAdminWebsite' => 'Website Configuration',
     'superAdminDeviceStatus' => 'Device Status',
     'superAdminSettings' => 'Settings',
+    'superAdminPanelSettings' => 'Admin Settings',
 
     // User 
     'userDashboard' => 'Dashboard',

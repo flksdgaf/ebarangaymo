@@ -7,6 +7,8 @@ $res = $conn->query("SELECT * FROM announcements ORDER BY created_at DESC");
 $announcements = $res->fetch_all(MYSQLI_ASSOC);
 ?>
 
+<title>eBarangay Mo | Website Configurations</title>
+
 <div class="container-fluid p-3">
   <div class="accordion" id="adminAccordion">
 

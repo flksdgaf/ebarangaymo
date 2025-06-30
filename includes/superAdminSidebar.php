@@ -1,12 +1,19 @@
 <!-- Sidebar (Bootstrap-based) -->
+<?php 
+include 'functions/dbconn.php'; 
+
+$info = $conn->query("SELECT logo, name, address FROM barangay_info WHERE id=1")->fetch_assoc();
+$logoUrl = 'images/' . $info['logo'];
+?>
+
 <nav id="sidebar" class="sidebar">
     <div class="text-center mb-4 mt-3">
         <div class="d-flex justify-content-center align-items-center gap-2">
             <img src="images/good_governance_logo.png" alt="Good Governance Logo" style="width: 50px;">
-            <img src="images/magang_logo.png" alt="Barangay Magang Logo" style="width: 50px;">
+            <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Barangay Magang Logo" style="width: 50px;">
         </div>
-        <h1 class="mt-1 mb-1">Barangay Magang</h1>
-        <h2 class="text-uppercase">Daet, Camarines Norte, Philippines</h2>
+        <h1 class="mt-1 mb-1"><?= htmlspecialchars($info['name']) ?></h1>
+        <h2 class="text-uppercase"><?= htmlspecialchars($info['address']) ?></h2>
         <hr class="custom-hr">
 
         <button class="btn btn-sm" id="close-btn">
@@ -31,24 +38,6 @@
             Request
             </a>
         </li>
-        <!-- <li>
-            <a href="superAdminPanel.php?page=superAdminBlotter" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminBlotter') ? 'active' : '' ?>">
-            <span class="material-symbols-outlined me-2">edit_document</span>
-            Blotter Record
-            </a>
-        </li>
-        <li>
-            <a href="superAdminPanel.php?page=superAdminSummon" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminSummon') ? 'active' : '' ?>">
-            <span class="material-symbols-outlined me-2">event</span>
-            Summon
-            </a>
-        </li> -->
-        <!-- <li>
-            <a href="superAdminPanel.php?page=superAdminKatarungangPambarangay" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminKatarungangPambarangay') ? 'active' : '' ?>">
-            <span class="material-symbols-outlined me-2">balance</span>
-            Katarungang Pambarangay
-            </a>
-        </li> -->
         <li>
             <a href="superAdminPanel.php?page=superAdminComplaints" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminComplaints') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">release_alert</span>
@@ -92,12 +81,12 @@
             </a>
         </li>   
         <!-- SUPER ADMIN SETTINGS (NOT YET SURE IF NEEDED) -->
-        <!-- <li>
-            <a href="superAdminPanel.php?page=superAdminSettings" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminSettings') ? 'active' : '' ?>">
-            <span class="material-symbols-outlined me-2">settings</span>
+        <li>
+            <a href="superAdminPanel.php?page=superAdminPanelSettings" class="nav-link d-flex align-items-center <?= ($currentPage === 'superAdminPanelSettings') ? 'active' : '' ?>">
+            <span class="material-symbols-outlined me-2">manage_accounts</span>
             Admin Settings
             </a>
-        </li> -->
+        </li>
     </ul>
 </nav>
 

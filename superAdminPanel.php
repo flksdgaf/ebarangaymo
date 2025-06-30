@@ -8,7 +8,7 @@
 <div class="main-content">
     <?php
         // List of Allowed Pages
-        $allowed_pages = ['superAdminDashboard', 'superAdminRequest', 'superAdminBlotter', 'superAdminSummon', 'superAdminComplaints', 'superAdminKatarungangPambarangay', 'superAdminResidents', 'superAdminVerifications', 'superAdminTransactions', 'superAdminLogs', 'superAdminWebsite', 'superAdminDeviceStatus', 'superAdminSettings'];
+        $allowed_pages = ['superAdminDashboard', 'superAdminRequest', 'superAdminBlotter', 'superAdminSummon', 'superAdminKatarungangPambarangay', 'superAdminComplaints', 'superAdminResidents', 'superAdminVerifications', 'superAdminTransactions', 'superAdminWebsite', 'superAdminDeviceStatus', 'superAdminLogs', 'superAdminPanelSettings'];
 
         // Check Page if Allowed
         if (in_array($page, $allowed_pages)) {

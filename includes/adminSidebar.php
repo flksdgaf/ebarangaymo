@@ -38,24 +38,6 @@ $logoUrl = 'images/' . $info['logo'];
             Request
             </a>
         </li>
-        <!-- <li>
-            <a href="adminPanel.php?page=adminBlotter" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminBlotter') ? 'active' : '' ?>">
-            <span class="material-symbols-outlined me-2">edit_document</span>
-            Blotter Record
-            </a>
-        </li>
-        <li>
-            <a href="adminPanel.php?page=adminSummon" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminSummon') ? 'active' : '' ?>">
-            <span class="material-symbols-outlined me-2">event</span>
-            Summon
-            </a>
-        </li>
-        <li>
-            <a href="adminPanel.php?page=adminKatarungangPambarangay" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminKatarungangPambarangay') ? 'active' : '' ?>">
-            <span class="material-symbols-outlined me-2">balance</span>
-            Katarungang Pambarangay
-            </a>
-        </li> -->
         <li>
             <a href="adminPanel.php?page=adminComplaints" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminComplaints') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">release_alert</span>
@@ -77,7 +59,7 @@ $logoUrl = 'images/' . $info['logo'];
         <li>
             <a href="adminPanel.php?page=adminTransactions" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminTransactions') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">receipt_long</span>
-            Transaction History
+            Transaction Reports
             </a>
         </li>
         <li>
@@ -92,12 +74,12 @@ $logoUrl = 'images/' . $info['logo'];
             Device Status
             </a>
         </li>
-        <!-- <li>
+        <li>
             <a href="adminPanel.php?page=adminLogs" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminLogs') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">badge</span>
             Logs
             </a>
-        </li> -->
+        </li>
     </ul>
 </nav>
 

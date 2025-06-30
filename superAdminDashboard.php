@@ -16,8 +16,8 @@ $search = trim($_GET['search'] ?? '');
 
 // BUILD WHERE CLAUSES
 $whereClauses = [];
-$bindTypes    = '';
-$bindParams   = [];
+$bindTypes = '';
+$bindParams = [];
 
 // GLOBAL FULL-TEXT SEARCH
 if ($search !== '') {
@@ -115,6 +115,8 @@ if ($queryString) {
 }
 ?>
 
+<title>eBarangay Mo | Dashboard</title>
+
 <!-- MAIN CONTENT -->
 <div class="container-fluid p-3">
   <?php
@@ -135,8 +137,8 @@ if ($queryString) {
   ];
   $serviceCount = 0;
   foreach ($serviceTables as $tbl) {
-      $cnt = $conn->query("SELECT COUNT(*) FROM {$tbl}")->fetch_row()[0] ?? 0;
-      $serviceCount += $cnt;
+    $cnt = $conn->query("SELECT COUNT(*) FROM {$tbl}")->fetch_row()[0] ?? 0;
+    $serviceCount += $cnt;
   }
 
   // 3. TOTAL PENDING ACCOUNT REQUESTS
@@ -145,8 +147,8 @@ if ($queryString) {
   // 4. TOTAL RESIDENTS (always show all)
   $residentsCount = 0;
   foreach ($allPuroks as $tbl) {
-      $cnt = $conn->query("SELECT COUNT(*) FROM {$tbl}")->fetch_row()[0] ?? 0;
-      $residentsCount += $cnt;
+    $cnt = $conn->query("SELECT COUNT(*) FROM {$tbl}")->fetch_row()[0] ?? 0;
+    $residentsCount += $cnt;
   }
 
   // AGE GROUP COUNTS
@@ -340,7 +342,6 @@ if ($queryString) {
               <th>Transaction No.</th>
               <th>Name</th>
               <th>Request</th>
-              <!-- <th>Payment Method</th> -->
               <th>Payment Status</th>
               <th>Document Status</th>
             </tr>
@@ -352,7 +353,6 @@ if ($queryString) {
                 $txn = htmlspecialchars($row['transaction_id']);
                 $name = htmlspecialchars($row['full_name']);
                 $req = htmlspecialchars($row['request_type']);
-                // $pm = htmlspecialchars($row['payment_method']);
                 $ps = htmlspecialchars($row['payment_status']);
                 $ds = htmlspecialchars($row['document_status']);
                 
@@ -371,7 +371,6 @@ if ($queryString) {
                 <td><?= $txn ?></td>
                 <td><?= $name ?></td>
                 <td><?= $req ?></td>
-                <!-- <td><?= $pm ?></td> -->
                 <td><span class="badge <?= $payClass ?>"><?= $ps ?></span></td>
                 <td><span class="badge <?= $docClass ?>"><?= $ds ?></span></td>
               </tr>

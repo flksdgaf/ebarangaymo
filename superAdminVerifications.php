@@ -212,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
           let val = dataObj[key];
           if (/\.(jpg|jpeg|png|gif)$/i.test(val)) {
             const folder = key.includes('front') ? 'frontID'
-                         : key.includes('back')   ? 'backID'
+                         : key.includes('back') ? 'backID'
                          : 'profilePictures';
             html += `<dt class="col-sm-3">${label}</dt>
                      <dd class="col-sm-9 mb-3">

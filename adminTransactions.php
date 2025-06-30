@@ -1,148 +1,217 @@
 <?php
 require 'functions/dbconn.php';
-$userId = (int)$_SESSION['loggedInUserID'];
-
-// ── 0) FILTER + SEARCH SETUP ───────────────────────────────────────────────────
-$search      = trim($_GET['search']      ?? '');
-$date_from   = $_GET['date_from']        ?? '';
-$date_to     = $_GET['date_to']          ?? '';
-$requestType = $_GET['request_type']     ?? '';
-
-$whereClauses = [];
-$bindTypes    = '';
-$bindParams   = [];
-
-// Global search on ID, name, or request type
-if ($search !== '') {
-  $whereClauses[]   = "(transaction_id LIKE ? OR full_name LIKE ? OR request_type LIKE ?)";
-  $bindTypes       .= 'sss';
-  $term             = "%{$search}%";
-  $bindParams[]     = $term;
-  $bindParams[]     = $term;
-  $bindParams[]     = $term;
-}
-
-// Filter by request type
-if ($requestType) {
-  $whereClauses[] = "request_type = ?";
-  $bindTypes     .= 's';
-  $bindParams[]   = $requestType;
-}
-
-// Date range on created_at (optional)
-if ($date_from && $date_to) {
-  $whereClauses[] = 'DATE(created_at) BETWEEN ? AND ?';
-  $bindTypes     .= 'ss';
-  $bindParams[]   = $date_from;
-  $bindParams[]   = $date_to;
-} elseif ($date_from) {
-  $whereClauses[] = 'DATE(created_at) >= ?';
-  $bindTypes     .= 's';
-  $bindParams[]   = $date_from;
-} elseif ($date_to) {
-  $whereClauses[] = 'DATE(created_at) <= ?';
-  $bindTypes     .= 's';
-  $bindParams[]   = $date_to;
-}
-
-// ── NEW: only show fully completed transactions ───────────────────────────────
-$whereClauses[] = "payment_status = 'Paid'";
-$whereClauses[] = "document_status = 'Released'";
-
-// build WHERE SQL
-$whereSQL = $whereClauses
-  ? 'WHERE ' . implode(' AND ', $whereClauses)
-  : '';
-
-// ── FETCH WITH DYNAMIC WHERE ────────────────────────────────────────────────────
-$sql = "
-  SELECT
-    transaction_id,
-    full_name,
-    request_type,
-    amount AS amount_paid,
-    claim_date AS issued_date
-  FROM view_general_requests
-  {$whereSQL}
-  ORDER BY claim_date ASC
-";
-
-$stmt = $conn->prepare($sql);
-
-if ($bindTypes) {
-  // bind dynamic params
-  $refs = [];
-  foreach ($bindParams as $i => $v) {
-    $refs[$i] = & $bindParams[$i];
-  }
-  array_unshift($refs, $bindTypes);
-  call_user_func_array([$stmt, 'bind_param'], $refs);
-}
-
-$stmt->execute();
-$result = $stmt->get_result();
+// Fetch report types from database or define statically
+$reportTypes = ['Barangay ID','Barangay Clearance','Certification','Business Permit','Equipment Borrowing','Cash Incentives'];
 ?>
 
-<title>eBarangay Mo | Transaction History</title>
+<div class="container-fluid p-3">
+  <div class="accordion" id="adminAccordion">
 
-<div class="container py-3">
-  <div class="card shadow-sm p-3">
-    <!-- Filter & Search UI here… (unchanged) -->
+    <!-- Collection Reports -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingCollection">
+        <button class="accordion-button collapsed text-success fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCollection" aria-expanded="false" aria-controls="collapseCollection">
+          Collection Reports
+        </button>
+      </h2>
+      <div id="collapseCollection" class="accordion-collapse collapse" aria-labelledby="headingCollection" data-bs-parent="#adminAccordion">
+        <div class="accordion-body p-0">
+          <div class="card border-0">
+            <div class="card-body">
 
-    <!-- RESULTS TABLE -->
-    <div class="table-responsive admin-table" style="height:500px;overflow-y:auto;">
-      <table class="table table-hover align-middle text-start">
-        <thead class="table-light">
-          <tr>
-            <th>Transaction ID</th>
-            <th>Full Name</th>
-            <th>Request Type</th>
-            <th>Amount Paid</th>
-            <th>Issued Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php if ($result->num_rows): ?>
-            <?php while ($row = $result->fetch_assoc()): ?>
-              <tr>
-                <td><?= htmlspecialchars($row['transaction_id']) ?></td>
-                <td><?= htmlspecialchars($row['full_name'])       ?></td>
-                <td><?= htmlspecialchars($row['request_type'])     ?></td>
-                <td><?= number_format($row['amount_paid'], 2)     ?></td>
-                <td><?= htmlspecialchars($row['issued_date'])      ?></td>
-              </tr>
-            <?php endwhile; ?>
-          <?php else: ?>
-            <tr>
-              <td colspan="5" class="text-center">No completed transactions found.</td>
-            </tr>
-          <?php endif; ?>
-        </tbody>
-      </table>
+              <form method="post" action="functions/generate_collection_report.php" target="_blank">
+                <div class="row align-items-end g-3 mb-4">
+                  <div class="col-md-3">
+                    <label for="collectionReportType" class="form-label">Report Type</label>
+                    <select id="collectionReportType" name="report_type" class="form-select" required>
+                      <?php foreach($reportTypes as $type): ?>
+                      <option value="<?= htmlspecialchars($type) ?>"><?= htmlspecialchars($type) ?></option>
+                      <?php endforeach; ?>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="collectionFrom" class="form-label">From</label>
+                    <input type="date" id="collectionFrom" name="date_from" class="form-control" required>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="collectionTo" class="form-label">To</label>
+                    <input type="date" id="collectionTo" name="date_to" class="form-control" required>
+                  </div>
+                  <div class="col-md-3 text-end">
+                    <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">CSV</button>
+                    <button type="submit" name="format" value="pdf" class="btn btn-success">PDF</button>
+                  </div>
+                </div>
+              </form>
+
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+
+    <!-- Official Receipt Reports -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingOfficialReceipts">
+        <button class="accordion-button collapsed text-success fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOfficialReceipts" aria-expanded="false" aria-controls="collapseOfficialReceipts">
+          Official Receipt Reports
+        </button>
+      </h2>
+      <div id="collapseOfficialReceipts" class="accordion-collapse collapse" aria-labelledby="headingOfficialReceipts" data-bs-parent="#adminAccordion">
+        <div class="accordion-body p-0">
+          <div class="card border-0">
+            <div class="card-body">
+
+              <form method="post" action="functions/generate_official_receipt_report.php" target="_blank">
+                <div class="row align-items-end g-3 mb-4">
+                  <div class="col-md-3">
+                    <label for="receiptReportType" class="form-label">Report Type</label>
+                    <select id="receiptReportType" name="report_type" class="form-select" required>
+                      <?php foreach($reportTypes as $type): ?>
+                      <option value="<?= htmlspecialchars($type) ?>"><?= htmlspecialchars($type) ?></option>
+                      <?php endforeach; ?>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="receiptFrom" class="form-label">From</label>
+                    <input type="date" id="receiptFrom" name="date_from" class="form-control" required>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="receiptTo" class="form-label">To</label>
+                    <input type="date" id="receiptTo" name="date_to" class="form-control" required>
+                  </div>
+                  <div class="col-md-3 text-end">
+                    <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">CSV</button>
+                    <button type="submit" name="format" value="pdf" class="btn btn-success">PDF</button>
+                  </div>
+                </div>
+              </form>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Blotter Reports -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingBlotter">
+        <button class="accordion-button collapsed text-success fw-bold"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#collapseBlotter"
+                aria-expanded="false"
+                aria-controls="collapseBlotter">
+          Blotter Reports
+        </button>
+      </h2>
+      <div id="collapseBlotter" class="accordion-collapse collapse"
+           aria-labelledby="headingBlotter"
+           data-bs-parent="#adminAccordion">
+        <div class="accordion-body p-0">
+          <div class="card border-0">
+            <div class="card-body">
+              <form method="post" action="functions/generate_blotter_report.php" target="_blank">
+                <div class="row align-items-end g-3 mb-4">
+                  <div class="col-md-3">
+                    <label for="blotterFrom" class="form-label">From</label>
+                    <input type="date" id="blotterFrom" name="date_from" class="form-control" required>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="blotterTo" class="form-label">To</label>
+                    <input type="date" id="blotterTo" name="date_to" class="form-control" required>
+                  </div>
+                  <div class="col-md-6 text-end">
+                    <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">CSV</button>
+                    <button type="submit" name="format" value="pdf" class="btn btn-success">PDF</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Complaint Reports -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingComplaint">
+        <button class="accordion-button collapsed text-success fw-bold"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#collapseComplaint"
+                aria-expanded="false"
+                aria-controls="collapseComplaint">
+          Complaint Reports
+        </button>
+      </h2>
+      <div id="collapseComplaint" class="accordion-collapse collapse"
+           aria-labelledby="headingComplaint"
+           data-bs-parent="#adminAccordion">
+        <div class="accordion-body p-0">
+          <div class="card border-0">
+            <div class="card-body">
+              <form method="post" action="functions/generate_complaint_report.php" target="_blank">
+                <div class="row align-items-end g-3 mb-4">
+                  <div class="col-md-3">
+                    <label for="complaintFrom" class="form-label">From</label>
+                    <input type="date" id="complaintFrom" name="date_from" class="form-control" required>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="complaintTo" class="form-label">To</label>
+                    <input type="date" id="complaintTo" name="date_to" class="form-control" required>
+                  </div>
+                  <div class="col-md-6 text-end">
+                    <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">CSV</button>
+                    <button type="submit" name="format" value="pdf" class="btn btn-success">PDF</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Katarungang Pambarangay Reports -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingKatarungang">
+        <button class="accordion-button collapsed text-success fw-bold"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#collapseKatarungang"
+                aria-expanded="false"
+                aria-controls="collapseKatarungang">
+          Katarungang Pambarangay Reports
+        </button>
+      </h2>
+      <div id="collapseKatarungang" class="accordion-collapse collapse"
+           aria-labelledby="headingKatarungang"
+           data-bs-parent="#adminAccordion">
+        <div class="accordion-body p-0">
+          <div class="card border-0">
+            <div class="card-body">
+              <form method="post" action="functions/generate_katarungang_report.php" target="_blank">
+                <div class="row align-items-end g-3 mb-4">
+                  <div class="col-md-3">
+                    <label for="kataFrom" class="form-label">From</label>
+                    <input type="date" id="kataFrom" name="date_from" class="form-control" required>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="kataTo" class="form-label">To</label>
+                    <input type="date" id="kataTo" name="date_to" class="form-control" required>
+                  </div>
+                  <div class="col-md-6 text-end">
+                    <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">CSV</button>
+                    <button type="submit" name="format" value="pdf" class="btn btn-success">PDF</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
-
-<?php
-$stmt->close();
-$conn->close();
-?>
-
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const form      = document.getElementById('searchForm');
-  const input     = document.getElementById('searchInput');
-  const btn       = document.getElementById('searchBtn');
-  const icon      = document.getElementById('searchIcon');
-  const hasSearch = <?= json_encode(!empty($search)) ?>;
-
-  btn.addEventListener('click', () => {
-    if (hasSearch) {
-      input.value = '';
-      icon.textContent = 'search';
-    }
-    form.submit();
-  });
-});
-</script>

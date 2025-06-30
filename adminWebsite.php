@@ -9,7 +9,7 @@ $announcements = $res->fetch_all(MYSQLI_ASSOC);
 
 <title>eBarangay Mo | Website Configurations</title>
 
-<div class="container py-3">
+<div class="container-fluid p-3">
   <div class="accordion" id="adminAccordion">
 
     <div class="accordion-item">

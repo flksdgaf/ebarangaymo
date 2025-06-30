@@ -1,5 +1,4 @@
 <?php
-// adminVerifications.php (initial render for pending)
 require 'functions/dbconn.php';
 
 if (!isset($_SESSION['auth'])||!$_SESSION['auth']) {
@@ -19,7 +18,7 @@ if ($res0) {
 
 <title>eBarangay Mo | Account Verifications</title>
 
-<div class="container py-3">
+<div class="container-fluid p-3">
   <div class="d-flex justify-content-end mb-2">
     <div class="dropdown">
       <button class="btn btn-secondary dropdown-toggle" type="button" id="viewDropdown" data-bs-toggle="dropdown" aria-expanded="false">
@@ -213,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
           let val = dataObj[key];
           if (/\.(jpg|jpeg|png|gif)$/i.test(val)) {
             const folder = key.includes('front') ? 'frontID'
-                         : key.includes('back')   ? 'backID'
+                         : key.includes('back') ? 'backID'
                          : 'profilePictures';
             html += `<dt class="col-sm-3">${label}</dt>
                      <dd class="col-sm-9 mb-3">

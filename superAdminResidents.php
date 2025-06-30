@@ -3,9 +3,7 @@
 require_once 'functions/dbconn.php';
 
 // Determine purok (default=1)
-$purokNum = isset($_GET['purok']) && in_array((int)$_GET['purok'], [1,2,3,4,5,6])
-            ? (int)$_GET['purok']
-            : 1;
+$purokNum = isset($_GET['purok']) && in_array((int)$_GET['purok'], [1,2,3,4,5,6]) ? (int)$_GET['purok'] : 1;
 
 // --- Search setup ---
 $search = trim($_GET['search'] ?? '');
@@ -40,20 +38,12 @@ if ($search !== '') {
     $where[] = '(' . implode(' OR ', $likes) . ')';
 }
 
-$whereSQL = $where
-    ? 'WHERE ' . implode(' AND ', $where)
-    : '';            
+$whereSQL = $where ? 'WHERE ' . implode(' AND ', $where) : '';            
 
 $tableName = "purok{$purokNum}_rbi";
 
 // Fetch all columns plus role from user_accounts
-$sql = "
-  SELECT r.*, ua.role
-  FROM `{$tableName}` AS r
-  LEFT JOIN user_accounts AS ua
-    ON r.account_ID = ua.account_id
-  {$whereSQL}
-";
+$sql = "SELECT r.*, ua.role FROM `{$tableName}` AS r LEFT JOIN user_accounts AS ua ON r.account_ID = ua.account_id {$whereSQL}";
 $stmt = $conn->prepare($sql);
 if ($whereSQL) {
     $stmt->bind_param($types, ...$params);
@@ -64,10 +54,13 @@ $result = $stmt->get_result();
 // Build PHP array for JS
 $allRows = [];
 while ($row = $result->fetch_assoc()) {
+    $row['purok'] = $purokNum;
     $allRows[] = $row;
 }
 $stmt->close();
 ?>
+
+<title>eBarangay Mo | Residents</title>
 
 <div class="container-fluid p-3">
   <div class="card shadow-sm p-3">
@@ -83,8 +76,8 @@ $stmt->close();
 
       <!-- Search Form -->
       <form id="searchForm" method="get" class="d-flex ms-auto me-2">
-        <input type="hidden" name="page"     value="superAdminResidents">
-        <input type="hidden" name="purok"    value="<?= $purokNum ?>">
+        <input type="hidden" name="page" value="superAdminResidents">
+        <input type="hidden" name="purok" value="<?= $purokNum ?>">
         <input type="hidden" name="page_num" value="1">
         <div class="input-group input-group-sm w-100">
           <input name="search" id="searchInput" type="text" class="form-control" placeholder="Search..." value="<?= htmlspecialchars($search) ?>">
@@ -108,7 +101,7 @@ $stmt->close();
             <th class="text-nowrap">Relationship to Head</th>
             <th class="text-nowrap">Registry No.</th>
             <th class="text-nowrap">Total Population</th>
-            <th class="text-nowrap">Role</th>
+            <th class="text-nowrap">Account Role</th>
             <th class="text-nowrap">Remarks</th>
           </tr>
         </thead>
@@ -119,9 +112,10 @@ $stmt->close();
             <?php foreach ($allRows as $row):
               // map enum to CSS color
               switch($row['remarks']) {
-                case 'Missing': $bgColor = 'yellow'; break;
-                case 'Deceased':    $bgColor = 'red';    break;
-                default:        $bgColor = '';
+                case 'On Hold': $bgColor = 'yellow'; break;
+                case 'Transferred': $bgColor = 'orange'; break;
+                case 'Deceased': $bgColor = 'red'; break;
+                default: $bgColor = '';
               }
               $cellStyle = $bgColor ? "background-color:{$bgColor}!important;" : '';
               $escapedName = htmlspecialchars($row['full_name'], ENT_QUOTES);
@@ -138,7 +132,7 @@ $stmt->close();
                   <?php if ($row['role'] !== null): ?>
                     <select class="form-select form-select-sm role-select" style="width:137px; background-image: none; padding-right: 0.5rem;">
                       <?php 
-                      $roles = ['Resident','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Staff'];
+                      $roles = ['Resident','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Lupon'];
                       foreach ($roles as $r): ?>
                         <option value="<?= $r ?>"
                           <?= $row['role'] === $r ? 'selected' : '' ?>>
@@ -151,9 +145,10 @@ $stmt->close();
                   <?php endif; ?>
                 </td>
                 <td style="<?= $cellStyle ?>">
-                  <select class="form-select form-select-sm remarks-select" style="width:91px; background-image: none; padding-right: 0.5rem;">
+                  <select class="form-select form-select-sm remarks-select" style="width:101px; background-image: none; padding-right: 0.5rem;">
                     <option value="">None</option>
-                    <option value="Missing"  <?= $row['remarks']==='Missing'  ? 'selected' : '' ?>>Missing</option>
+                    <option value="On Hold" <?= $row['remarks']==='On Hold' ? 'selected' : '' ?>>On Hold</option>
+                    <option value="Transferred" <?= $row['remarks']==='Transferred' ? 'selected' : '' ?>>Transferred</option>
                     <option value="Deceased" <?= $row['remarks']==='Deceased' ? 'selected' : '' ?>>Deceased</option>
                   </select>
                 </td>
@@ -213,7 +208,8 @@ $stmt->close();
 
   // map remarks to colors in JS
   const remarkColor = {
-    'Missing':  'yellow',
+    'On Hold': 'yellow',
+    'Transferred': 'orange',
     'Deceased': 'red'
   };
 
@@ -225,13 +221,23 @@ $stmt->close();
       window.location.href = url;
     });
 
+    // Search handler
+    const Sform = document.getElementById('searchForm');
+    const input = document.getElementById('searchInput');
+    const btn = document.getElementById('searchBtn');
+    let hasSearch = <?= json_encode($search !== '') ?>;
+    btn.addEventListener('click', () => {
+      if (hasSearch) input.value = '';
+      Sform.submit();
+    });
+
     // --- Remarks dropdown handler
     document.querySelectorAll('.remarks-select').forEach(sel => {
       sel.addEventListener('change', async function() {
-        const row    = this.closest('tr');
-        const name   = row.dataset.name;
+        const row = this.closest('tr');
+        const name = row.dataset.name;
         const remark = this.value;
-        const color  = remarkColor[remark] || '';
+        const color = remarkColor[remark] || '';
 
         // update backgrounds
         row.querySelectorAll('td').forEach(td => td.style.backgroundColor = color);
@@ -248,8 +254,8 @@ $stmt->close();
     // --- Role dropdown handler
     document.querySelectorAll('.role-select').forEach(sel => {
       sel.addEventListener('change', async function() {
-        const tr      = this.closest('tr');
-        const acct    = tr.children[0].textContent.trim();
+        const tr = this.closest('tr');
+        const acct = tr.children[0].textContent.trim();
         const newRole = this.value;
         await fetch('functions/update_role.php', {
           method: 'POST',
@@ -260,22 +266,22 @@ $stmt->close();
     });
 
     // --- Details / Edit Modal setup ---
-    const modalEl       = document.getElementById('residentDetailsModal');
-    const modal         = new bootstrap.Modal(modalEl);
-    const form          = document.getElementById('residentDetailsForm');
-    const editSaveBtn   = document.getElementById('detailsEditSaveBtn');
-    let   currentData   = null;
-    let   isEditing     = false;
+    const modalEl = document.getElementById('residentDetailsModal');
+    const modal = new bootstrap.Modal(modalEl);
+    const form = document.getElementById('residentDetailsForm');
+    const editSaveBtn = document.getElementById('detailsEditSaveBtn');
+    let currentData = null;
+    let isEditing = false;
 
     // Confirmation modal
     const confirmSaveModalEl = document.getElementById('confirmSaveModal');
-    const confirmSaveModal   = new bootstrap.Modal(confirmSaveModalEl);
-    const confirmSaveBtn     = document.getElementById('confirmSaveBtn');
+    const confirmSaveModal = new bootstrap.Modal(confirmSaveModalEl);
+    const confirmSaveBtn = document.getElementById('confirmSaveBtn');
 
     // Build form fields (readonly by default)
     function buildForm(data) {
       currentData = data;
-      isEditing   = false;
+      isEditing = false;
       editSaveBtn.textContent = 'Edit';
       
       form.innerHTML = '';
@@ -290,26 +296,21 @@ $stmt->close();
         form.appendChild(picDiv);
       }
 
-      // our schema
       const fields = [
+        { key:'purok',                          label:'Purok',                          type:'select', readonly:true, editable:true, options:['1','2','3','4','5','6'] },
         { key:'account_ID',                     label:'Account ID',                     type:'text',   readonly:true },
         { key:'full_name',                      label:'Full Name',                      type:'text',   readonly:true, editable:true },
-        { key:'birthdate',                      label:'Birthdate',                      type:'date',   readonly:true, editable:true },
-        { key:'sex',                            label:'Sex',                            type:'select', readonly:true, editable:true,
-            options:['Male','Female','Prefer not to say'] },
-        { key:'civil_status',                   label:'Civil Status',                   type:'select', readonly:true, editable:true,
-            options:['Single','Married','Separated','Widowed'] },
-        { key:'blood_type',                     label:'Blood Type',                     type:'select', readonly:true, editable:true,
-            options:['A','B','AB','O','Unknown'] },
+        { key:'birthdate',                      label:'Birthdate',                      type:'date',   readonly:true },
+        { key:'sex',                            label:'Sex',                            type:'select', readonly:true, editable:true, options:['Male','Female','Prefer not to say','Unknown'] },
+        { key:'civil_status',                   label:'Civil Status',                   type:'select', readonly:true, editable:true, options:['Single','Married','Widowed','Separated','Divorced','Unknown'] },
+        { key:'blood_type',                     label:'Blood Type',                     type:'select', readonly:true, editable:true, options:['A+','A-','B+','B-','AB+','AB-','O+','O-','Unknown'] },
         { key:'birth_registration_number',      label:'Birth Reg. No.',                 type:'text',   readonly:true, editable:true },
-        { key:'highest_educational_attainment', label:'Highest Educational Attainment', type:'select', readonly:true, editable:true,
-            options:['Kindergarten','Elementary','High School','Senior High School','College','College Graduate','Vocational','None'] },
+        { key:'highest_educational_attainment', label:'Highest Educational Attainment', type:'select', readonly:true, editable:true, options:['Kindergarten','Elementary','High School','Senior High School','Undergraduate','College Graduate','Post-Graduate','Vocational','None','Unknown'] },
         { key:'occupation',                     label:'Occupation',                     type:'text',   readonly:true, editable:true },
-        { key:'house_number',                   label:'House No.',                       type:'number', readonly:true, editable:true },
+        { key:'house_number',                   label:'House No.',                      type:'number', readonly:true, editable:true },
         { key:'relationship_to_head',           label:'Relationship to Head',           type:'text',   readonly:true, editable:true },
         { key:'registry_number',                label:'Registry No.',                   type:'number', readonly:true, editable:true },
         { key:'total_population',               label:'Total Population',               type:'number', readonly:true, editable:true },
-        // note: role & remarks stay readonly
         { key:'role',                           label:'Role',                           type:'text',   readonly:true },
         { key:'remarks',                        label:'Remarks',                        type:'text',   readonly:true }
       ];
@@ -332,27 +333,25 @@ $stmt->close();
           f.options.forEach(opt => {
             const o = document.createElement('option');
             o.value = o.textContent = opt;
-            if (data[f.key] === opt) o.selected = true;
+            if (String(data[f.key]) === opt) o.selected = true;
             input.appendChild(o);
           });
           input.disabled = true;
-        }
-        else {
+        } else {
           input = document.createElement('input');
           input.className = 'form-control';
-          input.type      = f.type;
-          input.value     = data[f.key] ?? '';
-          input.disabled  = true;
+          input.type = f.type;
+          input.value = data[f.key] ?? '';
+          input.disabled = true;
 
           if (f.key === 'remarks') {
-          // if DB returned null/empty, show “None”
             input.value = data.remarks ? data.remarks : 'None';
           } else {
             input.value = data[f.key] ?? '';
           }
         }
 
-        input.id   = `field_${f.key}`;
+        input.id = `field_${f.key}`;
         input.name = f.key;
 
         wr.appendChild(lbl);
@@ -376,7 +375,7 @@ $stmt->close();
         //   .forEach(k => document.getElementById(`field_${k}`).disabled = false);
 
           // enable only editable controls
-       ['full_name','birthdate','house_number','relationship_to_head','registry_number','total_population',
+       ['purok','full_name','house_number','relationship_to_head','registry_number','total_population',
         'sex','civil_status','blood_type', 'birth_registration_number','highest_educational_attainment', 'occupation'
        ].forEach(k => {
          const el = document.getElementById(`field_${k}`);
@@ -394,10 +393,18 @@ $stmt->close();
       confirmSaveModal.hide();
 
       // gather payload
+      const originalPurok = currentData.purok;
+      const newPurok = document.getElementById('field_purok').value;
       const payload = new URLSearchParams({ 
         account_id: currentData.account_ID,
-        purok:       purokNum
+        original_purok: originalPurok,
+        new_purok: newPurok
       });
+
+      if (currentData.profile_picture) {
+        payload.append('profile_picture', currentData.profile_picture);
+      }
+
       ['full_name','birthdate','sex','civil_status','blood_type',
       'birth_registration_number','highest_educational_attainment',
       'occupation','house_number','relationship_to_head',
@@ -413,7 +420,16 @@ $stmt->close();
         headers: {'Content-Type':'application/x-www-form-urlencoded'},
         body: payload
       });
-      const json = await resp.json();
+
+      let text = await resp.text();
+      console.log('Raw response:', text);
+      let json;
+      try {
+        json = JSON.parse(text);
+      } catch(e) {
+        return alert('Invalid JSON response, see console for raw output');
+      }
+
       if (!json.success) {
         return alert('Save failed: ' + (json.error||'unknown'));
       }
@@ -453,25 +469,4 @@ $stmt->close();
       });
     });
   });
-</script>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  // Purok filter
-  document.getElementById('purokFilter').addEventListener('change', function() {
-    const url = new URL(window.location.href);
-    url.searchParams.set('purok', this.value);
-    window.location.href = url;
-  });
-
-  // Search handler
-  const form = document.getElementById('searchForm');
-  const input = document.getElementById('searchInput');
-  const btn   = document.getElementById('searchBtn');
-  let hasSearch = <?= json_encode($search !== '') ?>;
-  btn.addEventListener('click', () => {
-    if (hasSearch) input.value = '';
-    form.submit();
-  });
-});
 </script>

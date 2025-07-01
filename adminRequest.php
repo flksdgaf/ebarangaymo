@@ -1142,6 +1142,40 @@ $result = $st->get_result();
         </div>
       </div>
 
+      <!-- Print / Generate Certificate Modal -->
+      <div class="modal fade" id="printModal" tabindex="-1" aria-labelledby="printModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="printModalLabel">
+                Certificate for <span id="printTidSpan"></span>
+              </h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <p>
+                <label class="form-label">Current payment status:</label>
+                <select id="printPaymentStatus" class="form-select form-select-sm">
+                  <option value="Unpaid">Unpaid</option>
+                  <option value="Paid">Paid</option>
+                </select>
+              </p>
+              <!-- carry‑over of the request type -->
+              <input type="hidden" id="printRequestType">
+            </div>
+            <div class="modal-footer">
+              <button id="generateBtn" type="button" class="btn btn-primary" disabled>
+                Generate Certificate
+              </button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
       <form method="get" id="searchForm" class="d-flex ms-auto me-2">
       <!-- preserve pagination & filters -->
       <input type="hidden" name="page" value="adminRequest">
@@ -1439,6 +1473,6 @@ document.addEventListener('DOMContentLoaded', () => {
       new bootstrap.Modal(document.getElementById('noChangesModal')).show();
     }
   });
-
+  
 });
 </script>

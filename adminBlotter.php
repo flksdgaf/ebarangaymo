@@ -94,12 +94,20 @@ $stmt->close();
 ?>
 
 <div>
-   <?php if ($newTid): ?>
+  <?php if (isset($_GET['new_blotter_id'])): ?>
     <div class="alert alert-success alert-dismissible fade show" role="alert">
-      New blotter record <strong><?= htmlspecialchars($newTid) ?></strong> added successfully!
+      New blotter record <strong><?= htmlspecialchars($_GET['new_blotter_id']) ?></strong> added successfully!
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
   <?php endif; ?>
+
+  <?php if (isset($_GET['blotter_deleted'])): ?>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      Blotter record <strong><?= htmlspecialchars($_GET['blotter_deleted']) ?></strong> was permanently deleted.
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <?php endif; ?>
+
   <div class="card shadow-sm p-3">
     <!-- SEARCH + FILTER DROPDOWN -->
     <div class="d-flex align-items-center mb-3">
@@ -282,6 +290,29 @@ $stmt->close();
           </div>
         </div>
       </div>
+
+      <!-- Delete Confirmation Modal -->
+      <div class="modal fade" id="deleteBlotterModal" tabindex="-1" aria-labelledby="deleteBlotterModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <form id="deleteBlotterForm">
+              <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteBlotterModalLabel">Confirm Deletion</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                Are you sure you want to permanently delete blotter record <strong id="deleteTransactionIdLabel"></strong>?
+                <input type="hidden" name="transaction_id" id="deleteTransactionId">
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-danger">Delete</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- TABLE -->
@@ -313,14 +344,14 @@ $stmt->close();
                 </td>
                 <td class="text-center">
                   <!-- Edit -->
-                  <button class="btn btn-sm btn-success">
+                  <!-- <button class="btn btn-sm btn-success">
                     <span class="material-symbols-outlined" style="font-size: 12px;">
                       stylus
                     </span>
-                  </button>
+                  </button> -->
 
                   <!-- Delete -->
-                  <button class="btn btn-sm btn-danger">
+                  <button class="btn btn-sm btn-danger delete-btn" data-id="<?= $tid ?>" data-bs-toggle="modal" data-bs-target="#deleteBlotterModal">
                     <span class="material-symbols-outlined" style="font-size: 12px;">
                       delete
                     </span>
@@ -408,5 +439,38 @@ document.addEventListener('DOMContentLoaded', () => {
   // wire up change + initialize
   respCheck.addEventListener('change', blotter_toggleRespondent);
   blotter_toggleRespondent();
+
+  const deleteModal = new bootstrap.Modal(document.getElementById('deleteBlotterModal'));
+  const deleteForm = document.getElementById('deleteBlotterForm');
+  const deleteIdInput = document.getElementById('deleteTransactionId');
+  const deleteLabel = document.getElementById('deleteTransactionIdLabel');
+
+  document.querySelectorAll('.delete-btn').forEach(button => {
+    button.addEventListener('click', () => {
+      const tid = button.getAttribute('data-id');
+      deleteIdInput.value = tid;
+      deleteLabel.textContent = tid;
+    });
+  });
+
+  deleteForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(deleteForm);
+
+    fetch('functions/delete_blotter.php', {
+      method: 'POST',
+      body: formData
+    })
+    .then(resp => resp.json())
+    .then(data => {
+      if (data.success) {
+  deleteModal.hide();
+  window.location.href = window.location.pathname + '?page=adminComplaints&blotter_deleted=' + encodeURIComponent(formData.get('transaction_id'));
+} else {
+        alert('Error: ' + (data.error || 'Failed to delete.'));
+      }
+    });
+  });
 });
 </script>

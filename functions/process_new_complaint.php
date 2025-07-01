@@ -12,28 +12,32 @@ $userId = (int)$_SESSION['loggedInUserID'];
 
 // 2) COLLECT + SANITIZE
 // build complainant full name
-$cf = trim($_POST['complainant_first_name'] ?? '');
-$cm = trim($_POST['complainant_middle_name'] ?? '');
-$cl = trim($_POST['complainant_last_name'] ?? '');
-$cs = trim($_POST['complainant_suffix'] ?? '');
-$cMiddle = $cm ? " {$cm}" : '';
-$cSuffix = $cs ? " {$cs}" : '';
-$complainantName = "{$cl}, {$cf}{$cMiddle}{$cSuffix}";
+// $cf = trim($_POST['complainant_first_name'] ?? '');
+// $cm = trim($_POST['complainant_middle_name'] ?? '');
+// $cl = trim($_POST['complainant_last_name'] ?? '');
+// $cs = trim($_POST['complainant_suffix'] ?? '');
+// $cMiddle = $cm ? " {$cm}" : '';
+// $cSuffix = $cs ? " {$cs}" : '';
+// $complainantName = "{$cl}, {$cf}{$cMiddle}{$cSuffix}";
+$complainantName = trim($_POST['complainant_name'] ?? '');
 $complainantAddress = trim($_POST['complainant_address'] ?? '');
 
 // respondent (may be empty if no respondent)
-$respondentName = null;
-$respondentAddress = null;
-if (!empty($_POST['respondent_first_name'])) {
-    $rf = trim($_POST['respondent_first_name']);
-    $rm = trim($_POST['respondent_middle_name'] ?? '');
-    $rl = trim($_POST['respondent_last_name']);
-    $rs = trim($_POST['respondent_suffix'] ?? '');
-    $rMiddle = $rm ? " {$rm}" : '';
-    $rSuffix = $rs ? " {$rs}" : '';
-    $respondentName = "{$rl}, {$rf}{$rMiddle}{$rSuffix}";
-    $respondentAddress = trim($_POST['respondent_address'] ?? '');
-}
+// $respondentName = null;
+// $respondentAddress = null;
+// if (!empty($_POST['respondent_first_name'])) {
+//     $rf = trim($_POST['respondent_first_name']);
+//     $rm = trim($_POST['respondent_middle_name'] ?? '');
+//     $rl = trim($_POST['respondent_last_name']);
+//     $rs = trim($_POST['respondent_suffix'] ?? '');
+//     $rMiddle = $rm ? " {$rm}" : '';
+//     $rSuffix = $rs ? " {$rs}" : '';
+//     $respondentName = "{$rl}, {$rf}{$rMiddle}{$rSuffix}";
+//     $respondentAddress = trim($_POST['respondent_address'] ?? '');
+// }
+
+$respondentName = trim($_POST['respondent_name'] ?? '');
+$respondentAddress = trim($_POST['respondent_address'] ?? '');
 
 // other fields
 $complaintType = trim($_POST['complaint_type'] ?? '');
@@ -79,6 +83,10 @@ if (in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
 }
 
 // 6) REDIRECT BACK WITH SUCCESS
-header("Location: ../superAdminPanel.php?page=superAdminComplaints&transaction_id={$transactionId}");
+// header("Location: ../superAdminPanel.php?page=superAdminComplaints&transaction_id={$transactionId}");
+$pageNum = $_POST['summon_page'] ?? 1;
+
+header("Location: ../adminPanel.php?page=adminComplaints&summon_page=$pageNum&new_complaint_id={$transactionId}");
+
 exit();
 ?>

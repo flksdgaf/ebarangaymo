@@ -39,9 +39,15 @@ $logoUrl = 'images/' . $info['logo'];
             </a>
         </li>
         <li>
+            <a href="adminPanel.php?page=adminEquipment" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminEquipment') ? 'active' : '' ?>">
+            <span class="material-symbols-outlined me-2">folded_hands</span>
+            Equipment Request
+            </a>
+        </li>
+        <li>
             <a href="adminPanel.php?page=adminComplaints" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminComplaints') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">release_alert</span>
-            Complaints
+            Blotter & Complaints
             </a>
         </li>
         <li>

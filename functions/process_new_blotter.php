@@ -116,7 +116,8 @@ if (in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
 
 // 6) REDIRECT BACK
 // header("Location: ../superAdminPanel.php?page=superAdminComplaints&transaction_id={$transactionId}");
-header("Location: ../adminPanel.php?page=adminComplaints&transaction_id={$transactionId}");
+// header("Location: ../adminPanel.php?page=adminComplaints&transaction_id={$transactionId}");
+header("Location: ../adminPanel.php?page=adminComplaints&new_blotter_id={$transactionId}");
 
 exit();
 ?>

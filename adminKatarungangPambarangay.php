@@ -183,18 +183,18 @@ $stmt->close();
                 <td><?= htmlspecialchars($row['formatted_sched']) ?></td>
                 <td class="text-center">
                  <!-- Edit -->
-                  <button class="btn btn-sm btn-success">
+                  <button class="btn btn-sm btn-success editBtn">
                     <span class="material-symbols-outlined" style="font-size: 12px;">
                       stylus
                     </span>
                   </button>
 
                   <!-- Delete -->
-                  <button class="btn btn-sm btn-danger">
+                  <!-- <button class="btn btn-sm btn-danger deleteBtn">
                     <span class="material-symbols-outlined" style="font-size: 12px;">
                       delete
                     </span>
-                  </button>
+                  </button> -->
                 </td>
               </tr>
             <?php endwhile; ?>

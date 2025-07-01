@@ -95,12 +95,28 @@ $stmt->close();
 ?>
 
 <div>
-  <?php if ($newTid): ?>
+  <?php if (isset($_GET['new_complaint_id'])): ?>
     <div class="alert alert-success alert-dismissible fade show" role="alert">
-      New complaint record <strong><?= htmlspecialchars($newTid) ?></strong> added successfully!
+      New complaint record <strong><?= htmlspecialchars($_GET['new_complaint_id']) ?></strong> added successfully!
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
   <?php endif; ?>
+
+  <?php if (isset($_GET['updated_complaint_id'])): ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      Complaint record <strong><?= htmlspecialchars($_GET['updated_complaint_id']) ?></strong> updated successfully!
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <?php endif; ?>
+
+
+  <?php if (isset($_GET['error']) && $_GET['error'] === 'summon_exists'): ?>
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+      A summon has already been scheduled for transaction ID <strong><?= htmlspecialchars($_GET['transaction_id']) ?></strong>.
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <?php endif; ?>
+
 
   <div class="card shadow-sm p-3">
     <!-- FILTER + SEARCH -->
@@ -180,7 +196,7 @@ $stmt->close();
                 <div class="row gy-2">
                   <!-- Complainant Details -->
                   <div class="col-12"><h6 class="fw-bold">Complainant Details</h6><hr class="my-2"></div>
-                  <div class="col-12 col-md-3">
+                  <!-- <div class="col-12 col-md-3">
                     <label class="form-label fw-bold">First Name</label>
                     <input name="complainant_first_name" type="text" class="form-control form-control-sm" required>
                   </div>
@@ -195,15 +211,20 @@ $stmt->close();
                   <div class="col-12 col-md-3">
                     <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
                     <input name="complainant_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
+                  </div> -->
+                  <div class="col-12 col-md-5">
+                    <label class="form-label fw-bold">Full Name</label>
+                    <input name="complainant_name" type="text" class="form-control form-control-sm" required>
                   </div>
-                  <div class="col-12">
+
+                  <div class="col-12 col-md-5">
                     <label class="form-label fw-bold">Full Address</label>
                     <input name="complainant_address" type="text" class="form-control form-control-sm" required>
                   </div>
 
                   <!-- Respondent Details -->
                   <div class="col-12 mt-3"><h6 class="fw-bold">Respondent Details</h6><hr class="my-2"></div>
-                  <div class="col-12 col-md-3">
+                  <!-- <div class="col-12 col-md-3">
                     <label class="form-label fw-bold">First Name</label>
                     <input name="respondent_first_name" type="text" class="form-control form-control-sm" required>
                   </div>
@@ -218,8 +239,14 @@ $stmt->close();
                   <div class="col-12 col-md-3">
                     <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
                     <input name="respondent_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
+                  </div> -->
+
+                  <div class="col-12 col-md-5">
+                    <label class="form-label fw-bold">Full Name</label>
+                    <input name="respondent_name" type="text" class="form-control form-control-sm" required>
                   </div>
-                  <div class="col-12">
+
+                  <div class="col-12 col-md-5">
                     <label class="form-label fw-bold">Full Address</label>
                     <input name="respondent_address" type="text" class="form-control form-control-sm" required>
                   </div>
@@ -252,6 +279,91 @@ $stmt->close();
           </div>
         </div>
       </div>
+
+      <!-- Edit Complaint Modal -->
+      <div class="modal fade" id="editComplaintModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="editComplaintModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width:90vw;">
+          <div class="modal-content">
+            <div class="modal-header text-white" style="background-color: #13411F;">
+              <h5 class="modal-title" id="editComplaintModalLabel">Edit Complaint Record</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editComplaintForm" method="POST" action="functions/process_edit_complaint.php">
+              <div class="modal-body">
+                <input type="hidden" name="transaction_id" id="edit_transaction_id">
+                <input type="hidden" name="summon_page" value="<?= htmlspecialchars($page) ?>">
+
+                <div class="row gy-2">
+                  <!-- Complainant Details -->
+                  <div class="col-12"><h6 class="fw-bold">Complainant Details</h6><hr class="my-2"></div>
+                  <div class="col-12 col-md-5">
+                    <label class="form-label fw-bold">Full Name</label>
+                    <input type="text" id="edit_complainant_name" name="complainant_name" class="form-control form-control-sm" required>
+                  </div>
+                  <div class="col-12 col-md-5">
+                    <label class="form-label fw-bold">Full Address</label>
+                    <input type="text" id="edit_complainant_address" name="complainant_address" class="form-control form-control-sm" required>
+                  </div>
+
+                  <!-- Respondent Details -->
+                  <div class="col-12 mt-3"><h6 class="fw-bold">Respondent Details</h6><hr class="my-2"></div>
+                  <div class="col-12 col-md-5">
+                    <label class="form-label fw-bold">Full Name</label>
+                    <input type="text" id="edit_respondent_name" name="respondent_name" class="form-control form-control-sm" required>
+                  </div>
+                  <div class="col-12 col-md-5">
+                    <label class="form-label fw-bold">Full Address</label>
+                    <input type="text" id="edit_respondent_address" name="respondent_address" class="form-control form-control-sm" required>
+                  </div>
+
+                  <!-- Complaint Details -->
+                  <div class="col-12 mt-3"><h6 class="fw-bold">Complaint Details</h6><hr class="my-2"></div>
+                  <div class="col-12 col-md-5">
+                    <label class="form-label fw-bold">Complaint Type</label>
+                    <input type="text" id="edit_complaint_type" name="complaint_type" class="form-control form-control-sm" required>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label fw-bold">Complaint Affidavit</label>
+                    <textarea id="edit_complaint_affidavit" name="complaint_affidavit" class="form-control form-control-sm" rows="3" required></textarea>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label fw-bold">Pleading Statement</label>
+                    <textarea id="edit_pleading_statement" name="pleading_statement" class="form-control form-control-sm" rows="3" required></textarea>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-success">Save Changes</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Print Summon Modal -->
+      <div class="modal fade" id="printSummonModal" tabindex="-1" aria-labelledby="printSummonModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <form method="POST" action="functions/schedule_summon.php" id="printSummonForm" class="modal-content">
+            <div class="modal-header bg-success text-white">
+              <h5 class="modal-title" id="printSummonModalLabel">Schedule Summon</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <input type="hidden" name="transaction_id" id="print_transaction_id">
+
+              <div class="mb-3">
+                <label class="form-label">Select Schedule</label>
+                <input type="datetime-local" name="scheduled_at" class="form-control" required>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-success">Confirm & Generate</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
     </div>
 
     <!-- TABLE -->
@@ -279,19 +391,26 @@ $stmt->close();
                 <td><?= htmlspecialchars($row['complaint_type']) ?></td>
                 <td><?= htmlspecialchars($row['formatted_created']) ?></td>
                 <td class="text-center">
+                  <!-- Print -->
+                  <button class="btn btn-sm btn-warning printBtn" data-id="<?= $tid ?>">
+                  <span class="material-symbols-outlined" style="font-size: 12px;">
+                    print
+                    </span>
+                  </button>
+
                   <!-- Edit -->
-                  <button class="btn btn-sm btn-success">
+                  <button class="btn btn-sm btn-success editBtn">
                     <span class="material-symbols-outlined" style="font-size: 12px;">
                       stylus
                     </span>
                   </button>
 
                   <!-- Delete -->
-                  <button class="btn btn-sm btn-danger">
+                  <!-- <button class="btn btn-sm btn-danger deleteBtn">
                     <span class="material-symbols-outlined" style="font-size: 12px;">
                       delete
                     </span>
-                  </button>
+                  </button> -->
                 </td>
               </tr>
             <?php endwhile; ?>
@@ -361,5 +480,45 @@ document.addEventListener('DOMContentLoaded', () => {
   // Your existing wiring
   const complaintModal = new bootstrap.Modal(complaintModalEl);
   document.getElementById('addComplaintBtn').addEventListener('click', () => complaintModal.show());
+
+  const editModalEl = document.getElementById('editComplaintModal');
+  const editModal   = new bootstrap.Modal(editModalEl);
+
+  document.querySelectorAll('.editBtn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const tr  = btn.closest('tr');
+      const tid = tr.dataset.id;
+
+      // fetch the complaint row
+      const res  = await fetch(
+        `functions/fetch_complaint_data.php?transaction_id=${encodeURIComponent(tid)}`
+      );
+      const data = await res.json();
+
+      // populate form
+      document.getElementById('edit_transaction_id').value           = tid;
+      document.getElementById('edit_complainant_name').value        = data.complainant_name;
+      document.getElementById('edit_complainant_address').value     = data.complainant_address;
+      document.getElementById('edit_respondent_name').value         = data.respondent_name;
+      document.getElementById('edit_respondent_address').value      = data.respondent_address;
+      document.getElementById('edit_complaint_type').value          = data.complaint_type;
+      document.getElementById('edit_complaint_affidavit').value     = data.complaint_affidavit;
+      document.getElementById('edit_pleading_statement').value      = data.pleading_statement;
+
+      editModal.show();
+    });
+  });
+
+   const printModal = new bootstrap.Modal(document.getElementById('printSummonModal'));
+  const printForm = document.getElementById('printSummonForm');
+  const txInput = document.getElementById('print_transaction_id');
+
+  document.querySelectorAll('.printBtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tid = btn.dataset.id;
+      txInput.value = tid;
+      printModal.show();
+    });
+  });
 });
 </script>

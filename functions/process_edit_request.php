@@ -120,7 +120,7 @@ if (empty($updates)) {
 // 4) build & run UPDATE
 $updates[] = "`updated_at` = NOW()";
 $sql = "UPDATE `{$table}` SET " . implode(',', $updates) . " WHERE transaction_id = ?";
-$params[] = $transactionid;
+$params[] = $tid;
 $types   .= 's';
 
 $up = $conn->prepare($sql);

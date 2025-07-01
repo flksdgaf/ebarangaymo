@@ -9,7 +9,7 @@ $pageTitles = [
     // Admin
     'adminDashboard' => 'Dashboard',
     'adminRequest' => 'Service Records',
-    'adminEquipment' => 'Equipment Records',
+    'adminEquipmentBorrowing' => 'Equipment Borrowing',
     'adminBlotter' => 'Blotter Records',
     'adminSummon' => 'Summon Records',
     'adminComplaints' => 'Complaint Records',

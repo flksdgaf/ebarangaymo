@@ -39,7 +39,7 @@ $logoUrl = 'images/' . $info['logo'];
             </a>
         </li>
         <li>
-            <a href="adminPanel.php?page=adminEquipment" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminEquipment') ? 'active' : '' ?>">
+            <a href="adminPanel.php?page=adminEquipmentBorrowing" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminEquipmentBorrowing') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">folded_hands</span>
             Equipment Request
             </a>

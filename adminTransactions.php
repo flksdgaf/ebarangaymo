@@ -38,7 +38,7 @@ $reportTypes = ['Barangay ID','Barangay Clearance','Certification','Business Per
                     <input type="date" id="collectionTo" name="date_to" class="form-control" required>
                   </div>
                   <div class="col-md-3 text-end">
-                    <!-- <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">CSV</button> -->
+                    <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">CSV</button>
                     <button type="submit" name="format" value="pdf" class="btn btn-success">PDF</button>
                   </div>
                 </div>
@@ -67,6 +67,7 @@ $reportTypes = ['Barangay ID','Barangay Clearance','Certification','Business Per
                   <div class="col-md-3">
                     <label for="receiptReportType" class="form-label">Report Type</label>
                     <select id="receiptReportType" name="report_type" class="form-select" required>
+                      <option value="all">All</option>
                       <?php foreach($reportTypes as $type): ?>
                       <option value="<?= htmlspecialchars($type) ?>"><?= htmlspecialchars($type) ?></option>
                       <?php endforeach; ?>
@@ -81,8 +82,8 @@ $reportTypes = ['Barangay ID','Barangay Clearance','Certification','Business Per
                     <input type="date" id="receiptTo" name="date_to" class="form-control" required>
                   </div>
                   <div class="col-md-3 text-end">
-                    <!-- <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">CSV</button> -->
-                    <button type="submit" name="format" value="pdf" class="btn btn-success">PDF</button>
+                    <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">CSV</button>
+                    <button type="button" id="generateOfficialReceiptPDFBtn" class="btn btn-success">PDF</button>
                   </div>
                 </div>
               </form>
@@ -102,16 +103,16 @@ $reportTypes = ['Barangay ID','Barangay Clearance','Certification','Business Per
                 data-bs-target="#collapseBlotter"
                 aria-expanded="false"
                 aria-controls="collapseBlotter">
-          Respondent Reports
+          Blotter Reports
         </button>
       </h2>
       <div id="collapseBlotter" class="accordion-collapse collapse"
-           aria-labelledby="headingBlotter"
-           data-bs-parent="#adminAccordion">
+          aria-labelledby="headingBlotter"
+          data-bs-parent="#adminAccordion">
         <div class="accordion-body p-0">
           <div class="card border-0">
             <div class="card-body">
-              <form method="post" action="functions/generate_blotter_report.php" target="_blank">
+              <form id="blotterReportForm" method="post" action="functions/generate_blotter_report.php" target="_blank">
                 <div class="row align-items-end g-3 mb-4">
                   <div class="col-md-3">
                     <label for="blotterFrom" class="form-label">From</label>
@@ -122,8 +123,8 @@ $reportTypes = ['Barangay ID','Barangay Clearance','Certification','Business Per
                     <input type="date" id="blotterTo" name="date_to" class="form-control" required>
                   </div>
                   <div class="col-md-6 text-end">
-                    <!-- <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">CSV</button> -->
-                    <button type="submit" name="format" value="pdf" class="btn btn-success">PDF</button>
+                    <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">CSV</button>
+                    <button type="button" id="generateBlotterPDFBtn" class="btn btn-success">PDF</button>
                   </div>
                 </div>
               </form>
@@ -162,7 +163,7 @@ $reportTypes = ['Barangay ID','Barangay Clearance','Certification','Business Per
                     <input type="date" id="complaintTo" name="date_to" class="form-control" required>
                   </div>
                   <div class="col-md-6 text-end">
-                    <!-- <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">CSV</button> -->
+                    <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">CSV</button>
                     <button type="submit" name="format" value="pdf" class="btn btn-success">PDF</button>
                   </div>
                 </div>
@@ -202,7 +203,7 @@ $reportTypes = ['Barangay ID','Barangay Clearance','Certification','Business Per
                     <input type="date" id="kataTo" name="date_to" class="form-control" required>
                   </div>
                   <div class="col-md-6 text-end">
-                    <!-- <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">CSV</button> -->
+                    <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">CSV</button>
                     <button type="submit" name="format" value="pdf" class="btn btn-success">PDF</button>
                   </div>
                 </div>
@@ -214,4 +215,44 @@ $reportTypes = ['Barangay ID','Barangay Clearance','Certification','Business Per
     </div>
 
   </div>
+
+  <script>
+    // Blotter PDF generation
+    document.getElementById('generateBlotterPDFBtn').addEventListener('click', function () {
+      const from = document.getElementById('blotterFrom').value;
+      const to = document.getElementById('blotterTo').value;
+
+      if (!from || !to) {
+        alert("Please select both FROM and TO dates.");
+        return;
+      }
+
+      const url = `functions/generateBlotterReport.php?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+      window.open(url, 'BlotterReportWindow', 'width=1000,height=800,resizable=yes,scrollbars=yes');
+    });
+
+    // Official Receipt PDF generation (with 'All Types' support)
+    document.getElementById('generateOfficialReceiptPDFBtn').addEventListener('click', function () {
+      const from = document.getElementById('receiptFrom').value;
+      const to = document.getElementById('receiptTo').value;
+      const type = document.getElementById('receiptReportType').value;
+
+      if (!from || !to || !type) {
+        alert("Please select FROM, TO, and Report Type.");
+        return;
+      }
+
+      // Include type even if it's 'all'
+      const url = `functions/generateOfficialReceiptReport.php?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&type=${encodeURIComponent(type)}`;
+      window.open(url, 'OfficialReceiptReportWindow', 'width=1000,height=800,resizable=yes,scrollbars=yes');
+    });
+  </script>
+
+
+
+
+
+
 </div>
+
+

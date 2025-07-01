@@ -9,6 +9,7 @@ $pageTitles = [
     // Admin
     'adminDashboard' => 'Dashboard',
     'adminRequest' => 'Service Records',
+    'adminEquipment' => 'Equipment Records',
     'adminBlotter' => 'Blotter Records',
     'adminSummon' => 'Summon Records',
     'adminComplaints' => 'Complaint Records',
@@ -235,7 +236,7 @@ if (in_array($role, $admin_roles)) {
                 <div class="col-md-4 text-center mb-4 mb-md-0">
                     <img
                     src="profilePictures/<?php echo htmlspecialchars($profileData['profile_picture']); ?>"
-                    class="rounded-circle border border-3 border-dark"
+                    class="rounded-circle border-3 border-dark"
                     width="140" height="140"
                     style="object-fit: cover;"
                     alt="Profile Picture"

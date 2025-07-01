@@ -148,6 +148,6 @@ $log->execute();
 $log->close();
 
 // 6) redirect back with success
-header("Location: ../adminPanel.php?page=adminRequest&updated=1");
+header("Location: ../adminPanel.php?page=adminRequest&updated_request_id=$tid");
 exit;
 ?>

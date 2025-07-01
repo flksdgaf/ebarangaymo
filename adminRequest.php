@@ -120,6 +120,8 @@ $st->execute();
 $result = $st->get_result();
 ?>
 
+<title>eBarangay Mo | Requests</title>
+
 <div class="container-fluid p-3">
   <?php if ($newTid && $newType): ?>
     <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -128,10 +130,10 @@ $result = $st->get_result();
     </div>
   <?php endif; ?>
 
-  <?php if (isset($_GET['updated']) && $_GET['updated'] == 1): ?>
+  <?php if (isset($_GET['updated_request_id'])): ?>
     <div class="alert alert-success alert-dismissible fade show" role="alert">
-      <strong>Success!</strong> Request updated successfully.
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      Document Request record <strong><?= htmlspecialchars($_GET['updated_request_id']) ?></strong> updated successfully!
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
   <?php endif; ?>
 
@@ -1223,11 +1225,11 @@ $result = $st->get_result();
                 <td><?= htmlspecialchars($row['formatted_date']) ?></td>
                 <td>
                   <!-- Print Button -->
-                  <button type="button" class="btn btn-sm btn-warning btn-print" title="Print <?= $tid ?>">
+                  <!-- <button type="button" class="btn btn-sm btn-warning btn-print" title="Print <?= $tid ?>">
                     <span class="material-symbols-outlined" style="font-size: 13px;">
                       print
                     </span>
-                  </button>
+                  </button> -->
 
                   <!-- Edit Button -->
                   <button type="button" class="btn btn-sm btn-success btn-edit" title="Edit <?= $tid ?>">
@@ -1237,11 +1239,11 @@ $result = $st->get_result();
                   </button>
 
                   <!-- Delete Button -->
-                  <button class="btn btn-sm btn-danger delete-btn" title="Delete <?= $tid ?>">
+                  <!-- <button class="btn btn-sm btn-danger delete-btn" title="Delete <?= $tid ?>">
                     <span class="material-symbols-outlined" style="font-size: 13px;">
                       delete
                     </span>
-                  </button>
+                  </button> -->
                 </td>
               </tr>
             <?php endwhile; ?>

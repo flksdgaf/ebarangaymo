@@ -79,7 +79,7 @@ if (!$purokTable) {
                       </div>
                   </a>
               </div>
-              <div class="col d-flex">
+              <!-- <div class="col d-flex">
                   <a href="#" class="service-card dark-green w-100">
                       <i class="fas fa-money-bill icon"></i>
                       <div>
@@ -87,7 +87,7 @@ if (!$purokTable) {
                           <p>Pagbibigay ng insentibong pera bilang pagkilala at parangal sa mga mag-aaral na may natatanging tagumpay sa akademiko.</p>
                       </div>
                   </a>
-              </div>
+              </div> -->
           </div>
       </div>
   </div>

@@ -205,6 +205,7 @@ $stmt->close();
   // Pass data to JS
   const residents = <?= json_encode($allRows, JSON_HEX_TAG) ?>;
   const purokNum  = <?= $purokNum ?>;
+  window.loggedInUserRole = <?= json_encode($_SESSION['loggedInUserRole'] ?? '') ?>;
 
   // map remarks to colors in JS
   const remarkColor = {
@@ -214,6 +215,24 @@ $stmt->close();
   };
 
   document.addEventListener('DOMContentLoaded', () => {
+    const canEdit = window.loggedInUserRole !== 'Brgy Kagawad';
+
+    if (!canEdit) {
+    // disable the remarks & role dropdowns
+    document.querySelectorAll('.remarks-select, .role-select')
+      .forEach(s => s.disabled = true);
+
+    // remove the row‐click handler links to edit
+    document.querySelectorAll('.resident-row').forEach(row => {
+      row.style.cursor = 'default';
+      row.replaceWith(row.cloneNode(true));  
+      // (cloneNode strips off any event listeners)
+    });
+
+    // hide the “Edit” button in the modal
+    document.getElementById('detailsEditSaveBtn').style.display = 'none';
+  }
+  
     // --- Filter Purok
     document.getElementById('purokFilter').addEventListener('change', function() {
       const url = new URL(window.location.href);

@@ -244,12 +244,12 @@
 
 .service-card:hover {
   transform: scale(1.05);
-  transition: transform 0.3s ease-in-out;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
   cursor: pointer;
   text-decoration: none;
   color: white;
-  border-style: solid;
   gap: 15px;
+  font-size: 12px;
   flex-shrink: 0;
   flex-grow: 1;
 }

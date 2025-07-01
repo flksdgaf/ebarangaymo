@@ -99,12 +99,7 @@ $birthFmt = formatDate($birthdate);
                         <th class="text-start pe-3">Account Name:</th>
                         <td class="text-start"><?php echo htmlspecialchars($fullName) ?></td>
                         </tr>
-                        <?php endif; ?>
-                        <?php if (!empty($birthFmt)): ?>
-                        <tr>
-                        <th class="text-start pe-3">Birthdate:</th>
-                        <td class="text-start"><?php echo htmlspecialchars($birthFmt) ?></td>
-                        </tr>
+                        
                         <?php endif; ?>
                     </tbody>
                     </table>

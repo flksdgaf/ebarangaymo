@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
     setupPaymentControls(); // ADDED
 
     const currentUser = window.currentUser;
-    const forSelect       = document.getElementById('forSelect');
+    const forSelect   = document.getElementById('forSelect');
 
     (function(){
         const options = [

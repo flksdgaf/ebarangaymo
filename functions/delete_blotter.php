@@ -1,6 +1,6 @@
 <?php
-require 'dbconn.php';
 session_start();
+require 'dbconn.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $transaction_id = $_POST['transaction_id'] ?? '';

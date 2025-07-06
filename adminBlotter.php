@@ -75,7 +75,7 @@ if ($baseQS) {
 }
 
 // 2) fetch the actual rows
-$sql = "SELECT transaction_id, client_name, respondent_name, incident_type, DATE_FORMAT(incident_date,'%b %e, %Y') AS formatted_date, DATE_FORMAT(incident_time,'%l:%i %p') AS formatted_time FROM blotter_records {$whereSQL} ORDER BY transaction_id ASC LIMIT ? OFFSET ?";
+$sql = "SELECT transaction_id, client_name, client_address, respondent_name, respondent_address, incident_type, incident_date,            incident_time,            incident_place, incident_description, DATE_FORMAT(incident_date,'%b %e, %Y') AS formatted_date, DATE_FORMAT(incident_time,'%l:%i %p') AS formatted_time FROM blotter_records {$whereSQL} ORDER BY transaction_id ASC LIMIT ? OFFSET ?";
 $stmt = $conn->prepare($sql);
 
 // bind the filters + pagination
@@ -98,6 +98,19 @@ $stmt->close();
     <div class="alert alert-success alert-dismissible fade show" role="alert">
       New blotter record <strong><?= htmlspecialchars($_GET['new_blotter_id']) ?></strong> added successfully!
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <?php endif; ?>
+
+  <?php if (isset($_GET['blotter_updated'])): ?>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    Blotter record <strong><?= htmlspecialchars($_GET['blotter_updated']) ?></strong> updated successfully!
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+
+  <?php elseif (isset($_GET['blotter_nochange'])): ?>
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+      No changes detected, nothing to update.
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
   <?php endif; ?>
 
@@ -187,14 +200,14 @@ $stmt->close();
                 <div class="row gy-2">
                   <!-- Client Details -->
                   <div class="col-12">
-                    <h6 class="fw-bold">Client Details</h6>
+                    <h6 class="fw-bold fs-5">Client Details</h6>
                     <hr class="my-2">
                   </div>
-                  <div class="col-12 col-md-5">
+                  <!-- <div class="col-12 col-md-5">
                     <label class="form-label fw-bold">Client's Name</label>
                     <input name="client_name" type="text" class="form-control form-control-sm" required>
-                  </div>
-                  <!-- <div class="col-12 col-md-3">
+                  </div> -->
+                  <div class="col-12 col-md-3">
                     <label class="form-label fw-bold">First Name</label>
                     <input name="client_first_name" type="text" class="form-control form-control-sm" required>
                   </div>
@@ -209,8 +222,8 @@ $stmt->close();
                   <div class="col-12 col-md-3">
                     <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
                     <input name="client_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
-                  </div> -->
-                  <div class="col-12 col-md-5">
+                  </div>
+                  <div class="col-12 col-md-6">
                     <label class="form-label fw-bold">Client Address</label>
                     <input name="client_address" type="text" class="form-control form-control-sm" required>
                   </div>
@@ -221,7 +234,7 @@ $stmt->close();
                        <input class="form-check-input" type="checkbox" id="hasRespondentCheck" name="has_respondent" checked>
                        <label class="form-check-label fs-6" for="hasRespondentCheck"></label>
                      </div>
-                     <h6 class="fw-bold mb-0 me-3">Respondent Details</h6>
+                     <h6 class="fw-bold mb-0 me-3 fs-5">Respondent Details</h6>
                    </div>
 
                   <!-- horizontal rule covers the entire 12 columns -->
@@ -229,11 +242,11 @@ $stmt->close();
 
                   <!-- Wrap all respondent fields here — note the `row` class -->
                   <div id="respondentSection" class="row gy-2 col-12">
-                    <div class="col-12 col-md-5">
+                    <!-- <div class="col-12 col-md-5">
                       <label class="form-label fw-bold">Respondent's Name</label>
                       <input name="respondent_name" type="text" class="form-control form-control-sm" required>
-                    </div>
-                    <!-- <div class="col-12 col-md-3">
+                    </div> -->
+                    <div class="col-12 col-md-3">
                       <label class="form-label fw-bold">First Name</label>
                       <input name="respondent_first_name" type="text" class="form-control form-control-sm" required>
                     </div>
@@ -248,8 +261,8 @@ $stmt->close();
                     <div class="col-12 col-md-3">
                       <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
                       <input name="respondent_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
-                    </div> -->
-                    <div class="col-12 col-md-5">
+                    </div>
+                    <div class="col-12 col-md-6">
                       <label class="form-label fw-bold">Respondent Address</label>
                       <input name="respondent_address" type="text" class="form-control form-control-sm" required>
                     </div>
@@ -257,7 +270,7 @@ $stmt->close();
 
                   <!-- Complaint Details -->
                   <div class="col-12 mt-3">
-                    <h6 class="fw-bold">Complaint Details</h6>
+                    <h6 class="fw-bold fs-5">Complaint Details</h6>
                     <hr class="my-2">
                   </div>
                   <div class="col-12 col-md-6">
@@ -272,7 +285,7 @@ $stmt->close();
                     <label class="form-label fw-bold">Time Occurred</label>
                     <input name="incident_time" type="time" class="form-control form-control-sm" required>
                   </div>
-                  <div class="col-12">
+                  <div class="col-12 col-md-6">
                     <label class="form-label fw-bold">Incident Place</label>
                     <input name="incident_place" type="text" class="form-control form-control-sm" required>
                   </div>
@@ -290,6 +303,118 @@ $stmt->close();
           </div>
         </div>
       </div>
+
+      <!-- Edit Blotter Modal -->
+      <div class="modal fade" id="editBlotterModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="editBlotterModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width:90vw;">
+          <div class="modal-content">
+            <div class="modal-header text-white" style="background-color: #0B6623;">
+              <h5 class="modal-title" id="editBlotterModalLabel">Edit Blotter Record</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editBlotterForm" method="POST" action="functions/process_edit_blotter.php">
+              <div class="modal-body">
+                <input type="hidden" name="transaction_id" id="edit_transaction_id" value="">
+                <input type="hidden" name="account_id" value="<?= $userId ?>">
+
+                <div class="row gy-2">
+                  <!-- Client Details -->
+                  <div class="col-12">
+                    <h6 class="fw-bold fs-5">Client Details</h6>
+                    <hr class="my-2">
+                  </div>
+                  <div class="col-12 col-md-3">
+                    <label class="form-label fw-bold">First Name</label>
+                    <input name="client_first_name" id="edit_client_first_name" type="text" class="form-control form-control-sm" required>
+                  </div>
+                  <div class="col-12 col-md-3">
+                    <label class="form-label fw-bold">Middle Name <small>(optional)</small></label>
+                    <input name="client_middle_name" id="edit_client_middle_name" type="text" class="form-control form-control-sm">
+                  </div>
+                  <div class="col-12 col-md-3">
+                    <label class="form-label fw-bold">Last Name</label>
+                    <input name="client_last_name" id="edit_client_last_name" type="text" class="form-control form-control-sm" required>
+                  </div>
+                  <div class="col-12 col-md-3">
+                    <label class="form-label fw-bold">Suffix <small>(optional)</small></label>
+                    <input name="client_suffix" id="edit_client_suffix" type="text" class="form-control form-control-sm">
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label class="form-label fw-bold">Client Address</label>
+                    <input name="client_address" id="edit_client_address" type="text" class="form-control form-control-sm" required>
+                  </div>
+
+                  <!-- Respondent Details Header + Toggle -->
+                  <div class="col-12 mt-3 d-flex align-items-center">
+                    <div class="form-check d-inline-block">
+                      <input class="form-check-input" type="checkbox" id="edit_hasRespondentCheck" name="has_respondent" checked>
+                      <label class="form-check-label" for="edit_hasRespondentCheck"></label>
+                    </div>
+                    <h6 class="fw-bold mb-0 ms-2 fs-5">Respondent Details</h6>
+                  </div>
+                  <div class="col-12"><hr class="my-2"></div>
+
+                  <!-- Respondent Fields -->
+                  <div id="edit_respondentSection" class="row gy-2 col-12">
+                    <div class="col-12 col-md-3">
+                      <label class="form-label fw-bold">First Name</label>
+                      <input name="respondent_first_name" id="edit_respondent_first_name" type="text" class="form-control form-control-sm" required>
+                    </div>
+                    <div class="col-12 col-md-3">
+                      <label class="form-label fw-bold">Middle Name <small>(optional)</small></label>
+                      <input name="respondent_middle_name" id="edit_respondent_middle_name" type="text" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-12 col-md-3">
+                      <label class="form-label fw-bold">Last Name</label>
+                      <input name="respondent_last_name" id="edit_respondent_last_name" type="text" class="form-control form-control-sm" required>
+                    </div>
+                    <div class="col-12 col-md-3">
+                      <label class="form-label fw-bold">Suffix <small>(optional)</small></label>
+                      <input name="respondent_suffix" id="edit_respondent_suffix" type="text" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <label class="form-label fw-bold">Respondent Address</label>
+                      <input name="respondent_address" id="edit_respondent_address" type="text" class="form-control form-control-sm" required>
+                    </div>
+                  </div>
+
+                  <!-- Complaint Details -->
+                  <div class="col-12 mt-3">
+                    <h6 class="fw-bold fs-5">Complaint Details</h6>
+                    <hr class="my-2">
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label class="form-label fw-bold">Complaint / Incident Type</label>
+                    <input name="incident_type" id="edit_incident_type" type="text" class="form-control form-control-sm" required>
+                  </div>
+                  <div class="col-12 col-md-3">
+                    <label class="form-label fw-bold">Date Occurred</label>
+                    <input name="incident_date" id="edit_incident_date" type="date" class="form-control form-control-sm" required>
+                  </div>
+                  <div class="col-12 col-md-3">
+                    <label class="form-label fw-bold">Time Occurred</label>
+                    <input name="incident_time" id="edit_incident_time" type="time" class="form-control form-control-sm" required>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label class="form-label fw-bold">Incident Place</label>
+                    <input name="incident_place" id="edit_incident_place" type="text" class="form-control form-control-sm" required>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label fw-bold">Incident Description</label>
+                    <textarea name="incident_description" id="edit_incident_description" class="form-control form-control-sm" rows="3" required></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
 
       <!-- Delete Confirmation Modal -->
       <div class="modal fade" id="deleteBlotterModal" tabindex="-1" aria-labelledby="deleteBlotterModalLabel" aria-hidden="true">
@@ -333,7 +458,15 @@ $stmt->close();
             <?php while ($row = $result->fetch_assoc()):
               $tid = htmlspecialchars($row['transaction_id']);
             ?>
-              <tr data-id="<?= $tid ?>">
+              <tr 
+                data-id="<?= $tid ?>"
+                data-client-address="<?= htmlspecialchars($row['client_address'], ENT_QUOTES) ?>"
+                data-respondent-address="<?= htmlspecialchars($row['respondent_name'] ? $row['respondent_address'] : '', ENT_QUOTES) ?>"
+                data-incident-date="<?= $row['incident_date'] ?>"
+                data-incident-time="<?= $row['incident_time'] ?>"
+                data-incident-place="<?= htmlspecialchars($row['incident_place'], ENT_QUOTES) ?>"
+                data-incident-desc="<?= htmlspecialchars($row['incident_description'], ENT_QUOTES) ?>"            
+              >
                 <td><?= $tid ?></td>
                 <td><?= htmlspecialchars($row['client_name']) ?></td>
                 <td><?= htmlspecialchars($row['respondent_name'] ?: '—') ?></td>
@@ -344,11 +477,11 @@ $stmt->close();
                 </td>
                 <td class="text-center">
                   <!-- Edit -->
-                  <!-- <button class="btn btn-sm btn-success">
+                  <button class="btn btn-sm btn-success edit-btn">
                     <span class="material-symbols-outlined" style="font-size: 12px;">
                       stylus
                     </span>
-                  </button> -->
+                  </button>
 
                   <!-- Delete -->
                   <button class="btn btn-sm btn-danger delete-btn" data-id="<?= $tid ?>" data-bs-toggle="modal" data-bs-target="#deleteBlotterModal">
@@ -421,6 +554,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Reset all fields when the modal fully hides
   blotterModalEl.addEventListener('hidden.bs.modal', () => {
     blotterForm.reset();
+    blotter_toggleRespondent();
   });
 
   // Your existing wiring
@@ -439,6 +573,125 @@ document.addEventListener('DOMContentLoaded', () => {
   // wire up change + initialize
   respCheck.addEventListener('change', blotter_toggleRespondent);
   blotter_toggleRespondent();
+
+  // 1) Grab Edit modal + form + fields
+  const editModalEl = document.getElementById('editBlotterModal');
+  const editModal = new bootstrap.Modal(editModalEl);
+  const editRespCheck = document.getElementById('edit_hasRespondentCheck');
+  const editRespSection = document.getElementById('edit_respondentSection');
+
+  // 2) Respondent toggle logic (same as add)
+  function edit_toggleRespondent() {
+    const show = editRespCheck.checked;
+    editRespSection.style.display = show ? '' : 'none';
+    editRespSection.querySelectorAll('input, textarea').forEach(el => el.disabled = !show);
+  }
+  editRespCheck.addEventListener('change', edit_toggleRespondent);
+  edit_toggleRespondent();
+
+  // 3) Wire up all .edit-btn clicks
+  document.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tr  = btn.closest('tr');
+      const tid = tr.getAttribute('data-id');
+
+      // inject transaction_id
+      document.getElementById('edit_transaction_id').value = tid;
+
+      // 2) Read the two name‑cells:
+      const clientFull = tr.children[1].textContent.trim();      // e.g. "Doe Jr., John A."
+      const respondentFull = tr.children[2].textContent.trim();  // e.g. "—" or "Smith, Jane"
+
+      // Helper to parse "Last[ Suffix], First[ Middle]" into parts
+      function parseName(full) {
+        // split into [ leftOfComma, rightOfComma ]
+        const [ left = '', right = '' ] = full.split(/\s*,\s*/);
+
+        // --- LAST & SUFFIX ---
+        // left could be “Britos” or “Britos Jr.” etc
+        const leftWords = left.trim().split(/\s+/);
+        const last   = leftWords[0] || '';
+        const suffix = leftWords.slice(1).join(' ') || '';
+
+        // --- FIRST & MIDDLE ---
+        // right could be “Kent Gabriel Villariasa”
+        const rightWords = right.trim().split(/\s+/);
+        let first = '';
+        let middle = '';
+
+        if (rightWords.length === 0) {
+          // nothing
+        } else if (rightWords.length === 1) {
+          first = rightWords[0];
+        } else {
+          // everything except last word → first
+          first  = rightWords.slice(0, -1).join(' ');
+          // last word → middle
+          middle = rightWords.slice(-1)[0];
+        }
+
+        return { first, middle, last, suffix };
+      }
+
+      // 3) Populate client inputs
+      const c = parseName(clientFull);
+      document.getElementById('edit_client_first_name').value = c.first;
+      document.getElementById('edit_client_middle_name').value = c.middle;
+      document.getElementById('edit_client_last_name').value = c.last;
+      document.getElementById('edit_client_suffix').value = c.suffix;
+
+      // 4) Handle respondent checkbox + fields
+      if (respondentFull === '—' || respondentFull === '') {
+        // no respondent
+        editRespCheck.checked = false;
+        edit_toggleRespondent();
+
+        // clear any existing values
+        [
+          'first_name',
+          'middle_name',
+          'last_name',
+          'suffix',
+          'address'
+        ].forEach(key => {
+          document.getElementById(`edit_respondent_${key}`).value = '';
+        });
+
+      } else {
+        editRespCheck.checked = true;
+        edit_toggleRespondent();
+        const r = parseName(respondentFull);
+        document.getElementById('edit_respondent_first_name').value = r.first;
+        document.getElementById('edit_respondent_middle_name').value = r.middle;
+        document.getElementById('edit_respondent_last_name').value = r.last;
+        document.getElementById('edit_respondent_suffix').value = r.suffix;
+      }
+
+      // 5) For the other complaint fields—if you have them in hidden <td>s or data-attributes—
+      // you could do exactly the same: grab their textContent and assign to
+      // document.getElementById('edit_incident_type').value, etc.
+      document.getElementById('edit_incident_type').value = tr.children[3].textContent.trim();
+      // If your date/time are in the same cell you may need to store them as data-* on the <tr>
+      document.getElementById('edit_incident_date').value = tr.getAttribute('data-incident-date');
+      document.getElementById('edit_incident_time').value = tr.getAttribute('data-incident-time');
+      document.getElementById('edit_incident_place').value = tr.getAttribute('data-incident-place');
+      document.getElementById('edit_incident_description').value = tr.getAttribute('data-incident-desc');
+
+      // 5b) Fill in addresses & complaint details:
+      document.getElementById('edit_client_address').value = tr.dataset.clientAddress;
+      if (editRespCheck.checked) {
+        document.getElementById('edit_respondent_address').value = tr.dataset.respondentAddress;
+      }
+
+      document.getElementById('edit_incident_date').value = tr.dataset.incidentDate;
+      document.getElementById('edit_incident_time').value = tr.dataset.incidentTime;
+      document.getElementById('edit_incident_place').value = tr.dataset.incidentPlace;
+      document.getElementById('edit_incident_description').value = tr.dataset.incidentDesc;
+
+      // 6) Finally show modal
+      editModal.show();
+    });
+  });
 
   const deleteModal = new bootstrap.Modal(document.getElementById('deleteBlotterModal'));
   const deleteForm = document.getElementById('deleteBlotterForm');
@@ -465,9 +718,9 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(resp => resp.json())
     .then(data => {
       if (data.success) {
-  deleteModal.hide();
-  window.location.href = window.location.pathname + '?page=adminComplaints&blotter_deleted=' + encodeURIComponent(formData.get('transaction_id'));
-} else {
+      deleteModal.hide();
+      window.location.href = window.location.pathname + '?page=adminComplaints&blotter_deleted=' + encodeURIComponent(formData.get('transaction_id'));
+    } else {
         alert('Error: ' + (data.error || 'Failed to delete.'));
       }
     });

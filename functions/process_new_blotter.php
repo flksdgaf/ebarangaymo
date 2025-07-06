@@ -12,46 +12,46 @@ $userId = (int)$_SESSION['loggedInUserID'];
 
 // 2) COLLECT + SANITIZE
 // Client name parts
-// $cf = trim($_POST['client_first_name'] ?? '');
-// $cm = trim($_POST['client_middle_name'] ?? '');
-// $cl = trim($_POST['client_last_name'] ?? '');
-// $cs = trim($_POST['client_suffix'] ?? '');
-// $middlePart = $cm ? " {$cm}" : '';
-// $suffixPart = $cs ? " {$cs}" : '';
-// $clientName = "{$cl}, {$cf}{$middlePart}{$suffixPart}";
-$clientName = trim($_POST['client_name'] ?? '');
+$cf = trim($_POST['client_first_name'] ?? '');
+$cm = trim($_POST['client_middle_name'] ?? '');
+$cl = trim($_POST['client_last_name'] ?? '');
+$cs = trim($_POST['client_suffix'] ?? '');
+$middlePart = $cm ? " {$cm}" : '';
+$suffixPart = $cs ? " {$cs}" : '';
+$clientName = "{$cl}{$suffixPart}, {$cf}{$middlePart}";
+// $clientName = trim($_POST['client_name'] ?? '');
 $clientAddress = trim($_POST['client_address'] ?? '');
 
 // Respondent (only if checkbox was checked, otherwise fields disabled)
-// $respondentName = null;
-// $respondentAddress = null;
-// if (!empty($_POST['respondent_first_name'])) {
-//     $rf = trim($_POST['respondent_first_name']);
-//     $rm = trim($_POST['respondent_middle_name'] ?? '');
-//     $rl = trim($_POST['respondent_last_name']);
-//     $rs = trim($_POST['respondent_suffix'] ?? '');
-//     $rMiddle = $rm ? " {$rm}" : '';
-//     $rSuffix = $rs ? " {$rs}" : '';
-//     $respondentName = "{$rl}, {$rf}{$rMiddle}{$rSuffix}";
-//     $respondentAddress = trim($_POST['respondent_address'] ?? '');
-// }
+$respondentName = null;
+$respondentAddress = null;
+if (!empty($_POST['respondent_first_name'])) {
+    $rf = trim($_POST['respondent_first_name']);
+    $rm = trim($_POST['respondent_middle_name'] ?? '');
+    $rl = trim($_POST['respondent_last_name']);
+    $rs = trim($_POST['respondent_suffix'] ?? '');
+    $rMiddle = $rm ? " {$rm}" : '';
+    $rSuffix = $rs ? " {$rs}" : '';
+    $respondentName = "{$rl}, {$rf}{$rMiddle}{$rSuffix}";
+    $respondentAddress = trim($_POST['respondent_address'] ?? '');
+}
 
 // Respondent (only if checkbox was checked):
-$respondentName    = null;
-$respondentAddress = null;
-if (isset($_POST['has_respondent'])) {
-    // Pull both fields, defaulting to empty string if not set
-    $rawName    = trim($_POST['respondent_name']    ?? '');
-    $rawAddress = trim($_POST['respondent_address'] ?? '');
+// $respondentName    = null;
+// $respondentAddress = null;
+// if (isset($_POST['has_respondent'])) {
+//     // Pull both fields, defaulting to empty string if not set
+//     $rawName    = trim($_POST['respondent_name']    ?? '');
+//     $rawAddress = trim($_POST['respondent_address'] ?? '');
 
-    // Only set them if non‐empty
-    if ($rawName !== '') {
-        $respondentName    = $rawName;
-    }
-    if ($rawAddress !== '') {
-        $respondentAddress = $rawAddress;
-    }
-}
+//     // Only set them if non‐empty
+//     if ($rawName !== '') {
+//         $respondentName    = $rawName;
+//     }
+//     if ($rawAddress !== '') {
+//         $respondentAddress = $rawAddress;
+//     }
+// }
 
 // Incident details
 $incidentType = trim($_POST['incident_type'] ?? '');
@@ -79,22 +79,8 @@ $stmt->close();
 // $ins = $conn->prepare($sql);
 // $ins->bind_param('issssssssss', $userId, $transactionId, $clientName, $clientAddress, $respondentName, $respondentAddress, $incidentType, $incidentDesc, $incidentPlace, $incidentDate, $incidentTime);
 
-$ins = $conn->prepare(
-  "INSERT INTO blotter_records
-     (account_id, transaction_id, client_name, client_address,
-      respondent_name, respondent_address,
-      incident_type, incident_description, incident_place,
-      incident_date, incident_time)
-   VALUES (?,?,?,?,?,?,?,?,?,?,?)"
-);
-$ins->bind_param(
-  'issssssssss',
-  $userId, $transactionId,
-  $clientName, $clientAddress,
-  $respondentName, $respondentAddress,  // now properly set or NULL
-  $incidentType, $incidentDesc, $incidentPlace,
-  $incidentDate, $incidentTime
-);
+$ins = $conn->prepare("INSERT INTO blotter_records (account_id, transaction_id, client_name, client_address, respondent_name, respondent_address, incident_type, incident_description, incident_place, incident_date, incident_time) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+$ins->bind_param('issssssssss',$userId, $transactionId,$clientName, $clientAddress,$respondentName, $respondentAddress, $incidentType, $incidentDesc, $incidentPlace,$incidentDate, $incidentTime);
 $ins->execute();
 $ins->close();
 

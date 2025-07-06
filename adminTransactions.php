@@ -4,6 +4,8 @@ require 'functions/dbconn.php';
 $reportTypes = ['Barangay ID','Barangay Clearance','Certification','Business Permit','Equipment Borrowing','Cash Incentives'];
 ?>
 
+<title>eBarangay Mo | Generate Reports</title>
+
 <div class="container-fluid p-3">
   <div class="accordion" id="adminAccordion">
 

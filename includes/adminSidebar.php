@@ -40,8 +40,8 @@ $logoUrl = 'images/' . $info['logo'];
         </li>
         <li>
             <a href="adminPanel.php?page=adminEquipmentBorrowing" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminEquipmentBorrowing') ? 'active' : '' ?>">
-            <span class="material-symbols-outlined me-2">folded_hands</span>
-            Equipment Request
+            <span class="material-symbols-outlined me-2">hand_package</span>
+            Equipment Borrowing
             </a>
         </li>
         <li>

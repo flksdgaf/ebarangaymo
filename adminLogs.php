@@ -91,6 +91,8 @@ $stmt->execute();
 $result = $stmt->get_result();
 ?>
 
+<title>eBarangay Mo | Activity Logs</title>
+
 <!-- MAIN CONTENT -->
 <div class="container-fluid p-3">
   <div class="card p-3 shadow-sm">

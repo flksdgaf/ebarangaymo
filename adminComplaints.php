@@ -2,6 +2,9 @@
 require 'functions/dbconn.php';
 $userId = (int) $_SESSION['loggedInUserID'];
 ?>
+
+<title>eBarangay Mo | Complaints</title>
+
 <div class="container-fluid p-3">
   <ul class="nav nav-tabs" id="complaintTabs" role="tablist">
     <li class="nav-item" role="presentation">

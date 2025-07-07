@@ -75,7 +75,7 @@ if ($baseQS) {
 }
 
 // 2) fetch the actual rows
-$sql = "SELECT transaction_id, client_name, client_address, respondent_name, respondent_address, incident_type, incident_date,            incident_time,            incident_place, incident_description, DATE_FORMAT(incident_date,'%b %e, %Y') AS formatted_date, DATE_FORMAT(incident_time,'%l:%i %p') AS formatted_time FROM blotter_records {$whereSQL} ORDER BY transaction_id ASC LIMIT ? OFFSET ?";
+$sql = "SELECT transaction_id, client_name, client_address, respondent_name, respondent_address, incident_type, incident_date, incident_time, incident_place, incident_description, blotter_status, DATE_FORMAT(incident_date,'%b %e, %Y') AS formatted_date, DATE_FORMAT(incident_time,'%l:%i %p') AS formatted_time FROM blotter_records {$whereSQL} ORDER BY transaction_id ASC LIMIT ? OFFSET ?";
 $stmt = $conn->prepare($sql);
 
 // bind the filters + pagination
@@ -200,7 +200,7 @@ $stmt->close();
                 <div class="row gy-2">
                   <!-- Client Details -->
                   <div class="col-12">
-                    <h6 class="fw-bold fs-5">Client Details</h6>
+                    <h6 class="fw-bold fs-5" style="color: #13411F;">Client Details</h6>
                     <hr class="my-2">
                   </div>
                   <!-- <div class="col-12 col-md-5">
@@ -234,7 +234,7 @@ $stmt->close();
                        <input class="form-check-input" type="checkbox" id="hasRespondentCheck" name="has_respondent" checked>
                        <label class="form-check-label fs-6" for="hasRespondentCheck"></label>
                      </div>
-                     <h6 class="fw-bold mb-0 me-3 fs-5">Respondent Details</h6>
+                     <h6 class="fw-bold mb-0 me-3 fs-5" style="color: #13411F;">Respondent Details</h6>
                    </div>
 
                   <!-- horizontal rule covers the entire 12 columns -->
@@ -270,12 +270,16 @@ $stmt->close();
 
                   <!-- Complaint Details -->
                   <div class="col-12 mt-3">
-                    <h6 class="fw-bold fs-5">Complaint Details</h6>
+                    <h6 class="fw-bold fs-5" style="color: #13411F;">Complaint Details</h6>
                     <hr class="my-2">
                   </div>
-                  <div class="col-12 col-md-6">
+                  <div class="col-12 col-md-6 ms-1">
                     <label class="form-label fw-bold">Complaint / Incident Type</label>
                     <input name="incident_type" type="text" class="form-control form-control-sm" required>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label class="form-label fw-bold">Incident Place</label>
+                    <input name="incident_place" type="text" class="form-control form-control-sm" required>
                   </div>
                   <div class="col-12 col-md-3">
                     <label class="form-label fw-bold">Date Occurred</label>
@@ -284,10 +288,6 @@ $stmt->close();
                   <div class="col-12 col-md-3">
                     <label class="form-label fw-bold">Time Occurred</label>
                     <input name="incident_time" type="time" class="form-control form-control-sm" required>
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <label class="form-label fw-bold">Incident Place</label>
-                    <input name="incident_place" type="text" class="form-control form-control-sm" required>
                   </div>
                   <div class="col-12">
                     <label class="form-label fw-bold">Incident Description</label>
@@ -387,6 +387,24 @@ $stmt->close();
                     <label class="form-label fw-bold">Complaint / Incident Type</label>
                     <input name="incident_type" id="edit_incident_type" type="text" class="form-control form-control-sm" required>
                   </div>
+                  <!-- <div class="col-12 col-md-3">
+                    <label class="form-label fw-bold">Complaint Status</label>
+                    <select name="blotter_status" class="form-select form-select-sm" required>
+                      <option value="Pending">Pending</option>
+                      <option value="Resolved">Resolved</option>
+                    </select>
+                  </div> -->
+                  <div class="col-12 col-md-3">
+                    <label class="form-label fw-bold">Complaint Status</label>
+                    <select name="blotter_status" id="edit_blotter_status" class="form-select form-select-sm" required>
+                      <option value="Pending">Pending</option>
+                      <option value="Cleared">Cleared</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label class="form-label fw-bold">Incident Place</label>
+                    <input name="incident_place" id="edit_incident_place" type="text" class="form-control form-control-sm" required>
+                  </div>
                   <div class="col-12 col-md-3">
                     <label class="form-label fw-bold">Date Occurred</label>
                     <input name="incident_date" id="edit_incident_date" type="date" class="form-control form-control-sm" required>
@@ -394,10 +412,6 @@ $stmt->close();
                   <div class="col-12 col-md-3">
                     <label class="form-label fw-bold">Time Occurred</label>
                     <input name="incident_time" id="edit_incident_time" type="time" class="form-control form-control-sm" required>
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <label class="form-label fw-bold">Incident Place</label>
-                    <input name="incident_place" id="edit_incident_place" type="text" class="form-control form-control-sm" required>
                   </div>
                   <div class="col-12">
                     <label class="form-label fw-bold">Incident Description</label>
@@ -450,6 +464,7 @@ $stmt->close();
             <th class="text-nowrap">Respondent</th>
             <th class="text-nowrap">Complaint Nature</th>
             <th class="text-nowrap">Date Occurred</th>
+            <th class="text-nowrap">Status</th>
             <th class="text-nowrap text-center">Action</th>
           </tr>
         </thead>
@@ -465,7 +480,8 @@ $stmt->close();
                 data-incident-date="<?= $row['incident_date'] ?>"
                 data-incident-time="<?= $row['incident_time'] ?>"
                 data-incident-place="<?= htmlspecialchars($row['incident_place'], ENT_QUOTES) ?>"
-                data-incident-desc="<?= htmlspecialchars($row['incident_description'], ENT_QUOTES) ?>"            
+                data-incident-desc="<?= htmlspecialchars($row['incident_description'], ENT_QUOTES) ?>"   
+                data-status="<?= htmlspecialchars($row['blotter_status'], ENT_QUOTES) ?>"          
               >
                 <td><?= $tid ?></td>
                 <td><?= htmlspecialchars($row['client_name']) ?></td>
@@ -475,6 +491,7 @@ $stmt->close();
                   <?= htmlspecialchars($row['formatted_date']) ?>
                   <?= htmlspecialchars($row['formatted_time']) ?>
                 </td>
+                <td><?= htmlspecialchars($row['blotter_status']) ?></td>
                 <td class="text-center">
                   <!-- Edit -->
                   <button class="btn btn-sm btn-success edit-btn">
@@ -594,13 +611,15 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', () => {
       const tr  = btn.closest('tr');
       const tid = tr.getAttribute('data-id');
+      const status = tr.dataset.status;
 
       // inject transaction_id
       document.getElementById('edit_transaction_id').value = tid;
+      document.getElementById('edit_blotter_status').value = status;
 
       // 2) Read the two name‑cells:
-      const clientFull = tr.children[1].textContent.trim();      // e.g. "Doe Jr., John A."
-      const respondentFull = tr.children[2].textContent.trim();  // e.g. "—" or "Smith, Jane"
+      const clientFull = tr.children[1].textContent.trim(); // e.g. "Doe Jr., John A."
+      const respondentFull = tr.children[2].textContent.trim(); // e.g. "—" or "Smith, Jane"
 
       // Helper to parse "Last[ Suffix], First[ Middle]" into parts
       function parseName(full) {

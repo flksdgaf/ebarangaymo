@@ -44,6 +44,8 @@ $tableName = "purok{$purokNum}_rbi";
 
 // Fetch all columns plus role from user_accounts
 $sql = "SELECT r.*, ua.role FROM `{$tableName}` AS r LEFT JOIN user_accounts AS ua ON r.account_ID = ua.account_id {$whereSQL}";
+// $sql = "SELECT r.*, ua.role, CASE WHEN EXISTS (SELECT 1 FROM blotter_records b WHERE b.respondent_name = r.full_name AND b.blotter_status = 'Pending') THEN 'On Hold' WHEN EXISTS (SELECT 1 FROM blotter_records b WHERE b.respondent_name = r.full_name AND b.blotter_status = 'Cleared') THEN '' ELSE r.remarks END AS remarks FROM `{$tableName}` AS r LEFT JOIN user_accounts AS ua ON r.account_ID = ua.account_id {$whereSQL}";
+
 $stmt = $conn->prepare($sql);
 if ($whereSQL) {
     $stmt->bind_param($types, ...$params);
@@ -63,6 +65,7 @@ $stmt->close();
 <title>eBarangay Mo | Residents</title>
 
 <div class="container-fluid p-3">
+  <div id="alertContainer"></div>
   <div class="card shadow-sm p-3">
     <!-- Filter -->
     <div class="d-flex justify-content-end mb-3">
@@ -202,6 +205,25 @@ $stmt->close();
 </div>
 
 <script>
+  function showBootstrapAlert(message, type = 'success') {
+    const alertContainer = document.getElementById('alertContainer');
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = `
+      <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    `;
+    alertContainer.appendChild(wrapper);
+
+    // Optional: auto-dismiss after 5s
+    setTimeout(() => {
+      wrapper.querySelector('.alert').classList.remove('show');
+      wrapper.querySelector('.alert').classList.add('fade');
+      setTimeout(() => wrapper.remove(), 500);
+    }, 5000);
+  }
+
   // Pass data to JS
   const residents = <?= json_encode($allRows, JSON_HEX_TAG) ?>;
   const purokNum  = <?= $purokNum ?>;
@@ -251,21 +273,55 @@ $stmt->close();
     });
 
     // --- Remarks dropdown handler
+    // document.querySelectorAll('.remarks-select').forEach(sel => {
+    //   sel.addEventListener('change', async function() {
+    //     const row = this.closest('tr');
+    //     const name = row.dataset.name;
+    //     const remark = this.value;
+    //     const color = remarkColor[remark] || '';
+
+    //     // update backgrounds
+    //     row.querySelectorAll('td').forEach(td => td.style.backgroundColor = color);
+
+    //     // persist
+    //     await fetch('functions/update_remarks.php', {
+    //       method: 'POST',
+    //       headers: {'Content-Type':'application/x-www-form-urlencoded'},
+    //       body: new URLSearchParams({ full_name: name, purok: purokNum, remarks: remark })
+    //     });
+    //   });
+    // });
+
     document.querySelectorAll('.remarks-select').forEach(sel => {
-      sel.addEventListener('change', async function() {
+      sel.addEventListener('change', async function () {
         const row = this.closest('tr');
         const name = row.dataset.name;
-        const remark = this.value;
-        const color = remarkColor[remark] || '';
+        const newRemark = this.value;
+        const color = remarkColor[newRemark] || '';
 
-        // update backgrounds
+        // Check if resident has pending blotter
+        const res = await fetch('functions/check_pending.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({ full_name: name })
+        });
+        const json = await res.json();
+
+        // If pending and admin tries to change to something else
+        if (json.has_pending && newRemark !== 'On Hold') {
+          showBootstrapAlert(`<strong>${name}</strong> has a pending blotter case. Remarks must remain as <strong>On Hold</strong>.`, 'danger');
+          this.value = 'On Hold'; // revert back
+          return;
+        }
+
+        // update row color
         row.querySelectorAll('td').forEach(td => td.style.backgroundColor = color);
 
         // persist
         await fetch('functions/update_remarks.php', {
           method: 'POST',
-          headers: {'Content-Type':'application/x-www-form-urlencoded'},
-          body: new URLSearchParams({ full_name: name, purok: purokNum, remarks: remark })
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({ full_name: name, purok: purokNum, remarks: newRemark })
         });
       });
     });

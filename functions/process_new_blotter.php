@@ -100,6 +100,35 @@ if (in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
     $logStmt->close();
 }
 
+// ——> SYNC RESPONDENT INTO RBI TABLES HERE:
+
+$blotterStatus = trim($_POST['blotter_status'] ?? 'Pending');
+
+if ($respondentName) {
+  $purokTables = [
+    'purok1_rbi','purok2_rbi','purok3_rbi',
+    'purok4_rbi','purok5_rbi','purok6_rbi'
+  ];
+  foreach ($purokTables as $tbl) {
+    if ($blotterStatus === 'Pending') {
+      $upd = $conn->prepare("
+        UPDATE `{$tbl}`
+           SET remarks = 'On Hold'
+         WHERE full_name = ?
+      ");
+    } else {
+      $upd = $conn->prepare("
+        UPDATE `{$tbl}`
+           SET remarks = NULL
+         WHERE full_name = ?
+      ");
+    }
+    $upd->bind_param('s', $respondentName);
+    $upd->execute();
+    $upd->close();
+  }
+}
+
 // 6) REDIRECT BACK
 // header("Location: ../superAdminPanel.php?page=superAdminComplaints&transaction_id={$transactionId}");
 // header("Location: ../adminPanel.php?page=adminComplaints&transaction_id={$transactionId}");

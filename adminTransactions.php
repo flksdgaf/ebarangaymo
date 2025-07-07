@@ -9,6 +9,70 @@ $reportTypes = ['Barangay ID','Barangay Clearance','Certification','Business Per
 <div class="container-fluid p-3">
   <div class="accordion" id="adminAccordion">
 
+    <!-- Resident Reports -->
+    <div class="accordion-item">
+    <h2 class="accordion-header" id="headingResident">
+      <button class="accordion-button collapsed text-success fw-bold"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#collapseResident"
+              aria-expanded="false"
+              aria-controls="collapseResident">
+        Resident Reports
+      </button>
+    </h2>
+    <div id="collapseResident" class="accordion-collapse collapse"
+        aria-labelledby="headingResident"
+        data-bs-parent="#adminAccordion">
+      <div class="accordion-body p-0">
+        <div class="card border-0">
+          <div class="card-body">
+            <form id="residentReportForm" method="get" action="functions/generate_resident_report.php">
+              <div class="row align-items-end g-3 mb-4">
+                
+                <!-- Purok filter -->
+                <div class="col-md-4">
+                  <label for="filterPurok" class="form-label">Purok</label>
+                  <select id="filterPurok" name="purok" class="form-select">
+                    <option value="all" selected>All</option>
+                    <?php for($i=1; $i<=6; $i++): ?>
+                    <option value="<?= $i ?>">Purok <?= $i ?></option>
+                    <?php endfor; ?>
+                  </select>
+                </div>
+
+                <!-- Age Group filter -->
+                <div class="col-md-4">
+                  <label for="filterAgeGroup" class="form-label">Age Group</label>
+                  <select id="filterAgeGroup" name="age_group" class="form-select">
+                    <option value="all" selected>All</option>
+                    <option value="0-17">0–17</option>
+                    <option value="18-35">18–35</option>
+                    <option value="36-60">36–60</option>
+                    <option value="61+">61+</option>
+                  </select>
+                </div>
+
+                <!-- Buttons -->
+                <div class="col-md-4 text-end">
+                  <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">
+                    CSV
+                  </button>
+                  <button type="button"
+                          id="generateResidentPDFBtn"
+                          class="btn btn-success">
+                    PDF
+                  </button>
+                </div>
+
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
     <!-- Collection Reports -->
     <div class="accordion-item">
       <h2 class="accordion-header" id="headingCollection">
@@ -219,6 +283,19 @@ $reportTypes = ['Barangay ID','Barangay Clearance','Certification','Business Per
   </div>
 
   <script>
+    // Resident PDF preview + print
+    document.getElementById('generateResidentPDFBtn').addEventListener('click', function() {
+      const form = document.getElementById('residentReportForm');
+      const params = new URLSearchParams(new FormData(form));
+      // require at least a filter selection (you could also validate better)
+      if (!params.has('purok') || !params.has('age_group')) {
+        alert('Please choose your filters.');
+        return;
+      }
+      const url = 'functions/generateResidentsReport.php?' + params.toString() + '&format=pdf';
+      window.open(url, 'ResidentReportWindow', 'width=900,height=700,resizable=yes,scrollbars=yes');
+    });
+
     // Blotter PDF generation
     document.getElementById('generateBlotterPDFBtn').addEventListener('click', function () {
       const from = document.getElementById('blotterFrom').value;

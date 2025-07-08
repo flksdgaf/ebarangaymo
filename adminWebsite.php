@@ -1,11 +1,25 @@
 <?php
 require 'functions/dbconn.php';
 
-$info = $conn->query("SELECT logo,name,address FROM barangay_info WHERE id=1")->fetch_assoc();
+$info = $conn->query("SELECT logo, name, address FROM barangay_info WHERE id=1")->fetch_assoc();
 
 $res = $conn->query("SELECT * FROM announcements ORDER BY created_at DESC");
 $announcements = $res->fetch_all(MYSQLI_ASSOC);
+
+// ABOUT US
+$about = $conn->query("SELECT title, background_image FROM about_banner WHERE id=1")->fetch_assoc();
+
+// Ebarangay Section (corrected table name + fallback)
+$ebarangay = $conn->query("SELECT first_image, second_image, third_image FROM about_ebarangaymo WHERE id = 1")->fetch_assoc();
+// if (!$ebarangay) {
+//     $ebarangay = [
+//         'first_image' => 'info_image.png',
+//         'second_image' => 'info_image2.png',
+//         'third_image' => 'info_image3.png'
+//     ];
+// }
 ?>
+
 
 <title>eBarangay Mo | Website Configurations</title>
 
@@ -23,7 +37,7 @@ $announcements = $res->fetch_all(MYSQLI_ASSOC);
           <div class="card border-0">
             <div class="card-body">
 
-              <h6 class="text-secondary fw-bold">Masthead</h6>
+              <h6 class="text-secondary fw-bold">Banner</h6>
               <div class="table-responsive admin-table mb-4">
                 <table class="table table-hover align-middle text-start">
                   <thead class="table-light">
@@ -98,69 +112,6 @@ $announcements = $res->fetch_all(MYSQLI_ASSOC);
                   </tbody>
                 </table>
               </div>
-              <!-- <h6 class="text-secondary fw-bold">Announcements</h6>
-              <div class="table-responsive admin-table mb-4">
-                <table class="table table-hover align-middle text-start">
-                  <thead class="table-light">
-                    <tr>
-                      <th>Properties</th>
-                      <th>Image</th>
-                      <th class="text-end">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>Barangay Assembly Day</td>
-                      <td><img src="images/transparency_seal.png" style="height:32px;"></td>
-                      <td class="text-end"><button class="btn btn-success btn-sm"><i class="bi bi-pencil"></i> Edit</button></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div> -->
-
-              <!-- <h6 class="text-secondary fw-bold">Services Offered</h6>
-              <div class="table-responsive admin-table mb-4">
-                <table class="table table-hover align-middle text-start">
-                  <thead class="table-light">
-                    <tr>
-                      <th>Icon</th>
-                      <th>Service Name</th>
-                      <th>Service Description</th>
-                      <th class="text-end">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td><img src="images/transparency_seal.png" style="height:32px;"></td>
-                      <td>Barangay ID</td>
-                      <td>Opsiyal na identification card na inilalabas ng barangay.</td>
-                      <td class="text-end"><button class="btn btn-success btn-sm"><i class="bi bi-pencil"></i> Edit</button></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div> -->
-
-              <!-- <h6 class="text-secondary fw-bold">News and Updates</h6>
-              <div class="table-responsive admin-table">
-                <table class="table table-hover align-middle text-start">
-                  <thead class="table-light">
-                    <tr>
-                      <th>Cover Photo</th>
-                      <th>Date</th>
-                      <th>Headline</th>
-                      <th class="text-end">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td><img src="images/transparency_seal.png" style="height:32px;"></td>
-                      <td>February 12, 2025</td>
-                      <td>Camarines Norte Sets Highest Number of SGLGB Passers</td>
-                      <td class="text-end"><button class="btn btn-success btn-sm"><i class="bi bi-pencil"></i> Edit</button></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div> -->
 
               <div class="d-flex align-items-center mb-3 justify-content-between">
                 <h6 class="text-secondary fw-bold mb-0">News and Updates</h6>
@@ -439,6 +390,7 @@ $announcements = $res->fetch_all(MYSQLI_ASSOC);
 
     </script>
 
+    <!-- ABOUT US -->
     <div class="accordion-item">
       <h2 class="accordion-header" id="headingAbout">
         <button class="accordion-button collapsed text-success fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAbout" aria-expanded="false" aria-controls="collapseAbout">
@@ -450,70 +402,183 @@ $announcements = $res->fetch_all(MYSQLI_ASSOC);
           <div class="card border-0">
             <div class="card-body">
 
-              <h6 class="text-secondary fw-bold">Banner</h6>
-              <div class="table-responsive admin-table mb-4">
-                <table class="table table-hover align-middle text-start">
-                  <thead class="table-light">
-                    <tr>
-                      <th>Title</th>
-                      <th>Background Image</th>
-                      <th class="text-end">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>About Us</td>
-                      <td><img src="images/transparency_seal.png" style="height:32px;"></td>
-                      <td class="text-end"><button class="btn btn-success btn-sm"><i class="bi bi-pencil"></i> Edit</button></td>
-                    </tr>
-                  </tbody>
-                </table>
+
+            <h6 class="text-secondary fw-bold">Banner</h6>
+            <div class="table-responsive admin-table mb-4">
+              <table class="table table-hover align-middle text-start">
+                <thead class="table-light">
+                  <tr>
+                    <th>Properties</th>
+                    <th>Current</th>
+                    <th class="text-end">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Title</td>
+                    <td><?= htmlspecialchars($about['title']) ?></td>
+                    <td class="text-end">
+                      <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#editAboutBannerTitleModal">
+                        <i class="bi bi-pencil"></i> Edit
+                      </button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Background Image</td>
+                    <td>
+                      <?php if (!empty($about['background_image']) && file_exists("images/" . $about['background_image'])): ?>
+                        <img src="images/<?= htmlspecialchars($about['background_image']) ?>?v=<?= time() ?>" style="height:32px;">
+                      <?php else: ?>
+                        <span class="text-muted">No image</span>
+                      <?php endif; ?>
+                    </td>
+                    <td class="text-end">
+                      <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#editAboutBannerImageModal">
+                        <i class="bi bi-pencil"></i> Edit
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- MODALS -->
+            <!-- Title Modal -->
+            <div class="modal fade" id="editAboutBannerTitleModal" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                <form method="POST" action="functions/update_about_banner.php" class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Edit About Banner Title</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                    <div class="mb-3">
+                      <label class="form-label">New Title</label>
+                      <input type="text" name="title" class="form-control" value="<?= htmlspecialchars($about['title']) ?>" required>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                  </div>
+                </form>
               </div>
+            </div>
+            <!-- Background Image Modal -->
+            <div class="modal fade" id="editAboutBannerImageModal" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                <form method="POST" action="functions/update_about_banner.php" enctype="multipart/form-data" class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Edit About Banner Background Image</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body text-center">
+                    <?php if (!empty($about['background_image']) && file_exists("images/" . $about['background_image'])): ?>
+                      <img src="images/<?= htmlspecialchars($about['background_image']) ?>?v=<?= time() ?>" class="img-fluid mb-3" style="max-height: 150px;">
+                    <?php else: ?>
+                      <p class="text-muted mb-3">No image uploaded.</p>
+                    <?php endif; ?>
+                    <div class="mb-3">
+                      <input type="file" name="background_image" accept="image/*" class="form-control" required>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                  </div>
+                </form>
+              </div>
+            </div>
 
               <h6 class="text-secondary fw-bold">eBarangay Mo</h6>
               <div class="table-responsive admin-table mb-4">
                 <table class="table table-hover align-middle text-start">
                   <thead class="table-light">
                     <tr>
-                      <th>Properties</th>
-                      <th>Current</th>
+                      <th>Image</th>
+                      <th>Preview</th>
                       <th class="text-end">Action</th>
                     </tr>
                   </thead>
                   <tbody>
+                    <?php foreach (['first_image', 'second_image', 'third_image'] as $label): ?>
                     <tr>
-                      <td>Title</td>
-                      <td>Fast. Easy. eBarangay Mo.</td>
-                      <td class="text-end"><button class="btn btn-success btn-sm"><i class="bi bi-pencil"></i> Edit</button></td>
+                      <td><?= ucfirst(str_replace('_', ' ', $label)) ?></td>
+                      <td>
+                        <?php if (!empty($ebarangay[$label]) && file_exists("images/" . $ebarangay[$label])): ?>
+                          <img src="images/<?= htmlspecialchars($ebarangay[$label]) ?>?v=<?= time() ?>" style="height:32px;">
+                        <?php else: ?>
+                          <span class="text-muted">No image</span>
+                        <?php endif; ?>
+                      </td>
+                      <td class="text-end">
+                        <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#edit<?= ucfirst($label) ?>Modal">
+                          <i class="bi bi-pencil"></i> Edit
+                        </button>
+                      </td>
                     </tr>
-                    <tr>
-                      <td>Subtitle</td>
-                      <td>Bringing Barangay Services Closer to You.</td>
-                      <td class="text-end"><button class="btn btn-success btn-sm"><i class="bi bi-pencil"></i> Edit</button></td>
-                    </tr>
-                    <tr>
-                      <td>Description</td>
-                      <td>Ang eBarangay Mo ay isang online portal ng Barangay Magang.</td>
-                      <td class="text-end"><button class="btn btn-success btn-sm"><i class="bi bi-pencil"></i> Edit</button></td>
-                    </tr>
-                    <tr>
-                      <td>Image 1</td>
-                      <td><img src="images/transparency_seal.png" style="height:32px;"></td>
-                      <td class="text-end"><button class="btn btn-success btn-sm"><i class="bi bi-pencil"></i> Edit</button></td>
-                    </tr>
-                    <tr>
-                      <td>Image 2</td>
-                      <td><img src="images/transparency_seal.png" style="height:32px;"></td>
-                      <td class="text-end"><button class="btn btn-success btn-sm"><i class="bi bi-pencil"></i> Edit</button></td>
-                    </tr>
-                    <tr>
-                      <td>Image 3</td>
-                      <td><img src="images/transparency_seal.png" style="height:32px;"></td>
-                      <td class="text-end"><button class="btn btn-success btn-sm"><i class="bi bi-pencil"></i> Edit</button></td>
-                    </tr>
+                    <?php endforeach; ?>
                   </tbody>
                 </table>
               </div>
+
+              <!-- First Image Modal -->
+              <div class="modal fade" id="editFirst_imageModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                  <form action="functions/update_about_ebarangaymo.php" method="post" enctype="multipart/form-data" class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Edit First Image</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                      <input type="file" name="first_image" class="form-control" required>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="submit" class="btn btn-success">Save</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <!-- Second Image Modal -->
+              <div class="modal fade" id="editSecond_imageModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                  <form action="functions/update_about_ebarangaymo.php" method="post" enctype="multipart/form-data" class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Edit Second Image</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                      <input type="file" name="second_image" class="form-control" required>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="submit" class="btn btn-success">Save</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <!-- Third Image Modal -->
+              <div class="modal fade" id="editThird_imageModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                  <form action="functions/update_about_ebarangaymo.php" method="post" enctype="multipart/form-data" class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Edit Third Image</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                      <input type="file" name="third_image" class="form-control" required>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="submit" class="btn btn-success">Save</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+
+
+
 
               <h6 class="text-secondary fw-bold">Barangay Officials</h6>
               <div class="table-responsive admin-table mb-4">

@@ -1,6 +1,12 @@
 <?php 
+include 'functions/dbconn.php';
 $page = 'index';
 include 'includes/header.php'; 
+
+$about = $conn->query("SELECT title, background_image FROM about_banner WHERE id=1")->fetch_assoc();
+$bannerUrl = 'images/' . ($about['background_image'] ?? 'about_banner.png');
+$barangayInfo = $conn->query("SELECT name, address FROM barangay_info WHERE id=1")->fetch_assoc();
+$ebarangay = $conn->query("SELECT first_image, second_image, third_image FROM about_ebarangaymo WHERE id = 1")->fetch_assoc();
 ?>
 
 <link rel="stylesheet" href="about.css">
@@ -9,11 +15,11 @@ include 'includes/header.php';
 <div class="container-fluid px-0">
     <!-- Background image with overlay -->
     <div class="position-relative text-white text-center">
-        <img src="images/about_banner.png" alt="About Banner" class="img-fluid w-100">
+        <img src="<?= htmlspecialchars($bannerUrl) ?>" alt="About Banner" class="img-fluid w-100">
         
         <!-- Overlay content -->
         <div class="position-absolute top-50 start-50 translate-middle">
-            <h1 class="fw-semibold text-uppercase">About Us</h1>
+            <h1 class="fw-semibold text-uppercase"><?= htmlspecialchars($about['title']) ?></h1>
             <p>Home / About</p>
         </div>
     </div>
@@ -22,41 +28,54 @@ include 'includes/header.php';
 <!-- EBARANGAY INFO SECTION -->
 <div class="about-page-container">
     <div class="container py-5">
-    <div class="row align-items-center">
-        <!-- Text Content -->
-        <div class="col-lg-6 mb-4 mb-lg-0">
-        <h2 class="tagline fw-bold mb-2">
-            Fast. Easy. <span class="gradient-text">eBarangay Mo.</span>
-        </h2>
-        <h5 class="gradient-text mb-4">
-            Bringing Barangay Services Closer to You.
-        </h5>
-        <p>Ang <strong>eBarangay Mo</strong> ay ang online portal ng Barangay Magang, Daet, Camarines Norte, na binuo upang mas mapalapit at madaliang ma‑access ng komunidad ang mahahalagang serbisyo ng barangay. Layunin ng digital na plataporma na ito na pasimplehin at i‑modernisa ang paraan ng pakikipag‑ugnayan ng mga residente sa kanilang lokal na pamahalaan.</p>
-        <p>Sa pamamagitan ng eBarangay Mo, maaaring mag‑apply ng business permit, humiling ng iba't ibang sertipiko, o suriin ang katayuan ng transaksyon—lahat ng ito ay magagawa nang maginhawa mula sa inyong tahanan, anumang oras at saanman. Pangarap namin na mapabuti ang transparency, kahusayan, at kalidad ng serbisyo publiko sa pagtanggap at paggamit ng teknolohiya na tutugon sa lumalaking pangangailangan ng ating barangay.</p>
-        </div>
+        <div class="row align-items-center">
+            <!-- Text Content -->
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <h2 class="tagline fw-bold mb-2">
+                    Fast. Easy. <span class="gradient-text">eBarangay Mo.</span>
+                </h2>
+                <h5 class="gradient-text mb-4">
+                    Bringing Barangay Services Closer to You.
+                </h5>
+                <p>Ang <strong>eBarangay Mo</strong> ay ang online portal ng <?= htmlspecialchars($barangayInfo['name']) ?>, <?= htmlspecialchars($barangayInfo['address']) ?>, na binuo upang mas mapalapit at madaliang ma‑access ng komunidad ang mahahalagang serbisyo ng barangay. Layunin ng digital platform na ito na pasimplehin at i‑modernisa ang paraan ng pakikipag‑ugnayan ng mga residente sa kanilang lokal na pamahalaan.</p>
+                <p>Sa pamamagitan ng eBarangay Mo, maaaring mag‑apply ng business permit, humiling ng iba't ibang certificates, o suriin ang katayuan ng kanilang transaksyon—lahat ng ito ay magagawa kahit sa inyong tahanan, anumang oras at saanman. Pangarap namin na mapabuti ang transparency, kahusayan, at kalidad ng serbisyo publiko sa pagtanggap at paggamit ng teknolohiya na tutugon sa lumalaking pangangailangan ng ating barangay.</p>
+            </div>
 
-        <!-- Image Grid -->
-        <div class="col-lg-6">
-        <div class="row g-2">
-            <div class="info-image col-6">
-            <img src="images/info_image.png" alt="Event 1" class="img-fluid rounded-4 shadow img-size">
-            </div>
-            <div class="info-image2 col-6 ml-2">
-            <img src="images/info_image2.png" alt="Event 2" class="img-fluid rounded-4 shadow img-size">
-            </div>
-            <div class="info-image4 col-12">
-            <img src="images/info_image4.png" alt="Event 3" class="img-fluid rounded-4 shadow img-size">
+            <!-- Image Grid -->
+            <div class="col-lg-6">
+                <div class="row g-2">
+                    <div class="info-image col-6">
+                        <?php if (!empty($ebarangay['first_image']) && file_exists('images/' . $ebarangay['first_image'])): ?>
+                            <img src="images/<?= htmlspecialchars($ebarangay['first_image']) ?>?v=<?= time() ?>" alt="Ebarangay Image 1" class="img-fluid rounded-4 shadow img-size">
+                        <?php else: ?>
+                            <div class="bg-light text-muted p-5 text-center rounded-4">No Image</div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="info-image2 col-6 ml-2">
+                        <?php if (!empty($ebarangay['second_image']) && file_exists('images/' . $ebarangay['second_image'])): ?>
+                            <img src="images/<?= htmlspecialchars($ebarangay['second_image']) ?>?v=<?= time() ?>" alt="Ebarangay Image 2" class="img-fluid rounded-4 shadow img-size">
+                        <?php else: ?>
+                            <div class="bg-light text-muted p-5 text-center rounded-4">No Image</div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="info-image4 col-12">
+                        <?php if (!empty($ebarangay['third_image']) && file_exists('images/' . $ebarangay['third_image'])): ?>
+                            <img src="images/<?= htmlspecialchars($ebarangay['third_image']) ?>?v=<?= time() ?>" alt="Ebarangay Image 3" class="img-fluid rounded-4 shadow img-size">
+                        <?php else: ?>
+                            <div class="bg-light text-muted p-5 text-center rounded-4">No Image</div>
+                        <?php endif; ?>
+                    </div>
+                </div>
             </div>
         </div>
-        </div>
     </div>
-    </div>
+</div>
 
     <!-- BARANGAY OFFICIALS SECTION -->
     <div id="officials" class="container custom-padding">
         <div class="autoShow">
             <h2 class="text-uppercase fw-bold gradient-text">Barangay Officials</h2>
-            <p>Ipinapakilala ng seksyong ito ang mga opisyal na halal ng Barangay Magang, Daet, Camarines Norte. Sila ang inatasang pamunuan ang barangay, magpatupad ng mga patakaran, at tiyakin ang maayos na paghahatid ng mahahalagang serbisyo para sa kapakanan at kaunlaran ng komunidad.</p>
+            <p>Ipinapakilala ng seksyong ito ang mga opisyal na halal ng <?= htmlspecialchars($barangayInfo['name']) ?>. Sila ang inatasang pamunuan ang barangay, magpatupad ng mga patakaran, at tiyakin ang maayos na paghahatid ng mahahalagang serbisyo para sa kapakanan at kaunlaran ng komunidad.</p>
         </div>
 
         <div class="autoShow">

@@ -234,7 +234,7 @@ $stmt->close();
                        <input class="form-check-input" type="checkbox" id="hasRespondentCheck" name="has_respondent" checked>
                        <label class="form-check-label fs-6" for="hasRespondentCheck"></label>
                      </div>
-                     <h6 class="fw-bold mb-0 me-3 fs-5" style="color: #13411F;">Respondent Details</h6>
+                     <h6 class="fw-bold mb-0 fs-5" style="color: #13411F;">Respondent Details</h6>
                    </div>
 
                   <!-- horizontal rule covers the entire 12 columns -->
@@ -308,7 +308,7 @@ $stmt->close();
       <div class="modal fade" id="editBlotterModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="editBlotterModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width:90vw;">
           <div class="modal-content">
-            <div class="modal-header text-white" style="background-color: #0B6623;">
+            <div class="modal-header text-white" style="background-color: #13411F;">
               <h5 class="modal-title" id="editBlotterModalLabel">Edit Blotter Record</h5>
               <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
@@ -387,13 +387,6 @@ $stmt->close();
                     <label class="form-label fw-bold">Complaint / Incident Type</label>
                     <input name="incident_type" id="edit_incident_type" type="text" class="form-control form-control-sm" required>
                   </div>
-                  <!-- <div class="col-12 col-md-3">
-                    <label class="form-label fw-bold">Complaint Status</label>
-                    <select name="blotter_status" class="form-select form-select-sm" required>
-                      <option value="Pending">Pending</option>
-                      <option value="Resolved">Resolved</option>
-                    </select>
-                  </div> -->
                   <div class="col-12 col-md-3">
                     <label class="form-label fw-bold">Complaint Status</label>
                     <select name="blotter_status" id="edit_blotter_status" class="form-select form-select-sm" required>
@@ -609,7 +602,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 3) Wire up all .edit-btn clicks
   document.querySelectorAll('.edit-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const tr  = btn.closest('tr');
+      const tr = btn.closest('tr');
       const tid = tr.getAttribute('data-id');
       const status = tr.dataset.status;
 

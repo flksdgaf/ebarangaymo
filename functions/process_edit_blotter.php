@@ -12,7 +12,6 @@ $userId = (int)$_SESSION['loggedInUserID'];
 // 2) COLLECT + SANITIZE
 $tid = trim($_POST['transaction_id'] ?? '');
 
-
 // client name
 $cf = trim($_POST['client_first_name'] ?? '');
 $cm = trim($_POST['client_middle_name'] ?? '');
@@ -111,17 +110,9 @@ if ($respondentName) {
 
   foreach ($purokTables as $tbl) {
     if ($blotterStatus === 'Pending') {
-      $upd = $conn->prepare("
-        UPDATE `{$tbl}`
-           SET remarks = 'On Hold'
-         WHERE full_name = ?
-      ");
+      $upd = $conn->prepare("UPDATE `{$tbl}` SET remarks = 'On Hold' WHERE full_name = ?");
     } else { // 'Cleared'
-      $upd = $conn->prepare("
-        UPDATE `{$tbl}`
-           SET remarks = NULL
-         WHERE full_name = ?
-      ");
+      $upd = $conn->prepare("UPDATE `{$tbl}` SET remarks = NULL WHERE full_name = ?");
     }
     $upd->bind_param('s', $respondentName);
     $upd->execute();
@@ -136,25 +127,12 @@ $tableName = 'blotter_records';
 $recordId  = $tid;
 $desc = 'Edited blotter record';
 
-
 // 4) LOG + REDIRECT
 if ($stmt->affected_rows > 0) {
-  $logStmt = $conn->prepare("
-  INSERT INTO activity_logs
-    (admin_id, role, action, table_name, record_id, description)
-  VALUES (?,?,?,?,?,?)
-");
-$logStmt->bind_param(
-  'isssss',
-  $adminId,
-  $role,
-  $action,
-  $tableName,
-  $recordId,
-  $desc
-);
-$logStmt->execute();
-$logStmt->close();
+  $logStmt = $conn->prepare("INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description) VALUES (?,?,?,?,?,?)");
+  $logStmt->bind_param('isssss', $adminId, $role, $action, $tableName, $recordId, $desc);
+  $logStmt->execute();
+  $logStmt->close();
 
   header("Location: ../adminPanel.php?page=adminComplaints&blotter_updated={$recordId}");
 } else {

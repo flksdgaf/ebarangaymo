@@ -46,10 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       }
 
       // 5. Insert into activity_logs
-      $log_stmt = $conn->prepare("
-        INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description, created_at)
-        VALUES (?, ?, 'DELETE', 'blotter_records', ?, ?, NOW())
-      ");
+      $log_stmt = $conn->prepare("INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description, created_at) VALUES (?, ?, 'DELETE', 'blotter_records', ?, ?, NOW())");
       $desc = "Deleted blotter record with transaction ID: $transaction_id";
       $log_stmt->bind_param("isss", $admin_id, $role, $transaction_id, $desc);
       $log_stmt->execute();

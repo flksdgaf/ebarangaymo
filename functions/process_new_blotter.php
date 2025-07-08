@@ -32,7 +32,7 @@ if (!empty($_POST['respondent_first_name'])) {
     $rs = trim($_POST['respondent_suffix'] ?? '');
     $rMiddle = $rm ? " {$rm}" : '';
     $rSuffix = $rs ? " {$rs}" : '';
-    $respondentName = "{$rl}, {$rf}{$rMiddle}{$rSuffix}";
+    $respondentName = "{$rl}{$rSuffix}, {$rf}{$rMiddle}";
     $respondentAddress = trim($_POST['respondent_address'] ?? '');
 }
 
@@ -101,7 +101,6 @@ if (in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
 }
 
 // ——> SYNC RESPONDENT INTO RBI TABLES HERE:
-
 $blotterStatus = trim($_POST['blotter_status'] ?? 'Pending');
 
 if ($respondentName) {
@@ -111,17 +110,9 @@ if ($respondentName) {
   ];
   foreach ($purokTables as $tbl) {
     if ($blotterStatus === 'Pending') {
-      $upd = $conn->prepare("
-        UPDATE `{$tbl}`
-           SET remarks = 'On Hold'
-         WHERE full_name = ?
-      ");
+      $upd = $conn->prepare("UPDATE `{$tbl}` SET remarks = 'On Hold' WHERE full_name = ?");
     } else {
-      $upd = $conn->prepare("
-        UPDATE `{$tbl}`
-           SET remarks = NULL
-         WHERE full_name = ?
-      ");
+      $upd = $conn->prepare("UPDATE `{$tbl}` SET remarks = NULL WHERE full_name = ?");
     }
     $upd->bind_param('s', $respondentName);
     $upd->execute();

@@ -95,10 +95,32 @@ $stmt->close();
 ?>
 
 <div>
-  <?php if (isset($_GET['new_complaint_id'])): ?>
+  <!-- <?php if (isset($_GET['new_complaint_id'])): ?>
     <div class="alert alert-success alert-dismissible fade show" role="alert">
       New complaint record <strong><?= htmlspecialchars($_GET['new_complaint_id']) ?></strong> added successfully!
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <?php endif; ?> -->
+
+  <!-- <?php if ($id = ($_GET['new_complaint_id'] ?? false)): ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      New complaint record <strong><?= htmlspecialchars($id) ?></strong> added!
+      <a href="functions/print_complaint.php?transaction_id=<?= urlencode($id) ?>" class="btn btn-sm btn-outline-success ms-2" target="_blank">
+        Print Complaint
+      </a>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <?php endif; ?> -->
+
+    <?php if ($id = ($_GET['new_complaint_id'] ?? false)): ?>
+    <div class="alert alert-success alert-dismissible fade show d-flex align-items-center" role="alert">
+      <div>New complaint record <strong><?= htmlspecialchars($id) ?></strong> added!</div>
+      <div class="ms-auto d-flex align-items-center">
+        <a href="#" data-tid="<?= htmlspecialchars($id) ?>" class="btn btn-sm btn-outline-success me-2 print-alert-btn">
+          Print Complaint
+        </a>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
     </div>
   <?php endif; ?>
 
@@ -323,7 +345,7 @@ $stmt->close();
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <button type="submit" class="btn btn-warning">Confirm & Schedule</button>
+              <button type="submit" class="btn btn-warning">Schedule & Print </button>
             </div>
           </form>
         </div>
@@ -417,6 +439,7 @@ $stmt->close();
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="printComplaintBtn">Print Complaint</button>
                 <button type="submit" class="btn btn-success">Save Changes</button>
               </div>
             </form>
@@ -547,6 +570,16 @@ $stmt->close();
 </div>
 
 <script>
+
+function printComplaint(transactionId) {
+  if (!transactionId) return alert('No transaction ID provided.');
+  window.open(
+    'functions/print_complaint.php?transaction_id=' + encodeURIComponent(transactionId),
+    '_blank',
+    'width=900,height=600'
+  );
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('searchFormSummon');
   const input = document.getElementById('searchInputSummon');
@@ -687,6 +720,21 @@ document.addEventListener('DOMContentLoaded', () => {
         alert('Error: ' + (data.error || 'Failed to delete.'));
       }
     });
+  });
+
+  // 1) in the alert:
+  document.querySelectorAll('.alert a.print-alert-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      const tid = btn.dataset.tid;
+      printComplaint(tid);
+    });
+  });
+
+  // 2) in the Edit Complaint modal:
+  document.getElementById('printComplaintBtn').addEventListener('click', () => {
+    const tid = document.getElementById('edit_complaint_transaction_id').value;
+    printComplaint(tid);
   });
 
 });

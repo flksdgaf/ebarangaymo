@@ -7,6 +7,11 @@ $about = $conn->query("SELECT title, background_image FROM about_banner WHERE id
 $bannerUrl = 'images/' . ($about['background_image'] ?? 'about_banner.png');
 $barangayInfo = $conn->query("SELECT name, address FROM barangay_info WHERE id=1")->fetch_assoc();
 $ebarangay = $conn->query("SELECT first_image, second_image, third_image FROM about_ebarangaymo WHERE id = 1")->fetch_assoc();
+$officials = $conn->query("SELECT * FROM about_barangay_officials WHERE id = 1")->fetch_assoc();
+$missionVision = $conn->query("SELECT mission, vision FROM about_mission_vision WHERE id = 1")->fetch_assoc();
+$citizensCharter = $conn->query("SELECT description, image FROM about_citizens_charter WHERE id = 1")->fetch_assoc();
+$barangayMap = $conn->query("SELECT description, image FROM about_barangay_map WHERE id = 1")->fetch_assoc();
+
 ?>
 
 <link rel="stylesheet" href="about.css">
@@ -73,64 +78,69 @@ $ebarangay = $conn->query("SELECT first_image, second_image, third_image FROM ab
 
     <!-- BARANGAY OFFICIALS SECTION -->
     <div id="officials" class="container custom-padding">
-        <div class="autoShow">
-            <h2 class="text-uppercase fw-bold gradient-text">Barangay Officials</h2>
-            <p>Ipinapakilala ng seksyong ito ang mga opisyal na halal ng <?= htmlspecialchars($barangayInfo['name']) ?>. Sila ang inatasang pamunuan ang barangay, magpatupad ng mga patakaran, at tiyakin ang maayos na paghahatid ng mahahalagang serbisyo para sa kapakanan at kaunlaran ng komunidad.</p>
-        </div>
+    <div class="autoShow">
+        <h2 class="text-uppercase fw-bold gradient-text">Barangay Officials</h2>
+        <p><?= htmlspecialchars($officials['description']) ?></p>
+    </div>
 
+    <?php if (!empty($officials['image']) && file_exists("images/" . $officials['image'])): ?>
         <div class="autoShow">
-            <img src="images/barangay_officials.png" alt="Barangay Officials" class="w-100">
+        <img src="images/<?= htmlspecialchars($officials['image']) ?>?v=<?= time() ?>" alt="Barangay Officials" class="w-100">
         </div>
+    <?php endif; ?>
     </div>
 
     <!-- MISSION VISION SECTION -->
     <div id="mission-vision" class="container custom-padding">
-        <h2 class="text-uppercase fw-bold gradient-text mb-4 autoShow">Mission and Vision</h2>
-        <div class="row justify-content-center align-items-stretch g-4 text-center">
-            <!-- Mission Card -->
-            <div class="col-lg-5 col-md-6 d-flex fadeUp">
-                <div class="card-custom mission-shape w-100 d-flex flex-column justify-content-center">
-                    <h4 class="section-title mb-3">MISSION</h4>
-                    <p class="mb-0">
-                        We members of of Sangguniang Barangay will continue to strive more to effectively deliver basic services needed by the people, promote peace and order, protect the interest, promote social and economic development in pursuit of peaceful reliant towards a develop and progressive community within a just VARI social order.
-                    </p>
-                </div>
-            </div>
-
-            <!-- Vision Card -->
-            <div class="col-lg-5 col-md-6 d-flex fadeUp">
-                <div class="card-custom vision-shape w-100 d-flex flex-column justify-content-center">
-                    <h4 class="section-title mb-3">VISION</h4>
-                    <p class="mb-0">
-                        Barangay Magang is one of the most widely competitive community in Daet with well-developed, self-reliant, vigorously, God fearing and empowered people, economically adequate with expensive infrastructure facilities an and ecologically balance environment governed by effective and service centered leaders ready to implement the Good Governance and Ethical Leadership.
-                    </p>
-                </div>
-            </div>
+    <h2 class="text-uppercase fw-bold gradient-text mb-4 autoShow">Mission and Vision</h2>
+    <div class="row justify-content-center align-items-stretch g-4 text-center">
+        
+        <!-- Mission -->
+        <div class="col-lg-5 col-md-6 d-flex fadeUp">
+        <div class="card-custom mission-shape w-100 d-flex flex-column justify-content-center">
+            <h4 class="section-title mb-3">MISSION</h4>
+            <p class="mb-0"><?= htmlspecialchars($missionVision['mission']) ?></p>
         </div>
+        </div>
+
+        <!-- Vision -->
+        <div class="col-lg-5 col-md-6 d-flex fadeUp">
+        <div class="card-custom vision-shape w-100 d-flex flex-column justify-content-center">
+            <h4 class="section-title mb-3">VISION</h4>
+            <p class="mb-0"><?= htmlspecialchars($missionVision['vision']) ?></p>
+        </div>
+        </div>
+
     </div>
+    </div>
+
 
     <!-- CITIZENS CHARTER SECTION -->
     <div id="citizens-charter" class="container custom-padding">
-        <div class="autoShow">
-            <h2 class="text-uppercase fw-bold gradient-text">Citizen's Charter</h2>
-            <p>Inilalahad ng Citizen’s Charter ang pangako ng Barangay Magang na magbigay ng serbisyong mabilis, transparent, at may pananagutan. Gabay ito para sa mga residente upang malaman ang mga serbisyong iniaalok, hakbang‑hakbang na proseso, mga kinakailangang dokumento, oras ng pag‑proseso, at impormasyon sa pakikipag‑ugnayan. Sumasalamin ang charter na ito sa aming dedikasyon sa pagprotekta sa karapatan ng bawat mamamayan at sa pagbibigay ng de‑kalidad na serbisyo.</p>
-        </div>
+    <div class="autoShow">
+        <h2 class="text-uppercase fw-bold gradient-text">Citizen's Charter</h2>
+        <p><?= htmlspecialchars($citizensCharter['description']) ?></p>
+    </div>
 
+    <?php if (!empty($citizensCharter['image']) && file_exists("images/" . $citizensCharter['image'])): ?>
         <div class="autoShow">
-            <img src="images/citizens_charter.png" alt="Barangay Magang Citizens Charter" class="w-100">
+        <img src="images/<?= htmlspecialchars($citizensCharter['image']) ?>?v=<?= time() ?>" alt="Citizen's Charter" class="w-100">
         </div>
+    <?php endif; ?>
     </div>
 
     <!-- BARANGAY MAP SECTION -->
     <div id="barangay-map" class="container custom-padding">
-        <div class="autoShow">
-            <h2 class="text-uppercase fw-bold gradient-text">Barangay Map</h2>
-            <p>Ang mapang ito ay nagsisilbing visual na gabay para sa mga residente, bisita, at sa maayos na pagpaplano ng mga serbisyo sa loob ng komunidad.</p>
-        </div>
+    <div class="autoShow">
+        <h2 class="text-uppercase fw-bold gradient-text">Barangay Map</h2>
+        <p><?= htmlspecialchars($barangayMap['description']) ?></p>
+    </div>
 
+    <?php if (!empty($barangayMap['image']) && file_exists("images/" . $barangayMap['image'])): ?>
         <div class="autoShow">
-            <img src="images/barangay_map.png" alt="Barangay Magang Spot Map" class="w-100">
+        <img src="images/<?= htmlspecialchars($barangayMap['image']) ?>?v=<?= time() ?>" alt="Barangay Magang Spot Map" class="w-100">
         </div>
+    <?php endif; ?>
     </div>
 
     <!-- CONTACT US SECTION -->

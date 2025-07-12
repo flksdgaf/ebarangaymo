@@ -8,16 +8,12 @@ $announcements = $res->fetch_all(MYSQLI_ASSOC);
 
 // ABOUT US
 $about = $conn->query("SELECT title, background_image FROM about_banner WHERE id=1")->fetch_assoc();
-
-// Ebarangay Section (corrected table name + fallback)
 $ebarangay = $conn->query("SELECT first_image, second_image, third_image FROM about_ebarangaymo WHERE id = 1")->fetch_assoc();
-// if (!$ebarangay) {
-//     $ebarangay = [
-//         'first_image' => 'info_image.png',
-//         'second_image' => 'info_image2.png',
-//         'third_image' => 'info_image3.png'
-//     ];
-// }
+$officials = $conn->query("SELECT * FROM about_barangay_officials WHERE id = 1")->fetch_assoc();
+$missionVision = $conn->query("SELECT mission, vision FROM about_mission_vision WHERE id = 1")->fetch_assoc();
+$citizensCharter = $conn->query("SELECT description, image FROM about_citizens_charter WHERE id = 1")->fetch_assoc();
+$barangayMap = $conn->query("SELECT description, image FROM about_barangay_map WHERE id = 1")->fetch_assoc();
+
 ?>
 
 
@@ -37,6 +33,7 @@ $ebarangay = $conn->query("SELECT first_image, second_image, third_image FROM ab
           <div class="card border-0">
             <div class="card-body">
 
+              <!-- BANNER -->
               <h6 class="text-secondary fw-bold">Banner</h6>
               <div class="table-responsive admin-table mb-4">
                 <table class="table table-hover align-middle text-start">
@@ -79,6 +76,7 @@ $ebarangay = $conn->query("SELECT first_image, second_image, third_image FROM ab
                 </table>
               </div>
 
+              <!-- ANNOUNCEMENT -->
               <div class="d-flex align-items-center mb-3 justify-content-between">
                 <h6 class="text-secondary fw-bold mb-0">Announcements</h6>
                 <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addAnnouncementModal">
@@ -113,6 +111,7 @@ $ebarangay = $conn->query("SELECT first_image, second_image, third_image FROM ab
                 </table>
               </div>
 
+              <!-- NEWS & UPDATES -->
               <div class="d-flex align-items-center mb-3 justify-content-between">
                 <h6 class="text-secondary fw-bold mb-0">News and Updates</h6>
                 <button id="addNewsBtn" class="btn btn-success btn-sm">
@@ -403,6 +402,7 @@ $ebarangay = $conn->query("SELECT first_image, second_image, third_image FROM ab
             <div class="card-body">
 
 
+            <!-- BANNER -->
             <h6 class="text-secondary fw-bold">Banner</h6>
             <div class="table-responsive admin-table mb-4">
               <table class="table table-hover align-middle text-start">
@@ -442,8 +442,7 @@ $ebarangay = $conn->query("SELECT first_image, second_image, third_image FROM ab
               </table>
             </div>
 
-            <!-- MODALS -->
-            <!-- Title Modal -->
+            <!--Banner Title Modal -->
             <div class="modal fade" id="editAboutBannerTitleModal" tabindex="-1" aria-hidden="true">
               <div class="modal-dialog modal-dialog-centered">
                 <form method="POST" action="functions/update_about_banner.php" class="modal-content">
@@ -464,7 +463,7 @@ $ebarangay = $conn->query("SELECT first_image, second_image, third_image FROM ab
                 </form>
               </div>
             </div>
-            <!-- Background Image Modal -->
+            <!-- Banner Background Image Modal -->
             <div class="modal fade" id="editAboutBannerImageModal" tabindex="-1" aria-hidden="true">
               <div class="modal-dialog modal-dialog-centered">
                 <form method="POST" action="functions/update_about_banner.php" enctype="multipart/form-data" class="modal-content">
@@ -490,13 +489,15 @@ $ebarangay = $conn->query("SELECT first_image, second_image, third_image FROM ab
               </div>
             </div>
 
+
+              <!-- eBARANGAY MO -->
               <h6 class="text-secondary fw-bold">eBarangay Mo</h6>
               <div class="table-responsive admin-table mb-4">
                 <table class="table table-hover align-middle text-start">
                   <thead class="table-light">
                     <tr>
                       <th>Image</th>
-                      <th>Preview</th>
+                      <th>Current</th>
                       <th class="text-end">Action</th>
                     </tr>
                   </thead>
@@ -522,7 +523,7 @@ $ebarangay = $conn->query("SELECT first_image, second_image, third_image FROM ab
                 </table>
               </div>
 
-              <!-- First Image Modal -->
+              <!-- eBarangay Mo First Image Modal -->
               <div class="modal fade" id="editFirst_imageModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog">
                   <form action="functions/update_about_ebarangaymo.php" method="post" enctype="multipart/form-data" class="modal-content">
@@ -540,7 +541,7 @@ $ebarangay = $conn->query("SELECT first_image, second_image, third_image FROM ab
                 </div>
               </div>
 
-              <!-- Second Image Modal -->
+              <!--  eBarangay Mo Second Image Modal -->
               <div class="modal fade" id="editSecond_imageModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog">
                   <form action="functions/update_about_ebarangaymo.php" method="post" enctype="multipart/form-data" class="modal-content">
@@ -558,7 +559,7 @@ $ebarangay = $conn->query("SELECT first_image, second_image, third_image FROM ab
                 </div>
               </div>
 
-              <!-- Third Image Modal -->
+              <!--  eBarangay Mo Third Image Modal -->
               <div class="modal fade" id="editThird_imageModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog">
                   <form action="functions/update_about_ebarangaymo.php" method="post" enctype="multipart/form-data" class="modal-content">
@@ -577,93 +578,361 @@ $ebarangay = $conn->query("SELECT first_image, second_image, third_image FROM ab
               </div>
 
 
-
-
-
+              <!-- BARANGAY OFFICIALS -->
               <h6 class="text-secondary fw-bold">Barangay Officials</h6>
               <div class="table-responsive admin-table mb-4">
                 <table class="table table-hover align-middle text-start">
                   <thead class="table-light">
                     <tr>
-                      <th>Description</th>
-                      <th>Image</th>
+                      <th>Properties</th>
+                      <th class="text-center">Current</th> <!-- Center the middle column -->
                       <th class="text-end">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td>Ipinapakita ang listahan ng mga opisyal na halal ng Barangay Magang.</td>
-                      <td><img src="images/transparency_seal.png" style="height:32px;"></td>
-                      <td class="text-end"><button class="btn btn-success btn-sm"><i class="bi bi-pencil"></i> Edit</button></td>
+                      <td>Description</td>
+                      <td class="text-center">
+                        <?= htmlspecialchars(mb_strimwidth($officials['description'], 0, 70, '...')) ?>
+                      </td>
+                      <td class="text-end">
+                        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#editOfficialsDescriptionModal">
+                          <i class="bi bi-pencil"></i> Edit
+                        </button>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Image</td>
+                      <td class="text-center">
+                        <?php if (!empty($officials['image']) && file_exists("images/" . $officials['image'])): ?>
+                          <img src="images/<?= htmlspecialchars($officials['image']) ?>?v=<?= time() ?>" style="height:32px;">
+                        <?php else: ?>
+                          <span class="text-muted">No image</span>
+                        <?php endif; ?>
+                      </td>
+                      <td class="text-end">
+                        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#editOfficialsImageModal">
+                          <i class="bi bi-pencil"></i> Edit
+                        </button>
+                      </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
 
+              <!--Barangay Officials Description Modal -->
+              <div class="modal fade" id="editOfficialsDescriptionModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <form method="POST" action="functions/update_about_barangay_officials.php" class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Edit Barangay Officials Description</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="description" class="form-control" rows="4" required><?= htmlspecialchars($officials['description']) ?></textarea>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <!-- Barangay Officials Image Modal -->
+              <div class="modal fade" id="editOfficialsImageModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <form method="POST" action="functions/update_about_barangay_officials.php" enctype="multipart/form-data" class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Edit Barangay Officials Image</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                      <?php if (!empty($officials['image']) && file_exists("images/" . $officials['image'])): ?>
+                        <img src="images/<?= htmlspecialchars($officials['image']) ?>?v=<?= time() ?>" class="img-fluid mb-3" style="max-height: 150px;">
+                      <?php else: ?>
+                        <p class="text-muted mb-3">No image uploaded.</p>
+                      <?php endif; ?>
+                      <div class="mb-3">
+                        <input type="file" name="image" accept="image/*" class="form-control" required>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+
+              <!--MISSION & VISION -->
               <h6 class="text-secondary fw-bold">Mission and Vision</h6>
               <div class="table-responsive admin-table mb-4">
                 <table class="table table-hover align-middle text-start">
                   <thead class="table-light">
                     <tr>
-                      <th>Title</th>
-                      <th>Description</th>
+                      <th>Properties</th>
+                      <th class="text-center">Current</th>
                       <th class="text-end">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td>Mission</td>
-                      <td>We members of Sangguniang Barangay will continue to strive more to effectively deliver...</td>
-                      <td class="text-end"><button class="btn btn-success btn-sm"><i class="bi bi-pencil"></i> Edit</button></td>
-                    </tr>
-                    <tr>
-                      <td>Vision</td>
-                      <td>Barangay Magang is one of the most widely competitive communities in Daet...</td>
-                      <td class="text-end"><button class="btn btn-success btn-sm"><i class="bi bi-pencil"></i> Edit</button></td>
-                    </tr>
+                    <td>Mission</td>
+                    <td class="text-center">
+                      <?= isset($missionVision['mission']) ? htmlspecialchars(mb_strimwidth($missionVision['mission'], 0, 70, '...')) : '<span class="text-muted">No data</span>' ?>
+                    </td>
+                    <td class="text-end">
+                      <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#editMissionModal">
+                        <i class="bi bi-pencil"></i> Edit
+                      </button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Vision</td>
+                    <td class="text-center">
+                      <?= isset($missionVision['vision']) ? htmlspecialchars(mb_strimwidth($missionVision['vision'], 0, 70, '...')) : '<span class="text-muted">No data</span>' ?>
+                    </td>
+                    <td class="text-end">
+                      <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#editVisionModal">
+                        <i class="bi bi-pencil"></i> Edit
+                      </button>
+                    </td>
+                  </tr>
                   </tbody>
                 </table>
               </div>
 
+              <!-- Mission Modal -->
+              <div class="modal fade" id="editMissionModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <form method="POST" action="functions/update_about_mission_vision.php" class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Edit Mission</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <div class="mb-3">
+                        <label class="form-label">Mission</label>
+                        <textarea name="mission" class="form-control" rows="4" required><?= htmlspecialchars($missionVision['mission']) ?></textarea>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <!-- Vision Modal -->
+              <div class="modal fade" id="editVisionModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <form method="POST" action="functions/update_about_mission_vision.php" class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Edit Vision</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <div class="mb-3">
+                        <label class="form-label">Vision</label>
+                        <textarea name="vision" class="form-control" rows="4" required><?= htmlspecialchars($missionVision['vision']) ?></textarea>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            
+
+              <!-- CITIZENS CHARTER -->
               <h6 class="text-secondary fw-bold">Citizen’s Charter</h6>
               <div class="table-responsive admin-table mb-4">
                 <table class="table table-hover align-middle text-start">
                   <thead class="table-light">
                     <tr>
-                      <th>Description</th>
-                      <th>Image</th>
+                      <th>Properties</th>
+                      <th class="text-center">Current</th>
                       <th class="text-end">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td>Inilalahad ng Citizen’s Charter ang pangako ng Barangay Magang na magbigay ng…</td>
-                      <td><img src="images/transparency_seal.png" style="height:32px;"></td>
-                      <td class="text-end"><button class="btn btn-success btn-sm"><i class="bi bi-pencil"></i> Edit</button></td>
+                      <td>Description</td>
+                      <td class="text-center">
+                        <?= htmlspecialchars(mb_strimwidth($citizensCharter['description'], 0, 70, '...')) ?>
+                      </td>
+                      <td class="text-end">
+                        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#editCitizensCharterDescriptionModal">
+                          <i class="bi bi-pencil"></i> Edit
+                        </button>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Image</td>
+                      <td class="text-center">
+                        <?php if (!empty($citizensCharter['image']) && file_exists("images/" . $citizensCharter['image'])): ?>
+                          <img src="images/<?= htmlspecialchars($citizensCharter['image']) ?>?v=<?= time() ?>" style="height:32px;">
+                        <?php else: ?>
+                          <span class="text-muted">No image</span>
+                        <?php endif; ?>
+                      </td>
+                      <td class="text-end">
+                        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#editCitizensCharterImageModal">
+                          <i class="bi bi-pencil"></i> Edit
+                        </button>
+                      </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
 
+              <!-- Citizens Charter Description Modal -->
+              <div class="modal fade" id="editCitizensCharterDescriptionModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <form method="POST" action="functions/update_about_citizens_charter.php" class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Edit Citizen’s Charter Description</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="description" class="form-control" rows="4" required><?= htmlspecialchars($citizensCharter['description']) ?></textarea>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <!-- Citizens Charter Image Modal -->
+              <div class="modal fade" id="editCitizensCharterImageModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <form method="POST" action="functions/update_about_citizens_charter.php" enctype="multipart/form-data" class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Edit Citizen’s Charter Image</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                      <?php if (!empty($citizensCharter['image']) && file_exists("images/" . $citizensCharter['image'])): ?>
+                        <img src="images/<?= htmlspecialchars($citizensCharter['image']) ?>?v=<?= time() ?>" class="img-fluid mb-3" style="max-height: 150px;">
+                      <?php else: ?>
+                        <p class="text-muted mb-3">No image uploaded.</p>
+                      <?php endif; ?>
+                      <div class="mb-3">
+                        <input type="file" name="image" accept="image/*" class="form-control" required>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+
+              <!-- BARANGAY MAP -->
               <h6 class="text-secondary fw-bold">Barangay Map</h6>
-              <div class="table-responsive admin-table">
+              <div class="table-responsive admin-table mb-4">
                 <table class="table table-hover align-middle text-start">
                   <thead class="table-light">
                     <tr>
-                      <th>Description</th>
-                      <th>Image</th>
+                      <th>Properties</th>
+                      <th class="text-center">Current</th>
                       <th class="text-end">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td>Ang mapang ito ay nagsisilbing visual na gabay para sa mga residente…</td>
-                      <td><img src="images/transparency_seal.png" style="height:32px;"></td>
-                      <td class="text-end"><button class="btn btn-success btn-sm"><i class="bi bi-pencil"></i> Edit</button></td>
+                      <td>Description</td>
+                      <td class="text-center">
+                        <?= htmlspecialchars(mb_strimwidth($barangayMap['description'], 0, 70, '...')) ?>
+                      </td>
+                      <td class="text-end">
+                        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#editBarangayMapDescriptionModal">
+                          <i class="bi bi-pencil"></i> Edit
+                        </button>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Image</td>
+                      <td class="text-center">
+                        <?php if (!empty($barangayMap['image']) && file_exists("images/" . $barangayMap['image'])): ?>
+                          <img src="images/<?= htmlspecialchars($barangayMap['image']) ?>?v=<?= time() ?>" style="height:32px;">
+                        <?php else: ?>
+                          <span class="text-muted">No image</span>
+                        <?php endif; ?>
+                      </td>
+                      <td class="text-end">
+                        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#editBarangayMapImageModal">
+                          <i class="bi bi-pencil"></i> Edit
+                        </button>
+                      </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
+
+              <!-- Barangay Map Description Modal -->
+              <div class="modal fade" id="editBarangayMapDescriptionModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <form method="POST" action="functions/update_about_barangay_map.php" class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Edit Barangay Map Description</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="description" class="form-control" rows="4" required><?= htmlspecialchars($barangayMap['description']) ?></textarea>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <!-- Barangay Map Image Modal -->
+              <div class="modal fade" id="editBarangayMapImageModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <form method="POST" action="functions/update_about_barangay_map.php" enctype="multipart/form-data" class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Edit Barangay Map Image</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                      <?php if (!empty($barangayMap['image']) && file_exists("images/" . $barangayMap['image'])): ?>
+                        <img src="images/<?= htmlspecialchars($barangayMap['image']) ?>?v=<?= time() ?>" class="img-fluid mb-3" style="max-height: 150px;">
+                      <?php else: ?>
+                        <p class="text-muted mb-3">No image uploaded.</p>
+                      <?php endif; ?>
+                      <div class="mb-3">
+                        <input type="file" name="image" accept="image/*" class="form-control" required>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
 
             </div>
           </div>

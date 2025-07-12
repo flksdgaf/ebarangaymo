@@ -2,14 +2,14 @@
 require_once __DIR__ . '/dbconn.php';
 
 $purok     = $_GET['purok']     ?? '';
-$ageGroup  = $_GET['age_group'] ?? '';
+$exactAge  = $_GET['exact_age'] ?? '';
 $format    = $_GET['format']    ?? '';
 
-if ($purok === '' || $ageGroup === '' || $format === '') {
+if ($purok === '' || $format === '') {
     exit('Missing required filters.');
 }
 
-// 1) Build base SQL (either one purok table or union all six)
+// 1) Build SQL
 if ($purok === 'all') {
     $parts = [];
     for ($i = 1; $i <= 6; $i++) {
@@ -21,33 +21,25 @@ if ($purok === 'all') {
     $baseSql = "SELECT *, {$n} AS purok FROM purok{$n}_rbi";
 }
 
-// 2) Fetch everything, ordered appropriately
-if ($purok === 'all') {
-    // All Puroks: order by purok then name
-    $stmt = $conn->prepare("$baseSql ORDER BY purok ASC, full_name ASC");
-} else {
-    // Single Purok: just order by name
-    $stmt = $conn->prepare("$baseSql ORDER BY full_name ASC");
-}
+// 2) Fetch all data
+$stmt = $conn->prepare("$baseSql ORDER BY purok ASC, full_name ASC");
 $stmt->execute();
 $res = $stmt->get_result();
 $rows = $res->fetch_all(MYSQLI_ASSOC);
 
-// 3) Compute age helper
+// 3) Helper for age calculation
 function calc_age($bdate) {
     $dob = new DateTime($bdate);
     return $dob->diff(new DateTime())->y;
 }
 
-// 4) Filter by age-group in PHP
-if ($ageGroup !== 'all') {
-    list($min, $max) = explode('-', str_replace('+','',$ageGroup));
-    $rows = array_filter($rows, function($r) use ($min, $max) {
-        $age = calc_age($r['birthdate']);
-        if ($max === '') {
-            return $age >= $min;
-        }
-        return ($age >= $min && $age <= $max);
+// 4) Validate and apply age filter (if needed)
+$validAge = is_numeric($exactAge) && $exactAge >= 1 && $exactAge <= 150;
+
+if ($validAge) {
+    $exactAge = (int)$exactAge;
+    $rows = array_filter($rows, function($r) use ($exactAge) {
+        return calc_age($r['birthdate']) === $exactAge;
     });
 }
 

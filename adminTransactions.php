@@ -27,7 +27,7 @@ $reportTypes = ['Barangay ID','Barangay Clearance','Certification','Business Per
       <div class="accordion-body p-0">
         <div class="card border-0">
           <div class="card-body">
-            <form id="residentReportForm" method="get" action="functions/generate_resident_report.php">
+            <form id="residentReportForm" method="get" action="functions/generateResidentsReport.php">
               <div class="row align-items-end g-3 mb-4">
                 
                 <!-- Purok filter -->
@@ -41,17 +41,12 @@ $reportTypes = ['Barangay ID','Barangay Clearance','Certification','Business Per
                   </select>
                 </div>
 
-                <!-- Age Group filter -->
+                <!-- Exact Age input -->
                 <div class="col-md-4">
-                  <label for="filterAgeGroup" class="form-label">Age Group</label>
-                  <select id="filterAgeGroup" name="age_group" class="form-select">
-                    <option value="all" selected>All</option>
-                    <option value="0-17">0–17</option>
-                    <option value="18-35">18–35</option>
-                    <option value="36-60">36–60</option>
-                    <option value="61+">61+</option>
-                  </select>
+                  <label for="filterAge" class="form-label">Age</label>
+                  <input type="number" id="filterAge" name="exact_age" class="form-control" min="0" placeholder="All">
                 </div>
+
 
                 <!-- Buttons -->
                 <div class="col-md-4 text-end">
@@ -283,17 +278,24 @@ $reportTypes = ['Barangay ID','Barangay Clearance','Certification','Business Per
   </div>
 
   <script>
-    // Resident PDF preview + print
-    document.getElementById('generateResidentPDFBtn').addEventListener('click', function() {
-      const form = document.getElementById('residentReportForm');
-      const params = new URLSearchParams(new FormData(form));
-      // require at least a filter selection (you could also validate better)
-      if (!params.has('purok') || !params.has('age_group')) {
-        alert('Please choose your filters.');
+    // Resident PDF generation
+    document.getElementById('generateResidentPDFBtn').addEventListener('click', () => {
+      const purok = document.getElementById('filterPurok').value;
+      const ageInput = document.getElementById('filterAge').value.trim();
+      
+      if (ageInput !== '' && (!/^\d+$/.test(ageInput) || ageInput < 1 || ageInput > 150)) {
+        alert("Please enter a valid age between 1 and 150 or leave it blank to fetch all.");
         return;
       }
-      const url = 'functions/generateResidentsReport.php?' + params.toString() + '&format=pdf';
-      window.open(url, 'ResidentReportWindow', 'width=900,height=700,resizable=yes,scrollbars=yes');
+
+      const params = new URLSearchParams({
+        purok,
+        exact_age: ageInput,
+        format: 'pdf'
+      });
+
+      const url = `functions/generateResidentsReport.php?${params.toString()}`;
+      window.open(url, 'ResidentReportWindow', 'width=1000,height=800,resizable=yes,scrollbars=yes');
     });
 
     // Blotter PDF generation

@@ -1,5 +1,5 @@
 <?php 
-include 'functions/dbconn.php'; 
+require_once 'functions/dbconn.php';
 $page = 'index';
 include 'includes/header.php'; 
 

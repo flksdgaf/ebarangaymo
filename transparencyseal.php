@@ -1,39 +1,44 @@
 <?php 
+include 'functions/dbconn.php';
 $page = 'index';
 include 'includes/header.php'; 
+
+$transparency = $conn->query("SELECT title, background_image FROM transparency_banner WHERE id = 1")->fetch_assoc();
+$bannerUrl = 'images/' . ($transparency['background_image'] ?? 'transparency_seal_banner.png');
+$transparencyContent = $conn->query("SELECT image, description FROM transparency_content WHERE id = 1")->fetch_assoc();
 ?>
 
 <link rel="stylesheet" href="transparencyseal.css">
 
 <!-- BANNER SECTION -->
 <div class="container-fluid px-0">
-    <!-- Background image with overlay -->
-    <div class="position-relative text-white text-center">
-        <img src="images/about_banner.png" alt="Transparency Banner" class="img-fluid w-100">
-        
-        <!-- Overlay content -->
-        <div class="position-absolute top-50 start-50 translate-middle">
-            <h1 class="fw-semibold text-uppercase">Transparency Seal</h1>
-            <p>Home / Transparency Seal</p>
-        </div>
+  <div class="position-relative text-white text-center">
+    <img src="<?= htmlspecialchars($bannerUrl) ?>" alt="Transparency Banner" class="img-fluid w-100">
+    <div class="position-absolute top-50 start-50 translate-middle">
+      <h1 class="fw-semibold text-uppercase"><?= htmlspecialchars($transparency['title']) ?></h1>
+      <p>Home / Transparency Seal</p>
     </div>
+  </div>
 </div>
 
-<!-- SYMBOLISM SECTION -->
+<!-- CONTENT SECTION -->
 <div class="container my-5">
-    <div class="row align-items-center">
-        <!-- Image column -->
-        <div class="col-md-4 text-center mb-4 mb-md-0 fadeUp">
-            <img src="images/transparency_seal.png" alt="Philippine Transparency Seal" class="img-fluid" style="max-width: 100%;">
-        </div>
-        <!-- Text column -->
-        <div class="col-md-8">
-            <h4 class="gradient-text fw-bold text-success mb-4">SYMBOLISM</h4>
-            <p style="text-align: justify;">
-                A pearl buried inside a tightly-shut shell is practically worthless. Government information is a pearl, meant to be shared with the public to maximize its inherent value. The Transparency Seal, depicted by a pearl shining out of an open shell, symbolizes a policy shift towards openness in access to government information. On the one hand, it hopes to inspire Filipinos in the civil service to be more open to citizen engagement; on the other, to invite the Filipino citizenry to exercise their right to participate in governance. This initiative is envisioned as a step in the right direction towards solidifying the position of the Philippines as the Pearl of the Orient — a shining example of democratic virtue in the region.
-            </p>
-        </div>
+  <div class="row align-items-center">
+    <!-- Image -->
+    <?php if (!empty($transparencyContent['image']) && file_exists("images/" . $transparencyContent['image'])): ?>
+      <div class="col-md-4 text-center mb-4 mb-md-0 fadeUp">
+        <img src="images/<?= htmlspecialchars($transparencyContent['image']) ?>?v=<?= time() ?>" alt="Transparency Content" class="img-fluid" style="max-width: 100%;">
+      </div>
+    <?php endif; ?>
+    
+    <!-- Description -->
+    <div class="col-md-8">
+      <h4 class="gradient-text fw-bold text-success mb-4">SYMBOLISM</h4>
+      <p style="text-align: justify;">
+        <?= nl2br(htmlspecialchars($transparencyContent['description'])) ?>
+      </p>
     </div>
+  </div>
 </div>
 
 <?php

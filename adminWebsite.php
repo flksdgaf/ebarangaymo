@@ -1,5 +1,5 @@
 <?php
-require 'functions/dbconn.php';
+require_once 'functions/dbconn.php';
 
 $info = $conn->query("SELECT logo, name, address FROM barangay_info WHERE id=1")->fetch_assoc();
 
@@ -13,6 +13,14 @@ $officials = $conn->query("SELECT * FROM about_barangay_officials WHERE id = 1")
 $missionVision = $conn->query("SELECT mission, vision FROM about_mission_vision WHERE id = 1")->fetch_assoc();
 $citizensCharter = $conn->query("SELECT description, image FROM about_citizens_charter WHERE id = 1")->fetch_assoc();
 $barangayMap = $conn->query("SELECT description, image FROM about_barangay_map WHERE id = 1")->fetch_assoc();
+
+// SERVICES
+$servicesBanner = $conn->query("SELECT title, background_image FROM services_banner WHERE id=1")->fetch_assoc();
+$services = $conn->query("SELECT id, icon, title, description, button_color FROM services_list ORDER BY created_at ASC");
+
+// TRANSPARENCY
+$transparency = $conn->query("SELECT title, background_image FROM transparency_banner WHERE id = 1")->fetch_assoc(); 
+$transparencyContent = $conn->query("SELECT image, description FROM transparency_content WHERE id = 1")->fetch_assoc();
 
 ?>
 
@@ -463,6 +471,7 @@ $barangayMap = $conn->query("SELECT description, image FROM about_barangay_map W
                 </form>
               </div>
             </div>
+
             <!-- Banner Background Image Modal -->
             <div class="modal fade" id="editAboutBannerImageModal" tabindex="-1" aria-hidden="true">
               <div class="modal-dialog modal-dialog-centered">
@@ -940,7 +949,7 @@ $barangayMap = $conn->query("SELECT description, image FROM about_barangay_map W
       </div>
     </div>
 
-    <!-- Services panel (new) -->
+    <!-- SERVICES -->
     <div class="accordion-item">
       <h2 class="accordion-header" id="headingServices">
         <button class="accordion-button collapsed text-success fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseServices" aria-expanded="false" aria-controls="collapseServices">
@@ -952,93 +961,215 @@ $barangayMap = $conn->query("SELECT description, image FROM about_barangay_map W
           <div class="card border-0">
             <div class="card-body">
               
-              <!-- Banner -->
-              <h6 class="text-secondary fw-bold">Banner</h6>
+              <!-- Services Banner -->
+              <h6 class="text-secondary fw-bold">Services Banner</h6>
               <div class="table-responsive admin-table mb-4">
                 <table class="table table-hover align-middle text-start">
                   <thead class="table-light">
                     <tr>
-                      <th>Title</th>
-                      <th>Background Image</th>
+                      <th>Properties</th>
+                      <th>Current</th>
                       <th class="text-end">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td>Services</td>
-                      <td><img src="images/services_banner.png" alt="Services Banner" style="height:32px;"></td>
+                      <td>Title</td>
+                      <td><?= htmlspecialchars($servicesBanner['title']) ?></td>
                       <td class="text-end">
-                        <button class="btn btn-success btn-sm"><i class="bi bi-pencil"></i> Edit</button>
+                        <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#editServicesBannerTitleModal">
+                          <i class="bi bi-pencil"></i> Edit
+                        </button>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Background Image</td>
+                      <td>
+                        <?php if (!empty($servicesBanner['background_image']) && file_exists("images/" . $servicesBanner['background_image'])): ?>
+                          <img src="images/<?= htmlspecialchars($servicesBanner['background_image']) ?>?v=<?= time() ?>" style="height:32px;">
+                        <?php else: ?>
+                          <span class="text-muted">No image</span>
+                        <?php endif; ?>
+                      </td>
+                      <td class="text-end">
+                        <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#editServicesBannerImageModal">
+                          <i class="bi bi-pencil"></i> Edit
+                        </button>
                       </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
 
-              <!-- Barangay Services -->
-              <h6 class="text-secondary fw-bold">Barangay Services</h6>
-              <div class="table-responsive admin-table">
-                <table class="table table-hover align-middle text-start">
-                  <thead class="table-light">
-                    <tr>
-                      <th>Icon</th>
-                      <th>Service Name</th>
-                      <th>Service Description</th>
-                      <th class="text-end">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td><img src="images/icon_barangay_id.png" alt="Barangay ID" style="height:32px;"></td>
-                      <td>Barangay ID</td>
-                      <td>Opsiyal na identification card na inilalabas ng barangay.</td>
-                      <td class="text-end">
-                        <button class="btn btn-success btn-sm"><i class="bi bi-pencil"></i> Edit</button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td><img src="images/icon_clearance.png" alt="Clearance" style="height:32px;"></td>
-                      <td>Barangay Clearance</td>
-                      <td>Description</td>
-                      <td class="text-end">
-                        <button class="btn btn-success btn-sm"><i class="bi bi-pencil"></i> Edit</button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td><img src="images/icon_certification.png" alt="Certification" style="height:32px;"></td>
-                      <td>Certification</td>
-                      <td>Description</td>
-                      <td class="text-end">
-                        <button class="btn btn-success btn-sm"><i class="bi bi-pencil"></i> Edit</button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td><img src="images/icon_permit.png" alt="Permit" style="height:32px;"></td>
-                      <td>Business Permit</td>
-                      <td>Description</td>
-                      <td class="text-end">
-                        <button class="btn btn-success btn-sm"><i class="bi bi-pencil"></i> Edit</button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td><img src="images/icon_borrow.png" alt="Equipment Borrowing" style="height:32px;"></td>
-                      <td>Equipment Borrowing</td>
-                      <td>Description</td>
-                      <td class="text-end">
-                        <button class="btn btn-success btn-sm"><i class="bi bi-pencil"></i> Edit</button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td><img src="images/icon_cash.png" alt="Cash Incentives" style="height:32px;"></td>
-                      <td>Cash Incentives</td>
-                      <td>Description</td>
-                      <td class="text-end">
-                        <button class="btn btn-success btn-sm"><i class="bi bi-pencil"></i> Edit</button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+              <!-- Services Banner Title Modal -->
+              <div class="modal fade" id="editServicesBannerTitleModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <form method="POST" action="functions/update_services_banner.php" class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Edit Services Banner Title</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <div class="mb-3">
+                        <label class="form-label">New Title</label>
+                        <input type="text" name="title" class="form-control" value="<?= htmlspecialchars($servicesBanner['title']) ?>" required>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                  </form>
+                </div>
               </div>
+
+              <!-- Services Banner Background Image Modal -->
+              <div class="modal fade" id="editServicesBannerImageModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <form method="POST" action="functions/update_services_banner.php" enctype="multipart/form-data" class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Edit Services Banner Background Image</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                      <?php if (!empty($servicesBanner['background_image']) && file_exists("images/" . $servicesBanner['background_image'])): ?>
+                        <img src="images/<?= htmlspecialchars($servicesBanner['background_image']) ?>?v=<?= time() ?>" class="img-fluid mb-3" style="max-height: 150px;">
+                      <?php else: ?>
+                        <p class="text-muted mb-3">No image uploaded.</p>
+                      <?php endif; ?>
+                      <div class="mb-3">
+                        <input type="file" name="background_image" accept="image/*" class="form-control" required>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <!-- Barangay Services List -->
+              <h6 class="text-secondary fw-bold d-flex justify-content-between align-items-center">
+              Barangay Services
+              <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addServiceModal">
+                <i class="bi bi-plus-circle"></i> Add New Service
+              </button>
+              </h6>
+
+              <div class="table-responsive admin-table">
+              <table class="table table-hover align-middle text-start">
+                <thead class="table-light">
+                  <tr>
+                    <th>Icon</th>
+                    <th>Service Name</th>
+                    <th>Description</th>
+                    <th>Button Color</th>
+                    <th class="text-end">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <?php 
+                    $deleteModals = ''; // collect modals here
+                    while ($row = $services->fetch_assoc()): 
+                  ?>
+                    <tr>
+                      <td><i class="<?= htmlspecialchars($row['icon']) ?>" style="font-size: 24px;"></i></td>
+                      <td><?= htmlspecialchars($row['title']) ?></td>
+                      <td><?= htmlspecialchars(mb_strimwidth($row['description'], 0, 50, '...')) ?></td>
+                      <td>
+                        <div style="background: <?= htmlspecialchars($row['button_color']) ?>; width: 40px; height: 20px; border-radius: 4px; border: 1px solid #ccc;"></div>
+                      </td>
+                      <td class="text-end">
+                        <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteServiceModal<?= $row['id'] ?>">
+                          <i class="bi bi-trash"></i> Delete
+                        </button>
+                      </td>
+                    </tr>
+
+                    <?php 
+                    // Build the delete modal HTML and store it
+                    ob_start(); ?>
+                    <div class="modal fade" id="deleteServiceModal<?= $row['id'] ?>" tabindex="-1" aria-labelledby="deleteServiceLabel<?= $row['id'] ?>" aria-hidden="true">
+                      <div class="modal-dialog modal-dialog-centered">
+                        <form method="POST" action="functions/update_services_list.php" class="modal-content p-3">
+                          <input type="hidden" name="delete_id" value="<?= $row['id'] ?>">
+
+                          <div class="modal-header border-0 pb-0">
+                            <h5 class="modal-title fw-semibold text-danger" id="deleteServiceLabel<?= $row['id'] ?>">Delete Service</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+
+                          <div class="modal-body text-center">
+                            <p class="mb-0 fs-6">
+                              Are you sure you want to delete the service<br>
+                              <strong><?= htmlspecialchars($row['title']) ?></strong>?
+                            </p>
+                          </div>
+
+                          <div class="modal-footer border-0 justify-content-center">
+                            <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger px-4">
+                              <i class="bi bi-trash me-1"></i> Yes
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                    <?php $deleteModals .= ob_get_clean(); ?>
+
+                  <?php endwhile; ?>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Render delete modals outside the table -->
+            <?= $deleteModals ?>
+
+              <!-- Add New Service Modal -->
+              <div class="modal fade" id="addServiceModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <form method="POST" action="functions/update_services_list.php" enctype="multipart/form-data" class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Add New Service</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+
+                      <div class="mb-3">
+                        <label class="form-label">Upload Icon Image</label>
+                        <input type="file" name="icon_image" accept="image/*" class="form-control" required>
+                      </div>
+
+                      <div class="mb-3">
+                        <label class="form-label">Service Title</label>
+                        <input type="text" name="title" class="form-control" required>
+                      </div>
+
+                      <div class="mb-3">
+                        <label class="form-label">Service Description</label>
+                        <textarea name="description" class="form-control" rows="3" required></textarea>
+                      </div>
+
+                      <div class="mb-3">
+                        <label class="form-label">Button Color</label>
+                        <select name="button_color" class="form-select" required>
+                          <option value="">Select a color</option>
+                          <option value="#2A9245" style="background:#2A9245; color:white;">#2A9245 (Dark Green)</option>
+                          <option value="#61AD41" style="background:#61AD41; color:white;">#61AD41 (Lime Green)</option>
+                          <option value="#13411F" style="background:#13411F; color:white;">#13411F (Forest Green)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
 
             </div>
           </div>
@@ -1046,7 +1177,7 @@ $barangayMap = $conn->query("SELECT description, image FROM about_barangay_map W
       </div>
     </div>
 
-    <!-- Transparency Seal panel (new) -->
+    <!-- Transparency Seal -->
     <div class="accordion-item">
       <h2 class="accordion-header" id="headingSeal">
         <button class="accordion-button collapsed text-success fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSeal" aria-expanded="false" aria-controls="collapseSeal">
@@ -1058,27 +1189,182 @@ $barangayMap = $conn->query("SELECT description, image FROM about_barangay_map W
           <div class="card border-0">
             <div class="card-body">
               
-              <!-- Banner -->
+              <!-- BANNER -->
               <h6 class="text-secondary fw-bold">Banner</h6>
-              <div class="table-responsive admin-table">
+              <div class="table-responsive admin-table mb-4">
                 <table class="table table-hover align-middle text-start">
                   <thead class="table-light">
                     <tr>
-                      <th>Title</th>
-                      <th>Background Image</th>
+                      <th>Properties</th>
+                      <th>Current</th>
                       <th class="text-end">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td>Transparency Seal</td>
-                      <td><img src="images/transparency_seal_banner.png" alt="Transparency Seal Banner" style="height:32px;"></td>
+                      <td>Title</td>
+                      <td><?= htmlspecialchars($transparency['title']) ?></td>
                       <td class="text-end">
-                        <button class="btn btn-success btn-sm"><i class="bi bi-pencil"></i> Edit</button>
+                        <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#editTransparencyTitleModal">
+                          <i class="bi bi-pencil"></i> Edit
+                        </button>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Background Image</td>
+                      <td>
+                        <?php if (!empty($transparency['background_image']) && file_exists("images/" . $transparency['background_image'])): ?>
+                          <img src="images/<?= htmlspecialchars($transparency['background_image']) ?>?v=<?= time() ?>" style="height:32px;">
+                        <?php else: ?>
+                          <span class="text-muted">No image</span>
+                        <?php endif; ?>
+                      </td>
+                      <td class="text-end">
+                        <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#editTransparencyImageModal">
+                          <i class="bi bi-pencil"></i> Edit
+                        </button>
                       </td>
                     </tr>
                   </tbody>
                 </table>
+              </div>
+
+              <!-- Banner Title Modal -->
+              <div class="modal fade" id="editTransparencyTitleModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <form method="POST" action="functions/update_transparency_banner.php" class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Edit Transparency Banner Title</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <div class="mb-3">
+                        <label class="form-label">New Title</label>
+                        <input type="text" name="title" class="form-control" value="<?= htmlspecialchars($transparency['title']) ?>" required>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <!-- Banner Background Image Modal -->
+              <div class="modal fade" id="editTransparencyImageModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <form method="POST" action="functions/update_transparency_banner.php" enctype="multipart/form-data" class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Edit Transparency Banner Background Image</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                      <?php if (!empty($transparency['background_image']) && file_exists("images/" . $transparency['background_image'])): ?>
+                        <img src="images/<?= htmlspecialchars($transparency['background_image']) ?>?v=<?= time() ?>" class="img-fluid mb-3" style="max-height: 150px;">
+                      <?php else: ?>
+                        <p class="text-muted mb-3">No image uploaded.</p>
+                      <?php endif; ?>
+                      <div class="mb-3">
+                        <input type="file" name="background_image" accept="image/*" class="form-control" required>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <!-- TRANSPARENCY CONTENT -->
+              <h6 class="text-secondary fw-bold">Transparency Content</h6>
+              <div class="table-responsive admin-table mb-4">
+                <table class="table table-hover align-middle text-start">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Properties</th>
+                      <th class="text-center">Current</th>
+                      <th class="text-end">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Description</td>
+                      <td class="text-center">
+                        <?= htmlspecialchars(mb_strimwidth($transparencyContent['description'], 0, 70, '...')) ?>
+                      </td>
+                      <td class="text-end">
+                        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#editTransparencyDescriptionModal">
+                          <i class="bi bi-pencil"></i> Edit
+                        </button>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Image</td>
+                      <td class="text-center">
+                        <?php if (!empty($transparencyContent['image']) && file_exists("images/" . $transparencyContent['image'])): ?>
+                          <img src="images/<?= htmlspecialchars($transparencyContent['image']) ?>?v=<?= time() ?>" style="height:32px;">
+                        <?php else: ?>
+                          <span class="text-muted">No image</span>
+                        <?php endif; ?>
+                      </td>
+                      <td class="text-end">
+                        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#editTransparencyImageModal">
+                          <i class="bi bi-pencil"></i> Edit
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Content Description Modal -->
+              <div class="modal fade" id="editTransparencyDescriptionModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <form method="POST" action="functions/update_transparency_content.php" class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Edit Transparency Content Description</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="description" class="form-control" rows="4" required><?= htmlspecialchars($transparencyContent['description']) ?></textarea>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <!-- Content Image Modal -->
+              <div class="modal fade" id="editTransparencyImageModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <form method="POST" action="functions/update_transparency_content.php" enctype="multipart/form-data" class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Edit Transparency Content Image</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                      <?php if (!empty($transparencyContent['image']) && file_exists("images/" . $transparencyContent['image'])): ?>
+                        <img src="images/<?= htmlspecialchars($transparencyContent['image']) ?>?v=<?= time() ?>" class="img-fluid mb-3" style="max-height: 150px;">
+                      <?php else: ?>
+                        <p class="text-muted mb-3">No image uploaded.</p>
+                      <?php endif; ?>
+                      <div class="mb-3">
+                        <input type="file" name="image" accept="image/*" class="form-control" required>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                  </form>
+                </div>
               </div>
 
             </div>

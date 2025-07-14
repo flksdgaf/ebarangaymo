@@ -14,23 +14,23 @@ $bindParams = [];
 
 // global search on transaction_id or affidavit content
 if ($search !== '') {
-    $whereClauses[] = "(k.transaction_id LIKE ? OR ca.content LIKE ? OR ra.content LIKE ?)";
-    $bindTypes .= str_repeat('s', 3);
+    $whereClauses[] = "(k.transaction_id LIKE ? OR k.complainant_affidavit LIKE ? OR k.respondent_affidavit LIKE ?)";
+    $bindTypes .= 'sss';
     $term = "%{$search}%";
     $bindParams = array_merge($bindParams, [$term, $term, $term]);
 }
 
 // filter by date range
 if ($date_from && $date_to) {
-    $whereClauses[] = 'DATE(k.scheduled_at) BETWEEN ? AND ?';
+    $whereClauses[] = "(LEFT(k.scheduled_at, 10) BETWEEN ? AND ?)";
     $bindTypes .= 'ss';
     $bindParams = array_merge($bindParams, [$date_from, $date_to]);
 } elseif ($date_from) {
-    $whereClauses[] = 'DATE(k.scheduled_at) >= ?';
+    $whereClauses[] = "(LEFT(k.scheduled_at, 10) >= ?)";
     $bindTypes .= 's';
     $bindParams = array_merge($bindParams, [$date_from]);
 } elseif ($date_to) {
-    $whereClauses[] = 'DATE(k.scheduled_at) <= ?';
+    $whereClauses[] = "(LEFT(k.scheduled_at, 10) <= ?)";
     $bindTypes .= 's';
     $bindParams = array_merge($bindParams, [$date_to]);
 }
@@ -45,13 +45,13 @@ $offset = ($page - 1) * $limit;
 // 1) total count
 $countSQL = "
     SELECT COUNT(*) AS total
-      FROM katarungang_pambarangay_records k
-      LEFT JOIN affidavit_records ca 
-        ON ca.katarungan_id = k.id AND ca.role = 'complainant'
-      LEFT JOIN affidavit_records ra 
-        ON ra.katarungan_id = k.id AND ra.role = 'respondent'
-    {$whereSQL}
+    FROM katarungang_pambarangay_records k
+    LEFT JOIN complaint_records c ON c.transaction_id = k.transaction_id
+    $whereSQL
 ";
+
+// SELECT COUNT(*) AS total FROM katarungang_pambarangay_records k $whereSQL
+
 $countStmt = $conn->prepare($countSQL);
 if ($whereClauses) {
     // Bind dynamically
@@ -77,27 +77,20 @@ $bp = [
 
 // 2) fetch page of rows with JOIN to fetch affidavits
 $sql = "
-     SELECT
-      k.transaction_id,
-      c.complainant_name,
-      c.respondent_name,
-      c.complaint_type AS subject_pb,
-      c.complaint_status,
-      ca.content AS complainant_affidavit,
-      ra.content AS respondent_affidavit,
-      DATE(k.scheduled_at) AS scheduled_date_pb_raw,
-      TIME(k.scheduled_at) AS scheduled_time_pb_raw,
-      DATE_FORMAT(k.scheduled_at, '%b %e, %Y %l:%i %p') AS formatted_sched,
-      k.complaint_stage,
-      k.appearance_status
+   SELECT
+        k.transaction_id,
+        c.complainant_name,
+        c.respondent_name,
+        k.complaint_type AS subject_pb,
+        c.complaint_status,
+        k.complainant_affidavit,
+        k.respondent_affidavit,
+        k.scheduled_at,
+        DATE_FORMAT(k.scheduled_at, '%b %e, %Y %l:%i %p') AS formatted_sched,
+        k.complaint_stage
     FROM katarungang_pambarangay_records k
-    LEFT JOIN complaint_records c
-      ON c.transaction_id = k.transaction_id
-    LEFT JOIN affidavit_records ca 
-      ON ca.katarungan_id = k.id AND ca.role = 'complainant'
-    LEFT JOIN affidavit_records ra 
-      ON ra.katarungan_id = k.id AND ra.role = 'respondent'
-    {$whereSQL}
+    LEFT JOIN complaint_records c ON c.transaction_id = k.transaction_id
+    $whereSQL
     ORDER BY k.transaction_id ASC
     LIMIT ? OFFSET ?
 ";
@@ -197,8 +190,9 @@ $stmt->close();
               <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
 
-            <form method="POST" action="functions/process_clear_katarungan.php">
+            <form id="katarunganForm" method="POST" action="">
               <input type="hidden" name="transaction_id" id="edit_katarungan_tid">
+              <input type="hidden" name="action_type" id="actionType">
 
               <div class="modal-body px-4 py-3">
                 <!-- Complaint Information -->
@@ -254,15 +248,81 @@ $stmt->close();
                   </div>
 
                   <!-- Add content for Ikalawang / Ikatlong Patawag tabs here if needed -->
-                  <div class="tab-pane fade" id="tab1st">…</div>
-                  <div class="tab-pane fade" id="tab2nd">…</div>
-                  <div class="tab-pane fade" id="tab3rd">…</div>
+                  <div class="tab-pane fade" id="tab1st">
+                    <div class="border rounded bg-light p-3">
+                      <div class="row g-3">
+                        <div class="col-md-3">
+                          <label class="form-label">Scheduled Date</label>
+                          <input type="date" name="scheduled_date_1st" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-3 me-1">
+                          <label class="form-label">Scheduled Time</label>
+                          <input type="time" name="scheduled_time_1st" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label">Complainant Affidavit</label>
+                          <textarea name="complainant_affidavit_1st" rows="2" class="form-control form-control-sm"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label">Respondent Affidavit</label>
+                          <textarea name="respondent_affidavit_1st" rows="2" class="form-control form-control-sm"></textarea>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="tab-pane fade" id="tab2nd">
+                    <div class="border rounded bg-light p-3">
+                      <div class="row g-3">
+                        <div class="col-md-3">
+                          <label class="form-label">Scheduled Date</label>
+                          <input type="date" name="scheduled_date_2nd" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-3 me-1">
+                          <label class="form-label">Scheduled Time</label>
+                          <input type="time" name="scheduled_time_2nd" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label">Complainant Affidavit</label>
+                          <textarea name="complainant_affidavit_2nd" rows="2" class="form-control form-control-sm"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label">Respondent Affidavit</label>
+                          <textarea name="respondent_affidavit_2nd" rows="2" class="form-control form-control-sm"></textarea>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="tab-pane fade" id="tab3rd">
+                    <div class="border rounded bg-light p-3">
+                      <div class="row g-3">
+                        <div class="col-md-3">
+                          <label class="form-label">Scheduled Date</label>
+                          <input type="date" name="scheduled_date_3rd" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-3 me-1">
+                          <label class="form-label">Scheduled Time</label>
+                          <input type="time" name="scheduled_time_3rd" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label">Complainant Affidavit</label>
+                          <textarea name="complainant_affidavit_3rd" rows="2" class="form-control form-control-sm"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label">Respondent Affidavit</label>
+                          <textarea name="respondent_affidavit_3rd" rows="2" class="form-control form-control-sm"></textarea>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
               </div>
 
               <div class="modal-footer justify-content">
-                <button type="submit" name="clear_case" value="1" class="btn btn-outline-success">Cleared</button>
-                <button type="submit" name="proceed_next" value="1" class="btn btn-success">Proceed to Next Patawag</button>
+                <button type="submit" id="clearBtn" class="btn btn-outline-success">Cleared</button>
+                <button type="button" id="proceedBtn" class="btn btn-success">Proceed to Next Patawag</button>
               </div>
             </form>
           </div>
@@ -391,20 +451,21 @@ $stmt->close();
             <?php while ($row = $result->fetch_assoc()): 
               $tid = htmlspecialchars($row['transaction_id']);
               $isCleared = ($row['complaint_status'] === 'Cleared');
+              $schedRaw = $row['scheduled_at'] ?? '';
             ?>
               <tr
                 data-id="<?= $tid ?>"
                 data-complainant-name="<?= htmlspecialchars($row['complainant_name']   ?? '') ?>"
                 data-respondent-name="<?= htmlspecialchars($row['respondent_name']     ?? '') ?>"
                 data-pb-subject="<?= htmlspecialchars($row['subject_pb']            ?? '') ?>"
-                data-pb-date="<?= htmlspecialchars($row['scheduled_date_pb_raw']   ?? '') ?>"
-                data-pb-time="<?= htmlspecialchars($row['scheduled_time_pb_raw']   ?? '') ?>"
+                data-pb-date="<?= htmlspecialchars(date('Y-m-d', strtotime($schedRaw))) ?>"
+                data-pb-time="<?= htmlspecialchars(date('H:i', strtotime($schedRaw))) ?>"
                 data-complaint-status="<?= htmlspecialchars($row['complaint_stage'] ?? '') ?>"
               >
                 <td><?= $tid ?></td>
                 <td><?= htmlspecialchars(substr($row['complainant_affidavit'], 0, 50)) ?: '—' ?></td>
                 <td><?= htmlspecialchars(substr($row['respondent_affidavit'], 0, 50)) ?: '—' ?></td>
-                <td><?= htmlspecialchars($row['formatted_sched']) ?></td>
+                <td><?= $row['formatted_sched'] ? htmlspecialchars($row['formatted_sched']) : '—' ?></td>
                 <td><?= htmlspecialchars($row['complaint_stage']) ?></td>
                 <td class="text-center">
                   <?php if ($isCleared): ?>
@@ -546,6 +607,24 @@ document.addEventListener('DOMContentLoaded', () => {
       // Show view modal
       new bootstrap.Modal(document.getElementById('viewKatarunganModal')).show();
     });
+  });
+
+  document.getElementById('clearBtn').addEventListener('click', function() {
+    document.getElementById('actionType').value = 'clear';
+  });
+
+  document.getElementById('proceedBtn').addEventListener('click', function (e) {
+    e.preventDefault();
+
+    const stageOrder = ['Punong Barangay', 'Unang Patawag', 'Ikalawang Patawag', 'Ikatlong Patawag'];
+    const currentStage = document.querySelector('[data-bs-target].nav-link.active').textContent.trim();
+
+    const currentIdx = [...document.querySelectorAll('#summonTab .nav-link')].findIndex(el => el.classList.contains('active'));
+    const nextIdx = currentIdx + 1;
+    const tabTriggers = document.querySelectorAll('#summonTab .nav-link');
+    if (tabTriggers[nextIdx]) {
+      new bootstrap.Tab(tabTriggers[nextIdx]).show();
+    }
   });
 });
 </script>

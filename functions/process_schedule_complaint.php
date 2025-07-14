@@ -57,8 +57,8 @@ $stmt->close();
 $created_at = date('Y-m-d H:i:s');
 $ins = $conn->prepare("
     INSERT INTO katarungang_pambarangay_records
-      (account_id, transaction_id, complaint_type, complaint_stage, appearance_status, scheduled_at, created_at)
-    VALUES (?, ?, ?, 'Punong Barangay', 'Pending', ?, ?)
+      (account_id, transaction_id, complaint_type, complainant_affidavit, respondent_affidavit, complaint_stage, scheduled_at, created_at)
+    VALUES (?, ?, ?, NULL, NULL, 'Punong Barangay', ?, ?)
 ");
 $ins->bind_param(
     "issss",

@@ -9,17 +9,7 @@ use Dompdf\Options;
 
 // 1) fetch the record
 $tid = $_GET['transaction_id'] ?? die('Missing transaction_id');
-$stmt = $conn->prepare("
-  SELECT 
-    client_name, client_address,
-    respondent_name, respondent_address,
-    incident_type, incident_place,
-    DATE_FORMAT(incident_date, '%M %e, %Y') AS date_occurred,
-    DATE_FORMAT(incident_time, '%l:%i %p') AS time_occurred,
-    incident_description
-  FROM blotter_records
-  WHERE transaction_id = ?
-");
+$stmt = $conn->prepare("SELECT client_name, client_address, respondent_name, respondent_address, incident_type, incident_place, DATE_FORMAT(incident_date, '%M %e, %Y') AS date_occurred, DATE_FORMAT(incident_time, '%l:%i %p') AS time_occurred, incident_description FROM blotter_records WHERE transaction_id = ?");
 $stmt->bind_param('s', $tid);
 $stmt->execute();
 $data = $stmt->get_result()->fetch_assoc();

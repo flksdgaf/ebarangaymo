@@ -272,7 +272,7 @@ $stmt->close();
       Sform.submit();
     });
 
-    // --- Remarks dropdown handler
+    // // --- Remarks dropdown handler
     // document.querySelectorAll('.remarks-select').forEach(sel => {
     //   sel.addEventListener('change', async function() {
     //     const row = this.closest('tr');
@@ -309,7 +309,7 @@ $stmt->close();
 
         // If pending and admin tries to change to something else
         if (json.has_pending && newRemark !== 'On Hold') {
-          showBootstrapAlert(`<strong>${name}</strong> has a pending blotter case. Remarks must remain as <strong>On Hold</strong>.`, 'danger');
+          showBootstrapAlert(`<strong>${name}</strong> has a pending complaint case. Remarks must remain as <strong>On Hold</strong>.`, 'danger');
           this.value = 'On Hold'; // revert back
           return;
         }

@@ -39,7 +39,6 @@ $incidentDesc = trim($_POST['incident_description'] ?? '');
 $incidentPlace = trim($_POST['incident_place'] ?? '');
 $incidentDate = $_POST['incident_date'] ?? '';
 $incidentTime  = $_POST['incident_time'] ?? '';
-// $blotterStatus = trim($_POST['blotter_status'] ?? '');
 
 // 3) UPDATE
 // ensure every bind slot is a variable
@@ -57,7 +56,6 @@ $sets = [
   "incident_place = ?",
   "incident_date = ?",
   "incident_time = ?",
-  // "blotter_status = ?",
 ];
 
 $params  = [
@@ -69,7 +67,6 @@ $params  = [
   &$incidentPlace,
   &$incidentDate,
   &$incidentTime,
-  // &$blotterStatus,
 ];
 
 $types = 'isssssss';
@@ -103,22 +100,6 @@ array_unshift($params, $types);
 call_user_func_array([$stmt, 'bind_param'], $params);
 
 $stmt->execute();
-
-// if ($respondentName) {
-//   // choose the target purok table(s) – if you want to update ALL puroks, loop 1 through 6
-//   $purokTables = ['purok1_rbi','purok2_rbi','purok3_rbi','purok4_rbi','purok5_rbi','purok6_rbi'];
-
-//   foreach ($purokTables as $tbl) {
-//     if ($blotterStatus === 'Pending') {
-//       $upd = $conn->prepare("UPDATE `{$tbl}` SET remarks = 'On Hold' WHERE full_name = ?");
-//     } else { // 'Cleared'
-//       $upd = $conn->prepare("UPDATE `{$tbl}` SET remarks = NULL WHERE full_name = ?");
-//     }
-//     $upd->bind_param('s', $respondentName);
-//     $upd->execute();
-//     $upd->close();
-//   }
-// }
 
 $adminId = $_SESSION['loggedInUserID'];
 $role = $_SESSION['loggedInUserRole'];

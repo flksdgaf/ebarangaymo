@@ -47,7 +47,7 @@ if ($date_from && $date_to) {
 $whereSQL = $whereClauses ? 'WHERE ' . implode(' AND ', $whereClauses) : '';
 
 // pagination
-$limit = 10;
+$limit = 8;
 $page = max((int)($_GET['summon_page'] ?? 1), 1);
 $offset = ($page - 1) * $limit;
 
@@ -76,7 +76,7 @@ if ($baseQS) {
 }
 
 // 2) fetch actual rows
-$sql = "SELECT transaction_id, complainant_name, complainant_address, respondent_name, respondent_address, complaint_type, complaint_affidavit, pleading_statement, DATE_FORMAT(created_at, '%b %e, %Y %l:%i %p') AS formatted_created FROM complaint_records {$whereSQL} ORDER BY transaction_id ASC LIMIT ? OFFSET ?";
+$sql = "SELECT transaction_id, complainant_name, complainant_address, respondent_name, respondent_address, complaint_type, complaint_affidavit, pleading_statement, complaint_status, DATE_FORMAT(created_at, '%b %e, %Y %l:%i %p') AS formatted_created FROM complaint_records {$whereSQL} ORDER BY transaction_id ASC LIMIT ? OFFSET ?"; // %l:%i %p
 $stmt = $conn->prepare($sql);
 
 // bind params
@@ -95,27 +95,10 @@ $stmt->close();
 ?>
 
 <div>
-  <!-- <?php if (isset($_GET['new_complaint_id'])): ?>
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-      New complaint record <strong><?= htmlspecialchars($_GET['new_complaint_id']) ?></strong> added successfully!
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-  <?php endif; ?> -->
-
-  <!-- <?php if ($id = ($_GET['new_complaint_id'] ?? false)): ?>
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-      New complaint record <strong><?= htmlspecialchars($id) ?></strong> added!
-      <a href="functions/print_complaint.php?transaction_id=<?= urlencode($id) ?>" class="btn btn-sm btn-outline-success ms-2" target="_blank">
-        Print Complaint
-      </a>
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-  <?php endif; ?> -->
-
-    <?php if ($id = ($_GET['new_complaint_id'] ?? false)): ?>
+  <?php if ($id = ($_GET['new_complaint_id'] ?? false)): ?>
     <div class="alert alert-success alert-dismissible fade show d-flex align-items-center" role="alert">
       <div>New complaint record <strong><?= htmlspecialchars($id) ?></strong> added!</div>
-      <div class="ms-auto d-flex align-items-center">
+      <div class="ms-3 d-flex align-items-center">
         <a href="#" data-tid="<?= htmlspecialchars($id) ?>" class="btn btn-sm btn-outline-success me-2 print-alert-btn">
           Print Complaint
         </a>
@@ -136,7 +119,6 @@ $stmt->close();
       Complaint record <strong><?= htmlspecialchars($_GET['updated_complaint_id']) ?></strong> updated successfully!
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
-
   <?php elseif (isset($_GET['complaint_nochange'])): ?>
     <div class="alert alert-warning alert-dismissible fade show" role="alert">
       No changes detected, nothing to update.
@@ -151,13 +133,29 @@ $stmt->close();
     </div>
   <?php endif; ?>
 
-  <?php if (isset($_GET['error']) && $_GET['error'] === 'summon_exists'): ?>
-    <div class="alert alert-warning alert-dismissible fade show" role="alert">
-      A summon has already been scheduled for transaction ID <strong><?= htmlspecialchars($_GET['transaction_id']) ?></strong>.
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
+  <?php if (isset($_GET['error'])): ?>
+    <?php if ($_GET['error'] === 'missing_fields'): ?>
+      <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        Please select both a date and time before scheduling.
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    <?php elseif ($_GET['error'] === 'not_found'): ?>
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        Complaint record <strong><?= htmlspecialchars($_GET['transaction_id'] ?? '') ?></strong> not found.
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    <?php elseif ($_GET['error'] === 'summon_exists'): ?>
+      <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        A summon has already been scheduled for transaction ID <strong><?= htmlspecialchars($_GET['transaction_id'] ?? '') ?></strong>.
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    <?php elseif ($_GET['error'] === 'insert_failed'): ?>
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        Failed to schedule summon. Please try again or contact support.
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    <?php endif; ?>
   <?php endif; ?>
-
 
   <div class="card shadow-sm p-3">
     <!-- FILTER + SEARCH -->
@@ -331,25 +329,31 @@ $stmt->close();
       <!-- Schedule Summon Modal -->
       <div class="modal fade" id="scheduleSummonModal" tabindex="-1" aria-labelledby="scheduleSummonModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-          <form id="scheduleSummonForm" method="POST" action="functions/process_schedule_summon.php" class="modal-content">
+          <form id="scheduleSummonForm" method="POST" action="functions/process_schedule_complaint.php" class="modal-content">
             <div class="modal-header bg-warning text-dark">
               <h5 class="modal-title" id="scheduleSummonModalLabel">Schedule Summon</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
               <input type="hidden" name="transaction_id" id="scheduleSummonTransactionId">
+
               <div class="mb-3">
-                <label for="scheduled_at" class="form-label">Select Date & Time</label>
-                <input type="datetime-local" name="scheduled_at" id="scheduled_at" class="form-control" required>
+                <label for="scheduled_date" class="form-label">Select Date</label>
+                <input type="date" name="scheduled_date" id="scheduled_date" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label for="scheduled_time" class="form-label">Select Time</label>
+                <input type="time" name="scheduled_time" id="scheduled_time" class="form-control" required>
               </div>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <button type="submit" class="btn btn-warning">Schedule & Print </button>
+              <button type="submit" class="btn btn-warning">Schedule Summon</button>
             </div>
           </form>
         </div>
       </div>
+
 
       <!-- Edit Complaint Modal -->
       <div class="modal fade" id="editComplaintModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="editComplaintModalLabel" aria-hidden="true">
@@ -368,7 +372,7 @@ $stmt->close();
                 <div class="row gy-2">
                   <!-- Complainant Details -->
                   <div class="col-12">
-                    <h6 class="fw-bold fs-5">Complainant Details</h6>
+                    <h6 class="fw-bold fs-5" style="color: #13411F;">Complainant Details</h6>
                     <hr class="my-2">
                   </div>
                   <div class="col-12 col-md-3">
@@ -394,7 +398,7 @@ $stmt->close();
 
                   <!-- Respondent Details -->
                   <div class="col-12 mt-3">
-                    <h6 class="fw-bold fs-5">Respondent Details</h6>
+                    <h6 class="fw-bold fs-5" style="color: #13411F;">Respondent Details</h6>
                     <hr class="my-2">
                   </div>
                   <div class="col-12 col-md-3">
@@ -420,11 +424,11 @@ $stmt->close();
 
                   <!-- Complaint Details -->
                   <div class="col-12 mt-3">
-                    <h6 class="fw-bold fs-5">Complaint Details</h6>
+                    <h6 class="fw-bold fs-5" style="color: #13411F;">Complaint Details</h6>
                     <hr class="my-2">
                   </div>
                   <div class="col-12 col-md-6">
-                    <label class="form-label fw-bold">Complaint Type</label>
+                    <label class="form-label fw-bold">Complaint / Incident Type</label>
                     <input type="text" id="edit_complaint_type" name="complaint_type" class="form-control form-control-sm" required>
                   </div>
                   <div class="col-12">
@@ -439,7 +443,6 @@ $stmt->close();
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="printComplaintBtn">Print Complaint</button>
                 <button type="submit" class="btn btn-success">Save Changes</button>
               </div>
             </form>
@@ -450,7 +453,7 @@ $stmt->close();
       <!-- Delete Summon Modal -->
       <div class="modal fade" id="deleteSummonModal" tabindex="-1" aria-labelledby="deleteSummonModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-          <form id="deleteSummonForm">
+          <form id="deleteSummonForm" method="POST" action="functions/delete_complaint.php">
             <div class="modal-content">
               <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title" id="deleteSummonModalLabel">Confirm Deletion</h5>
@@ -459,6 +462,10 @@ $stmt->close();
               <div class="modal-body">
                 Are you sure you want to permanently delete summon record <strong id="deleteSummonTransactionIdLabel"></strong>?
                 <input type="hidden" name="transaction_id" id="deleteSummonTransactionId">
+                <input type="hidden" name="summon_page" value="<?= htmlspecialchars($page) ?>">
+                <input type="hidden" name="summon_search" value="<?= htmlspecialchars($search) ?>">
+                <input type="hidden" name="summon_date_from" value="<?= htmlspecialchars($date_from) ?>">
+                <input type="hidden" name="summon_date_to" value="<?= htmlspecialchars($date_to) ?>">
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -480,7 +487,8 @@ $stmt->close();
             <th class="text-nowrap">Complainant</th>
             <th class="text-nowrap">Respondent</th>
             <th class="text-nowrap">Complaint Type</th>
-            <th class="text-nowrap">Date Filed</th>
+            <th class="text-nowrap">Status</th>
+            <!-- <th class="text-nowrap">Date Filed</th> -->
             <th class="text-nowrap text-center">Action</th>
           </tr>
         </thead>
@@ -496,6 +504,7 @@ $stmt->close();
                 data-respondent-name="<?= htmlspecialchars($row['respondent_name'], ENT_QUOTES) ?>"
                 data-respondent-address="<?= htmlspecialchars($row['respondent_address'] ?? '', ENT_QUOTES) ?>"
                 data-complaint-type="<?= htmlspecialchars($row['complaint_type'], ENT_QUOTES) ?>"
+                data-complaint-status="<?= htmlspecialchars($row['complaint_status'], ENT_QUOTES) ?>"
                 data-complaint-affidavit="<?= htmlspecialchars($row['complaint_affidavit'] ?? '', ENT_QUOTES) ?>"
                 data-pleading-statement="<?= htmlspecialchars($row['pleading_statement'] ?? '', ENT_QUOTES) ?>"   
               >
@@ -503,12 +512,20 @@ $stmt->close();
                 <td><?= htmlspecialchars($row['complainant_name']) ?></td>
                 <td><?= htmlspecialchars($row['respondent_name']) ?></td>
                 <td><?= htmlspecialchars($row['complaint_type']) ?></td>
-                <td><?= htmlspecialchars($row['formatted_created']) ?></td>
-                <td class="text-center">
+                <td><?= htmlspecialchars($row['complaint_status']) ?></td> 
+                <!-- <td><?= htmlspecialchars($row['formatted_created']) ?></td> -->
+                <td class="text-center text-nowrap">
                   <!-- Schedule -->
                   <button class="btn btn-sm btn-warning schedule-btn-complaint">
                     <span class="material-symbols-outlined" style="font-size: 12px;">
                       event
+                    </span>
+                  </button>
+
+                  <!-- Print -->
+                  <button class="btn btn-sm btn-primary print-btn-complaint">
+                    <span class="material-symbols-outlined" style="font-size: 12px;">
+                      print
                     </span>
                   </button>
 
@@ -575,8 +592,7 @@ function printComplaint(transactionId) {
   if (!transactionId) return alert('No transaction ID provided.');
   window.open(
     'functions/print_complaint.php?transaction_id=' + encodeURIComponent(transactionId),
-    '_blank',
-    'width=900,height=600'
+    '_blank'
   );
 }
 
@@ -603,14 +619,29 @@ document.addEventListener('DOMContentLoaded', () => {
   const complaintModal = new bootstrap.Modal(complaintModalEl);
   document.getElementById('addComplaintBtn').addEventListener('click', () => complaintModal.show());
 
-  // Schedule‑button wiring
-  const scheduleModal = new bootstrap.Modal(document.getElementById('scheduleSummonModal'));
+  const scheduleModalEl = document.getElementById('scheduleSummonModal');
+  const scheduleModal   = new bootstrap.Modal(scheduleModalEl);  
+
   document.querySelectorAll('.schedule-btn-complaint').forEach(btn => {
     btn.addEventListener('click', () => {
       const tr  = btn.closest('tr');
       const tid = tr.dataset.id;
       document.getElementById('scheduleSummonTransactionId').value = tid;
-      scheduleModal.show();
+      scheduleModal.show();  // <- this now actually shows
+    });
+  });
+
+  document.querySelectorAll('.print-btn-complaint').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tid = btn.closest('tr').dataset.id;
+      printComplaint(tid);
+    });
+  });
+
+  document.querySelectorAll('.print-alert-btn').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      printComplaint(link.dataset.tid);
     });
   });
 
@@ -701,41 +732,5 @@ document.addEventListener('DOMContentLoaded', () => {
       deleteSummonLabel.textContent = tid;
     });
   });
-
-  deleteSummonForm.addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    const formData = new FormData(deleteSummonForm);
-
-    fetch('functions/delete_complaint.php', {
-      method: 'POST',
-      body: formData
-    })
-    .then(resp => resp.json())
-    .then(data => {
-      if (data.success) {
-        deleteSummonModal.hide();
-        window.location.href = window.location.pathname + '?page=adminComplaints&deleted_complaint_id=' + encodeURIComponent(formData.get('transaction_id'));
-      } else {
-        alert('Error: ' + (data.error || 'Failed to delete.'));
-      }
-    });
-  });
-
-  // 1) in the alert:
-  document.querySelectorAll('.alert a.print-alert-btn').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.preventDefault();
-      const tid = btn.dataset.tid;
-      printComplaint(tid);
-    });
-  });
-
-  // 2) in the Edit Complaint modal:
-  document.getElementById('printComplaintBtn').addEventListener('click', () => {
-    const tid = document.getElementById('edit_complaint_transaction_id').value;
-    printComplaint(tid);
-  });
-
 });
 </script>

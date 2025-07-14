@@ -232,7 +232,7 @@ $result = $st->get_result();
       <div class="dropdown ms-3">
         <button class="btn btn-sm btn-success dropdown-toggle" type="button" id="addRequestDropdown" data-bs-toggle="dropdown" aria-expanded="false">
           <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">add</span>
-          <i class="bi bi-plus-lg me-1"></i> Add New Request
+            Add New Request
         </button>
         <ul class="dropdown-menu" aria-labelledby="addRequestDropdown">
           <?php foreach (['Barangay ID','Business Permit','Good Moral','Guardianship','Indigency','Residency','Solo Parent'] as $type): ?> <!-- 'Equipment Borrowing' -->

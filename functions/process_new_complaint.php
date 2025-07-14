@@ -43,6 +43,7 @@ if (!empty($_POST['respondent_first_name'])) {
 $complaintType = trim($_POST['complaint_type'] ?? '');
 $complaintAffidavit = trim($_POST['complaint_affidavit'] ?? '');
 $pleadingStatement = trim($_POST['pleading_statement'] ?? '');
+$complaintStatus = 'Pending';
 
 // 3) GENERATE NEXT TRANSACTION_ID
 $stmt = $conn->prepare("SELECT transaction_id FROM complaint_records ORDER BY id DESC LIMIT 1");
@@ -59,10 +60,10 @@ $transactionId = sprintf('CMPL-%07d', $num);
 $stmt->close();
 
 // 4) INSERT INTO complaint_records
-$sql = "INSERT INTO complaint_records (account_id, transaction_id, blotter_id, complainant_name, complainant_address, respondent_name, respondent_address, complaint_type, complaint_affidavit, pleading_statement) VALUES (?,?,?,?,?,?,?,?,?,?)";
+$sql = "INSERT INTO complaint_records (account_id, transaction_id, blotter_id, complainant_name, complainant_address, respondent_name, respondent_address, complaint_type, complaint_affidavit, pleading_statement, complaint_status) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
 $ins = $conn->prepare($sql);
 $blotterId = null; // if you have a blotter link, set it here
-$ins->bind_param('isssssssss', $userId, $transactionId, $blotterId, $complainantName, $complainantAddress, $respondentName, $respondentAddress, $complaintType, $complaintAffidavit, $pleadingStatement);
+$ins->bind_param('issssssssss', $userId, $transactionId, $blotterId, $complainantName, $complainantAddress, $respondentName, $respondentAddress, $complaintType, $complaintAffidavit, $pleadingStatement, $complaintStatus);
 $ins->execute();
 $ins->close();
 
@@ -98,6 +99,35 @@ if (in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
 //     $upd->close();
 //   }
 // }
+
+// ——> SYNC RESPONDENT INTO RBI TABLES HERE:
+
+$complaintStatus = trim($_POST['complaint_status'] ?? 'Pending');
+
+if ($respondentName) {
+  $purokTables = [
+    'purok1_rbi','purok2_rbi','purok3_rbi',
+    'purok4_rbi','purok5_rbi','purok6_rbi'
+  ];
+  foreach ($purokTables as $tbl) {
+    if ($complaintStatus === 'Pending') {
+      $upd = $conn->prepare("
+        UPDATE `{$tbl}`
+           SET remarks = 'On Hold'
+         WHERE full_name = ?
+      ");
+    } else {
+      $upd = $conn->prepare("
+        UPDATE `{$tbl}`
+           SET remarks = NULL
+         WHERE full_name = ?
+      ");
+    }
+    $upd->bind_param('s', $respondentName);
+    $upd->execute();
+    $upd->close();
+  }
+}
 
 // 6) REDIRECT BACK WITH SUCCESS
 // header("Location: ../superAdminPanel.php?page=superAdminComplaints&transaction_id={$transactionId}");

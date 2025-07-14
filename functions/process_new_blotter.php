@@ -19,7 +19,6 @@ $cs = trim($_POST['client_suffix'] ?? '');
 $middlePart = $cm ? " {$cm}" : '';
 $suffixPart = $cs ? " {$cs}" : '';
 $clientName = "{$cl}{$suffixPart}, {$cf}{$middlePart}";
-// $clientName = trim($_POST['client_name'] ?? '');
 $clientAddress = trim($_POST['client_address'] ?? '');
 
 // Respondent (only if checkbox was checked, otherwise fields disabled)
@@ -36,29 +35,12 @@ if (!empty($_POST['respondent_first_name'])) {
     $respondentAddress = trim($_POST['respondent_address'] ?? '');
 }
 
-// Respondent (only if checkbox was checked):
-// $respondentName    = null;
-// $respondentAddress = null;
-// if (isset($_POST['has_respondent'])) {
-//     // Pull both fields, defaulting to empty string if not set
-//     $rawName    = trim($_POST['respondent_name']    ?? '');
-//     $rawAddress = trim($_POST['respondent_address'] ?? '');
-
-//     // Only set them if non‐empty
-//     if ($rawName !== '') {
-//         $respondentName    = $rawName;
-//     }
-//     if ($rawAddress !== '') {
-//         $respondentAddress = $rawAddress;
-//     }
-// }
-
 // Incident details
 $incidentType = trim($_POST['incident_type'] ?? '');
 $incidentDesc = trim($_POST['incident_description'] ?? '');
 $incidentPlace = trim($_POST['incident_place'] ?? '');
-$incidentDate = $_POST['incident_date']  ?? null;  // YYYY-MM-DD
-$incidentTime = $_POST['incident_time']  ?? null;  // HH:MM
+$incidentDate = $_POST['incident_date'] ?? null; // YYYY-MM-DD
+$incidentTime = $_POST['incident_time'] ?? null; // HH:MM
 
 // 3) GENERATE NEXT TRANSACTION_ID
 $stmt = $conn->prepare("SELECT transaction_id FROM blotter_records ORDER BY id DESC LIMIT 1");
@@ -75,10 +57,6 @@ $transactionId = sprintf('BLTR-%07d', $num);
 $stmt->close();
 
 // 4) INSERT INTO blotter_records
-// $sql = "INSERT INTO blotter_records (account_id, transaction_id, client_name, client_address, respondent_name, respondent_address, incident_type, incident_description, incident_place, incident_date, incident_time) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
-// $ins = $conn->prepare($sql);
-// $ins->bind_param('issssssssss', $userId, $transactionId, $clientName, $clientAddress, $respondentName, $respondentAddress, $incidentType, $incidentDesc, $incidentPlace, $incidentDate, $incidentTime);
-
 $ins = $conn->prepare("INSERT INTO blotter_records (account_id, transaction_id, client_name, client_address, respondent_name, respondent_address, incident_type, incident_description, incident_place, incident_date, incident_time) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
 $ins->bind_param('issssssssss',$userId, $transactionId,$clientName, $clientAddress,$respondentName, $respondentAddress, $incidentType, $incidentDesc, $incidentPlace,$incidentDate, $incidentTime);
 $ins->execute();
@@ -100,30 +78,7 @@ if (in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
     $logStmt->close();
 }
 
-// ——> SYNC RESPONDENT INTO RBI TABLES HERE:
-$blotterStatus = trim($_POST['blotter_status'] ?? 'Pending');
-
-if ($respondentName) {
-  $purokTables = [
-    'purok1_rbi','purok2_rbi','purok3_rbi',
-    'purok4_rbi','purok5_rbi','purok6_rbi'
-  ];
-  foreach ($purokTables as $tbl) {
-    if ($blotterStatus === 'Pending') {
-      $upd = $conn->prepare("UPDATE `{$tbl}` SET remarks = 'On Hold' WHERE full_name = ?");
-    } else {
-      $upd = $conn->prepare("UPDATE `{$tbl}` SET remarks = NULL WHERE full_name = ?");
-    }
-    $upd->bind_param('s', $respondentName);
-    $upd->execute();
-    $upd->close();
-  }
-}
-
 // 6) REDIRECT BACK
-// header("Location: ../superAdminPanel.php?page=superAdminComplaints&transaction_id={$transactionId}");
-// header("Location: ../adminPanel.php?page=adminComplaints&transaction_id={$transactionId}");
 header("Location: ../adminPanel.php?page=adminComplaints&new_blotter_id={$transactionId}");
-
 exit();
 ?>

@@ -1,85 +1,92 @@
 <?php
 session_start();
 require 'dbconn.php';
-require '../vendor/autoload.php'; // for Dompdf
 
-use Dompdf\Dompdf;
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  $transaction_id = $_POST['transaction_id'] ?? '';
-  $scheduled_at   = $_POST['scheduled_at'] ?? '';
-  $account_id     = $_SESSION['loggedInUserID'] ?? null;
-
-  if (!$transaction_id || !$scheduled_at || !$account_id) {
-    die("Missing required fields.");
-  }
-
-  // 1. Check if complaint exists in complaint_records
-  $stmt = $conn->prepare("SELECT * FROM complaint_records WHERE transaction_id = ?");
-  $stmt->bind_param('s', $transaction_id);
-  $stmt->execute();
-  $complaint = $stmt->get_result()->fetch_assoc();
-  $stmt->close();
-
-  if (!$complaint) {
-    die("Complaint record not found.");
-  }
-
-  // 2. Check if already scheduled in katarungang_pambarangay_records
-  $stmt = $conn->prepare("SELECT id FROM katarungang_pambarangay_records WHERE transaction_id = ?");
-  $stmt->bind_param('s', $transaction_id);
-  $stmt->execute();
-  $existing = $stmt->get_result()->fetch_assoc();
-  $stmt->close();
-
-  if ($existing) {
-    header("Location: ../adminPanel.php?page=adminComplaints&error=summon_exists&transaction_id={$transaction_id}");
-    exit();
-  }
-
-  // 3. Insert new summon schedule
-  $created_at = date('Y-m-d H:i:s');
-  $insert = $conn->prepare("INSERT INTO katarungang_pambarangay_records 
-    (account_id, transaction_id, complainant_affidavit, respondent_affidavit, complaint_status, scheduled_at, created_at) 
-    VALUES (?, ?, NULL, NULL, 'Scheduled', ?, ?)");
-  $insert->bind_param("isss", $account_id, $transaction_id, $scheduled_at, $created_at);
-
-  if (!$insert->execute()) {
-    die('Insert failed: ' . $insert->error);
-  }
-
-  // 4. Generate PDF using Dompdf
-  $dompdf = new Dompdf();
-
-  ob_start();
-  ?>
-  <html>
-    <head><title>Summon Letter</title></head>
-    <body>
-      <h2>Barangay Summon Notice</h2>
-      <p><strong>Case No.:</strong> <?= htmlspecialchars($transaction_id) ?></p>
-      <p><strong>Scheduled Date:</strong> <?= date('F j, Y g:i A', strtotime($scheduled_at)) ?></p>
-      <hr>
-      <h4>Complainant</h4>
-      <p><?= htmlspecialchars($complaint['complainant_name']) ?><br><?= htmlspecialchars($complaint['complainant_address']) ?></p>
-      <h4>Respondent</h4>
-      <p><?= htmlspecialchars($complaint['respondent_name']) ?><br><?= htmlspecialchars($complaint['respondent_address']) ?></p>
-      <h4>Complaint Type</h4>
-      <p><?= htmlspecialchars($complaint['complaint_type']) ?></p>
-      <h4>Pleading Statement</h4>
-      <p><?= nl2br(htmlspecialchars($complaint['pleading_statement'])) ?></p>
-    </body>
-  </html>
-  <?php
-  $html = ob_get_clean();
-
-  $dompdf->loadHtml($html);
-  $dompdf->setPaper('A4', 'portrait');
-  $dompdf->render();
-
-  $dompdf->stream("summon_{$transaction_id}.pdf", ["Attachment" => false]);
-  exit;
+// 1) AUTH CHECK
+if (!isset($_SESSION['auth'], $_SESSION['loggedInUserID']) || $_SESSION['auth'] !== true) {
+    header("Location: ../index.php");
+    exit;
 }
 
-$conn->close();
+$pageNum        = $_POST['summon_page'] ?? 1;
+$transaction_id = $_POST['transaction_id'] ?? '';
+$date           = $_POST['scheduled_date'] ?? '';
+$time           = $_POST['scheduled_time'] ?? '';
+$account_id     = $_SESSION['loggedInUserID'];
+
+// 2) VALIDATE
+if (!$transaction_id || !$date || !$time) {
+    header("Location: ../adminPanel.php?page=adminComplaints&summon_page=$pageNum&error=missing_fields");
+    exit;
+}
+$scheduled_at = $date . ' ' . $time . ':00';
+
+// 3) FETCH complaint_type
+$stmt = $conn->prepare("
+    SELECT complaint_type
+      FROM complaint_records
+     WHERE transaction_id = ?
+");
+$stmt->bind_param('s', $transaction_id);
+$stmt->execute();
+$result = $stmt->get_result();
+if (!($row = $result->fetch_assoc())) {
+    $stmt->close();
+    header("Location: ../adminPanel.php?page=adminComplaints&summon_page=$pageNum&error=not_found&transaction_id={$transaction_id}");
+    exit;
+}
+$complaint_type = $row['complaint_type'];
+$stmt->close();
+
+// 4) CHECK IF ALREADY SCHEDULED
+$stmt = $conn->prepare("
+    SELECT 1
+      FROM katarungang_pambarangay_records
+     WHERE transaction_id = ?
+");
+$stmt->bind_param('s', $transaction_id);
+$stmt->execute();
+if ($stmt->get_result()->fetch_row()) {
+    $stmt->close();
+    header("Location: ../adminPanel.php?page=adminComplaints&summon_page=$pageNum&error=summon_exists&transaction_id={$transaction_id}");
+    exit;
+}
+$stmt->close();
+
+// 5) INSERT INTO katarungang_pambarangay_records
+$created_at = date('Y-m-d H:i:s');
+$ins = $conn->prepare("
+    INSERT INTO katarungang_pambarangay_records
+      (account_id, transaction_id, complaint_type, complaint_stage, appearance_status, scheduled_at, created_at)
+    VALUES (?, ?, ?, 'Punong Barangay', 'Pending', ?, ?)
+");
+$ins->bind_param(
+    "issss",
+    $account_id,
+    $transaction_id,
+    $complaint_type,
+    $scheduled_at,
+    $created_at
+);
+
+if (!$ins->execute()) {
+    $ins->close();
+    header("Location: ../adminPanel.php?page=adminComplaints&summon_page=$pageNum&error=insert_failed");
+    exit;
+}
+$ins->close();
+
+// 6) UPDATE ORIGINAL complaint_records
+$upd = $conn->prepare("
+    UPDATE complaint_records
+       SET complaint_status = 'Scheduled'
+     WHERE transaction_id = ?
+");
+$upd->bind_param("s", $transaction_id);
+$upd->execute();
+$upd->close();
+
+// 7) SUCCESS REDIRECT
+header("Location: ../adminPanel.php?page=adminComplaints&summon_page=$pageNum&scheduled_complaint_id={$transaction_id}");
+exit;
 ?>

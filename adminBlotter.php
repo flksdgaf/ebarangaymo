@@ -203,10 +203,7 @@ $stmt->close();
                     <h6 class="fw-bold fs-5" style="color: #13411F;">Client Details</h6>
                     <hr class="my-2">
                   </div>
-                  <!-- <div class="col-12 col-md-5">
-                    <label class="form-label fw-bold">Client's Name</label>
-                    <input name="client_name" type="text" class="form-control form-control-sm" required>
-                  </div> -->
+
                   <div class="col-12 col-md-3">
                     <label class="form-label fw-bold">First Name</label>
                     <input name="client_first_name" type="text" class="form-control form-control-sm" required>
@@ -242,10 +239,6 @@ $stmt->close();
 
                   <!-- Wrap all respondent fields here — note the `row` class -->
                   <div id="respondentSection" class="row gy-2 col-12">
-                    <!-- <div class="col-12 col-md-5">
-                      <label class="form-label fw-bold">Respondent's Name</label>
-                      <input name="respondent_name" type="text" class="form-control form-control-sm" required>
-                    </div> -->
                     <div class="col-12 col-md-3">
                       <label class="form-label fw-bold">First Name</label>
                       <input name="respondent_first_name" type="text" class="form-control form-control-sm" required>
@@ -320,7 +313,7 @@ $stmt->close();
                 <div class="row gy-2">
                   <!-- Client Details -->
                   <div class="col-12">
-                    <h6 class="fw-bold fs-5">Client Details</h6>
+                    <h6 class="fw-bold fs-5" style="color: #13411F;">Client Details</h6>
                     <hr class="my-2">
                   </div>
                   <div class="col-12 col-md-3">
@@ -328,7 +321,7 @@ $stmt->close();
                     <input name="client_first_name" id="edit_client_first_name" type="text" class="form-control form-control-sm" required>
                   </div>
                   <div class="col-12 col-md-3">
-                    <label class="form-label fw-bold">Middle Name <small>(optional)</small></label>
+                    <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
                     <input name="client_middle_name" id="edit_client_middle_name" type="text" class="form-control form-control-sm">
                   </div>
                   <div class="col-12 col-md-3">
@@ -336,8 +329,8 @@ $stmt->close();
                     <input name="client_last_name" id="edit_client_last_name" type="text" class="form-control form-control-sm" required>
                   </div>
                   <div class="col-12 col-md-3">
-                    <label class="form-label fw-bold">Suffix <small>(optional)</small></label>
-                    <input name="client_suffix" id="edit_client_suffix" type="text" class="form-control form-control-sm">
+                    <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
+                    <input name="client_suffix" id="edit_client_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
                   </div>
                   <div class="col-12 col-md-6">
                     <label class="form-label fw-bold">Client Address</label>
@@ -350,7 +343,7 @@ $stmt->close();
                       <input class="form-check-input" type="checkbox" id="edit_hasRespondentCheck" name="has_respondent" checked>
                       <label class="form-check-label" for="edit_hasRespondentCheck"></label>
                     </div>
-                    <h6 class="fw-bold mb-0 ms-2 fs-5">Respondent Details</h6>
+                    <h6 class="fw-bold mb-0 fs-5" style="color: #13411F;">Respondent Details</h6>
                   </div>
                   <div class="col-12"><hr class="my-2"></div>
 
@@ -361,7 +354,7 @@ $stmt->close();
                       <input name="respondent_first_name" id="edit_respondent_first_name" type="text" class="form-control form-control-sm" required>
                     </div>
                     <div class="col-12 col-md-3">
-                      <label class="form-label fw-bold">Middle Name <small>(optional)</small></label>
+                      <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
                       <input name="respondent_middle_name" id="edit_respondent_middle_name" type="text" class="form-control form-control-sm">
                     </div>
                     <div class="col-12 col-md-3">
@@ -369,8 +362,9 @@ $stmt->close();
                       <input name="respondent_last_name" id="edit_respondent_last_name" type="text" class="form-control form-control-sm" required>
                     </div>
                     <div class="col-12 col-md-3">
-                      <label class="form-label fw-bold">Suffix <small>(optional)</small></label>
-                      <input name="respondent_suffix" id="edit_respondent_suffix" type="text" class="form-control form-control-sm">
+                      <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
+                      <input name="respondent_suffix" id="edit_respondent_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
+                      
                     </div>
                     <div class="col-12 col-md-6">
                       <label class="form-label fw-bold">Respondent Address</label>
@@ -380,20 +374,13 @@ $stmt->close();
 
                   <!-- Complaint Details -->
                   <div class="col-12 mt-3">
-                    <h6 class="fw-bold fs-5">Complaint Details</h6>
+                    <h6 class="fw-bold fs-5" style="color: #13411F;">Complaint Details</h6>
                     <hr class="my-2">
                   </div>
                   <div class="col-12 col-md-6 me-1">
                     <label class="form-label fw-bold">Complaint / Incident Type</label>
                     <input name="incident_type" id="edit_incident_type" type="text" class="form-control form-control-sm" required>
                   </div>
-                  <!-- <div class="col-12 col-md-3">
-                    <label class="form-label fw-bold">Complaint Status</label>
-                    <select name="blotter_status" id="edit_blotter_status" class="form-select form-select-sm" required>
-                      <option value="Pending">Pending</option>
-                      <option value="Cleared">Cleared</option>
-                    </select>
-                  </div> -->
                   <div class="col-12 col-md-6">
                     <label class="form-label fw-bold">Incident Place</label>
                     <input name="incident_place" id="edit_incident_place" type="text" class="form-control form-control-sm" required>
@@ -415,7 +402,7 @@ $stmt->close();
 
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <button type="submit" class="btn btn-success">Save Changes</button>
               </div>
             </form>
           </div>
@@ -482,7 +469,7 @@ $stmt->close();
                   <?= htmlspecialchars($row['formatted_date']) ?>
                   <?= htmlspecialchars($row['formatted_time']) ?>
                 </td>
-                <td class="text-center">
+                <td class="text-nowrap text-center">
                   <!-- Print -->
                   <button class="btn btn-sm btn-primary print-btn" data-id="<?= $tid ?>">
                     <span class="material-symbols-outlined" style="font-size: 12px;">
@@ -696,9 +683,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // 5) For the other complaint fields—if you have them in hidden <td>s or data-attributes—
       // you could do exactly the same: grab their textContent and assign to
-      // document.getElementById('edit_incident_type').value, etc.
+      // document.getElementById('edit_incident_type').value, etc. 
       document.getElementById('edit_incident_type').value = tr.children[3].textContent.trim();
-      // If your date/time are in the same cell you may need to store them as data-* on the <tr>
       document.getElementById('edit_incident_date').value = tr.getAttribute('data-incident-date');
       document.getElementById('edit_incident_time').value = tr.getAttribute('data-incident-time');
       document.getElementById('edit_incident_place').value = tr.getAttribute('data-incident-place');

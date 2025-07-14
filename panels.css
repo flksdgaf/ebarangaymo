@@ -313,4 +313,18 @@
 }
 
 /* END OF PAGINATION STYLES */
+
+/* ADMIN COMPLAINTS */
+/* override default nav‑tabs link colors */
+.nav-tabs .nav-link {
+  color: #000000;
+}
+.nav-tabs .nav-link:hover {
+  color: #28a745;
+}
+.nav-tabs.nav .nav-item > .nav-link.active {
+  color: #28a745;
+}
+
+/* END OF ADMIN COMPLAINTS */
 /* END OF MAIN CONTENT */

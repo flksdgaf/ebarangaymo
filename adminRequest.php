@@ -1081,7 +1081,7 @@ $result = $st->get_result();
       </div>
 
       <!-- Edit Request Modal -->
-      <div class="modal fade" id="editRequestModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="editRequestModalLabel" aria-hidden="true">
+      <!-- <div class="modal fade" id="editRequestModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="editRequestModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width:90vw;">
           <div class="modal-content">
             <div class="modal-header text-white" style="background-color: #13411F;">
@@ -1089,13 +1089,13 @@ $result = $st->get_result();
               <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="editRequestForm" method="POST" action="functions/process_edit_request.php" enctype="multipart/form-data">
-              <div class="modal-body">
+              <div class="modal-body"> -->
                 <!-- carry over the request type and transaction ID -->
-                <input type="hidden" name="request_type" id="editModalRequestType" value="">
-                <input type="hidden" name="transaction_id" id="editModalTransactionId" value="">
+                <!-- <input type="hidden" name="request_type" id="editModalRequestType" value="">
+                <input type="hidden" name="transaction_id" id="editModalTransactionId" value=""> -->
                 
                 <!-- Dynamic fields get injected here -->
-                <div class="row g-3" id="dynamicEditFields"></div>
+                <!-- <div class="row g-3" id="dynamicEditFields"></div>
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -1104,10 +1104,10 @@ $result = $st->get_result();
             </form>
           </div>
         </div>
-      </div>
+      </div> -->
 
       <!-- Print / Generate Certificate Modal -->
-      <div class="modal fade" id="printModal" tabindex="-1" aria-labelledby="printModalLabel" aria-hidden="true">
+      <!-- <div class="modal fade" id="printModal" tabindex="-1" aria-labelledby="printModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
             <div class="modal-header">
@@ -1124,7 +1124,6 @@ $result = $st->get_result();
                   <option value="Paid">Paid</option>
                 </select>
               </p>
-              <!-- carry‑over of the request type -->
               <input type="hidden" id="printRequestType">
             </div>
             <div class="modal-footer">
@@ -1137,7 +1136,7 @@ $result = $st->get_result();
             </div>
           </div>
         </div>
-      </div>
+      </div> -->
 
 
       <form method="get" id="searchForm" class="d-flex ms-auto me-2">
@@ -1187,7 +1186,7 @@ $result = $st->get_result();
                 <td><?= htmlspecialchars($row['formatted_date']) ?></td>
                 <td>
                   <!-- Release Button -->
-                  <button type="button" class="btn btn-sm btn-success btn-print" title="Release <?= $tid ?>">
+                  <button type="button" class="btn btn-sm btn-success btn-release" title="Release <?= $tid ?>">
                     <span class="material-symbols-outlined" style="font-size: 13px;">
                       check
                     </span>
@@ -1316,111 +1315,111 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Show Edit Modal on “Edit” button click
-  const dynamicEditFields = document.getElementById('dynamicEditFields');
-  document.querySelectorAll('.btn-edit').forEach(btn => {
-    btn.addEventListener('click', e => {
+  // const dynamicEditFields = document.getElementById('dynamicEditFields');
+  // document.querySelectorAll('.btn-edit').forEach(btn => {
+  //   btn.addEventListener('click', e => {
       // find the row and extract ID + Request Type
-      const tr = e.currentTarget.closest('tr');
-      const tid = tr.dataset.id;
+      // const tr = e.currentTarget.closest('tr');
+      // const tid = tr.dataset.id;
       // assuming the “Request” column is the 3rd <td>
-      const type = tr.children[2].textContent.trim();
+      // const type = tr.children[2].textContent.trim();
 
       // set hidden fields
-      document.getElementById('editModalTransactionId').value = tid;
-      document.getElementById('editModalRequestType').value = type;
+      // document.getElementById('editModalTransactionId').value = tid;
+      // document.getElementById('editModalRequestType').value = type;
       // update title
-      document.getElementById('editRequestModalLabel').textContent = `${type} Request`;
+      // document.getElementById('editRequestModalLabel').textContent = `${type} Request`;
 
       // inject the correct template
-      dynamicEditFields.innerHTML = '';
-      const tpl = document.getElementById('tpl-' + type);
-      if (tpl) {
-        dynamicEditFields.appendChild(tpl.content.cloneNode(true));
+      // dynamicEditFields.innerHTML = '';
+      // const tpl = document.getElementById('tpl-' + type);
+      // if (tpl) {
+      //   dynamicEditFields.appendChild(tpl.content.cloneNode(true));
 
         // 1) Grab the freshly injected elements
-        const chkEdit = dynamicEditFields.querySelector('#requirePhotoCheck');
-        const photoEdit = dynamicEditFields.querySelector('#photoInput');
+        // const chkEdit = dynamicEditFields.querySelector('#requirePhotoCheck');
+        // const photoEdit = dynamicEditFields.querySelector('#photoInput');
 
         // 2) Clone to nuke old listeners (optional, but safe)
-        let realChk = chkEdit;
-        if (chkEdit) {
-          const newChk = chkEdit.cloneNode();
-          chkEdit.parentNode.replaceChild(newChk, chkEdit);
-          realChk = newChk;
-        }
+        // let realChk = chkEdit;
+        // if (chkEdit) {
+        //   const newChk = chkEdit.cloneNode();
+        //   chkEdit.parentNode.replaceChild(newChk, chkEdit);
+        //   realChk = newChk;
+        // }
 
         // 3) **Re‑attach** your toggle listener to the “real” checkbox
-        if (realChk && photoEdit) {
+        // if (realChk && photoEdit) {
           // ensure initial state matches the checkbox
-          photoEdit.disabled = !realChk.checked;
+        //   photoEdit.disabled = !realChk.checked;
 
-          realChk.addEventListener('change', () => {
-            photoEdit.disabled = !realChk.checked;
-          });
-        }
+        //   realChk.addEventListener('change', () => {
+        //     photoEdit.disabled = !realChk.checked;
+        //   });
+        // }
 
-        fetch(`functions/fetch_request_data.php`
-          + `?transaction_id=${encodeURIComponent(tid)}`
-          + `&request_type=${encodeURIComponent(type)}`)
-        .then(res => res.json())
-        .then(data => {
+        // fetch(`functions/fetch_request_data.php`
+        //   + `?transaction_id=${encodeURIComponent(tid)}`
+        //   + `&request_type=${encodeURIComponent(type)}`)
+        // .then(res => res.json())
+        // .then(data => {
 
-          originalData = JSON.parse(JSON.stringify(data));
+        //   originalData = JSON.parse(JSON.stringify(data));
 
-          Object.entries(data).forEach(([rawKey, val]) => {
+        //   Object.entries(data).forEach(([rawKey, val]) => {
             // 1) Normalize column → form name
-            let key = rawKey;
-            if (key === 'birth_date') key = 'dob';
-            if (key === 'formal_picture') key = 'photo'; 
+            // let key = rawKey;
+            // if (key === 'birth_date') key = 'dob';
+            // if (key === 'formal_picture') key = 'photo'; 
 
             // 2) Handle radio groups
-            const radios = dynamicEditFields.querySelectorAll(`input[type="radio"][name="${key}"]`);
-            if (radios.length) {
-              radios.forEach(radio => {
-                radio.checked = (radio.value === val);
-              });
-              return;
-            }
+            // const radios = dynamicEditFields.querySelectorAll(`input[type="radio"][name="${key}"]`);
+            // if (radios.length) {
+            //   radios.forEach(radio => {
+            //     radio.checked = (radio.value === val);
+            //   });
+            //   return;
+            // }
 
             // 3) Handle the "require photo" checkbox + file input
-            if (rawKey === 'formal_picture') {
-              const chk = dynamicEditFields.querySelector('#requirePhotoCheck');
-              const photo = dynamicEditFields.querySelector('#photoInput');
-              const nameEl = dynamicEditFields.querySelector('#currentPhotoName');
+            // if (rawKey === 'formal_picture') {
+            //   const chk = dynamicEditFields.querySelector('#requirePhotoCheck');
+            //   const photo = dynamicEditFields.querySelector('#photoInput');
+            //   const nameEl = dynamicEditFields.querySelector('#currentPhotoName');
 
-              const hasPic = Boolean(val);
-              chk.checked = hasPic;
-              photo.disabled = !hasPic;
+            //   const hasPic = Boolean(val);
+            //   chk.checked = hasPic;
+            //   photo.disabled = !hasPic;
 
-              if (hasPic) {
+            //   if (hasPic) {
                 // show and populate the filename
-                nameEl.textContent = `Current file: ${val}`;
-                nameEl.classList.remove('d-none');
-              } else {
+              //   nameEl.textContent = `Current file: ${val}`;
+              //   nameEl.classList.remove('d-none');
+              // } else {
                 // hide if no file
-                nameEl.classList.add('d-none');
-              }
-              return;
-            }
+            //     nameEl.classList.add('d-none');
+            //   }
+            //   return;
+            // }
 
             // 4) All other inputs/selects/textareas
-            const field = dynamicEditFields.querySelector(`[name="${key}"]`);
-            if (!field) return;
-            field.value = val;
-            field.dispatchEvent(new Event('change'));
-          });
+          //   const field = dynamicEditFields.querySelector(`[name="${key}"]`);
+          //   if (!field) return;
+          //   field.value = val;
+          //   field.dispatchEvent(new Event('change'));
+          // });
 
           // show the modal
-          new bootstrap.Modal(document.getElementById('editRequestModal')).show();
-        })
-        .catch(err => console.error('Fetch error:', err));
-      } else {
-        dynamicEditFields.innerHTML = '<div class="col-12 text-muted">No fields for this request type.</div>';
-      }
+      //     new bootstrap.Modal(document.getElementById('editRequestModal')).show();
+      //   })
+      //   .catch(err => console.error('Fetch error:', err));
+      // } else {
+      //   dynamicEditFields.innerHTML = '<div class="col-12 text-muted">No fields for this request type.</div>';
+      // }
 
       
-    });
-  });
+  //   });
+  // });
 
   // intercept the Edit form submit and compare against originalData
   const editForm = document.getElementById('editRequestForm');

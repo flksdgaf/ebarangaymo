@@ -151,3 +151,5 @@ $log->close();
 header("Location: ../adminPanel.php?page=adminRequest&updated_request_id=$tid");
 exit;
 ?>
+
+<!-- MAY BABAGUHIN DITO -->

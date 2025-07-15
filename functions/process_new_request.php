@@ -21,40 +21,39 @@ $requestType = $_POST['request_type'] ?? '';
 
 switch($requestType) {
   case 'Barangay ID':
-    // 1) Collect posted fields
-    // $fn = trim($_POST['first_name'] ?? '');
-    // $mn = trim($_POST['middle_name'] ?? '');
-    // $ln = trim($_POST['last_name'] ?? '');
-    // $sn = trim($_POST['suffix'] ?? '');
+    $transactionType = $_POST['barangay_id_transaction_type'];
 
-    // Build the optional pieces
-    // $suffixPart = $sn ? " {$sn}" : '';
-    // $middlePart = $mn ? " {$mn}" : '';
-    $transactionType = $_POST['transaction_type'];
-    
-    // Assemble full name as “Last, First Middle Suffix”
-    // $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
-    $fullName = trim($_POST['full_name'] ?? '');
-    $purok = $_POST['purok'];
-    $birthDate = $_POST['dob'];
+    // 1) Collect posted fields
+    $fn = trim($_POST['barangay_id_first_name'] ?? '');
+    $mn = trim($_POST['barangay_id_middle_name'] ?? '');
+    $ln = trim($_POST['barangay_id_last_name'] ?? '');
+    $sn = trim($_POST['barangay_id_suffix'] ?? '');
+    $suffixPart = $sn ? " {$sn}" : '';
+    $middlePart = $mn ? " {$mn}" : '';
+    $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+    // $fullName = trim($_POST['full_name'] ?? '');
+
+    $purok = $_POST['barangay_id_purok'];
+    $birthDate = $_POST['barangay_id_dob'];
     // $birthPlace = "{$_POST['birth_municipality']}, {$_POST['birth_province']}";
-    $birthPlace = trim($_POST['birth_place'] ?? '');
-    $civilStatus = $_POST['civil_status'];
-    $religion = $_POST['religion'] === 'Other' ? $_POST['religion_other'] : $_POST['religion'];
-    $height = (float)$_POST['height'];
-    $weight = (float)$_POST['weight'];
-    $contactPerson = $_POST['emergency_contact_person'];
-    $contactNo = $_POST['emergency_contact_number'];
-    $claimDate = $_POST['claim_date'];
-    $paymentMethod = $_POST['payment_method'];
+    $birthPlace = trim($_POST['barangay_id_birth_place'] ?? '');
+    $civilStatus = $_POST['barangay_id_civil_status'];
+    $religion = $_POST['barangay_id_religion'] === 'Other' ? $_POST['barangay_id_religion_other'] : $_POST['barangay_id_religion'];
+    $height = (float)$_POST['barangay_id_height'];
+    $weight = (float)$_POST['barangay_id_weight'];
+    $contactPerson = $_POST['barangay_id_emergency_contact_person'];
+    $contactNo = $_POST['barangay_id_emergency_contact_number'];
+    $paymentMethod = $_POST['barangay_id_payment_method'];
+    $documentStatus = 'Processing';
+    // $claimDate = $_POST['claim_date'];
 
     // 2) Handle file upload
     $formalPicName = null;
-    if (!empty($_FILES['photo']['name']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
+    if (!empty($_FILES['barangay_id_photo']['name']) && $_FILES['barangay_id_photo']['error'] === UPLOAD_ERR_OK) {
       $uploadDir    = __DIR__ . '/../barangayIDpictures/';
       if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
-      $formalPicName = uniqid() . '_' . basename($_FILES['photo']['name']);
-      move_uploaded_file($_FILES['photo']['tmp_name'], $uploadDir . $formalPicName);
+      $formalPicName = uniqid() . '_' . basename($_FILES['barangay_id_photo']['name']);
+      move_uploaded_file($_FILES['barangay_id_photo']['tmp_name'], $uploadDir . $formalPicName);
     }
 
     // 3) Generate next transaction_id
@@ -71,10 +70,10 @@ switch($requestType) {
     $stmt->close();
 
     // 4) Insert into barangay_id_requests
-    $sql = "INSERT INTO barangay_id_requests (account_id, transaction_id, transaction_type, full_name, purok, birth_date, birth_place, civil_status, religion, height, weight, emergency_contact_person, emergency_contact_number, formal_picture, claim_date, payment_method) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    $sql = "INSERT INTO barangay_id_requests (account_id, transaction_id, transaction_type, full_name, purok, birth_date, birth_place, civil_status, religion, height, weight, emergency_contact_person, emergency_contact_number, formal_picture, claim_date, payment_method, document_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL,?,?)";
     $ins = $conn->prepare($sql);
     $ins->bind_param('issssssssddsssss', $userId, $transactionId, $transactionType, $fullName, $purok, $birthDate, $birthPlace, 
-    $civilStatus, $religion, $height, $weight, $contactPerson, $contactNo, $formalPicName, $claimDate, $paymentMethod);
+    $civilStatus, $religion, $height, $weight, $contactPerson, $contactNo, $formalPicName, $paymentMethod, $documentStatus);
     $ins->execute();
     $ins->close();
 
@@ -100,27 +99,29 @@ switch($requestType) {
     break;
 
   case 'Business Permit':
+    $transactionType = $_POST['business_permit_transaction_type'] ?? '';
+
     // 1) Collect posted fields (owner name)
-    // $fn = trim($_POST['first_name'] ?? '');
-    // $mn = trim($_POST['middle_name'] ?? '');
-    // $ln = trim($_POST['last_name'] ?? '');
-    // $sn = trim($_POST['suffix'] ?? '');
-    // $middlePart = $mn ? " {$mn}" : '';
-    // $suffixPart = $sn ? " {$sn}" : '';
-    // $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
-    $fullName = trim($_POST['full_name'] ?? '');
+    $fn = trim($_POST['business_permit_first_name'] ?? '');
+    $mn = trim($_POST['business_permit_middle_name'] ?? '');
+    $ln = trim($_POST['business_permit_last_name'] ?? '');
+    $sn = trim($_POST['business_permit_suffix'] ?? '');
+    $middlePart = $mn ? " {$mn}" : '';
+    $suffixPart = $sn ? " {$sn}" : '';
+    $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+    // $fullName = trim($_POST['full_name'] ?? '');
 
     // 2) Other form inputs
-    $transactionType = $_POST['transaction_type'] ?? '';
-    $purok = $_POST['purok'] ?? '';
-    $barangay = $_POST['barangay'] ?? '';
-    $age = (int)$_POST['age'] ?? 0;
-    $civilStatus = $_POST['civil_status'] ?? '';
-    $businessName = trim($_POST['name_of_business'] ?? '');
-    $businessType = trim($_POST['type_of_business'] ?? '');
-    $fullAddress = trim($_POST['full_address'] ?? '');
-    $claimDate = $_POST['claim_date'] ?? '';
-    $paymentMethod = $_POST['payment_method'] ?? '';
+    $purok = $_POST['business_permit_purok'] ?? '';
+    $barangay = $_POST['business_permit_barangay'] ?? '';
+    $age = (int)$_POST['business_permit_age'] ?? 0;
+    $civilStatus = $_POST['business_permit_civil_status'] ?? '';
+    $businessName = trim($_POST['business_permit_name_of_business'] ?? '');
+    $businessType = trim($_POST['business_permit_type_of_business'] ?? '');
+    $fullAddress = trim($_POST['business_permit_full_address'] ?? '');
+    $paymentMethod = $_POST['business_permit_payment_method'] ?? '';
+    $documentStatus = 'Processing';
+    // $claimDate = $_POST['claim_date'] ?? '';
     // $amount = (float)$_POST['amount'] ?? 0.0;
 
     // 3) Generate next transaction_id
@@ -137,10 +138,10 @@ switch($requestType) {
     $stmt->close();
 
     // 4) Insert into business_permit_requests
-    $sql = "INSERT INTO business_permit_requests (account_id, transaction_id, transaction_type, full_name, purok, barangay, age, civil_status, name_of_business, type_of_business, full_address, claim_date, payment_method) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    $sql = "INSERT INTO business_permit_requests (account_id, transaction_id, transaction_type, full_name, purok, barangay, age, civil_status, name_of_business, type_of_business, full_address, claim_date, payment_method, document_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,NULL,?,?)";
     $ins = $conn->prepare($sql);
     $ins->bind_param('isssssissssss', $userId, $transactionId, $transactionType, $fullName, $purok, $barangay, $age, $civilStatus,
-    $businessName, $businessType, $fullAddress, $claimDate, $paymentMethod,);
+    $businessName, $businessType, $fullAddress, $paymentMethod, $documentStatus);
     $ins->execute();
     $ins->close();
 
@@ -167,25 +168,26 @@ switch($requestType) {
 
   case 'Good Moral':
     // 1) Collect posted fields
-    // $fn = trim($_POST['first_name'] ?? '');
-    // $mn = trim($_POST['middle_name'] ?? '');
-    // $ln = trim($_POST['last_name'] ?? '');
-    // $sn = trim($_POST['suffix'] ?? '');
-    // $middlePart = $mn ? " {$mn}" : '';
-    // $suffixPart = $sn ? " {$sn}" : '';
-    // $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
-    $fullName = trim($_POST['full_name'] ?? '');
+    $fn = trim($_POST['good_moral_first_name'] ?? '');
+    $mn = trim($_POST['good_moral_middle_name'] ?? '');
+    $ln = trim($_POST['good_moral_last_name'] ?? '');
+    $sn = trim($_POST['good_moral_suffix'] ?? '');
+    $middlePart = $mn ? " {$mn}" : '';
+    $suffixPart = $sn ? " {$sn}" : '';
+    $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+    // $fullName = trim($_POST['full_name'] ?? '');
 
-    $civilStatus = $_POST['civil_status'] ?? '';
-    $sex = $_POST['sex'] ?? '';
-    $age = (int)($_POST['age'] ?? 0);
-    $purok = $_POST['purok'] ?? '';
+    $civilStatus = $_POST['good_moral_civil_status'] ?? '';
+    $sex = $_POST['good_moral_sex'] ?? '';
+    $age = (int)($_POST['good_moral_age'] ?? 0);
+    $purok = $_POST['good_moral_purok'] ?? '';
     // $barangay = $_POST['barangay'] ?? '';
-    $subdivision = trim($_POST['subdivision'] ?? '');
+    $subdivision = trim($_POST['good_moral_subdivision'] ?? '');
     // $fullAddress = "{$subdivision}, {$purok}, {$barangay}";
-    $purpose = trim($_POST['purpose'] ?? '');
-    $paymentMethod = $_POST['payment_method'] ?? '';
-    $claimDate = $_POST['claim_date'] ?? '';
+    $purpose = trim($_POST['good_moral_purpose'] ?? '');
+    $paymentMethod = $_POST['good_moral_payment_method'] ?? '';
+    $documentStatus = 'Processing';
+    // $claimDate = $_POST['claim_date'] ?? '';
 
     // 2) Generate next transaction_id
     $stmt = $conn->prepare("SELECT transaction_id FROM good_moral_requests ORDER BY id DESC LIMIT 1");
@@ -201,9 +203,9 @@ switch($requestType) {
     $stmt->close();
 
     // 3) Insert into good_moral_requests
-    $sql = "INSERT INTO good_moral_requests (account_id, transaction_id, full_name, civil_status, sex, age, purok, subdivision, purpose, claim_date, payment_method) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
+    $sql = "INSERT INTO good_moral_requests (account_id, transaction_id, full_name, civil_status, sex, age, purok, subdivision, purpose, claim_date, payment_method, document_status) VALUES (?,?,?,?,?,?,?,?,?,NULL,?,?)";
     $ins = $conn->prepare($sql);
-    $ins->bind_param('issssisssss', $userId, $transactionId, $fullName, $civilStatus, $sex, $age, $purok, $subdivision, $purpose, $claimDate, $paymentMethod);
+    $ins->bind_param('issssisssss', $userId, $transactionId, $fullName, $civilStatus, $sex, $age, $purok, $subdivision, $purpose, $paymentMethod, $documentStatus);
     $ins->execute();
     $ins->close();
 
@@ -230,25 +232,35 @@ switch($requestType) {
 
   case 'Guardianship':
     // 1) Collect posted fields & assemble full name
-    // $fn = trim($_POST['guardian_first_name'] ?? '');
-    // $mn = trim($_POST['guardian_middle_name'] ?? '');
-    // $ln = trim($_POST['guardian_last_name'] ?? '');
-    // $sn = trim($_POST['guardian_suffix'] ?? '');
-    // $middlePart = $mn ? " {$mn}" : '';
-    // $suffixPart = $sn ? " {$sn}" : '';
-    // $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
-    $fullName = trim($_POST['full_name'] ?? '');
+    $fn = trim($_POST['guardianship_first_name'] ?? '');
+    $mn = trim($_POST['guardianship_middle_name'] ?? '');
+    $ln = trim($_POST['guardianship_last_name'] ?? '');
+    $sn = trim($_POST['guardianship_suffix'] ?? '');
+    $middlePart = $mn ? " {$mn}" : '';
+    $suffixPart = $sn ? " {$sn}" : '';
+    $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+    // $fullName = trim($_POST['full_name'] ?? '');
 
     // $civilStatus = $_POST['guardian_civil_status'] ?? '';
-    $civilStatus = $_POST['civil_status'] ?? '';
+    $civilStatus = $_POST['guardianship_civil_status'] ?? '';
     // $age = (int)($_POST['guardian_age'] ?? 0);
-    $age = (int)($_POST['age'] ?? 0);
+    $age = (int)($_POST['guardianship_age'] ?? 0);
     // $purok = $_POST['guardian_purok'] ?? '';
-    $purok = $_POST['purok'] ?? '';
-    $childName = trim($_POST['child_name'] ?? '');
-    $purpose = trim($_POST['purpose'] ?? '');
-    $claimDate = $_POST['claim_date'] ?? '';
-    $paymentMethod = $_POST['payment_method'] ?? '';
+    $purok = $_POST['guardianship_purok'] ?? '';
+
+    // Child's Name
+    $fnChild = trim($_POST['child_first_name'] ?? '');
+    $mnChild = trim($_POST['child_middle_name'] ?? '');
+    $lnChild = trim($_POST['child_last_name'] ?? '');
+    $snChild = trim($_POST['child_suffix'] ?? '');
+    $middlePartChild = $mnChild ? " {$mnChild}" : '';
+    $suffixPartChild = $snChild ? " {$snChild}" : '';
+    $fullNameChild = "{$lnChild}{$suffixPartChild}, {$fnChild}{$middlePartChild}";
+    // $childName = trim($_POST['child_name'] ?? '');
+
+    $purpose = trim($_POST['guardianship_purpose'] ?? '');
+    $paymentMethod = $_POST['guardianship_payment_method'] ?? '';
+    $documentStatus = 'Processing';
 
     // 2) Generate next transaction_id
     $stmt = $conn->prepare("SELECT transaction_id FROM guardianship_requests ORDER BY id DESC LIMIT 1");
@@ -264,9 +276,9 @@ switch($requestType) {
     $stmt->close();
     
     // 3) Insert into guardianship_request
-    $sql = "INSERT INTO guardianship_requests (account_id, transaction_id, full_name, civil_status, age, purok, child_name, purpose, claim_date, payment_method) VALUES (?,?,?,?,?,?,?,?,?,?)";
+    $sql = "INSERT INTO guardianship_requests (account_id, transaction_id, full_name, civil_status, age, purok, child_name, purpose, claim_date, payment_method, document_status) VALUES (?,?,?,?,?,?,?,?,NULL,?,?)";
     $ins = $conn->prepare($sql);
-    $ins->bind_param('isssisssss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $childName, $purpose, $claimDate, $paymentMethod);
+    $ins->bind_param('isssisssss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $fullNameChild, $purpose, $paymentMethod, $documentStatus);
     $ins->execute();
     $ins->close();
 
@@ -293,23 +305,23 @@ switch($requestType) {
 
   case 'Indigency':
     // 1) Collect posted fields & assemble full name
-    // $fn = trim($_POST['first_name'] ?? '');
-    // $mn = trim($_POST['middle_name'] ?? '');
-    // $ln = trim($_POST['last_name'] ?? '');
-    // $sn = trim($_POST['suffix'] ?? '');
-    // $middlePart = $mn ? " {$mn}" : '';
-    // $suffixPart = $sn ? " {$sn}" : '';
-    // $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
-    $fullName = trim($_POST['full_name'] ?? '');
+    $fn = trim($_POST['indigency_first_name'] ?? '');
+    $mn = trim($_POST['indigency_middle_name'] ?? '');
+    $ln = trim($_POST['indigency_last_name'] ?? '');
+    $sn = trim($_POST['indigency_suffix'] ?? '');
+    $middlePart = $mn ? " {$mn}" : '';
+    $suffixPart = $sn ? " {$sn}" : '';
+    $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+    // $fullName = trim($_POST['full_name'] ?? '');
 
     // 2) Other form inputs
-    $civilStatus = $_POST['civil_status'] ?? '';
-    $age = (int) ($_POST['age'] ?? 0);
+    $civilStatus = $_POST['indigency_civil_status'] ?? '';
+    $age = (int) ($_POST['indigency_age'] ?? 0);
     // $barangay = $_POST['barangay'] ?? '';
-    $purok = $_POST['purok'] ?? '';
+    $purok = $_POST['indigency_purok'] ?? '';
     // $subdivision = trim($_POST['subdivision'] ?? '');
-    $purpose = trim($_POST['purpose'] ?? '');
-    $claimDate = $_POST['claim_date'] ?? '';
+    $purpose = trim($_POST['indigency_purpose'] ?? '');
+    $documentStatus = 'Processing';
 
     // 3) Generate next transaction_id
     $stmt = $conn->prepare("SELECT transaction_id FROM indigency_requests ORDER BY id DESC LIMIT 1");
@@ -325,9 +337,9 @@ switch($requestType) {
     $stmt->close();
 
     // 4) Insert into indigency_requests
-    $sql = "INSERT INTO indigency_requests (account_id, transaction_id, full_name, civil_status, age, purok, purpose, claim_date) VALUES (?,?,?,?,?,?,?,?)";
+    $sql = "INSERT INTO indigency_requests (account_id, transaction_id, full_name, civil_status, age, purok, purpose, claim_date, document_status) VALUES (?,?,?,?,?,?,?,NULL,?)";
     $ins = $conn->prepare($sql);
-    $ins->bind_param('isssisss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $purpose, $claimDate);
+    $ins->bind_param('isssisss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $purpose, $documentStatus);
     $ins->execute();
     $ins->close();
 
@@ -354,25 +366,26 @@ switch($requestType) {
 
   case 'Residency':
     // 1) Collect posted fields & assemble full name
-    // $fn = trim($_POST['first_name'] ?? '');
-    // $mn = trim($_POST['middle_name'] ?? '');
-    // $ln = trim($_POST['last_name'] ?? '');
-    // $sn = trim($_POST['suffix'] ?? '');
-    // $middlePart = $mn ? " {$mn}" : '';
-    // $suffixPart = $sn ? " {$sn}" : '';
-    // $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
-    $fullName = trim($_POST['full_name'] ?? '');
+    $fn = trim($_POST['residency_first_name'] ?? '');
+    $mn = trim($_POST['residency_middle_name'] ?? '');
+    $ln = trim($_POST['residency_last_name'] ?? '');
+    $sn = trim($_POST['residency_suffix'] ?? '');
+    $middlePart = $mn ? " {$mn}" : '';
+    $suffixPart = $sn ? " {$sn}" : '';
+    $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+    // $fullName = trim($_POST['full_name'] ?? '');
 
     // 2) Other form inputs
-    $civilStatus = $_POST['civil_status'] ?? '';
-    $age = (int) ($_POST['age'] ?? 0);
+    $civilStatus = $_POST['residency_civil_status'] ?? '';
+    $age = (int) ($_POST['residency_age'] ?? 0);
     // $barangay = $_POST['barangay'] ?? '';
-    $purok = $_POST['purok'] ?? '';
+    $purok = $_POST['residency_purok'] ?? '';
     // $subdivision = trim($_POST['subdivision'] ?? '');
-    $yearsResiding = (int) ($_POST['residing_years'] ?? 0);
-    $purpose = trim($_POST['purpose'] ?? '');
-    $paymentMethod = $_POST['payment_method'] ?? '';
-    $claimDate = $_POST['claim_date'] ?? '';
+    $yearsResiding = (int) ($_POST['residency_residing_years'] ?? 0);
+    $purpose = trim($_POST['residency_purpose'] ?? '');
+    $paymentMethod = $_POST['residency_payment_method'] ?? '';
+    $documentStatus = 'Processing';
+    // $claimDate = $_POST['claim_date'] ?? '';
 
     // 3) Generate next transaction_id
     $stmt = $conn->prepare("SELECT transaction_id FROM residency_requests ORDER BY id DESC LIMIT 1");
@@ -388,9 +401,9 @@ switch($requestType) {
     $stmt->close();
 
     // 4) Insert into residency_requests
-    $sql = "INSERT INTO residency_requests (account_id, transaction_id, full_name, civil_status, age, purok, residing_years, purpose, payment_method, claim_date) VALUES (?,?,?,?,?,?,?,?,?,?)";
+    $sql = "INSERT INTO residency_requests (account_id, transaction_id, full_name, civil_status, age, purok, residing_years, purpose, payment_method, claim_date, document_status) VALUES (?,?,?,?,?,?,?,?,?,NULL,?)";
     $ins = $conn->prepare($sql);
-    $ins->bind_param('isssisisss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $yearsResiding, $purpose, $paymentMethod, $claimDate);
+    $ins->bind_param('isssisisss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $yearsResiding, $purpose, $paymentMethod, $documentStatus);
     $ins->execute();
     $ins->close();
 
@@ -417,29 +430,40 @@ switch($requestType) {
 
   case 'Solo Parent':
     // 1) Collect posted fields & assemble full name
-    // $fn = trim($_POST['first_name'] ?? '');
-    // $mn = trim($_POST['middle_name'] ?? '');
-    // $ln = trim($_POST['last_name'] ?? '');
-    // $sn = trim($_POST['suffix'] ?? '');
-    // $middlePart = $mn ? " {$mn}" : '';
-    // $suffixPart = $sn ? " {$sn}" : '';
-    // $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
-    $fullName = trim($_POST['full_name'] ?? '');
+    $fn = trim($_POST['solo_parent_first_name'] ?? '');
+    $mn = trim($_POST['solo_parent_middle_name'] ?? '');
+    $ln = trim($_POST['solo_parent_last_name'] ?? '');
+    $sn = trim($_POST['solo_parent_suffix'] ?? '');
+    $middlePart = $mn ? " {$mn}" : '';
+    $suffixPart = $sn ? " {$sn}" : '';
+    $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+    // $fullName = trim($_POST['full_name'] ?? '');
 
     // 2) Other form inputs
-    $civilStatus = $_POST['civil_status'] ?? '';
-    $age = (int) ($_POST['age'] ?? 0);
+    $civilStatus = $_POST['solo_parent_civil_status'] ?? '';
+    $age = (int) ($_POST['solo_parent_age'] ?? 0);
     // $barangay = $_POST['barangay'] ?? '';
-    $purok = $_POST['purok'] ?? '';
+    $purok = $_POST['solo_parent_purok'] ?? '';
     // $subdivision = trim($_POST['subdivision'] ?? '');
-    $yearsSoloParent = (int) ($_POST['years_solo_parent'] ?? 0);
-    $childName = trim($_POST['child_name'] ?? '');
-    $childSex = $_POST['child_sex'] ?? '';
+    $yearsSoloParent = (int) ($_POST['solo_parent_years_solo_parent'] ?? 0);
+
+    // Child Name
+    $fnChild = trim($_POST['solo_parent_child_first_name'] ?? '');
+    $mnChild = trim($_POST['solo_parent_child_middle_name'] ?? '');
+    $lnChild = trim($_POST['solo_parent_child_last_name'] ?? '');
+    $snChild = trim($_POST['solo_parent_child_suffix'] ?? '');
+    $middlePartChild = $mnChild ? " {$mnChild}" : '';
+    $suffixPartChild = $snChild ? " {$snChild}" : '';
+    $fullNameChild = "{$lnChild}{$suffixPartChild}, {$fnChild}{$middlePartChild}";
+    // $childName = trim($_POST['child_name'] ?? '');
+
+    $childSex = $_POST['solo_parent_child_sex'] ?? '';
     // $childAge = (int) ($_POST['child_age'] ?? 0);
-    $childAge = trim($_POST['child_age'] ?? '');
-    $purpose = trim($_POST['purpose'] ?? '');
-    $paymentMethod = $_POST['payment_method'] ?? '';
-    $claimDate = $_POST['claim_date'] ?? '';
+    $childAge = trim($_POST['solo_parent_child_age'] ?? '');
+    $purpose = trim($_POST['solo_parent_purpose'] ?? '');
+    $paymentMethod = $_POST['solo_parent_payment_method'] ?? '';
+    $documentStatus = 'Processing';
+    // $claimDate = $_POST['claim_date'] ?? '';
 
     // 3) Generate next transaction_id
     $stmt = $conn->prepare("SELECT transaction_id FROM solo_parent_requests ORDER BY id DESC LIMIT 1");
@@ -455,9 +479,9 @@ switch($requestType) {
     $stmt->close();
 
     // 4) Insert into solo_parent_requests
-    $sql = "INSERT INTO solo_parent_requests (account_id, transaction_id, full_name, civil_status, age, purok, years_solo_parent, child_name, child_age, child_sex, purpose, payment_method, claim_date) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    $sql = "INSERT INTO solo_parent_requests (account_id, transaction_id, full_name, civil_status, age, purok, years_solo_parent, child_name, child_age, child_sex, purpose, payment_method, claim_date, document_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,NULL,?)";
     $ins = $conn->prepare($sql);
-    $ins->bind_param('isssisisissss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $yearsSoloParent, $childName, $childAge, $childSex, $purpose, $paymentMethod, $claimDate);
+    $ins->bind_param('isssisisissss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $yearsSoloParent, $fullNameChild, $childAge, $childSex, $purpose, $paymentMethod, $documentStatus);
     $ins->execute();
     $ins->close();
 

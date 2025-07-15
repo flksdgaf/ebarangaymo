@@ -89,7 +89,8 @@ $html = '
       margin-left: 0.75in;
       margin-right: 0.75in;
       margin-top: 0.25in;
-      font-size: 14px;
+      font-size: 16px;
+      text-alignment: center;
     }
 
     /* Left info block, nudged further left */
@@ -98,17 +99,28 @@ $html = '
       display: table;
       margin-left: -0.25in;      /* ← pull it ¼″ further left */
       margin-bottom: 20px;
+      margin-top: 60px;
       border-collapse: collapse;
-      font-size: 14px;
+      font-size: 16px;
     }
     .info td {
       padding: 2px 4px;
       white-space: nowrap;
     }
-    .info .value {
-      border-bottom: 1px solid #000;
+    .info .name1,
+    .info .name2 {
       padding-left: 4px;
+      padding-top: 15px;
+      margin-bottom: 13px; 
+      display: inline-block; 
     }
+    .info .add1,
+    .info .add2 {
+      padding-left: 4px;
+      padding-bottom: 1px;
+      display: inline-block; 
+    }  
+  
 
     /* Right meta block, nudged further right */
     .meta {
@@ -116,15 +128,15 @@ $html = '
       margin-left: auto;
       margin-right: -0.25in;     /* ← push it ¼″ further right */
       margin-bottom: 20px;
+      margin-top: 20px;
       border-collapse: collapse;
-      font-size: 14px;
+      font-size: 16px;
     }
     .meta td {
       padding: 2px 4px;
       white-space: nowrap;
     }
     .meta .value {
-      border-bottom: 1px solid #000;
       padding-left: 4px;
     }
 
@@ -142,15 +154,64 @@ $html = '
       font-weight: bold;
       margin-bottom: 0.1in;
     }
+    .sumbong-content {
+      margin-left: -0.20in; 
+      margin-right: -32px; 
+    }
     .section-text {
       text-indent: 0.5in;
-      margin-bottom: 0.1in;
-      line-height:1.5;
+      margin-top: 10px;
+      margin-bottom: 3px;
+      line-height: 1.2;
+      text-align; justify;
+    }
+    .section-text2 {
+      text-indent: 0.5in;
+      margin-top: 20px;
+      margin-bottom: 3px;
+      line-height: 1.2;
+      text-align; justify;
     }
     .underline-block {
-      border-bottom: 1px solid #000;
-      margin-bottom: 0.1in;
+      text-align; justify;
     }
+
+    /* Signatories */
+    .signatories-section {
+      margin-top: 50px;
+      margin-left: -0.20in; 
+      margin-right: -32px; 
+    }
+    .signatory1 {
+      text-align: right;
+      margin-bottom: 20px;
+    }
+    .signatory1 .line {
+      display: inline-block;
+      border-top: 1px solid black;
+      width: 200px;
+    }
+    .signatory1 p {
+      display: block;
+      font-size: 16px;
+      margin-top: -10px;
+    }
+    .signatories-section .date-file {
+      text-align: center; 
+      margin-bottom: 40px;
+    }
+    .signatory2 {
+      margin-left: 300px;
+      text-align: center; 
+      margin-top: 80px;
+    }
+    .signatory2 p {
+      display: block;
+      font-size: 16px;
+      margin-top: 3px;
+    }
+      
+
   </style>
 </head>
 <body>
@@ -176,43 +237,67 @@ $html = '
 
   <hr class="header-line">
 
+  <div>
   <div class="content">
 
     <!-- Left info -->
     <table class="info">
-      <tr><td><strong>Name:</strong></td><td class="value">' . htmlspecialchars($rec['complainant_name']) . '</td></tr>
-      <tr><td><strong>Add:</strong></td><td class="value">' . htmlspecialchars($rec['complainant_address']) . '</td></tr>
-      <tr><td><strong>Name:</strong></td><td class="value">' . htmlspecialchars($rec['respondent_name']) . '</td></tr>
-      <tr><td><strong>Add:</strong></td><td class="value">' . htmlspecialchars($rec['respondent_address']) . '</td></tr>
+      <tr><td>Name:</td><td class="name1"><u>' . htmlspecialchars($rec['complainant_name']) . '</u><br></td></tr>
+      <tr><td>Add:</td><td class="add1"><u>' . htmlspecialchars($rec['complainant_address']) . '</u></td></tr>
+      <tr><td></td><td>Nagrereklamo</td></tr>
+      <tr><td>Name:</td><td class="name2"><u>' . htmlspecialchars($rec['respondent_name']) . '</u></td></tr>
+      <tr><td>Add:</td><td class="add2"><u>' . htmlspecialchars($rec['respondent_address']) . '</u></td></tr>
+      <tr><td></td><td>Inirereklamo</td></tr>
     </table>
 
     <!-- Right meta -->
     <table class="meta">
-      <tr><td><strong>Barangay kaso blg.</strong></td><td class="value">' . htmlspecialchars($tid) . '</td></tr>
-      <tr><td><strong>Para:</strong></td><td class="value">' . htmlspecialchars($rec['complaint_type']) . '</td></tr>
+      <tr><td>Barangay kaso blg.</td><td class="value"><u>' . htmlspecialchars($tid) . '</u></td></tr>
+      <tr><td>Para:</td><td class="value"><u>' . htmlspecialchars($rec['complaint_type']) . '</u></td></tr>
     </table>
 
     <div class="clear"></div>
 
     <!-- SUMBONG section -->
     <div class="section-title">SUMBONG</div>
-    <div class="section-text">
-      Ako/kami sa pamamagitan nito ay nagrereklamo laban sa mga pinangalanang isinakdal sa
-      itaas, sa pagkakalabag ng aking/naming karapatan at pansariling kapakanan sa sumusunod na
-      dahilan:
-    </div>
-    <div class="underline-block">
-      ' . nl2br(htmlspecialchars($rec['complaint_affidavit'])) . '
+    <div class="sumbong-content">
+      <div class="section-text">
+        Ako/kami sa pamamagitan nito ay nagrereklamo laban sa mga pinangalanang isinakdal sa
+        itaas, sa pagkakalabag ng aking/naming karapatan at pansariling kapakanan sa sumusunod na
+        dahilan:
+      </div>
+      <div class="underline-block">
+        <u>' . nl2br(htmlspecialchars($rec['complaint_affidavit'])) . '</u>
+      </div>
+
+      <!-- Dahil Doon section -->
+      <div class="section-text2">
+        Dahil doon, ako/kami ay sumasamo ng sumusunod na kaluwagan/kabayaran ay
+        ipinagkaloob sa akin/amin alinsunod sa batas at/o pagkamakatao:
+      </div>
+      <div class="underline-block">
+        <u>' . nl2br(htmlspecialchars($rec['pleading_statement'])) . '</u>
+      </div>
     </div>
 
-    <!-- Dahil doon section -->
-    <div class="section-text">
-      Dahil doon, ako/kami ay sumasamo ng sumusunod na kaluwagan/kabayaran ay
-      ipinagkaloob sa akin/amin alinsunod sa batas at/o pagkamakatao:
+    <!-- Signature and acknowledgment block -->
+    <div class="signatories-section">
+      <div class="signatory1">
+        <div class="line"></div>
+        <p>Nagrereklamo</p>
+      </div>
+
+      <div class="date-file">
+        Tinanggap at isinasampa ngayon ika- _____________________, 2025.
+      </div>
+
+      <div class="signatory2">
+        <div class="punong-barangay"><strong>EDUARDO C. ASIAO</strong></div>
+        <p>Punong Barangay/Lupon Chairman</p>
+      </div>
     </div>
-    <div class="underline-block">
-      ' . nl2br(htmlspecialchars($rec['pleading_statement'])) . '
-    </div>
+
+
 
   </div><!-- /.content -->
 </body>
@@ -224,7 +309,7 @@ $options = new Options();
 $options->set('isRemoteEnabled', false); // base64 doesn't need remote access
 $dompdf = new Dompdf($options);
 $dompdf->loadHtml($html);
-$dompdf->setPaper('letter', 'portrait');
+$dompdf->setPaper('a4', 'portrait');
 $dompdf->render();
 $dompdf->stream("complaint_{$tid}.pdf", ["Attachment" => false]);
 exit;

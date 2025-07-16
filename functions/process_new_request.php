@@ -78,7 +78,7 @@ switch($requestType) {
     $ins->close();
 
     // ACTIVITY LOGGING 
-    $admin_roles = ['SuperAdmin','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Lupon'];
+    $admin_roles = ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper', 'Brgy Kagawad', 'Brgy Treasurer', 'Brgy Lupon'];
     if (in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
         $logStmt = $conn->prepare("INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description) VALUES (?,?,?,?,?,?)");    
         $admin_id = $_SESSION['loggedInUserID'];
@@ -146,7 +146,7 @@ switch($requestType) {
     $ins->close();
 
     // 5) Activity logging
-    $admin_roles = ['SuperAdmin','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Lupon'];
+    $admin_roles = ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper', 'Brgy Kagawad', 'Brgy Treasurer', 'Brgy Lupon'];
     if (in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
       $logStmt = $conn->prepare("INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description) VALUES (?,?,?,?,?,?)");
       $admin_id = $_SESSION['loggedInUserID'];
@@ -210,7 +210,7 @@ switch($requestType) {
     $ins->close();
 
     // 4) Activity logging
-    $admin_roles = ['SuperAdmin','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Lupon'];
+    $admin_roles = ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper', 'Brgy Kagawad', 'Brgy Treasurer', 'Brgy Lupon'];
     if (in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
       $logStmt = $conn->prepare("INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description) VALUES (?,?,?,?,?,?)");
       $admin_id = $_SESSION['loggedInUserID'];
@@ -283,7 +283,7 @@ switch($requestType) {
     $ins->close();
 
     // 4) Activity logging
-    $admin_roles = ['SuperAdmin','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Lupon'];
+    $admin_roles = ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper', 'Brgy Kagawad', 'Brgy Treasurer', 'Brgy Lupon'];
     if (in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
       $logStmt = $conn->prepare("INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description) VALUES (?,?,?,?,?,?)");
       $admin_id = $_SESSION['loggedInUserID'];
@@ -344,7 +344,7 @@ switch($requestType) {
     $ins->close();
 
     // 5) ACTIVITY LOGGING
-    $admin_roles = ['SuperAdmin','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Lupon'];
+    $admin_roles = ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper', 'Brgy Kagawad', 'Brgy Treasurer', 'Brgy Lupon'];
     if (in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
       $logStmt = $conn->prepare("INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description) VALUES (?,?,?,?,?,?)");
       $admin_id = $_SESSION['loggedInUserID'];
@@ -408,7 +408,7 @@ switch($requestType) {
     $ins->close();
 
     // 5) ACTIVITY LOGGING
-    $admin_roles = ['SuperAdmin','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Lupon'];
+    $admin_roles = ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper', 'Brgy Kagawad', 'Brgy Treasurer', 'Brgy Lupon'];
     if (in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
       $logStmt = $conn->prepare("INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description) VALUES (?,?,?,?,?,?)");
       $admin_id = $_SESSION['loggedInUserID'];
@@ -486,7 +486,7 @@ switch($requestType) {
     $ins->close();
 
     // 5) ACTIVITY LOGGING
-    $admin_roles = ['SuperAdmin','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Lupon'];
+    $admin_roles = ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper', 'Brgy Kagawad', 'Brgy Treasurer', 'Brgy Lupon'];
     if (in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
       $logStmt = $conn->prepare("INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description) VALUES (?,?,?,?,?,?)");
       $admin_id = $_SESSION['loggedInUserID'];

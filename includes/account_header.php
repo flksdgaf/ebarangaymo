@@ -106,7 +106,9 @@ if (isset($result) && $result->num_rows === 1) {
 $stmt->close();
 
 $role = $_SESSION['loggedInUserRole'] ?? '';
-$admin_roles = ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper', 'Brgy Kagawad', 'Brgy Lupon'];
+
+// ACESS LEVELS ( ALL ACCESS - ALL ACCESS - ALL ACCESS - VIEWING ONLY - TRANSACTIONS - KATARAUNGANG PAMBARANGAY)
+$admin_roles = ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper', 'Brgy Kagawad', 'Brgy Treasurer', 'Brgy Lupon'];
 
 if (in_array($role, $admin_roles)) {
     $settingsHref = 'adminPanel.php?page=adminSettings';

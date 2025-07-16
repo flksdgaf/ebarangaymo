@@ -70,7 +70,7 @@ $limit = 10; // records per page
 $page = isset($_GET['page_num']) ? max((int)$_GET['page_num'], 1) : 1;
 $offset = ($page - 1) * $limit;
   
-$countSQL = "SELECT COUNT(*) AS total FROM view_general_requests {$whereSQL}";
+$countSQL = "SELECT COUNT(*) AS total FROM view_request {$whereSQL}";
 $countStmt = $conn->prepare($countSQL);
 
 if ($whereClauses) {
@@ -91,7 +91,7 @@ $countStmt->close();
 // If there’s a new transaction, fetch its request_type
 $newType = '';
 if ($newTid) {
-  $q = $conn->prepare("SELECT request_type FROM view_general_requests WHERE transaction_id = ? LIMIT 1");
+  $q = $conn->prepare("SELECT request_type FROM view_request WHERE transaction_id = ? LIMIT 1");
   $q->bind_param('s', $newTid);
   $q->execute();
   $r = $q->get_result()->fetch_assoc();
@@ -102,7 +102,7 @@ if ($newTid) {
 }
 
 // LIST + FILTERED QUERY 
-$sql = "SELECT transaction_id, full_name, request_type, payment_method, payment_status, document_status, DATE_FORMAT(created_at, '%b %e, %Y') AS formatted_date FROM view_general_requests {$whereSQL} ORDER BY created_at ASC LIMIT ? OFFSET ?";
+$sql = "SELECT transaction_id, full_name, request_type, payment_method, payment_status, document_status, amount, DATE_FORMAT(claim_date, '%b %e, %Y') AS formatted_claim_date, DATE_FORMAT(created_at, '%b %e, %Y') AS formatted_date FROM view_request {$whereSQL} ORDER BY created_at ASC LIMIT ? OFFSET ?";
 $st = $conn->prepare($sql);
 
 $types = $bindTypes . 'ii';
@@ -1080,64 +1080,33 @@ $result = $st->get_result();
         </div>
       </div>
 
-      <!-- Edit Request Modal -->
-      <!-- <div class="modal fade" id="editRequestModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="editRequestModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width:90vw;">
-          <div class="modal-content">
-            <div class="modal-header text-white" style="background-color: #13411F;">
-              <h5 class="modal-title" id="editRequestModalLabel">Edit Request</h5>
-              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="editRequestForm" method="POST" action="functions/process_edit_request.php" enctype="multipart/form-data">
-              <div class="modal-body"> -->
-                <!-- carry over the request type and transaction ID -->
-                <!-- <input type="hidden" name="request_type" id="editModalRequestType" value="">
-                <input type="hidden" name="transaction_id" id="editModalTransactionId" value=""> -->
-                
-                <!-- Dynamic fields get injected here -->
-                <!-- <div class="row g-3" id="dynamicEditFields"></div>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn btn-success">Save Changes</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div> -->
-
-      <!-- Print / Generate Certificate Modal -->
-      <!-- <div class="modal fade" id="printModal" tabindex="-1" aria-labelledby="printModalLabel" aria-hidden="true">
+      <!-- Print Modal -->
+      <!-- <div class="modal fade" id="printModal" tabindex="-1" aria-labelledby="printModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="printModalLabel">
-                Certificate for <span id="printTidSpan"></span>
-              </h5>
+            <div class="modal-header bg-warning text-dark">
+              <h5 class="modal-title" id="printModalLabel">Print Certificate</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-              <p>
-                <label class="form-label">Current payment status:</label>
-                <select id="printPaymentStatus" class="form-select form-select-sm">
-                  <option value="Unpaid">Unpaid</option>
-                  <option value="Paid">Paid</option>
-                </select>
-              </p>
-              <input type="hidden" id="printRequestType">
+              <form id="printForm">
+                <div class="mb-3">
+                  <label for="orNumber" class="form-label">OR Number</label>
+                  <input type="text" class="form-control" id="orNumber" name="or_number" placeholder="Enter OR Number" required>
+                </div>
+                <div class="mb-3">
+                  <label for="amountPaid" class="form-label">Amount Paid</label>
+                  <input type="text" class="form-control" id="amountPaid" name="amount_paid" placeholder="Enter Amount Paid" required>
+                </div>
+              </form>
             </div>
             <div class="modal-footer">
-              <button id="generateBtn" type="button" class="btn btn-primary" disabled>
-                Generate Certificate
-              </button>
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                Close
-              </button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-warning">Print Certificate</button>
             </div>
           </div>
         </div>
       </div> -->
-
 
       <form method="get" id="searchForm" class="d-flex ms-auto me-2">
       <!-- preserve pagination & filters -->
@@ -1186,28 +1155,28 @@ $result = $st->get_result();
                 <td><?= htmlspecialchars($row['formatted_date']) ?></td>
                 <td>
                   <!-- Release Button -->
-                  <button type="button" class="btn btn-sm btn-success btn-release" title="Release <?= $tid ?>">
+                  <button type="button" class="btn btn-sm btn-success request-btn-release" title="Release <?= $tid ?>">
                     <span class="material-symbols-outlined" style="font-size: 13px;">
                       check
                     </span>
                   </button>
 
                   <!-- Print Button -->
-                  <button type="button" class="btn btn-sm btn-warning btn-print" title="Print <?= $tid ?>">
+                  <button type="button" class="btn btn-sm btn-warning request-btn-print" title="Print <?= $tid ?>">
                     <span class="material-symbols-outlined" style="font-size: 13px;">
                       print
                     </span>
                   </button>
 
                   <!-- Edit Button -->
-                  <button type="button" class="btn btn-sm btn-primary btn-edit" title="Edit <?= $tid ?>">
+                  <button type="button" class="btn btn-sm btn-primary request-btn-edit" title="Edit <?= $tid ?>">
                     <span class="material-symbols-outlined" style="font-size: 13px;">
                       stylus
                     </span>
                   </button>
 
                   <!-- Delete Button -->
-                  <button class="btn btn-sm btn-danger delete-btn" title="Delete <?= $tid ?>">
+                  <button type="button" class="btn btn-sm btn-danger request-delete-btn" title="Delete <?= $tid ?>">
                     <span class="material-symbols-outlined" style="font-size: 13px;">
                       delete
                     </span>
@@ -1313,136 +1282,33 @@ document.addEventListener('DOMContentLoaded', () => {
       new bootstrap.Modal(document.getElementById('addRequestModal')).show();
     });
   });
+  
+  // // Initialize the Bootstrap modal instance
+  // const printModalEl = document.getElementById('printModal');
+  // const printModal = new bootstrap.Modal(printModalEl);
 
-  // Show Edit Modal on “Edit” button click
-  // const dynamicEditFields = document.getElementById('dynamicEditFields');
-  // document.querySelectorAll('.btn-edit').forEach(btn => {
-  //   btn.addEventListener('click', e => {
-      // find the row and extract ID + Request Type
-      // const tr = e.currentTarget.closest('tr');
-      // const tid = tr.dataset.id;
-      // assuming the “Request” column is the 3rd <td>
-      // const type = tr.children[2].textContent.trim();
+  // // Attach click handler to all print buttons
+  // document.querySelectorAll('.request-btn-print').forEach(btn => {
+  //   btn.addEventListener('click', () => {
+  //     // Optional: clear previous values
+  //     document.getElementById('orNumber').value = '';
+  //     document.getElementById('amountPaid').value = '';
 
-      // set hidden fields
-      // document.getElementById('editModalTransactionId').value = tid;
-      // document.getElementById('editModalRequestType').value = type;
-      // update title
-      // document.getElementById('editRequestModalLabel').textContent = `${type} Request`;
-
-      // inject the correct template
-      // dynamicEditFields.innerHTML = '';
-      // const tpl = document.getElementById('tpl-' + type);
-      // if (tpl) {
-      //   dynamicEditFields.appendChild(tpl.content.cloneNode(true));
-
-        // 1) Grab the freshly injected elements
-        // const chkEdit = dynamicEditFields.querySelector('#requirePhotoCheck');
-        // const photoEdit = dynamicEditFields.querySelector('#photoInput');
-
-        // 2) Clone to nuke old listeners (optional, but safe)
-        // let realChk = chkEdit;
-        // if (chkEdit) {
-        //   const newChk = chkEdit.cloneNode();
-        //   chkEdit.parentNode.replaceChild(newChk, chkEdit);
-        //   realChk = newChk;
-        // }
-
-        // 3) **Re‑attach** your toggle listener to the “real” checkbox
-        // if (realChk && photoEdit) {
-          // ensure initial state matches the checkbox
-        //   photoEdit.disabled = !realChk.checked;
-
-        //   realChk.addEventListener('change', () => {
-        //     photoEdit.disabled = !realChk.checked;
-        //   });
-        // }
-
-        // fetch(`functions/fetch_request_data.php`
-        //   + `?transaction_id=${encodeURIComponent(tid)}`
-        //   + `&request_type=${encodeURIComponent(type)}`)
-        // .then(res => res.json())
-        // .then(data => {
-
-        //   originalData = JSON.parse(JSON.stringify(data));
-
-        //   Object.entries(data).forEach(([rawKey, val]) => {
-            // 1) Normalize column → form name
-            // let key = rawKey;
-            // if (key === 'birth_date') key = 'dob';
-            // if (key === 'formal_picture') key = 'photo'; 
-
-            // 2) Handle radio groups
-            // const radios = dynamicEditFields.querySelectorAll(`input[type="radio"][name="${key}"]`);
-            // if (radios.length) {
-            //   radios.forEach(radio => {
-            //     radio.checked = (radio.value === val);
-            //   });
-            //   return;
-            // }
-
-            // 3) Handle the "require photo" checkbox + file input
-            // if (rawKey === 'formal_picture') {
-            //   const chk = dynamicEditFields.querySelector('#requirePhotoCheck');
-            //   const photo = dynamicEditFields.querySelector('#photoInput');
-            //   const nameEl = dynamicEditFields.querySelector('#currentPhotoName');
-
-            //   const hasPic = Boolean(val);
-            //   chk.checked = hasPic;
-            //   photo.disabled = !hasPic;
-
-            //   if (hasPic) {
-                // show and populate the filename
-              //   nameEl.textContent = `Current file: ${val}`;
-              //   nameEl.classList.remove('d-none');
-              // } else {
-                // hide if no file
-            //     nameEl.classList.add('d-none');
-            //   }
-            //   return;
-            // }
-
-            // 4) All other inputs/selects/textareas
-          //   const field = dynamicEditFields.querySelector(`[name="${key}"]`);
-          //   if (!field) return;
-          //   field.value = val;
-          //   field.dispatchEvent(new Event('change'));
-          // });
-
-          // show the modal
-      //     new bootstrap.Modal(document.getElementById('editRequestModal')).show();
-      //   })
-      //   .catch(err => console.error('Fetch error:', err));
-      // } else {
-      //   dynamicEditFields.innerHTML = '<div class="col-12 text-muted">No fields for this request type.</div>';
-      // }
-
-      
+  //     // Show the modal
+  //     printModal.show();
   //   });
   // });
 
-  // intercept the Edit form submit and compare against originalData
-  const editForm = document.getElementById('editRequestForm');
-  editForm.addEventListener('submit', e => {
-    const formData = new FormData(editForm);
-    let changed = false;
+  document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.request-btn-print');
+  if (!btn) return;
 
-    Object.entries(originalData).forEach(([col, orig]) => {
-      // normalize column names to form names
-      let name = col === 'birth_date' ? 'dob' : col;
-      if (col === 'formal_picture') name = 'photo';
+  // grab the transaction ID from the row
+  const row = btn.closest('tr');
+  const tid = row.dataset.id;  // you already set data-id="<?= $tid ?>"
 
-      const curr = formData.get(name) || '';
-      if (String(curr) !== String(orig)) {
-        changed = true;
-      }
-    });
-
-    if (!changed) {
-      e.preventDefault();
-      new bootstrap.Modal(document.getElementById('noChangesModal')).show();
-    }
-  });
-  
+  // open the certificate page in a new tab (auto-prints)
+  window.open(`functions/print_certificate.php?transaction_id=${encodeURIComponent(tid)}`, '_blank');
+});
 });
 </script>

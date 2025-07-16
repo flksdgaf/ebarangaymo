@@ -1410,6 +1410,49 @@ document.addEventListener('DOMContentLoaded', () => {
       new bootstrap.Modal(document.getElementById('noChangesModal')).show();
     }
   });
-  
+
+  // Print Modal 
+  // <div class="modal fade" id="printModal" tabindex="-1" aria-labelledby="printModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  //   <div class="modal-dialog modal-dialog-centered">
+  //     <div class="modal-content">
+  //       <div class="modal-header bg-warning text-dark">
+  //         <h5 class="modal-title" id="printModalLabel">Print Certificate</h5>
+  //         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+  //       </div>
+  //       <div class="modal-body">
+  //         <form id="printForm">
+  //           <div class="mb-3">
+  //             <label for="orNumber" class="form-label">OR Number</label>
+  //             <input type="text" class="form-control" id="orNumber" name="or_number" placeholder="Enter OR Number" required>
+  //           </div>
+  //           <div class="mb-3">
+  //             <label for="amountPaid" class="form-label">Amount Paid</label>
+  //             <input type="text" class="form-control" id="amountPaid" name="amount_paid" placeholder="Enter Amount Paid" required>
+  //           </div>
+  //         </form>
+  //       </div>
+  //       <div class="modal-footer">
+  //         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+  //         <button type="button" class="btn btn-warning">Print Certificate</button>
+  //       </div>
+  //     </div>
+  //   </div>
+  // </div>
+
+  // // Initialize the Bootstrap modal instance
+  // const printModalEl = document.getElementById('printModal');
+  // const printModal = new bootstrap.Modal(printModalEl);
+
+  // // Attach click handler to all print buttons
+  // document.querySelectorAll('.request-btn-print').forEach(btn => {
+  //   btn.addEventListener('click', () => {
+  //     // Optional: clear previous values
+  //     document.getElementById('orNumber').value = '';
+  //     document.getElementById('amountPaid').value = '';
+
+  //     // Show the modal
+  //     printModal.show();
+  //   });
+  // });
 });
 </script>

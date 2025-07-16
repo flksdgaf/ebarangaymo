@@ -25,7 +25,7 @@ $suffixPart = $sn ? " {$sn}" : '';
 $middlePart = $mn ? " {$mn}" : '';
 
 // Always put the comma immediately after last name (+ suffix), then a space
-$full_name = "{$ln}, {$fn}{$middlePart}{$suffixPart}";
+$full_name = "{$suffixPart}{$ln}, {$fn}{$middlePart}";
 
 // Step 2 inputs
 // $cs = $_POST['civilstatus']          ?? '';

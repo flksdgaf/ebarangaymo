@@ -135,7 +135,7 @@ $stmt->close();
                   <?php if ($row['role'] !== null): ?>
                     <select class="form-select form-select-sm role-select" style="width:137px; background-image: none; padding-right: 0.5rem;">
                       <?php 
-                      $roles = ['Resident','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Lupon'];
+                      $roles = ['Resident','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad', 'Brgy Treasurer', 'Brgy Lupon'];
                       foreach ($roles as $r): ?>
                         <option value="<?= $r ?>"
                           <?= $row['role'] === $r ? 'selected' : '' ?>>

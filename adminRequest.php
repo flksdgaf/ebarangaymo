@@ -6,6 +6,18 @@ require 'functions/dbconn.php';
 $userId = (int)$_SESSION['loggedInUserID'];
 $newTid = $_GET['transaction_id'] ?? '';
 
+$currentRole = $_SESSION['loggedInUserRole'] ?? '';
+
+// what each role is allowed to do on the request page
+$rolePermissions = [
+  'Brgy Captain'    => ['add','proceed','print','edit','delete'],
+  'Brgy Secretary'  => ['add','proceed','print','edit','delete'],
+  'Brgy Bookkeeper' => ['add','proceed','print','edit','delete'],
+  'Brgy Treasurer'  => [],     // no default actions
+  'Brgy Kagawad'    => [],     // view‑only
+];
+$perms = $rolePermissions[$currentRole] ?? [];
+
 // FILTER SETUP
 $request_type = $_GET['request_type'] ?? '';
 $date_from = $_GET['date_from'] ?? '';
@@ -230,10 +242,17 @@ $result = $st->get_result();
 
       <!-- Add New Request button -->
       <div class="dropdown ms-3">
-        <button class="btn btn-sm btn-success dropdown-toggle" type="button" id="addRequestDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        <!-- <button class="btn btn-sm btn-success dropdown-toggle" type="button" id="addRequestDropdown" data-bs-toggle="dropdown" aria-expanded="false">
           <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">add</span>
             Add New Request
-        </button>
+        </button> -->
+        <?php if (in_array('add', $perms, true)): ?>
+          <button class="btn btn-sm btn-success dropdown-toggle" type="button" id="addRequestDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">add</span>
+            Add New Request
+          </button>
+        <?php endif; ?>
+
         <ul class="dropdown-menu" aria-labelledby="addRequestDropdown">
           <?php foreach (['Barangay ID','Business Permit','Good Moral','Guardianship','Indigency','Residency','Solo Parent'] as $type): ?> <!-- 'Equipment Borrowing' -->
             <li>
@@ -1080,33 +1099,79 @@ $result = $st->get_result();
         </div>
       </div>
 
-      <!-- Print Modal -->
-      <!-- <div class="modal fade" id="printModal" tabindex="-1" aria-labelledby="printModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+      <!-- Record Payment Modal -->
+      <!-- <div class="modal fade" id="recordModal" tabindex="-1" aria-labelledby="recordModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
-            <div class="modal-header bg-warning text-dark">
-              <h5 class="modal-title" id="printModalLabel">Print Certificate</h5>
+            <div class="modal-header">
+              <h5 class="modal-title" id="recordModalLabel">Record Payment</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-              <form id="printForm">
+              <form id="recordForm">
                 <div class="mb-3">
-                  <label for="orNumber" class="form-label">OR Number</label>
-                  <input type="text" class="form-control" id="orNumber" name="or_number" placeholder="Enter OR Number" required>
+                  <label for="orNumberRecord" class="form-label">OR Number</label>
+                  <input type="text" class="form-control" id="orNumberRecord" name="or_number" placeholder="Enter OR Number" required>
                 </div>
                 <div class="mb-3">
-                  <label for="amountPaid" class="form-label">Amount Paid</label>
-                  <input type="text" class="form-control" id="amountPaid" name="amount_paid" placeholder="Enter Amount Paid" required>
+                  <label for="amountPaidRecord" class="form-label">Amount Paid</label>
+                  <input type="number" step="0.01" class="form-control" id="amountPaidRecord" name="amount_paid" placeholder="Enter Amount Paid" required>
                 </div>
               </form>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <button type="button" class="btn btn-warning">Print Certificate</button>
+              <button type="submit" form="recordForm" class="btn btn-primary">Save Payment</button>
             </div>
           </div>
         </div>
       </div> -->
+
+      <!-- Record Payment Modal -->
+      <div class="modal fade" id="recordModal" tabindex="-1" aria-labelledby="recordModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="recordModalLabel">Record Payment</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <form id="recordForm">
+                <input type="hidden" name="transaction_id" id="recordTransactionId">
+
+                <div class="mb-3">
+                  <label for="paymentMethodRecord" class="form-label">Payment Method</label>
+                  <input type="text" class="form-control" id="paymentMethodRecord" name="payment_method" readonly>
+                </div>
+
+                <div id="refRow" class="mb-3" style="display:none;">
+                  <label for="referenceNumberRecord" class="form-label">Reference Number</label>
+                  <input type="text" class="form-control" id="referenceNumberRecord" name="reference_number" placeholder="Enter Reference Number">
+                </div>
+
+                <div class="mb-3">
+                  <label for="orNumberRecord" class="form-label">OR Number</label>
+                  <input type="text" class="form-control" id="orNumberRecord" name="or_number" placeholder="Enter OR Number" required>
+                </div>
+
+                <div class="mb-3">
+                  <label for="issuedDateRecord" class="form-label">Issued Date</label>
+                  <input type="date" class="form-control" id="issuedDateRecord" name="issued_date" required>
+                </div>
+
+                <div class="mb-3">
+                  <label for="amountPaidRecord" class="form-label">Amount Paid</label>
+                  <input type="number" step="0.01" class="form-control" id="amountPaidRecord" name="amount_paid" placeholder="Enter Amount Paid" required>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" form="recordForm" class="btn btn-primary">Save Payment</button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <form method="get" id="searchForm" class="d-flex ms-auto me-2">
       <!-- preserve pagination & filters -->
@@ -1138,7 +1203,10 @@ $result = $st->get_result();
             <th class="text-nowrap">Payment Status</th>
             <th class="text-nowrap">Document Status</th>
             <th class="text-nowrap">Date Created</th>
-            <th class="text-nowrap text-center">Action</th>
+            <!-- <th class="text-nowrap text-center">Action</th> -->
+             <?php if (!empty($perms) || $currentRole === 'Brgy Treasurer'): ?>
+              <th class="text-nowrap text-center">Action</th>
+            <?php endif; ?>
           </tr>
         </thead>
         <tbody>
@@ -1153,35 +1221,83 @@ $result = $st->get_result();
                 <td><?= htmlspecialchars($row['payment_status']) ?></td>
                 <td><?= htmlspecialchars($row['document_status']) ?></td>
                 <td><?= htmlspecialchars($row['formatted_date']) ?></td>
-                <td>
+                <?php if (!empty($perms) || $currentRole === 'Brgy Treasurer'): ?>
+                  <td class="text-center">
+                    <?php if (in_array('proceed', $perms, true)): ?>
+                      <button type="button" class="btn btn-sm btn-success request-btn-release" title="Release <?= $tid ?>">
+                        <span class="material-symbols-outlined" style="font-size: 13px;">
+                          check
+                        </span>
+                      </button>
+                    <?php endif; ?>
+
+                    <?php if (in_array('print', $perms, true)): ?>
+                      <button type="button" class="btn btn-sm btn-warning request-btn-print" title="Print <?= $tid ?>">
+                        <span class="material-symbols-outlined" style="font-size: 13px;">
+                          print
+                        </span>
+                      </button>
+                    <?php endif; ?>
+
+                    <?php if (in_array('edit', $perms, true)): ?>
+                      <button type="button" class="btn btn-sm btn-primary request-btn-edit" title="Edit <?= $tid ?>">
+                        <span class="material-symbols-outlined" style="font-size: 13px;">
+                          stylus
+                        </span>
+                      </button>
+                    <?php endif; ?>
+
+                    <?php if (in_array('delete', $perms, true)): ?>
+                      <button type="button" class="btn btn-sm btn-danger request-delete-btn" title="Delete <?= $tid ?>">
+                        <span class="material-symbols-outlined" style="font-size: 13px;">
+                          delete
+                        </span>
+                      </button>
+                    <?php endif; ?>
+
+                    <!-- Treasurer’s custom button(s) -->
+                    <?php if ($currentRole === 'Brgy Treasurer'): ?>
+                      <button type="button" class="btn btn-sm btn-info request-record-btn"  data-id="<?= htmlspecialchars($row['transaction_id']) ?>"
+  data-payment-method="<?= htmlspecialchars($row['payment_method']) ?>"
+  data-amount-paid="<?= htmlspecialchars($row['amount'] ?? '') ?>"
+>
+                        <span class="material-symbols-outlined" style="font-size: 13px;">
+                          receipt
+                        </span>
+                      </button>
+                      <!-- add more as needed -->
+                    <?php endif; ?>
+                  </td>
+                <?php endif; ?>
+                <!-- <td> -->
                   <!-- Release Button -->
-                  <button type="button" class="btn btn-sm btn-success request-btn-release" title="Release <?= $tid ?>">
+                  <!-- <button type="button" class="btn btn-sm btn-success request-btn-release" title="Release <?= $tid ?>">
                     <span class="material-symbols-outlined" style="font-size: 13px;">
                       check
                     </span>
-                  </button>
+                  </button> -->
 
                   <!-- Print Button -->
-                  <button type="button" class="btn btn-sm btn-warning request-btn-print" title="Print <?= $tid ?>">
+                  <!-- <button type="button" class="btn btn-sm btn-warning request-btn-print" title="Print <?= $tid ?>">
                     <span class="material-symbols-outlined" style="font-size: 13px;">
                       print
                     </span>
-                  </button>
+                  </button> -->
 
                   <!-- Edit Button -->
-                  <button type="button" class="btn btn-sm btn-primary request-btn-edit" title="Edit <?= $tid ?>">
+                  <!-- <button type="button" class="btn btn-sm btn-primary request-btn-edit" title="Edit <?= $tid ?>">
                     <span class="material-symbols-outlined" style="font-size: 13px;">
                       stylus
                     </span>
-                  </button>
+                  </button> -->
 
                   <!-- Delete Button -->
-                  <button type="button" class="btn btn-sm btn-danger request-delete-btn" title="Delete <?= $tid ?>">
+                  <!-- <button type="button" class="btn btn-sm btn-danger request-delete-btn" title="Delete <?= $tid ?>">
                     <span class="material-symbols-outlined" style="font-size: 13px;">
                       delete
                     </span>
-                  </button>
-                </td>
+                  </button> -->
+                <!-- </td> -->
               </tr>
             <?php endwhile; ?>
           <?php else: ?>
@@ -1282,33 +1398,73 @@ document.addEventListener('DOMContentLoaded', () => {
       new bootstrap.Modal(document.getElementById('addRequestModal')).show();
     });
   });
-  
-  // // Initialize the Bootstrap modal instance
-  // const printModalEl = document.getElementById('printModal');
-  // const printModal = new bootstrap.Modal(printModalEl);
-
-  // // Attach click handler to all print buttons
-  // document.querySelectorAll('.request-btn-print').forEach(btn => {
-  //   btn.addEventListener('click', () => {
-  //     // Optional: clear previous values
-  //     document.getElementById('orNumber').value = '';
-  //     document.getElementById('amountPaid').value = '';
-
-  //     // Show the modal
-  //     printModal.show();
-  //   });
-  // });
 
   document.addEventListener('click', (e) => {
-  const btn = e.target.closest('.request-btn-print');
-  if (!btn) return;
+    const btn = e.target.closest('.request-btn-print');
+    if (!btn) return;
 
-  // grab the transaction ID from the row
-  const row = btn.closest('tr');
-  const tid = row.dataset.id;  // you already set data-id="<?= $tid ?>"
+    // grab the transaction ID from the row
+    const row = btn.closest('tr');
+    const tid = row.dataset.id;  // you already set data-id="<?= $tid ?>"
 
-  // open the certificate page in a new tab (auto-prints)
-  window.open(`functions/print_certificate.php?transaction_id=${encodeURIComponent(tid)}`, '_blank');
-});
+    // open the certificate page in a new tab (auto-prints)
+    window.open(`functions/print_certificate.php?transaction_id=${encodeURIComponent(tid)}`, '_blank');
+  });
+
+  const recordModal   = new bootstrap.Modal('#recordModal');
+  const pmInput       = document.getElementById('paymentMethodRecord');
+  const refRow        = document.getElementById('refRow');
+  const refInput      = document.getElementById('referenceNumberRecord');
+  const tidInput      = document.getElementById('recordTransactionId');
+  const orInput       = document.getElementById('orNumberRecord');
+  const issuedInput   = document.getElementById('issuedDateRecord');
+  const amtInput      = document.getElementById('amountPaidRecord');
+
+  document.querySelectorAll('.request-record-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tid  = btn.dataset.id;
+      const pm   = btn.dataset.paymentMethod || '';
+      const or   = btn.dataset.orNumber || '';
+      const amt  = btn.dataset.amountPaid || '';
+      const ref  = btn.dataset.referenceNumber || '';
+      const issued = btn.dataset.issuedDate || new Date().toISOString().slice(0,10);
+
+      // Prefill fields
+      tidInput.value    = tid;
+      pmInput.value     = pm;
+      orInput.value     = or;
+      amtInput.value    = amt;
+      refInput.value    = ref;
+      issuedInput.value = issued;
+
+      // Show reference only for GCash
+      if (pm === 'GCash') {
+        refRow.style.display = 'block';
+        refInput.required    = true;
+      } else {
+        refRow.style.display = 'none';
+        refInput.required    = false;
+      }
+
+      recordModal.show();
+    });
+  });
+
+  document.getElementById('recordForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const data = new URLSearchParams(new FormData(e.target));
+    const resp = await fetch('functions/record_payment.php', {
+      method: 'POST',
+      headers: {'Content-Type':'application/x-www-form-urlencoded'},
+      body: data
+    });
+
+    if (resp.ok) {
+      recordModal.hide();
+      location.reload();
+    } else {
+      alert('Error saving payment');
+    }
+  });
 });
 </script>

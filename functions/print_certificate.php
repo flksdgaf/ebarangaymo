@@ -1,5 +1,5 @@
 <?php
-// print_certificate.php
+// functions/print_certificate.php
 require_once __DIR__ . '/dbconn.php';
 
 $transactionId = $_GET['transaction_id'] ?? '';
@@ -7,7 +7,7 @@ if (!$transactionId) {
     die('Transaction ID is required');
 }
 
-// 1) Determine request type from view_request
+// 1) Find request type via view_request
 $stmt = $conn->prepare("SELECT request_type FROM view_request WHERE transaction_id = ?");
 $stmt->bind_param('s', $transactionId);
 $stmt->execute();
@@ -18,44 +18,22 @@ if (!$res || $res->num_rows !== 1) {
 $requestType = $res->fetch_assoc()['request_type'];
 $stmt->close();
 
-// 2) Based on type, query the specific table for all fields
-switch ($requestType) {
-    case 'Barangay ID':
-        $table = 'barangay_id_requests';
-        break;
-    case 'Business Permit':
-        $table = 'business_permit_requests';
-        break;
-    case 'Good Moral':
-        $table = 'good_moral_requests';
-        break;
-    case 'Guardianship':
-        $table = 'guardianship_requests';
-        break;
-    case 'Indigency':
-        $table = 'indigency_requests';
-        break;
-    case 'Residency':
-        $table = 'residency_requests';
-        break;
-    case 'Solo Parent':
-        $table = 'solo_parent_requests';
-        break;
-    default:
-        die('Unknown request type');
+// 2) Map requestType → actual table name
+$typeMap = [
+    'Barangay ID'       => 'barangay_id_requests',
+    'Business Permit'   => 'business_permit_requests',
+    'Good Moral'        => 'good_moral_requests',
+    'Guardianship'      => 'guardianship_requests',
+    'Indigency'         => 'indigency_requests',
+    'Residency'         => 'residency_requests',
+    'Solo Parent'       => 'solo_parent_requests',
+];
+if (!isset($typeMap[$requestType])) {
+    die('Unknown request type');
 }
+$table = $typeMap[$requestType];
 
-// // 3) Fetch all columns
-// $colStmt = $conn->prepare("SHOW COLUMNS FROM `$table`");
-// $colStmt->execute();
-// $colsRes = $colStmt->get_result();
-// $columns = [];
-// while ($col = $colsRes->fetch_assoc()) {
-//     $columns[] = $col['Field'];
-// }
-// $colStmt->close();
-
-// 3) Define columns manually per table/request type
+// 3) Define, per‑table, which columns to select
 $requestFields = [
   'barangay_id_requests' => [
     'transaction_id', 'request_type', 'transaction_type', 'full_name', 'purok', 'birth_date', 'birth_place', 
@@ -87,15 +65,13 @@ $requestFields = [
   ],
 ];
 
-// Check if we have predefined fields for this table
 if (!isset($requestFields[$table])) {
-  die('Unsupported request type for printing');
+    die('Unsupported request type for printing');
 }
-
 $columns = $requestFields[$table];
 
-// Build dynamic select
-$sql = 'SELECT ' . implode(',', array_map(function($c){ return "`$c`"; }, $columns))
+// 4) Fetch only those columns
+$sql = 'SELECT ' . implode(',', array_map(fn($c)=>"`$c`", $columns))
      . " FROM `$table` WHERE transaction_id = ? LIMIT 1";
 $rowStmt = $conn->prepare($sql);
 $rowStmt->bind_param('s', $transactionId);
@@ -107,34 +83,15 @@ if (!$dataRes || $dataRes->num_rows !== 1) {
 $data = $dataRes->fetch_assoc();
 $rowStmt->close();
 
-// 4) Render HTML certificate
-?><!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Print <?= htmlspecialchars($requestType) ?> Certificate</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 2rem; }
-    h1 { text-align: center; margin-bottom: 1.5rem; }
-    .field { margin-bottom: 0.75rem; }
-    .field label { font-weight: bold; display: inline-block; width: 200px; }
-  </style>
-</head>
-<body>
-  <h1><?= htmlspecialchars($requestType) ?> Certificate</h1>
-  <?php foreach ($data as $field => $value): ?>
-    <div class="field">
-      <label><?= htmlspecialchars(ucwords(str_replace('_', ' ', $field))) ?>:</label>
-      <span><?= htmlspecialchars($value) ?></span>
-    </div>
-  <?php endforeach; ?>
-  <hr>
-  <p style="text-align:center; font-size:0.9rem; color:#666;">
-    Printed on <?= date('F j, Y \\a\t g:i A') ?>
-  </p>
-</body>
-</html>
-<?php 
+// 5) Derive template name from table: drop '_requests' suffix
+$templateName = str_replace('_requests', '', $table);
+$templateFile = __DIR__ . '/../templates/' . $templateName . '.php';
+if (!file_exists($templateFile)) {
+    die('Template file not found: ' . htmlspecialchars($templateName));
+}
+
+// 6) Make $data and $requestType available and include template
+//    The template will output the full HTML (and call window.print())
+include $templateFile;
 exit;
 ?>

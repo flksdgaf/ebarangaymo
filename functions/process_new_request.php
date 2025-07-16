@@ -19,6 +19,9 @@ if ($role === 'SuperAdmin') {
 $userId = $_SESSION['loggedInUserID'];
 $requestType = $_POST['request_type'] ?? '';
 
+// HARD CODE PAYMENT STATUS FOR TESTING
+$paymentStatus = 'Paid';
+
 switch($requestType) {
   case 'Barangay ID':
     $transactionType = $_POST['barangay_id_transaction_type'];
@@ -70,10 +73,10 @@ switch($requestType) {
     $stmt->close();
 
     // 4) Insert into barangay_id_requests
-    $sql = "INSERT INTO barangay_id_requests (account_id, transaction_id, transaction_type, full_name, purok, birth_date, birth_place, civil_status, religion, height, weight, emergency_contact_person, emergency_contact_number, formal_picture, claim_date, payment_method, document_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL,?,?)";
+    $sql = "INSERT INTO barangay_id_requests (account_id, transaction_id, transaction_type, full_name, purok, birth_date, birth_place, civil_status, religion, height, weight, emergency_contact_person, emergency_contact_number, formal_picture, claim_date, payment_method, document_status, payment_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL,?,?,?)";
     $ins = $conn->prepare($sql);
-    $ins->bind_param('issssssssddsssss', $userId, $transactionId, $transactionType, $fullName, $purok, $birthDate, $birthPlace, 
-    $civilStatus, $religion, $height, $weight, $contactPerson, $contactNo, $formalPicName, $paymentMethod, $documentStatus);
+    $ins->bind_param('issssssssddssssss', $userId, $transactionId, $transactionType, $fullName, $purok, $birthDate, $birthPlace, 
+    $civilStatus, $religion, $height, $weight, $contactPerson, $contactNo, $formalPicName, $paymentMethod, $documentStatus, $paymentStatus);
     $ins->execute();
     $ins->close();
 
@@ -138,10 +141,10 @@ switch($requestType) {
     $stmt->close();
 
     // 4) Insert into business_permit_requests
-    $sql = "INSERT INTO business_permit_requests (account_id, transaction_id, transaction_type, full_name, purok, barangay, age, civil_status, name_of_business, type_of_business, full_address, claim_date, payment_method, document_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,NULL,?,?)";
+    $sql = "INSERT INTO business_permit_requests (account_id, transaction_id, transaction_type, full_name, purok, barangay, age, civil_status, name_of_business, type_of_business, full_address, claim_date, payment_method, document_status, payment_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,NULL,?,?,?)";
     $ins = $conn->prepare($sql);
-    $ins->bind_param('isssssissssss', $userId, $transactionId, $transactionType, $fullName, $purok, $barangay, $age, $civilStatus,
-    $businessName, $businessType, $fullAddress, $paymentMethod, $documentStatus);
+    $ins->bind_param('isssssisssssss', $userId, $transactionId, $transactionType, $fullName, $purok, $barangay, $age, $civilStatus,
+    $businessName, $businessType, $fullAddress, $paymentMethod, $documentStatus, $paymentStatus);
     $ins->execute();
     $ins->close();
 
@@ -203,9 +206,9 @@ switch($requestType) {
     $stmt->close();
 
     // 3) Insert into good_moral_requests
-    $sql = "INSERT INTO good_moral_requests (account_id, transaction_id, full_name, civil_status, sex, age, purok, subdivision, purpose, claim_date, payment_method, document_status) VALUES (?,?,?,?,?,?,?,?,?,NULL,?,?)";
+    $sql = "INSERT INTO good_moral_requests (account_id, transaction_id, full_name, civil_status, sex, age, purok, subdivision, purpose, claim_date, payment_method, document_status, payment_status) VALUES (?,?,?,?,?,?,?,?,?,NULL,?,?,?)";
     $ins = $conn->prepare($sql);
-    $ins->bind_param('issssisssss', $userId, $transactionId, $fullName, $civilStatus, $sex, $age, $purok, $subdivision, $purpose, $paymentMethod, $documentStatus);
+    $ins->bind_param('issssissssss', $userId, $transactionId, $fullName, $civilStatus, $sex, $age, $purok, $subdivision, $purpose, $paymentMethod, $documentStatus, $paymentStatus);
     $ins->execute();
     $ins->close();
 
@@ -276,9 +279,9 @@ switch($requestType) {
     $stmt->close();
     
     // 3) Insert into guardianship_request
-    $sql = "INSERT INTO guardianship_requests (account_id, transaction_id, full_name, civil_status, age, purok, child_name, purpose, claim_date, payment_method, document_status) VALUES (?,?,?,?,?,?,?,?,NULL,?,?)";
+    $sql = "INSERT INTO guardianship_requests (account_id, transaction_id, full_name, civil_status, age, purok, child_name, purpose, claim_date, payment_method, document_status, payment_status) VALUES (?,?,?,?,?,?,?,?,NULL,?,?,?)";
     $ins = $conn->prepare($sql);
-    $ins->bind_param('isssisssss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $fullNameChild, $purpose, $paymentMethod, $documentStatus);
+    $ins->bind_param('isssissssss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $fullNameChild, $purpose, $paymentMethod, $documentStatus, $paymentStatus);
     $ins->execute();
     $ins->close();
 
@@ -401,9 +404,9 @@ switch($requestType) {
     $stmt->close();
 
     // 4) Insert into residency_requests
-    $sql = "INSERT INTO residency_requests (account_id, transaction_id, full_name, civil_status, age, purok, residing_years, purpose, payment_method, claim_date, document_status) VALUES (?,?,?,?,?,?,?,?,?,NULL,?)";
+    $sql = "INSERT INTO residency_requests (account_id, transaction_id, full_name, civil_status, age, purok, residing_years, purpose, payment_method, claim_date, document_status, payment_status) VALUES (?,?,?,?,?,?,?,?,?,NULL,?,?)";
     $ins = $conn->prepare($sql);
-    $ins->bind_param('isssisisss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $yearsResiding, $purpose, $paymentMethod, $documentStatus);
+    $ins->bind_param('isssisissss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $yearsResiding, $purpose, $paymentMethod, $documentStatus, $paymentStatus);
     $ins->execute();
     $ins->close();
 
@@ -479,9 +482,9 @@ switch($requestType) {
     $stmt->close();
 
     // 4) Insert into solo_parent_requests
-    $sql = "INSERT INTO solo_parent_requests (account_id, transaction_id, full_name, civil_status, age, purok, years_solo_parent, child_name, child_age, child_sex, purpose, payment_method, claim_date, document_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,NULL,?)";
+    $sql = "INSERT INTO solo_parent_requests (account_id, transaction_id, full_name, civil_status, age, purok, years_solo_parent, child_name, child_age, child_sex, purpose, payment_method, claim_date, document_status, payment_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,NULL,?,?)";
     $ins = $conn->prepare($sql);
-    $ins->bind_param('isssisisissss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $yearsSoloParent, $fullNameChild, $childAge, $childSex, $purpose, $paymentMethod, $documentStatus);
+    $ins->bind_param('isssisisisssss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $yearsSoloParent, $fullNameChild, $childAge, $childSex, $purpose, $paymentMethod, $documentStatus, $paymentStatus);
     $ins->execute();
     $ins->close();
 

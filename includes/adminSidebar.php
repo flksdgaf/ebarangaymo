@@ -4,6 +4,95 @@ include 'functions/dbconn.php';
 
 $info = $conn->query("SELECT logo, name, address FROM barangay_info WHERE id=1")->fetch_assoc();
 $logoUrl = 'images/' . $info['logo'];
+
+$menuItems = [
+  [
+    'id'    => 'adminDashboard',
+    'label' => 'Dashboard',
+    'icon'  => 'home',
+    'href'  => 'adminDashboard.php',
+    'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Treasurer','Brgy Lupon']
+  ],
+  [
+    'id'    => 'adminRequest',
+    'label' => 'Document Request',
+    'icon'  => 'description',
+    'href'  => 'adminRequest.php',
+    'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Treasurer']
+  ],
+  [
+    'id'    => 'adminEquipmentBorrowing',
+    'label' => 'Equipment Borrowing',
+    'icon'  => 'inventory_2',
+    'href'  => 'adminEquipmentBorrowing.php',
+    'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad']
+  ],
+  [
+    'id'    => 'adminComplaints',
+    'label' => 'Blotter & Complaints',
+    'icon'  => 'gavel',
+    'href'  => 'adminComplaints.php',
+    'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Treasurer','Brgy Lupon']
+  ],
+  [
+    'id'    => 'adminResidents',
+    'label' => 'Residents',
+    'icon'  => 'people',
+    'href'  => 'adminResidents.php',
+    'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad']
+  ],
+  [
+    'id'    => 'adminVerifications',
+    'label' => 'Account Verifications',
+    'icon'  => 'verified_user',
+    'href'  => 'adminVerifications.php',
+    'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad']
+  ],
+  [
+    'id'    => 'adminHistory',
+    'label' => 'Transaction History',
+    'icon'  => 'history',
+    'href'  => 'adminHistory.php',
+    'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Treasurer']
+  ],
+  [
+    'id'    => 'adminTransactions',
+    'label' => 'Generate Reports',
+    'icon'  => 'bar_chart',
+    'href'  => 'adminTransactions.php',
+    'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Treasurer']
+  ],
+  [
+    'id'    => 'adminWebsite',
+    'label' => 'Website Configuration',
+    'icon'  => 'web',
+    'href'  => 'adminWebsite.php',
+    'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad']
+  ],
+  [
+    'id'    => 'adminDeviceStatus',
+    'label' => 'Device Status',
+    'icon'  => 'devices',
+    'href'  => 'adminDeviceStatus.php',
+    'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad']
+  ],
+  [
+    'id'    => 'adminLogs',
+    'label' => 'Activity Logs',
+    'icon'  => 'receipt_long',
+    'href'  => 'adminLogs.php',
+    'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad']
+  ],
+//   [
+//     'id'    => 'settings',
+//     'label' => 'Settings',
+//     'icon'  => 'settings',
+//     'href'  => 'adminSettings.php',
+//     'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad']
+//   ],
+];
+
+$currentRole = $_SESSION['loggedInUserRole'] ?? '';
 ?>
 
 <nav id="sidebar" class="sidebar">
@@ -26,7 +115,17 @@ $logoUrl = 'images/' . $info['logo'];
     ?>
 
     <ul class="nav flex-column gap-1">
-        <li>
+        <?php foreach ($menuItems as $item): ?>
+            <?php if (in_array($currentRole, $item['roles'], true)): ?>
+                <li>
+                <a href="adminPanel.php?page=<?= urlencode($item['id']) ?>" class="nav-link d-flex align-items-center <?= ($currentPage === $item['id']) ? 'active' : '' ?>">
+                    <span class="material-symbols-outlined me-2"><?= htmlspecialchars($item['icon']) ?></span>
+                    <?= htmlspecialchars($item['label']) ?>
+                </a>
+                </li>
+            <?php endif; ?>
+        <?php endforeach; ?>
+        <!-- <li>
             <a href="adminPanel.php?page=adminDashboard" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminDashboard') ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">dashboard</span>
             Dashboard
@@ -91,7 +190,7 @@ $logoUrl = 'images/' . $info['logo'];
             <span class="material-symbols-outlined me-2">badge</span>
             Activity Logs
             </a>
-        </li>
+        </li> -->
     </ul>
 </nav>
 

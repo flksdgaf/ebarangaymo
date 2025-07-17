@@ -11,7 +11,7 @@ if (!$from || !$to || $type === '') {
 
 if ($type === 'all') {
     $stmt = $conn->prepare("
-        SELECT transaction_type, or_number, issued_date, amount
+        SELECT request_type, or_number, issued_date, amount_paid
         FROM official_receipt_records
         WHERE issued_date BETWEEN ? AND ?
         ORDER BY issued_date ASC
@@ -19,9 +19,9 @@ if ($type === 'all') {
     $stmt->bind_param("ss", $from, $to);
 } else {
     $stmt = $conn->prepare("
-        SELECT transaction_type, or_number, issued_date, amount
+        SELECT request_type, or_number, issued_date, amount_paid
         FROM official_receipt_records
-        WHERE issued_date BETWEEN ? AND ? AND transaction_type = ?
+        WHERE issued_date BETWEEN ? AND ? AND request_type = ?
         ORDER BY issued_date ASC
     ");
     $stmt->bind_param("sss", $from, $to, $type);
@@ -32,7 +32,7 @@ $res = $stmt->get_result();
 
 $rows = $res->fetch_all(MYSQLI_ASSOC);
 $totalRecords = count($rows);
-$totalAmount = array_sum(array_column($rows, 'amount'));
+$totalAmount = array_sum(array_column($rows, 'amount_paid'));
 ?>
 <!DOCTYPE html>
 <html>
@@ -143,10 +143,10 @@ $totalAmount = array_sum(array_column($rows, 'amount'));
         <?php if ($totalRecords > 0): ?>
           <?php foreach ($rows as $row): ?>
             <tr>
-              <td><?= htmlspecialchars($row['transaction_type']) ?></td>
+              <td><?= htmlspecialchars($row['request_type']) ?></td>
               <td><?= htmlspecialchars($row['or_number']) ?></td>
               <td><?= date('F j, Y', strtotime($row['issued_date'])) ?></td>
-              <td><?= number_format((float)$row['amount'], 2) ?></td>
+              <td><?= number_format((float)$row['amount_paid'], 2) ?></td>
             </tr>
           <?php endforeach; ?>
         <?php else: ?>

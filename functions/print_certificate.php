@@ -83,6 +83,12 @@ if (!$dataRes || $dataRes->num_rows !== 1) {
 $data = $dataRes->fetch_assoc();
 $rowStmt->close();
 
+// 4.5) Update document_status to 'Released' (or another appropriate status)
+$updateStmt = $conn->prepare("UPDATE `$table` SET document_status = 'Ready to Release' WHERE transaction_id = ?");
+$updateStmt->bind_param('s', $transactionId);
+$updateStmt->execute();
+$updateStmt->close();
+
 // 5) Derive template name from table: drop '_requests' suffix
 $templateName = str_replace('_requests', '', $table);
 $templateFile = __DIR__ . '/../templates/' . $templateName . '.php';

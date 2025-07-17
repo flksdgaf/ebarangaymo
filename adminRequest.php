@@ -60,7 +60,10 @@ if ($document_status) {
   $whereClauses[] = 'document_status = ?';
   $bindTypes .= 's';
   $bindParams[] = $document_status;
+} else {
+  $whereClauses[] = "document_status <> 'Released'";
 }
+
 if ($date_from && $date_to) {
   $whereClauses[] = 'DATE(created_at) BETWEEN ? AND ?';
   $bindTypes .= 'ss';
@@ -85,7 +88,7 @@ $offset = ($page - 1) * $limit;
 $countSQL = "SELECT COUNT(*) AS total FROM view_request {$whereSQL}";
 $countStmt = $conn->prepare($countSQL);
 
-if ($whereClauses) {
+if (!empty($bindTypes)) {
   $refs = [];
   foreach ($bindParams as $i => $v) {
     $refs[$i] = & $bindParams[$i];
@@ -155,6 +158,14 @@ $result = $st->get_result();
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
   <?php endif; ?>
+
+  <?php if ($id = ($_GET['payment_transaction_id'] ?? false)): ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+       Payment for <strong><?= htmlspecialchars($id) ?></strong> recorded successfully!
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <?php endif; ?>
+
   <div class="card shadow-sm p-3">
     <!-- 2a) SEARCH FORM -->
     <div class="d-flex align-items-center mb-3">
@@ -1100,48 +1111,24 @@ $result = $st->get_result();
       </div>
 
       <!-- Record Payment Modal -->
-      <!-- <div class="modal fade" id="recordModal" tabindex="-1" aria-labelledby="recordModalLabel" aria-hidden="true">
+      <div class="modal fade" id="recordModal" tabindex="-1" aria-labelledby="recordModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="recordModalLabel">Record Payment</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-              <form id="recordForm">
-                <div class="mb-3">
-                  <label for="orNumberRecord" class="form-label">OR Number</label>
-                  <input type="text" class="form-control" id="orNumberRecord" name="or_number" placeholder="Enter OR Number" required>
-                </div>
-                <div class="mb-3">
-                  <label for="amountPaidRecord" class="form-label">Amount Paid</label>
-                  <input type="number" step="0.01" class="form-control" id="amountPaidRecord" name="amount_paid" placeholder="Enter Amount Paid" required>
-                </div>
-              </form>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <button type="submit" form="recordForm" class="btn btn-primary">Save Payment</button>
-            </div>
-          </div>
-        </div>
-      </div> -->
-
-      <!-- Record Payment Modal -->
-      <div class="modal fade" id="recordModal" tabindex="-1" aria-labelledby="recordModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="recordModalLabel">Record Payment</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <form id="recordForm">
+            <!-- 1) Form now has action + method -->
+            <form id="recordForm" action="functions/record_payment.php" method="POST">
+              <div class="modal-header">
+                <h5 class="modal-title" id="recordModalLabel">Record Payment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
                 <input type="hidden" name="transaction_id" id="recordTransactionId">
+                <!-- inside your form, right after the hidden transaction_id -->
+                <input type="hidden" name="payment_method" id="recordPaymentMethodHidden">
+
 
                 <div class="mb-3">
                   <label for="paymentMethodRecord" class="form-label">Payment Method</label>
-                  <input type="text" class="form-control" id="paymentMethodRecord" name="payment_method" readonly>
+                  <input type="text" class="form-control" id="paymentMethodRecord" disabled>
                 </div>
 
                 <div id="refRow" class="mb-3" style="display:none;">
@@ -1163,12 +1150,12 @@ $result = $st->get_result();
                   <label for="amountPaidRecord" class="form-label">Amount Paid</label>
                   <input type="number" step="0.01" class="form-control" id="amountPaidRecord" name="amount_paid" placeholder="Enter Amount Paid" required>
                 </div>
-              </form>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <button type="submit" form="recordForm" class="btn btn-primary">Save Payment</button>
-            </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Payment</button>
+              </div>
+            </form>
           </div>
         </div>
       </div>
@@ -1223,7 +1210,14 @@ $result = $st->get_result();
                 <td><?= htmlspecialchars($row['formatted_date']) ?></td>
                 <?php if (!empty($perms) || $currentRole === 'Brgy Treasurer'): ?>
                   <td class="text-center">
-                    <?php if (in_array('proceed', $perms, true)): ?>
+                    <?php
+                      $canProceed = in_array('proceed', $perms, true) && $row['document_status'] === 'Ready to Release';
+                      $canPrint   = in_array('print', $perms, true) && $row['payment_status'] === 'Paid';
+                      $canEdit    = in_array('edit', $perms, true);
+                      $canDelete  = in_array('delete', $perms, true);
+                    ?>
+
+                    <?php if ($canProceed): ?>
                       <button type="button" class="btn btn-sm btn-success request-btn-release" title="Release <?= $tid ?>">
                         <span class="material-symbols-outlined" style="font-size: 13px;">
                           check
@@ -1231,7 +1225,7 @@ $result = $st->get_result();
                       </button>
                     <?php endif; ?>
 
-                    <?php if (in_array('print', $perms, true)): ?>
+                    <?php if ($canPrint): ?>
                       <button type="button" class="btn btn-sm btn-warning request-btn-print" title="Print <?= $tid ?>">
                         <span class="material-symbols-outlined" style="font-size: 13px;">
                           print
@@ -1239,7 +1233,7 @@ $result = $st->get_result();
                       </button>
                     <?php endif; ?>
 
-                    <?php if (in_array('edit', $perms, true)): ?>
+                    <?php if ($canEdit): ?>
                       <button type="button" class="btn btn-sm btn-primary request-btn-edit" title="Edit <?= $tid ?>">
                         <span class="material-symbols-outlined" style="font-size: 13px;">
                           stylus
@@ -1247,7 +1241,7 @@ $result = $st->get_result();
                       </button>
                     <?php endif; ?>
 
-                    <?php if (in_array('delete', $perms, true)): ?>
+                    <?php if ($canDelete): ?>
                       <button type="button" class="btn btn-sm btn-danger request-delete-btn" title="Delete <?= $tid ?>">
                         <span class="material-symbols-outlined" style="font-size: 13px;">
                           delete
@@ -1255,49 +1249,18 @@ $result = $st->get_result();
                       </button>
                     <?php endif; ?>
 
-                    <!-- Treasurer’s custom button(s) -->
                     <?php if ($currentRole === 'Brgy Treasurer'): ?>
-                      <button type="button" class="btn btn-sm btn-info request-record-btn"  data-id="<?= htmlspecialchars($row['transaction_id']) ?>"
-  data-payment-method="<?= htmlspecialchars($row['payment_method']) ?>"
-  data-amount-paid="<?= htmlspecialchars($row['amount'] ?? '') ?>"
->
+                      <button type="button" class="btn btn-sm btn-info request-record-btn"
+                              data-id="<?= htmlspecialchars($row['transaction_id']) ?>"
+                              data-payment-method="<?= htmlspecialchars($row['payment_method']) ?>"
+                              data-amount-paid="<?= htmlspecialchars($row['amount'] ?? '') ?>">
                         <span class="material-symbols-outlined" style="font-size: 13px;">
                           receipt
                         </span>
                       </button>
-                      <!-- add more as needed -->
                     <?php endif; ?>
                   </td>
                 <?php endif; ?>
-                <!-- <td> -->
-                  <!-- Release Button -->
-                  <!-- <button type="button" class="btn btn-sm btn-success request-btn-release" title="Release <?= $tid ?>">
-                    <span class="material-symbols-outlined" style="font-size: 13px;">
-                      check
-                    </span>
-                  </button> -->
-
-                  <!-- Print Button -->
-                  <!-- <button type="button" class="btn btn-sm btn-warning request-btn-print" title="Print <?= $tid ?>">
-                    <span class="material-symbols-outlined" style="font-size: 13px;">
-                      print
-                    </span>
-                  </button> -->
-
-                  <!-- Edit Button -->
-                  <!-- <button type="button" class="btn btn-sm btn-primary request-btn-edit" title="Edit <?= $tid ?>">
-                    <span class="material-symbols-outlined" style="font-size: 13px;">
-                      stylus
-                    </span>
-                  </button> -->
-
-                  <!-- Delete Button -->
-                  <!-- <button type="button" class="btn btn-sm btn-danger request-delete-btn" title="Delete <?= $tid ?>">
-                    <span class="material-symbols-outlined" style="font-size: 13px;">
-                      delete
-                    </span>
-                  </button> -->
-                <!-- </td> -->
               </tr>
             <?php endwhile; ?>
           <?php else: ?>
@@ -1411,33 +1374,32 @@ document.addEventListener('DOMContentLoaded', () => {
     window.open(`functions/print_certificate.php?transaction_id=${encodeURIComponent(tid)}`, '_blank');
   });
 
-  const recordModal   = new bootstrap.Modal('#recordModal');
-  const pmInput       = document.getElementById('paymentMethodRecord');
-  const refRow        = document.getElementById('refRow');
-  const refInput      = document.getElementById('referenceNumberRecord');
-  const tidInput      = document.getElementById('recordTransactionId');
-  const orInput       = document.getElementById('orNumberRecord');
-  const issuedInput   = document.getElementById('issuedDateRecord');
-  const amtInput      = document.getElementById('amountPaidRecord');
+  const recordModal = new bootstrap.Modal('#recordModal');
+  const tidInput   = document.getElementById('recordTransactionId');
+  const pmInput    = document.getElementById('paymentMethodRecord');
+  const pmHidden   = document.getElementById('recordPaymentMethodHidden');
+  const refRow     = document.getElementById('refRow');
+  const refInput   = document.getElementById('referenceNumberRecord');
+  const orInput    = document.getElementById('orNumberRecord');
+  const issuedInput= document.getElementById('issuedDateRecord');
+  const amtInput   = document.getElementById('amountPaidRecord');
 
   document.querySelectorAll('.request-record-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const tid  = btn.dataset.id;
-      const pm   = btn.dataset.paymentMethod || '';
-      const or   = btn.dataset.orNumber || '';
-      const amt  = btn.dataset.amountPaid || '';
-      const ref  = btn.dataset.referenceNumber || '';
-      const issued = btn.dataset.issuedDate || new Date().toISOString().slice(0,10);
-
-      // Prefill fields
+      const tid = btn.dataset.id;
+      const pm  = btn.dataset.paymentMethod || '';
+      const ref = btn.dataset.referenceNumber || '';
+      const or  = btn.dataset.orNumber || '';
+      // always start fresh
       tidInput.value    = tid;
       pmInput.value     = pm;
-      orInput.value     = or;
-      amtInput.value    = amt;
+      pmHidden.value    = pm;          // ensure it submits
       refInput.value    = ref;
-      issuedInput.value = issued;
+      orInput.value     = or;
+      issuedInput.value = '';
+      amtInput.value    = '';          // clear old amount
 
-      // Show reference only for GCash
+      // toggle GCash reference field
       if (pm === 'GCash') {
         refRow.style.display = 'block';
         refInput.required    = true;
@@ -1450,21 +1412,43 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  document.getElementById('recordForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    const data = new URLSearchParams(new FormData(e.target));
-    const resp = await fetch('functions/record_payment.php', {
-      method: 'POST',
-      headers: {'Content-Type':'application/x-www-form-urlencoded'},
-      body: data
-    });
+  document.querySelectorAll('.request-btn-release').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const row = btn.closest('tr');
+      const tid = row.dataset.id;
+      const requestType = row.querySelector('td:nth-child(3)').textContent.trim();
 
-    if (resp.ok) {
-      recordModal.hide();
-      location.reload();
-    } else {
-      alert('Error saving payment');
-    }
+      if (!tid || !requestType) {
+        alert('Missing transaction ID or request type.');
+        return;
+      }
+
+      if (!confirm('Are you sure you want to mark this record as released?')) {
+        return;
+      }
+
+      fetch('functions/update_document_status.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `transaction_id=${encodeURIComponent(tid)}&request_type=${encodeURIComponent(requestType)}`
+      })
+      .then(res => res.text())
+      .then(response => {
+        if (response === 'success') {
+          alert('This record has been marked as Released.');
+          // Optionally update the status in the DOM
+          row.querySelector('td:nth-child(5)').textContent = 'Released';
+          btn.disabled = true;
+        } else {
+          alert('Failed to update status: ' + response);
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('An error occurred while updating status.');
+      });
+    });
   });
+
 });
 </script>

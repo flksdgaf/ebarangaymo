@@ -22,6 +22,17 @@ $purpose       = $data['purpose'] ?? '';
 $paymentMethod = $data['payment_method'] ?? '';
 $amount        = $data['amount'] ?? '';
 $createdAt     = $data['created_at'] ?? '';
+$issuedDate = date('F j, Y g:i A'); // TEMPORARY
+
+// Format date with suffix (e.g., 21st, 22nd)
+function formatWithSuffix($dateString) {
+    $day = date('j', strtotime($dateString));
+    if ($day % 10 == 1 && $day != 11) $suffix = 'st';
+    elseif ($day % 10 == 2 && $day != 12) $suffix = 'nd';
+    elseif ($day % 10 == 3 && $day != 13) $suffix = 'rd';
+    else $suffix = 'th';
+    return $day . $suffix;
+}
 
 ob_start();
 ?>
@@ -30,37 +41,50 @@ ob_start();
 <head>
   <meta charset="UTF-8">
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-    .header { text-align: center; margin-bottom: 20px; }
-    .header img { height: 80px; vertical-align: middle; }
-    .header .title { display: inline-block; margin: 0 15px; font-size: 18pt; font-weight: bold; }
-    .content { padding: 0 40px; font-size: 12pt; }
-    .field { margin-bottom: 8px; }
-    .label { font-weight: bold; width: 180px; display: inline-block; }
-    .footer { position: fixed; bottom: 20px; width: 100%; text-align: center; font-size: 10pt; }
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      margin: 0;
+      padding: 50px 60px;
+      font-size: 13pt;
+    }
+    .content {
+      text-align: justify;
+      width: 100%;
+    }
+    .certification-title {
+      font-size: 18pt;
+      text-align: center;
+      font-weight: bold;
+      text-decoration: underline;
+      margin-bottom: 50px;
+    }
+    p {
+      text-indent: 50px;
+      margin-bottom: 20px;
+    }
+    .no-indent {
+      text-indent: 0;
+      font-size: 13pt;
+      margin-bottom: 40px;
+    }
   </style>
 </head>
 <body>
-  <div class="header">
-    <img src="<?= $srcGov ?>" alt="Gov Logo">
-    <span class="title">BARANGAY ID CERTIFICATE</span>
-    <img src="<?= $srcBrgy ?>" alt="Barangay Logo">
-  </div>
-    <div class="content">
-      <div class="field"><span class="label">Transaction ID:</span> <span><?= htmlspecialchars($transactionId) ?></span></div>
-      <div class="field"><span class="label">Request Type:</span> <span><?= htmlspecialchars($requestType) ?></span></div>
-      <div class="field"><span class="label">Full Name:</span> <span><?= htmlspecialchars($fullName) ?></span></div>
-      <div class="field"><span class="label">Civil Status:</span> <span><?= htmlspecialchars($civilStatus) ?></span></div>
-      <div class="field"><span class="label">Age:</span> <span><?= htmlspecialchars($age) ?></span></div>
-      <div class="field"><span class="label">Purok:</span> <span><?= htmlspecialchars($purok) ?></span></div>
-      <div class="field"><span class="label">Child Name:</span> <span><?= htmlspecialchars($childName) ?></span></div>
-      <div class="field"><span class="label">Purpose:</span> <span><?= htmlspecialchars($purpose) ?></span></div>
-      <div class="field"><span class="label">Payment Method:</span> <span><?= htmlspecialchars($paymentMethod) ?></span></div>
-      <div class="field"><span class="label">Amount:</span> <span><?= htmlspecialchars($amount) ?></span></div>
-      <div class="field"><span class="label">Created At:</span> <span><?= htmlspecialchars($createdAt) ?></span></div>
-    </div>
-  <div class="footer">
-    Printed on <?= date('F j, Y \a\t g:i A') ?>
+  <div class="content">
+    <p class="certification-title">CERTIFICATE OF GUARDIANSHIP</p>
+
+    <p>
+      This is to certify that <span style="text-transform: uppercase;"><strong><u><?= htmlspecialchars($fullName) ?></u></strong></span>,
+       <?= htmlspecialchars($age) ?> years old, <span style="text-transform: uppercase;"><?= htmlspecialchars($civilStatus) ?></span>, 
+       is a bonafide resident of <?= htmlspecialchars($purok) ?>, Barangay Magang, Daet, Camarines Norte.
+    </p>
+    <p>
+      This is to certify further that said person is the legal guardian of <strong><?= htmlspecialchars($childName) ?></strong>.
+    </p>
+    <p>
+      This certification is issued this <strong><?= formatWithSuffix($issuedDate) ?></strong> day of <?= date('F, Y', strtotime($issuedDate)) ?> 
+      at Barangay Magang, Daet, Camarines Norte upon request of interested person for whatever purposes it may serve.
+    </p>
   </div>
 </body>
 </html>

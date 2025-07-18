@@ -1,24 +1,38 @@
 <?php
-// templates/print/barangay_id.php
 require_once __DIR__ . '/../vendor/autoload.php';
+
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
-// 1) Prepare logos as Base64
+// Prepare logos as Base64
 $govLogo  = realpath(__DIR__ . '/../images/good_governance_logo.png');
 $brgyLogo = realpath(__DIR__ . '/../images/magang_logo.png');
 $srcGov   = 'data:image/png;base64,' . base64_encode(file_get_contents($govLogo));
 $srcBrgy  = 'data:image/png;base64,' . base64_encode(file_get_contents($brgyLogo));
 
-// 2) Capture the HTML with embedded PHP into $html
+// Fetch data
 $transactionId = $data['transaction_id'] ?? '';
-$requestType   = $data['request_type'] ?? '';
 $fullName      = $data['full_name'] ?? '';
 $civilStatus   = $data['civil_status'] ?? '';
 $age           = $data['age'] ?? '';
 $purok         = $data['purok'] ?? '';
 $purpose       = $data['purpose'] ?? '';
 $createdAt     = $data['created_at'] ?? '';
+$issuedDate    = $createdAt ?: date('Y-m-d');
+
+// Format day with suffix (e.g., 1st, 2nd)
+function formatWithSuffix($dateStr) {
+    $day = date('j', strtotime($dateStr));
+    $suffix = 'th';
+    if (!in_array(($day % 100), [11, 12, 13])) {
+        switch ($day % 10) {
+            case 1: $suffix = 'st'; break;
+            case 2: $suffix = 'nd'; break;
+            case 3: $suffix = 'rd'; break;
+        }
+    }
+    return $day . '<sup>' . $suffix . '</sup>';
+}
 
 ob_start();
 ?>
@@ -27,48 +41,67 @@ ob_start();
 <head>
   <meta charset="UTF-8">
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-    .header { text-align: center; margin-bottom: 20px; }
-    .header img { height: 80px; vertical-align: middle; }
-    .header .title { display: inline-block; margin: 0 15px; font-size: 18pt; font-weight: bold; }
-    .content { padding: 0 40px; font-size: 12pt; }
-    .field { margin-bottom: 8px; }
-    .label { font-weight: bold; width: 180px; display: inline-block; }
-    .footer { position: fixed; bottom: 20px; width: 100%; text-align: center; font-size: 10pt; }
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      margin: 0;
+      padding: 50px 60px;
+      font-size: 13pt;
+    }
+    .content {
+      text-align: justify;
+      width: 100%;
+    }
+    .certification-title {
+      font-size: 18pt;
+      text-align: center;
+      font-weight: bold;
+      text-decoration: underline;
+      margin-bottom: 50px;
+    }
+    p {
+      text-indent: 50px;
+      margin-bottom: 20px;
+    }
+    .no-indent {
+      text-indent: 0;
+      font-size: 13pt;
+      margin-bottom: 40px;
+    }
   </style>
 </head>
 <body>
-  <div class="header">
-    <img src="<?= $srcGov ?>" alt="Gov Logo">
-    <span class="title">BARANGAY ID CERTIFICATE</span>
-    <img src="<?= $srcBrgy ?>" alt="Barangay Logo">
-  </div>
-    <div class="content">
-      <div class="field"><span class="label">Transaction ID:</span> <span><?= htmlspecialchars($transactionId) ?></span></div>
-      <div class="field"><span class="label">Request Type:</span> <span><?= htmlspecialchars($requestType) ?></span></div>
-      <div class="field"><span class="label">Full Name:</span> <span><?= htmlspecialchars($fullName) ?></span></div>
-      <div class="field"><span class="label">Civil Status:</span> <span><?= htmlspecialchars($civilStatus) ?></span></div>
-      <div class="field"><span class="label">Age:</span> <span><?= htmlspecialchars($age) ?></span></div>
-      <div class="field"><span class="label">Purok:</span> <span><?= htmlspecialchars($purok) ?></span></div>
-      <div class="field"><span class="label">Purpose:</span> <span><?= htmlspecialchars($purpose) ?></span></div>
-      <div class="field"><span class="label">Created At:</span> <span><?= htmlspecialchars($createdAt) ?></span></div>
-    </div>
-  <div class="footer">
-    Printed on <?= date('F j, Y \a\t g:i A') ?>
+  <div class="content">
+    <p class="certification-title">CERTIFICATE OF INDIGENCY</p>
+
+    <p class="no-indent"><strong>TO WHOM IT MAY CONCERN:</strong></p>
+
+    <p>
+      This is to certify that <strong><?= htmlspecialchars(strtoupper($fullName)) ?></strong>, <?= htmlspecialchars($age) ?> years old,
+       <span style="text-transform: uppercase;"><?= htmlspecialchars($civilStatus) ?></span>, is a bonafide resident of <?= htmlspecialchars($purok) ?>, 
+       Barangay Magang, Daet, Camarines Norte.
+    </p>
+
+    <p>
+      This is to certify further that said person is known to me as one of the indigent families of this Barangay Magang.
+    </p>
+
+    <p>
+      This certification is issued this <strong><?= formatWithSuffix($issuedDate) ?></strong> day of <?= date('F, Y', strtotime($issuedDate)) ?> at Barangay Magang, Daet, Camarines Norte, for <strong><?= htmlspecialchars($purpose) ?></strong> purposes.
+    </p>
   </div>
 </body>
 </html>
 <?php
 $html = ob_get_clean();
 
-// 3) Render with Dompdf
+// Render with Dompdf
 $options = new Options();
 $options->set('isRemoteEnabled', true);
 $dompdf = new Dompdf($options);
 $dompdf->loadHtml($html);
 $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();
-$filename = 'barangay_id_' . $data['transaction_id'] . '.pdf';
+$filename = 'certificate_of_indigency_' . $transactionId . '.pdf';
 $dompdf->stream($filename, ['Attachment' => false]);
 exit;
 ?>

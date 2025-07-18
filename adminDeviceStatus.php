@@ -93,14 +93,14 @@ $conn->close();
             <div class="card shadow-sm text-center p-3">
               <span class="material-symbols-outlined fs-1 text-warning">monetization_on</span>
               <h2 id="count-1" class="fw-bold text-warning"><?= $c1 > 0 ? $c1 : '0' ?></h2>
-              <p class="text-muted mb-0">1 Peso Coin</p>
+              <p class="text-muted mb-0">₱1 Coin</p>
             </div>
           </div>
           <div class="col-6">
             <div class="card shadow-sm text-center p-3">
               <span class="material-symbols-outlined fs-1 text-warning">monetization_on</span>
               <h2 id="count-5" class="fw-bold text-warning"><?= $c5 > 0 ? $c5 : '0' ?></h2>
-              <p class="text-muted mb-0">5 Peso Coin</p>
+              <p class="text-muted mb-0">₱5 Coin</p>
             </div>
           </div>
         </div>
@@ -111,14 +111,14 @@ $conn->close();
             <div class="card shadow-sm text-center p-3">
               <span class="material-symbols-outlined fs-1 text-warning">monetization_on</span>
               <h2 id="count-10" class="fw-bold text-warning"><?= $c10 > 0 ? $c10 : '0' ?></h2>
-              <p class="text-muted mb-0">10 Peso Coin</p>
+              <p class="text-muted mb-0">₱10 Coin</p>
             </div>
           </div>
           <div class="col-6">
             <div class="card shadow-sm text-center p-3">
               <span class="material-symbols-outlined fs-1 text-warning">monetization_on</span>
               <h2 id="count-20" class="fw-bold text-warning"><?= $c20 > 0 ? $c20 : '0' ?></h2>
-              <p class="text-muted mb-0">20 Peso Coin</p>
+              <p class="text-muted mb-0">₱20 Coin</p>
             </div>
           </div>
         </div>

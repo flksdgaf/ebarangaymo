@@ -23,7 +23,7 @@ $purpose       = $data['purpose'] ?? '';
 $paymentMethod = $data['payment_method'] ?? '';
 $amount        = $data['amount'] ?? '';
 $createdAt     = $data['created_at'] ?? '';
-$issuedDate = date('F j, Y g:i A'); // TEMPORARY
+$issuedDate = date('Y-m-d');
 
 // Format date with suffix
 function formatWithSuffix($dateStr) {

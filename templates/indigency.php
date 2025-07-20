@@ -18,7 +18,7 @@ $age           = $data['age'] ?? '';
 $purok         = $data['purok'] ?? '';
 $purpose       = $data['purpose'] ?? '';
 $createdAt     = $data['created_at'] ?? '';
-$issuedDate    = $createdAt ?: date('Y-m-d');
+$issuedDate    = date('Y-m-d');
 
 // Format day with suffix (e.g., 1st, 2nd)
 function formatWithSuffix($dateStr) {

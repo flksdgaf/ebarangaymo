@@ -90,16 +90,16 @@ $conn->close();
         <!-- First row: 1 & 5 Peso -->
         <div class="row g-3 mb-3">
           <div class="col-6">
-            <div class="card shadow-sm text-center p-3">
-              <span class="material-symbols-outlined fs-1 text-warning">monetization_on</span>
-              <h2 id="count-1" class="fw-bold text-warning"><?= $c1 > 0 ? $c1 : '0' ?></h2>
+            <div class="card shadow-sm text-center p-3" style="align-items: center;">
+              <img src="images/one_peso_coin.png" alt="₱1 Coin" style="width:90px; height:40px; margin-bottom: 5px;">
+              <h2 id="count-1" class="fw-bold" style="color:#605D60;"><?= $c1 > 0 ? $c1 : '0' ?></h2>
               <p class="text-muted mb-0">₱1 Coin</p>
             </div>
           </div>
           <div class="col-6">
-            <div class="card shadow-sm text-center p-3">
-              <span class="material-symbols-outlined fs-1 text-warning">monetization_on</span>
-              <h2 id="count-5" class="fw-bold text-warning"><?= $c5 > 0 ? $c5 : '0' ?></h2>
+            <div class="card shadow-sm text-center p-3" style="align-items: center;">
+              <img src="images/five_peso_coin.png" alt="₱5 Coin" style="width:90px; height:40px; margin-bottom: 5px;">
+              <h2 id="count-5" class="fw-bold" style="color:#917B47;"><?= $c5 > 0 ? $c5 : '0' ?></h2>
               <p class="text-muted mb-0">₱5 Coin</p>
             </div>
           </div>
@@ -108,16 +108,16 @@ $conn->close();
         <!-- Second row: 10 & 20 Peso -->
         <div class="row g-3">
           <div class="col-6">
-            <div class="card shadow-sm text-center p-3">
-              <span class="material-symbols-outlined fs-1 text-warning">monetization_on</span>
-              <h2 id="count-10" class="fw-bold text-warning"><?= $c10 > 0 ? $c10 : '0' ?></h2>
+            <div class="card shadow-sm text-center p-3" style="align-items: center;">
+              <img src="images/ten_peso_coin.png" alt="₱10 Coin" style="width:90px; height:40px; margin-bottom: 5px;">
+              <h2 id="count-10" class="fw-bold" style="color:#6A4E3A;"><?= $c10 > 0 ? $c10 : '0' ?></h2>
               <p class="text-muted mb-0">₱10 Coin</p>
             </div>
           </div>
           <div class="col-6">
-            <div class="card shadow-sm text-center p-3">
-              <span class="material-symbols-outlined fs-1 text-warning">monetization_on</span>
-              <h2 id="count-20" class="fw-bold text-warning"><?= $c20 > 0 ? $c20 : '0' ?></h2>
+            <div class="card shadow-sm text-center p-3" style="align-items: center;">
+              <img src="images/twenty_peso_coin.png" alt="₱20 Coin" style="width:45px; height:40px; margin-bottom: 5px;">
+              <h2 id="count-20" class="fw-bold" style="color:#684422;"><?= $c20 > 0 ? $c20 : '0' ?></h2>
               <p class="text-muted mb-0">₱20 Coin</p>
             </div>
           </div>
@@ -136,16 +136,16 @@ $conn->close();
         <!-- First row: 20 & 50 Bill -->
         <div class="row g-3 mb-3">
           <div class="col-6">
-            <div class="card shadow-sm text-center p-3">
-              <span class="material-symbols-outlined fs-1 text-success">payments</span>
-              <h2 id="bill-20" class="fw-bold text-success"><?= $b20 > 0 ? $b20 : '0' ?></h2>
+            <div class="card shadow-sm text-center p-3" style="align-items: center;">
+              <img src="images/twenty_peso_bill.png" alt="₱20 Bill" style="width:85px; height:40px; margin-bottom: 5px;">
+              <h2 id="bill-20" class="fw-bold" style="color:#F0983D;"><?= $b20 > 0 ? $b20 : '0' ?></h2>
               <p class="text-muted mb-0">₱20 Bill</p>
             </div>
           </div>
           <div class="col-6">
-            <div class="card shadow-sm text-center p-3">
-              <span class="material-symbols-outlined fs-1 text-success">payments</span>
-              <h2 id="bill-50" class="fw-bold text-success"><?= $b50 > 0 ? $b50 : '0' ?></h2>
+            <div class="card shadow-sm text-center p-3" style="align-items: center;">
+              <img src="images/fifty_peso_bill.png" alt="₱50 Bill" style="width:85px; height:40px; margin-bottom: 5px;">
+              <h2 id="bill-50" class="fw-bold" style="color:#C9354E;"><?= $b50 > 0 ? $b50 : '0' ?></h2>
               <p class="text-muted mb-0">₱50 Bill</p>
             </div>
           </div>
@@ -154,16 +154,16 @@ $conn->close();
         <!-- Second row: 100 & 200 Bill -->
         <div class="row g-3">
           <div class="col-6">
-            <div class="card shadow-sm text-center p-3">
-              <span class="material-symbols-outlined fs-1 text-success">payments</span>
-              <h2 id="bill-100" class="fw-bold text-success"><?= $b100 > 0 ? $b100 : '0' ?></h2>
+            <div class="card shadow-sm text-center p-3" style="align-items: center;">
+              <img src="images/one_hundred_bill.png" alt="₱100 Bill" style="width:85px; height:40px; margin-bottom: 5px;">
+              <h2 id="bill-100" class="fw-bold" style="color:#6F4F79;"><?= $b100 > 0 ? $b100 : '0' ?></h2>
               <p class="text-muted mb-0">₱100 Bill</p>
             </div>
           </div>
           <div class="col-6">
-            <div class="card shadow-sm text-center p-3">
-              <span class="material-symbols-outlined fs-1 text-success">payments</span>
-              <h2 id="bill-200" class="fw-bold text-success"><?= $b200 > 0 ? $b200 : '0' ?></h2>
+            <div class="card shadow-sm text-center p-3" style="align-items: center;">
+              <img src="images/two_hundred_bill.png" alt="₱200 Bill" style="width:85px; height:40px; margin-bottom: 5px;">
+              <h2 id="bill-200" class="fw-bold" style="color:#4F8563;"><?= $b200 > 0 ? $b200 : '0' ?></h2>
               <p class="text-muted mb-0">₱200 Bill</p>
             </div>
           </div>

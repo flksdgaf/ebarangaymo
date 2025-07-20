@@ -11,29 +11,30 @@ if (!$from || !$to || $type === '') {
 
 if ($type === 'all') {
     $stmt = $conn->prepare("
-        SELECT request_type, or_number, issued_date, amount_paid
+        SELECT or_number, full_name, request_type, amount_paid, issued_date
         FROM official_receipt_records
         WHERE issued_date BETWEEN ? AND ?
-        ORDER BY issued_date ASC
+        ORDER BY issued_date ASC, or_number ASC
     ");
     $stmt->bind_param("ss", $from, $to);
 } else {
     $stmt = $conn->prepare("
-        SELECT request_type, or_number, issued_date, amount_paid
+        SELECT or_number, full_name, request_type, amount_paid, issued_date
         FROM official_receipt_records
         WHERE issued_date BETWEEN ? AND ? AND request_type = ?
-        ORDER BY issued_date ASC
+        ORDER BY issued_date ASC, or_number ASC
     ");
     $stmt->bind_param("sss", $from, $to, $type);
 }
 
 $stmt->execute();
 $res = $stmt->get_result();
-
 $rows = $res->fetch_all(MYSQLI_ASSOC);
+
 $totalRecords = count($rows);
 $totalAmount = array_sum(array_column($rows, 'amount_paid'));
 ?>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -59,33 +60,43 @@ $totalAmount = array_sum(array_column($rows, 'amount_paid'));
       padding: 1in;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
       box-sizing: border-box;
-      overflow: hidden;
     }
 
     body, .page {
       font-family: "Arial", serif;
-      font-size: 12pt;
-    }
-
-    .header {
-      text-align: center;
-      line-height: 1.5;
-    }
-
-    .header strong {
-      font-size: 13pt;
-    }
-
-    h2 {
-      text-align: center;
-      margin-top: 30px;
-      text-transform: uppercase;
+      font-size: 10pt;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 30px;
+      margin-top: 10px;
+    }
+
+    .second-row {
+      text-align: left;
+    }
+
+    .name-treasurer, .date,
+    .barangay, .rcd, .collection {
+      text-align: left;
+    }
+
+    td.name-treasurer {
+      border-right: none;
+    }
+    td.date {
+      border-left: none;
+    }
+    td.barangay {
+      border-right: none;
+    }
+    td.rcd {
+      border-left: none;
+    }
+
+    td.date, td.rcd {
+      border-left: none;
     }
 
     th, td {
@@ -94,17 +105,33 @@ $totalAmount = array_sum(array_column($rows, 'amount_paid'));
       text-align: center;
     }
 
+    th {
+      background: #eee;
+    }
+
     tfoot td {
       font-weight: bold;
       padding: 6px 8px;
     }
 
-    tfoot .left {
+    .left {
       text-align: left;
     }
 
-    tfoot .right {
+    .right {
       text-align: right;
+    }
+
+    .no-border td {
+      border: none;
+      padding: 4px 0;
+    }
+
+    .report-title {
+      font-weight: bold;
+      text-align: center;
+      text-transform: uppercase;
+      font-size: 14pt;
     }
 
     @media print {
@@ -121,42 +148,60 @@ $totalAmount = array_sum(array_column($rows, 'amount_paid'));
 </head>
 <body>
   <div class="page">
-    <div class="header">
-      <div>Republic of the Philippines</div>
-      <div>Province of Camarines Norte</div>
-      <div>Municipality of Daet</div>
-      <div><strong>Barangay Magang</strong></div>
-    </div>
 
-    <h2>Official Receipt Report</h2>
+    <!-- Header table -->
+    <table class="no-border">
+      
+    </table>
 
+    <!-- Data table -->
     <table>
       <thead>
         <tr>
-          <th>Type</th>
-          <th>OR Number</th>
-          <th>Date Issued</th>
-          <th>Amount (₱)</th>
+        <td class="report-title" colspan="5">REPORT OF COLLECTION AND DEPOSITS</td>
+      </tr>
+      <tr class="second-row">
+        <td colspan="3" class="name-treasurer">Name of Barangay Treasurer: <strong>EDITHA B. BORSONG</strong></td>
+        <td colspan="2" class="date">Date: ________________</td>
+      </tr>
+      <tr>
+        <td colspan="3" class="barangay">Barangay: <strong>MAGANG</strong></td>
+        <td colspan="2" class="rcd">RCD No.: 25-07-007</td>
+      </tr>
+      <tr>
+        <td colspan="5" class="collection"><strong>A. COLLECTIONS</strong></td>
+      </tr>
+        <tr>
+          <th colspan="2">Official Receipt/RCR</th>
+          <th rowspan="2">Payor/DBC</th>
+          <th rowspan="2">Nature of Collection</th>
+          <th rowspan="2">Amounts</th>
+        </tr>
+        <tr>
+          <th>Date</th>
+          <th>Number</th>
         </tr>
       </thead>
       <tbody>
         <?php if ($totalRecords > 0): ?>
           <?php foreach ($rows as $row): ?>
             <tr>
-              <td><?= htmlspecialchars($row['request_type']) ?></td>
+              <td><?= date('m/d/Y', strtotime($row['issued_date'])) ?></td>
               <td><?= htmlspecialchars($row['or_number']) ?></td>
-              <td><?= date('F j, Y', strtotime($row['issued_date'])) ?></td>
+              <td><?= htmlspecialchars($row['full_name']) ?></td>
+              <td><?= htmlspecialchars($row['request_type']) ?></td>
               <td><?= number_format((float)$row['amount_paid'], 2) ?></td>
             </tr>
           <?php endforeach; ?>
         <?php else: ?>
-          <tr><td colspan="4">No official receipts found for this range.</td></tr>
+          <tr><td colspan="5">No official receipts found for this range.</td></tr>
         <?php endif; ?>
       </tbody>
       <tfoot>
         <tr>
-          <td colspan="2" class="left">Total Records: <?= $totalRecords ?></td>
-          <td colspan="2" class="right">Total Amount: ₱<?= number_format($totalAmount, 2) ?></td>
+          <td colspan="3" class="left">Total Records: <?= $totalRecords ?></td>
+          <td class="right">Total Amount:</td>
+          <td>₱<?= number_format($totalAmount, 2) ?></td>
         </tr>
       </tfoot>
     </table>

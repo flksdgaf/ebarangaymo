@@ -14,23 +14,26 @@ $bindParams = [];
 
 // global search on transaction_id or affidavit content
 if ($search !== '') {
-    $whereClauses[] = "(k.transaction_id LIKE ? OR k.complainant_affidavit LIKE ? OR k.respondent_affidavit LIKE ?)";
-    $bindTypes .= 'sss';
-    $term = "%{$search}%";
-    $bindParams = array_merge($bindParams, [$term, $term, $term]);
+  $term = "%{$search}%";
+  $whereClauses[] = "(k.transaction_id LIKE ? OR c.complaint_affidavit LIKE ? OR k.complainant_affidavit_unang_patawag LIKE ? OR k.complainant_affidavit_ikalawang_patawag LIKE ? OR k.complainant_affidavit_ikatlong_patawag LIKE ? OR k.respondent_affidavit_unang_patawag LIKE ? OR k.respondent_affidavit_ikalawang_patawag LIKE ? OR k.respondent_affidavit_ikatlong_patawag LIKE ?)";
+  $bindTypes  .= str_repeat('s', 8);
+  $bindParams = array_merge($bindParams, array_fill(0, 8, $term));
 }
+
+// (B) Date-range filter on the *same* CASE expression you use in SELECT
+$dateExpr = "CASE k.complaint_stage WHEN 'Punong Barangay' THEN k.schedule_punong_barangay WHEN 'Unang Patawag' THEN k.schedule_unang_patawag WHEN 'Ikalawang Patawag' THEN k.schedule_ikalawang_patawag ELSE k.schedule_ikatlong_patawag END";
 
 // filter by date range
 if ($date_from && $date_to) {
-    $whereClauses[] = "(LEFT(k.scheduled_at, 10) BETWEEN ? AND ?)";
+    $whereClauses[] = "(DATE($dateExpr) BETWEEN ? AND ?)";
     $bindTypes .= 'ss';
     $bindParams = array_merge($bindParams, [$date_from, $date_to]);
 } elseif ($date_from) {
-    $whereClauses[] = "(LEFT(k.scheduled_at, 10) >= ?)";
+    $whereClauses[] = "(DATE($dateExpr) >= ?)";
     $bindTypes .= 's';
     $bindParams = array_merge($bindParams, [$date_from]);
 } elseif ($date_to) {
-    $whereClauses[] = "(LEFT(k.scheduled_at, 10) <= ?)";
+    $whereClauses[] = "(DATE($dateExpr) <= ?)";
     $bindTypes .= 's';
     $bindParams = array_merge($bindParams, [$date_to]);
 }
@@ -43,15 +46,9 @@ $page = max((int)($_GET['katarungan_page'] ?? 1), 1);
 $offset = ($page - 1) * $limit;
 
 // 1) total count
-$countSQL = "
-    SELECT COUNT(*) AS total
-    FROM katarungang_pambarangay_records k
-    LEFT JOIN complaint_records c ON c.transaction_id = k.transaction_id
-    $whereSQL
-";
+$countSQL = " SELECT COUNT(*) AS total FROM katarungang_pambarangay_records k LEFT JOIN complaint_records c ON c.transaction_id = k.transaction_id $whereSQL";
 
 // SELECT COUNT(*) AS total FROM katarungang_pambarangay_records k $whereSQL
-
 $countStmt = $conn->prepare($countSQL);
 if ($whereClauses) {
     // Bind dynamically
@@ -63,60 +60,141 @@ if ($whereClauses) {
     call_user_func_array([$countStmt, 'bind_param'], $refs);
 }
 $countStmt->execute();
-$totalRows  = $countStmt->get_result()->fetch_assoc()['total'];
+$totalRows = $countStmt->get_result()->fetch_assoc()['total'];
 $totalPages = ceil($totalRows / $limit);
 $countStmt->close();
 
 // build base query string for pagination links
 $bp = [
-    'page'                  => 'adminComplaints',
-    'katarungan_search'     => $search,
-    'katarungan_date_from'  => $date_from,
-    'katarungan_date_to'    => $date_to,
+    'page' => 'adminComplaints',
+    'katarungan_search' => $search,
+    'katarungan_date_from' => $date_from,
+    'katarungan_date_to' => $date_to,
 ];
 
 // 2) fetch page of rows with JOIN to fetch affidavits
+// $sql = "
+//   SELECT
+//      k.transaction_id,
+//      c.complainant_name,
+//      c.respondent_name,
+//      k.complaint_type       AS subject_pb,
+//      c.complaint_status,
+//      CASE k.complaint_stage
+//        WHEN 'Punong Barangay'    THEN k.schedule_punong_barangay
+//        WHEN 'Unang Patawag'      THEN k.schedule_unang_patawag
+//        WHEN 'Ikalawang Patawag'  THEN k.schedule_ikalawang_patawag
+//        ELSE k.schedule_ikatlong_patawag
+//      END AS scheduled_at,
+//      CASE k.complaint_stage
+//        WHEN 'Unang Patawag'      THEN k.complainant_affidavit_unang_patawag
+//        WHEN 'Ikalawang Patawag'  THEN k.complainant_affidavit_ikalawang_patawag
+//        WHEN 'Ikatlong Patawag'   THEN k.complainant_affidavit_ikatlong_patawag
+//        ELSE NULL
+//      END AS complainant_affidavit,
+//      CASE k.complaint_stage
+//        WHEN 'Unang Patawag'      THEN k.respondent_affidavit_unang_patawag
+//        WHEN 'Ikalawang Patawag'  THEN k.respondent_affidavit_ikalawang_patawag
+//        WHEN 'Ikatlong Patawag'   THEN k.respondent_affidavit_ikatlong_patawag
+//        ELSE NULL
+//      END AS respondent_affidavit,
+//      k.complaint_stage,
+//      DATE_FORMAT(
+//        CASE k.complaint_stage
+//          WHEN 'Punong Barangay'   THEN k.schedule_punong_barangay
+//          WHEN 'Unang Patawag'     THEN k.schedule_unang_patawag
+//          WHEN 'Ikalawang Patawag' THEN k.schedule_ikalawang_patawag
+//          ELSE k.schedule_ikatlong_patawag
+//        END,
+//        '%b %e, %Y %l:%i %p'
+//      ) AS formatted_sched
+//    FROM katarungang_pambarangay_records k
+//    LEFT JOIN complaint_records c 
+//      ON c.transaction_id = k.transaction_id
+//    $whereSQL
+//    ORDER BY k.transaction_id ASC
+//    LIMIT ? OFFSET ?
+// ";
+
+// $sql = "
+//   SELECT
+//     k.transaction_id,
+//     c.complainant_name,
+//     c.respondent_name,
+//     k.complaint_type AS subject_pb,
+//     c.complaint_status,
+//     $dateExpr AS scheduled_at,
+//     CASE k.complaint_stage
+//       WHEN 'Unang Patawag' THEN k.complainant_affidavit_unang_patawag
+//       WHEN 'Ikalawang Patawag' THEN k.complainant_affidavit_ikalawang_patawag
+//       WHEN 'Ikatlong Patawag' THEN k.complainant_affidavit_ikatlong_patawag
+//       ELSE NULL
+//     END AS complainant_affidavit,
+  
+//     CASE k.complaint_stage
+//       WHEN 'Unang Patawag' THEN k.respondent_affidavit_unang_patawag
+//       WHEN 'Ikalawang Patawag' THEN k.respondent_affidavit_ikalawang_patawag
+//       WHEN 'Ikatlong Patawag' THEN k.respondent_affidavit_ikatlong_patawag
+//       ELSE NULL
+//     END AS respondent_affidavit,
+  
+//     k.complaint_stage,
+//     DATE_FORMAT($dateExpr,'%b %e, %Y %l:%i %p') AS formatted_sched
+
+//   FROM katarungang_pambarangay_records k
+//   LEFT JOIN complaint_records c ON c.transaction_id = k.transaction_id
+//   $whereSQL
+//   ORDER BY k.transaction_id ASC
+//   LIMIT ? OFFSET ?
+// ";
+
 $sql = "
   SELECT
-     k.transaction_id,
-     c.complainant_name,
-     c.respondent_name,
-     k.complaint_type       AS subject_pb,
-     c.complaint_status,
-     CASE k.complaint_stage
-       WHEN 'Punong Barangay'    THEN k.schedule_punong_barangay
-       WHEN 'Unang Patawag'      THEN k.schedule_unang_patawag
-       WHEN 'Ikalawang Patawag'  THEN k.schedule_ikalawang_patawag
-       ELSE k.schedule_ikatlong_patawag
-     END AS scheduled_at,
-     CASE k.complaint_stage
-       WHEN 'Unang Patawag'      THEN k.complainant_affidavit_unang_patawag
-       WHEN 'Ikalawang Patawag'  THEN k.complainant_affidavit_ikalawang_patawag
-       WHEN 'Ikatlong Patawag'   THEN k.complainant_affidavit_ikatlong_patawag
-       ELSE NULL
-     END AS complainant_affidavit,
-     CASE k.complaint_stage
-       WHEN 'Unang Patawag'      THEN k.respondent_affidavit_unang_patawag
-       WHEN 'Ikalawang Patawag'  THEN k.respondent_affidavit_ikalawang_patawag
-       WHEN 'Ikatlong Patawag'   THEN k.respondent_affidavit_ikatlong_patawag
-       ELSE NULL
-     END AS respondent_affidavit,
-     k.complaint_stage,
-     DATE_FORMAT(
-       CASE k.complaint_stage
-         WHEN 'Punong Barangay'   THEN k.schedule_punong_barangay
-         WHEN 'Unang Patawag'     THEN k.schedule_unang_patawag
-         WHEN 'Ikalawang Patawag' THEN k.schedule_ikalawang_patawag
-         ELSE k.schedule_ikatlong_patawag
-       END,
-       '%b %e, %Y %l:%i %p'
-     ) AS formatted_sched
-   FROM katarungang_pambarangay_records k
-   LEFT JOIN complaint_records c 
-     ON c.transaction_id = k.transaction_id
-   $whereSQL
-   ORDER BY k.transaction_id ASC
-   LIMIT ? OFFSET ?
+    k.transaction_id,
+    c.complainant_name,
+    c.respondent_name,
+    k.complaint_type             AS subject_pb,
+    c.complaint_status,
+    
+    k.schedule_punong_barangay   AS sched_pb,
+    k.schedule_unang_patawag     AS sched_1st,
+    k.schedule_ikalawang_patawag AS sched_2nd,
+    k.schedule_ikatlong_patawag  AS sched_3rd,
+
+    k.complainant_affidavit_unang_patawag     AS aff_1st,
+    k.complainant_affidavit_ikalawang_patawag AS aff_2nd,
+    k.complainant_affidavit_ikatlong_patawag  AS aff_3rd,
+
+    k.respondent_affidavit_unang_patawag     AS affr_1st,
+    k.respondent_affidavit_ikalawang_patawag AS affr_2nd,
+    k.respondent_affidavit_ikatlong_patawag  AS affr_3rd,
+
+    k.complaint_stage,
+
+    $dateExpr AS scheduled_at,
+
+    DATE_FORMAT($dateExpr, '%b %e, %Y %l:%i %p') AS formatted_sched,
+
+    CASE k.complaint_stage
+      WHEN 'Unang Patawag'     THEN k.complainant_affidavit_unang_patawag
+      WHEN 'Ikalawang Patawag' THEN k.complainant_affidavit_ikalawang_patawag
+      WHEN 'Ikatlong Patawag'  THEN k.complainant_affidavit_ikatlong_patawag
+      ELSE NULL
+    END AS complainant_affidavit,
+
+    CASE k.complaint_stage
+      WHEN 'Unang Patawag'     THEN k.respondent_affidavit_unang_patawag
+      WHEN 'Ikalawang Patawag' THEN k.respondent_affidavit_ikalawang_patawag
+      WHEN 'Ikatlong Patawag'  THEN k.respondent_affidavit_ikatlong_patawag
+      ELSE NULL
+    END AS respondent_affidavit
+
+  FROM katarungang_pambarangay_records k
+  LEFT JOIN complaint_records c
+    ON c.transaction_id = k.transaction_id
+  $whereSQL
+  ORDER BY k.transaction_id ASC
+  LIMIT ? OFFSET ?
 ";
 
 $stmt = $conn->prepare($sql);
@@ -215,9 +293,10 @@ $stmt->close();
               <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
 
-            <form id="katarunganForm" method="POST" action="">
+            <form id="katarunganForm" method="POST" action="functions/process_save_affidavit.php">
               <input type="hidden" name="transaction_id" id="edit_katarungan_tid">
               <input type="hidden" name="action_type" id="actionType">
+              <input type="hidden" name="stage" id="affidavit_stage">
 
               <div class="modal-body px-4 py-3">
                 <!-- Complaint Information -->
@@ -286,11 +365,18 @@ $stmt->close();
                         </div>
                         <div class="col-md-6">
                           <label class="form-label">Complainant Affidavit</label>
-                          <textarea name="complainant_affidavit_1st" rows="2" class="form-control form-control-sm"></textarea>
+                          <!-- <textarea name="complainant_affidavit_1st" rows="2" class="form-control form-control-sm"></textarea> -->
+                          <textarea name="complainant_affidavit_1st" rows="2" class="form-control form-control-sm" disabled></textarea>
                         </div>
                         <div class="col-md-6">
                           <label class="form-label">Respondent Affidavit</label>
-                          <textarea name="respondent_affidavit_1st" rows="2" class="form-control form-control-sm"></textarea>
+                          <!-- <textarea name="respondent_affidavit_1st" rows="2" class="form-control form-control-sm"></textarea> -->
+                        <textarea name="respondent_affidavit_1st" rows="2" class="form-control form-control-sm" disabled></textarea>
+                        </div>
+                        <div class="col-12 d-flex justify-content-end gap-2">
+                          <button type="button" class="btn btn-sm btn-outline-secondary edit-affidavit-btn" data-stage="1st">Edit</button>
+                          <button type="submit" class="btn btn-sm btn-success save-affidavit-btn d-none" data-stage="1st">Save</button>
+                          <button type="button" class="btn btn-sm btn-danger cancel-affidavit-btn d-none" data-stage="1st">Cancel</button>
                         </div>
                       </div>
                     </div>
@@ -309,11 +395,16 @@ $stmt->close();
                         </div>
                         <div class="col-md-6">
                           <label class="form-label">Complainant Affidavit</label>
-                          <textarea name="complainant_affidavit_2nd" rows="2" class="form-control form-control-sm"></textarea>
+                          <textarea name="complainant_affidavit_2nd" rows="2" class="form-control form-control-sm" disabled></textarea>
                         </div>
                         <div class="col-md-6">
                           <label class="form-label">Respondent Affidavit</label>
-                          <textarea name="respondent_affidavit_2nd" rows="2" class="form-control form-control-sm"></textarea>
+                          <textarea name="respondent_affidavit_2nd" rows="2" class="form-control form-control-sm" disabled></textarea>
+                        </div>
+                        <div class="col-12 d-flex justify-content-end gap-2">
+                          <button type="button" class="btn btn-sm btn-outline-secondary edit-affidavit-btn" data-stage="2nd">Edit</button>
+                          <button type="submit" class="btn btn-sm btn-success save-affidavit-btn d-none" data-stage="2nd">Save</button>
+                          <button type="button" class="btn btn-sm btn-danger cancel-affidavit-btn d-none" data-stage="2nd">Cancel</button>
                         </div>
                       </div>
                     </div>
@@ -332,11 +423,16 @@ $stmt->close();
                         </div>
                         <div class="col-md-6">
                           <label class="form-label">Complainant Affidavit</label>
-                          <textarea name="complainant_affidavit_3rd" rows="2" class="form-control form-control-sm"></textarea>
+                          <textarea name="complainant_affidavit_3rd" rows="2" class="form-control form-control-sm" disabled></textarea>
                         </div>
                         <div class="col-md-6">
                           <label class="form-label">Respondent Affidavit</label>
-                          <textarea name="respondent_affidavit_3rd" rows="2" class="form-control form-control-sm"></textarea>
+                          <textarea name="respondent_affidavit_3rd" rows="2" class="form-control form-control-sm" disabled></textarea>
+                        </div>
+                        <div class="col-12 d-flex justify-content-end gap-2">
+                          <button type="button" class="btn btn-sm btn-outline-secondary edit-affidavit-btn" data-stage="3rd">Edit</button>
+                          <button type="submit" class="btn btn-sm btn-success save-affidavit-btn d-none" data-stage="3rd">Save</button>
+                          <button type="button" class="btn btn-sm btn-danger cancel-affidavit-btn d-none" data-stage="3rd">Cancel</button>
                         </div>
                       </div>
                     </div>
@@ -354,83 +450,34 @@ $stmt->close();
         </div>
       </div>
 
-      <!-- VIEW Katarungan Modal -->
-      <div class="modal fade" id="viewKatarunganModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="viewKatarunganModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width: 95vw;">
-          <div class="modal-content">
-            <div class="modal-header text-white" style="background-color: #13411F;">
-              <h5 class="modal-title" id="viewKatarunganModalLabel">KATARUNGANG PAMBARANGAY</h5>
-              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      <!-- Schedule Next Patawag Modal -->
+      <div class="modal fade" id="scheduleNextModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <form id="scheduleNextForm" class="modal-content" method="POST" action="functions/process_schedule_katarungang_pambarangay.php">
+            <input type="hidden" name="transaction_id" id="sched_txn">
+            <input type="hidden" name="current_stage" id="sched_current_stage">
+            <div class="modal-header">
+              <h5 class="modal-title">Schedule Next Patawag</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-
-            <div class="modal-body px-4 py-3">
-              <!-- Complaint Information -->
-              <div class="border rounded bg-light p-3 mb-3">
-                <h6 class="fw-bold mb-2">Complaint Information</h6>
-                <div class="d-flex flex-wrap align-items-center text-muted small gap-2">
-                  <div><strong id="view_case_id">Case No.</strong></div>
-                  <span class="text-muted">|</span>
-                  <div class="d-flex align-items-center gap-1 flex-wrap">
-                    <span id="view_complainant_summary">Complainant</span>
-                    <span class="fw-semibold text-dark">vs</span>
-                    <span id="view_respondent_summary">Respondent</span>
-                  </div>
-                </div>
+            <div class="modal-body">
+              <p id="sched_prompt">When should the next Patawag be?</p>
+              <div class="mb-3">
+                <label class="form-label">Date</label>
+                <input type="date" name="next_date" class="form-control" required>
               </div>
-
-              <!-- Summon Information -->
-              <div class="mb-2">
-                <h6 class="fw-bold mb-2">Summon Information</h6>
-              </div>
-
-              <!-- Tabbed Summons -->
-              <ul class="nav nav-tabs mb-2" id="viewSummonTab" role="tablist">
-                <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#viewTabPB" type="button">Punong Barangay</button></li>
-                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#viewTab1st" type="button">Unang Patawag</button></li>
-                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#viewTab2nd" type="button">Ikalawang Patawag</button></li>
-                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#viewTab3rd" type="button">Ikatlong Patawag</button></li>
-              </ul>
-
-              <div class="tab-content">
-                <div class="tab-pane fade show active" id="viewTabPB">
-                  <div class="border rounded bg-light p-3">
-                    <div class="row g-3">
-                      <div class="col-md-6 me-1">
-                        <label class="form-label">Subject</label>
-                        <input type="text" name="subject_pb" class="form-control form-control-sm" disabled>
-                      </div>
-                      <div class="col-md-6">
-                        <label class="form-label">Summon Scheduled Date</label>
-                        <input type="date" name="scheduled_date_pb" class="form-control form-control-sm" disabled>
-                      </div>
-                      <div class="col-md-6">
-                        <label class="form-label">Summon Scheduled Time</label>
-                        <input type="time" name="scheduled_time_pb" class="form-control form-control-sm" disabled>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Add content for other tabs as needed -->
-                <div class="tab-pane fade" id="viewTab1st">
-                  <div class="border rounded bg-light p-3 text-muted text-center small">No content.</div>
-                </div>
-                <div class="tab-pane fade" id="viewTab2nd">
-                  <div class="border rounded bg-light p-3 text-muted text-center small">No content.</div>
-                </div>
-                <div class="tab-pane fade" id="viewTab3rd">
-                  <div class="border rounded bg-light p-3 text-muted text-center small">No content.</div>
-                </div>
+              <div class="mb-3">
+                <label class="form-label">Time</label>
+                <input type="time" name="next_time" class="form-control" required>
               </div>
             </div>
-
-            <div class="modal-footer justify-content-end">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-success">Save Schedule</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             </div>
-          </div>
+          </form>
         </div>
       </div>
-
 
       <!-- Delete Modal -->
       <div class="modal fade" id="deleteKatarunganModal" tabindex="-1" aria-labelledby="deleteKatarunganModalLabel" aria-hidden="true">
@@ -475,16 +522,27 @@ $stmt->close();
           <?php if ($result->num_rows): ?>
             <?php while ($row = $result->fetch_assoc()): 
               $tid = htmlspecialchars($row['transaction_id']);
-              $isCleared = ($row['complaint_status'] === 'Cleared');
-              $schedRaw = $row['scheduled_at'] ?? '';
             ?>
               <tr
                 data-id="<?= $tid ?>"
                 data-complainant-name="<?= htmlspecialchars($row['complainant_name']   ?? '') ?>"
                 data-respondent-name="<?= htmlspecialchars($row['respondent_name']     ?? '') ?>"
                 data-pb-subject="<?= htmlspecialchars($row['subject_pb']            ?? '') ?>"
-                data-pb-date="<?= htmlspecialchars(date('Y-m-d', strtotime($schedRaw))) ?>"
-                data-pb-time="<?= htmlspecialchars(date('H:i', strtotime($schedRaw))) ?>"
+                data-pb-date="<?= htmlspecialchars(date('Y-m-d', strtotime($row['sched_pb']))) ?>"
+                data-pb-time="<?= htmlspecialchars(date('H:i',   strtotime($row['sched_pb']))) ?>"
+
+                data-1st-dt="<?= htmlspecialchars($row['sched_1st']) ?>"
+                data-1st-aff="<?= htmlspecialchars($row['aff_1st']) ?>"
+                data-1st-affr="<?= htmlspecialchars($row['affr_1st']) ?>"
+
+                data-2nd-dt="<?= htmlspecialchars($row['sched_2nd']) ?>"
+                data-2nd-aff="<?= htmlspecialchars($row['aff_2nd']) ?>"
+                data-2nd-affr="<?= htmlspecialchars($row['affr_2nd']) ?>"
+
+                data-3rd-dt="<?= htmlspecialchars($row['sched_3rd']) ?>"
+                data-3rd-aff="<?= htmlspecialchars($row['aff_3rd']) ?>"
+                data-3rd-affr="<?= htmlspecialchars($row['affr_3rd']) ?>" 
+                
                 data-complaint-status="<?= htmlspecialchars($row['complaint_stage'] ?? '') ?>"
               >
                 <td><?= $tid ?></td>
@@ -493,13 +551,8 @@ $stmt->close();
                 <td><?= $row['formatted_sched'] ? htmlspecialchars($row['formatted_sched']) : '—' ?></td>
                 <td><?= htmlspecialchars($row['complaint_stage']) ?></td>
                 <td class="text-center">
-                  <!-- View -->
-                  <!-- <button class="btn btn-sm btn-warning view-katarungan-btn">
-                    <span class="material-symbols-outlined" style="font-size: 12px;">visibility</span>
-                  </button> -->
-
                   <!-- Edit -->
-                  <button class="btn btn-sm btn-success edit-katarungan-btn">
+                  <button class="btn btn-sm btn-primary edit-katarungan-btn">
                     <span class="material-symbols-outlined" style="font-size: 12px;">stylus</span>
                   </button>
 
@@ -595,59 +648,163 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelector('[name="scheduled_date_pb"]').value = tr.dataset.pbDate || '';
       document.querySelector('[name="scheduled_time_pb"]').value = tr.dataset.pbTime || '';
 
-      // 4) set the Print button URL
-      document.getElementById('printSummonBtn').href = `functions/print_summon.php?transaction_id=${encodeURIComponent(tid)}`;
+      // grab the raw ISO datetime strings
+      const dt1 = tr.dataset['1stDt'];
+      const dt2 = tr.dataset['2ndDt'];
+      const dt3 = tr.dataset['3rdDt'];
 
+      // helper to split "YYYY-MM-DD hh:mm:ss" → [ "YYYY-MM-DD", "hh:mm" ]
+      function splitDateTime(dt) {
+        if (!dt) return ['', ''];
+        const [d, t] = dt.split(' ');
+        return [ d, t.slice(0,5) ];
+      }
+
+      // — 1st Patawag — 
+      const [d1, t1] = splitDateTime(dt1);
+      const dInp1 = document.querySelector('#tab1st [name="scheduled_date_1st"]');
+      const tInp1 = document.querySelector('#tab1st [name="scheduled_time_1st"]');
+      dInp1.value = d1; tInp1.value = t1;
+      if (dt1) { dInp1.disabled = tInp1.disabled = true; }
+
+      // — 2nd Patawag — 
+      const [d2, t2] = splitDateTime(dt2);
+      const dInp2 = document.querySelector('#tab2nd [name="scheduled_date_2nd"]');
+      const tInp2 = document.querySelector('#tab2nd [name="scheduled_time_2nd"]');
+      dInp2.value = d2; tInp2.value = t2;
+      if (dt2) { dInp2.disabled = tInp2.disabled = true; }
+
+      // — 3rd Patawag — 
+      const [d3, t3] = splitDateTime(dt3);
+      const dInp3 = document.querySelector('#tab3rd [name="scheduled_date_3rd"]');
+      const tInp3 = document.querySelector('#tab3rd [name="scheduled_time_3rd"]');
+      dInp3.value = d3; tInp3.value = t3;
+      if (dt3) { dInp3.disabled = tInp3.disabled = true; }
+
+      // ─── NOW POPULATE THE AFFIDAVITS ───
+      document.querySelector('#tab1st [name="complainant_affidavit_1st"]').value = tr.dataset['1stAff']  || '';
+      document.querySelector('#tab1st [name="respondent_affidavit_1st"]').value  = tr.dataset['1stAffr'] || '';
+      document.querySelector('#tab2nd [name="complainant_affidavit_2nd"]').value = tr.dataset['2ndAff']  || '';
+      document.querySelector('#tab2nd [name="respondent_affidavit_2nd"]').value  = tr.dataset['2ndAffr'] || '';
+      document.querySelector('#tab3rd [name="complainant_affidavit_3rd"]').value = tr.dataset['3rdAff']  || '';
+      document.querySelector('#tab3rd [name="respondent_affidavit_3rd"]').value  = tr.dataset['3rdAffr'] || '';
+
+      // 4) set the Print button URL
+      document.getElementById('printSummonBtn').href = `functions/print_complaint.php?transaction_id=${encodeURIComponent(tid)}`;
+
+       // ── **NEW**: activate the tab that matches the current stage ────────────────
+      const tabButtons = Array.from(document.querySelectorAll('#summonTab .nav-link'));
+      tabButtons.forEach(tabBtn => {
+        if (tabBtn.textContent.trim() === status) {
+          new bootstrap.Tab(tabBtn).show();
+        }
+      });
+      
       // 5) show modal
       new bootstrap.Modal(document.getElementById('editKatarunganModal')).show();
     });
   });
 
-  // Delete modal wiring
-  document.querySelectorAll('.delete-katarungan-btn').forEach(button => {
-    button.addEventListener('click', () => {
-      const tid = button.closest('tr').dataset.id;
-      document.getElementById('deleteKatarunganId').value      = tid;
-      document.getElementById('deleteKatarunganIdLabel').textContent = tid;
-      new bootstrap.Modal(document.getElementById('deleteKatarunganModal')).show();
-    });
-  });
+  // map each stage to its next stage label
+  const nextStageMap = {
+    'Punong Barangay': 'Unang Patawag',
+    'Unang Patawag':   'Ikalawang Patawag',
+    'Ikalawang Patawag':'Ikatlong Patawag'
+  };
 
-  document.querySelectorAll('.view-katarungan-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tr = btn.closest('tr');
-      const tid = tr.dataset.id;
+  document.getElementById('proceedBtn').addEventListener('click', e => {
+    e.preventDefault();
 
-      // Inject values into view modal
-      document.getElementById('view_case_id').textContent = tid;
-      document.getElementById('view_complainant_summary').textContent = tr.dataset.complainantName;
-      document.getElementById('view_respondent_summary').textContent = tr.dataset.respondentName;
+    // find currently active tab
+    const activeBtn = document.querySelector('#summonTab .nav-link.active');
+    const currStage = activeBtn.textContent.trim();
+    const nextStage = nextStageMap[currStage];
+    if (!nextStage) return; // no next stage
 
-      document.querySelector('#viewKatarunganModal [name="subject_pb"]').value = tr.dataset.pbSubject || '';
-      document.querySelector('#viewKatarunganModal [name="scheduled_date_pb"]').value = tr.dataset.pbDate || '';
-      document.querySelector('#viewKatarunganModal [name="scheduled_time_pb"]').value = tr.dataset.pbTime || '';
+    // grab the row’s txn from hidden input
+    const txn = document.getElementById('edit_katarungan_tid').value;
 
-      // Show view modal
-      new bootstrap.Modal(document.getElementById('viewKatarunganModal')).show();
-    });
+    // set up modal
+    document.getElementById('sched_txn').value = txn;
+    document.getElementById('sched_current_stage').value = currStage;
+    document.getElementById('sched_prompt').textContent = 
+      `Schedule "${nextStage}" for Case ${txn}:`;
+
+    // show modal
+    new bootstrap.Modal(document.getElementById('scheduleNextModal')).show();
   });
 
   document.getElementById('clearBtn').addEventListener('click', function() {
     document.getElementById('actionType').value = 'clear';
   });
 
-  document.getElementById('proceedBtn').addEventListener('click', function (e) {
-    e.preventDefault();
-
-    const stageOrder = ['Punong Barangay', 'Unang Patawag', 'Ikalawang Patawag', 'Ikatlong Patawag'];
-    const currentStage = document.querySelector('[data-bs-target].nav-link.active').textContent.trim();
-
-    const currentIdx = [...document.querySelectorAll('#summonTab .nav-link')].findIndex(el => el.classList.contains('active'));
-    const nextIdx = currentIdx + 1;
-    const tabTriggers = document.querySelectorAll('#summonTab .nav-link');
-    if (tabTriggers[nextIdx]) {
-      new bootstrap.Tab(tabTriggers[nextIdx]).show();
-    }
+  // Delete modal wiring
+  // document.querySelectorAll('.delete-katarungan-btn').forEach(button => {
+  //   button.addEventListener('click', () => {
+  //     const tid = button.closest('tr').dataset.id;
+  //     document.getElementById('deleteKatarunganId').value      = tid;
+  //     document.getElementById('deleteKatarunganIdLabel').textContent = tid;
+  //     new bootstrap.Modal(document.getElementById('deleteKatarunganModal')).show();
+  //   });
+  // });
+  
+  // Save button for affidavit: set stage + action_type before form submit
+  document.querySelectorAll('.save-affidavit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const stage = btn.dataset.stage;
+      document.getElementById('affidavit_stage').value = stage;
+      document.getElementById('actionType').value = 'clear'; // marks that we're saving affidavit edits
+    });
   });
+
+  function toggleAffidavitEditMode(stage, editing) {
+    const aff1 = document.querySelector(`[name="complainant_affidavit_${stage}"]`);
+    const aff2 = document.querySelector(`[name="respondent_affidavit_${stage}"]`);
+
+    const editBtn   = document.querySelector(`.edit-affidavit-btn[data-stage="${stage}"]`);
+    const saveBtn   = document.querySelector(`.save-affidavit-btn[data-stage="${stage}"]`);
+    const cancelBtn = document.querySelector(`.cancel-affidavit-btn[data-stage="${stage}"]`);
+
+    if (editing) {
+      aff1.removeAttribute('disabled');
+      aff2.removeAttribute('disabled');
+      editBtn.classList.add('d-none');
+      saveBtn.classList.remove('d-none');
+      cancelBtn.classList.remove('d-none');
+
+      // store original values to restore if cancelled
+      aff1.dataset.original = aff1.value;
+      aff2.dataset.original = aff2.value;
+    } else {
+      aff1.setAttribute('disabled', 'true');
+      aff2.setAttribute('disabled', 'true');
+      editBtn.classList.remove('d-none');
+      saveBtn.classList.add('d-none');
+      cancelBtn.classList.add('d-none');
+    }
+  }
+
+  // Edit button click
+  document.querySelectorAll('.edit-affidavit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const stage = btn.dataset.stage;
+      toggleAffidavitEditMode(stage, true);
+    });
+  });
+
+  // Cancel button click
+  document.querySelectorAll('.cancel-affidavit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const stage = btn.dataset.stage;
+      const aff1 = document.querySelector(`[name="complainant_affidavit_${stage}"]`);
+      const aff2 = document.querySelector(`[name="respondent_affidavit_${stage}"]`);
+
+      aff1.value = aff1.dataset.original || '';
+      aff2.value = aff2.dataset.original || '';
+
+      toggleAffidavitEditMode(stage, false);
+    });
+  });
+
 });
 </script>

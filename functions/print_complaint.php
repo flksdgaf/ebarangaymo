@@ -1,4 +1,6 @@
 <?php
+// print_complaint.php
+
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/dbconn.php';
 
@@ -12,206 +14,90 @@ if (!($_SESSION['auth'] ?? false)) {
   exit('Not authorized');
 }
 
-// 2) Fetch transaction_id
+// 2) transaction_id
 $tid = $_GET['transaction_id'] ?? '';
 if (!$tid) {
   exit('Missing transaction_id');
 }
 
-// 3) Load complaint record
-$stmt = $conn->prepare("SELECT complainant_name, complainant_address, respondent_name, respondent_address, complaint_type, complaint_affidavit, pleading_statement, DATE_FORMAT(created_at, '%M %e, %Y %l:%i %p') AS created_fmt FROM complaint_records WHERE transaction_id = ?");
+// 3) Load complaint + latest summon schedule
+$sql = "
+  SELECT
+    c.complainant_name,
+    c.complainant_address,
+    c.respondent_name,
+    c.respondent_address,
+    c.complaint_type,
+    c.complaint_affidavit,
+    c.pleading_statement,
+    DATE_FORMAT(c.created_at, '%M %e, %Y %l:%i %p') AS created_fmt,
+    CASE k.complaint_stage
+      WHEN 'Punong Barangay' THEN k.schedule_punong_barangay
+      WHEN 'Unang Patawag' THEN k.schedule_unang_patawag
+      WHEN 'Ikalawang Patawag' THEN k.schedule_ikalawang_patawag
+      ELSE k.schedule_ikatlong_patawag
+    END AS scheduled_at
+  FROM complaint_records c
+  LEFT JOIN katarungang_pambarangay_records k
+    ON k.transaction_id = c.transaction_id
+  WHERE c.transaction_id = ?
+  ORDER BY k.id DESC
+  LIMIT 1
+";
+$stmt = $conn->prepare($sql);
 $stmt->bind_param('s', $tid);
 $stmt->execute();
 $rec = $stmt->get_result()->fetch_assoc();
 $stmt->close();
+
 if (!$rec) {
   exit('Record not found');
 }
 
-// 4) Prepare logo images
-$goodGovernanceLogo = realpath(__DIR__ . '/../images/good_governance_logo.png');
-$magangLogo = realpath(__DIR__ . '/../images/magang_logo.png');
+// 4) Prepare logos
+$logoA = realpath(__DIR__ . '/../images/magang_logo.png');
+$logoB = realpath(__DIR__ . '/../images/good_governance_logo.png');
+if (! $logoA || ! $logoB) {
+  exit("Missing logo images");
+}
+$dataA = base64_encode(file_get_contents($logoA));
+$dataB = base64_encode(file_get_contents($logoB));
+$srcA = 'data:image/png;base64,' . $dataA;
+$srcB = 'data:image/png;base64,' . $dataB;
 
-if (!$goodGovernanceLogo || !$magangLogo) {
-  exit("Missing logo image(s).");
+// 5) Format the summon date/time
+$dtRaw = $rec['scheduled_at'] ?? null;
+if ($dtRaw) {
+  $dt = new DateTime($dtRaw);
+  $summonDate = $dt->format('F j, Y');
+  $summonTime = $dt->format('g:i A');
+} else {
+  $summonDate = $summonTime = '—';
 }
 
-$logo1 = base64_encode(file_get_contents($magangLogo));
-$logo2 = base64_encode(file_get_contents($goodGovernanceLogo));
-
-$src1  = 'data:image/png;base64,' . $logo1;
-$src2 = 'data:image/png;base64,' . $logo2;
-
-// 5) Build HTML template
+// 6) Build the combined HTML
 $html = '
 <!doctype html>
 <html>
 <head>
   <meta charset="utf-8">
   <style>
-    body {
-      font-family: "Times New Roman", serif;
-      margin: 0;
-      padding: 0;
-    }
-
-    /* Full-width header */
-    .header-table {
-      width: 100%;
-      margin-bottom: 5px;
-      border-collapse: collapse;
-    }
-    .header-table td {
-      vertical-align: middle;
-      text-align: center;
-    }
-    .logo {
-      height: 125px;
-    }
-    .header-text {
-      font-size: 17px;
-      font-weight: bold;
-      line-height: 1.4;
-    }
-    .header-text .agency {
-      margin-top: 10px;
-      display: block;
-    }
-    hr.header-line {
-      border: none;
-      border-top: 3px solid black;
-      width: 100%;
-      margin: 0;
-    }
-
-    /* Content area with page margins */
-    .content {
-      margin-left: 0.75in;
-      margin-right: 0.75in;
-      margin-top: 0.25in;
-      font-size: 16px;
-      text-alignment: center;
-    }
-
-    /* Left info block, nudged further left */
-    .info {
-      float: left;
-      display: table;
-      margin-left: -0.25in;      /* ← pull it ¼″ further left */
-      margin-bottom: 20px;
-      margin-top: 60px;
-      border-collapse: collapse;
-      font-size: 16px;
-    }
-    .info td {
-      padding: 2px 4px;
-      white-space: nowrap;
-    }
-    .info .name1,
-    .info .name2 {
-      padding-left: 4px;
-      padding-top: 15px;
-      margin-bottom: 13px; 
-      display: inline-block; 
-    }
-    .info .add1,
-    .info .add2 {
-      padding-left: 4px;
-      padding-bottom: 1px;
-      display: inline-block; 
-    }  
-  
-
-    /* Right meta block, nudged further right */
-    .meta {
-      display: table;
-      margin-left: auto;
-      margin-right: -0.25in;     /* ← push it ¼″ further right */
-      margin-bottom: 20px;
-      margin-top: 20px;
-      border-collapse: collapse;
-      font-size: 16px;
-    }
-    .meta td {
-      padding: 2px 4px;
-      white-space: nowrap;
-    }
-    .meta .value {
-      padding-left: 4px;
-    }
-
-    .clear { clear: both; }
-
-    .body-text {
-      line-height: 1.6;
-      text-align: justify;
-      margin-top: 0.5in;
-    }
-
-    /* New body section */
-    .section-title {
-      text-align: center;
-      font-weight: bold;
-      margin-bottom: 0.1in;
-    }
-    .sumbong-content {
-      margin-left: -0.20in; 
-      margin-right: -32px; 
-    }
-    .section-text {
-      text-indent: 0.5in;
-      margin-top: 10px;
-      margin-bottom: 3px;
-      line-height: 1.2;
-      text-align; justify;
-    }
-    .section-text2 {
-      text-indent: 0.5in;
-      margin-top: 20px;
-      margin-bottom: 3px;
-      line-height: 1.2;
-      text-align; justify;
-    }
-    .underline-block {
-      text-align; justify;
-    }
-
-    /* Signatories */
-    .signatories-section {
-      margin-top: 50px;
-      margin-left: -0.20in; 
-      margin-right: -32px; 
-    }
-    .signatory1 {
-      text-align: right;
-      margin-bottom: 20px;
-    }
-    .signatory1 .line {
-      display: inline-block;
-      border-top: 1px solid black;
-      width: 200px;
-    }
-    .signatory1 p {
-      display: block;
-      font-size: 16px;
-      margin-top: -10px;
-    }
-    .signatories-section .date-file {
-      text-align: center; 
-      margin-bottom: 40px;
-    }
-    .signatory2 {
-      margin-left: 300px;
-      text-align: center; 
-      margin-top: 80px;
-    }
-    .signatory2 p {
-      display: block;
-      font-size: 16px;
-      margin-top: 3px;
-    }
-      
-
+    body { font-family: "Times New Roman", serif; margin: 0; padding: 0; }
+    .header-table { width:100%; border-collapse:collapse; margin-bottom:6px; }
+    .header-table td { text-align:center; vertical-align:middle; }
+    .logo { height:100px; }
+    .header-text { font-size:16px; font-weight:bold; line-height:1.3; }
+    .header-text .agency { display:block; margin-top:6px; }
+    hr { border:none; border-top:3px solid #000; margin:4px 0; }
+    .content { margin:0.5in 0.75in; font-size:14px; }
+    table.info, table.meta { border-collapse:collapse; margin-bottom:16px; }
+    table.info td, table.meta td { padding:4px 6px; white-space:nowrap; }
+    .info .value, .meta .value { border-bottom:1px solid #000; padding-left:4px; }
+    .section-title { text-align:center; font-weight:bold; margin:16px 0 8px; }
+    .section-text { text-indent:0.5in; margin-bottom:12px; line-height:1.5; text-align:justify; }
+    .underline { border-bottom:1px solid #000; padding:4px; margin-bottom:16px; }
+    .sign-line { display:inline-block; border-top:1px solid #000; width:200px; margin-top:40px; }
+    .page-break { page-break-before:always; }
   </style>
 </head>
 <body>
@@ -219,9 +105,7 @@ $html = '
   <!-- HEADER -->
   <table class="header-table">
     <tr>
-      <td style="width:20%">
-        <img src="' . $src1 . '" class="logo" alt="Barangay Logo">
-      </td>
+      <td style="width:20%"><img src="'. $srcA .'" class="logo"></td>
       <td style="width:60%" class="header-text">
         Republic of the Philippines<br>
         Province of Camarines Norte<br>
@@ -229,88 +113,120 @@ $html = '
         <strong>BARANGAY MAGANG</strong><br>
         <span class="agency">TANGGAPAN NG LUPONG TAGAPAMAYAPA</span>
       </td>
-      <td style="width:20%">
-        <img src="' . $src2 . '" class="logo" alt="Lupong Tagapamayapa Logo">
-      </td>
+      <td style="width:20%"><img src="'. $srcB .'" class="logo"></td>
     </tr>
   </table>
+  <hr>
 
-  <hr class="header-line">
-
-  <div>
+  <!-- COMPLAINT (SUMBONG) -->
   <div class="content">
-
-    <!-- Left info -->
-    <table class="info">
-      <tr><td>Name:</td><td class="name1"><u>' . htmlspecialchars($rec['complainant_name']) . '</u><br></td></tr>
-      <tr><td>Add:</td><td class="add1"><u>' . htmlspecialchars($rec['complainant_address']) . '</u></td></tr>
+    <table class="info" style="float:left;">
+      <tr><td><strong>Name:</strong></td>
+          <td class="value">'. htmlspecialchars($rec['complainant_name']) .'</td></tr>
+      <tr><td><strong>Address:</strong></td>
+          <td class="value">'. htmlspecialchars($rec['complainant_address']) .'</td></tr>
       <tr><td></td><td>Nagrereklamo</td></tr>
-      <tr><td>Name:</td><td class="name2"><u>' . htmlspecialchars($rec['respondent_name']) . '</u></td></tr>
-      <tr><td>Add:</td><td class="add2"><u>' . htmlspecialchars($rec['respondent_address']) . '</u></td></tr>
+      <tr><td><strong>Name:</strong></td>
+          <td class="value">'. htmlspecialchars($rec['respondent_name']) .'</td></tr>
+      <tr><td><strong>Address:</strong></td>
+          <td class="value">'. htmlspecialchars($rec['respondent_address']) .'</td></tr>
       <tr><td></td><td>Inirereklamo</td></tr>
     </table>
 
-    <!-- Right meta -->
-    <table class="meta">
-      <tr><td>Barangay kaso blg.</td><td class="value"><u>' . htmlspecialchars($tid) . '</u></td></tr>
-      <tr><td>Para:</td><td class="value"><u>' . htmlspecialchars($rec['complaint_type']) . '</u></td></tr>
+    <table class="meta" style="float:right;">
+      <tr><td><strong>Case No.:</strong></td>
+          <td class="value">'. htmlspecialchars($tid) .'</td></tr>
+      <tr><td><strong>Type:</strong></td>
+          <td class="value">'. htmlspecialchars($rec['complaint_type']) .'</td></tr>
+    </table>
+    <div style="clear:both;"></div>
+
+    <div class="section-title">SUMBONG</div>
+    <div class="section-text">
+      Ako/kami sa pamamagitan nito ay nagrereklamo laban sa mga pinangalanang isinakdal sa itaas…:
+    </div>
+    <div class="underline">'. nl2br(htmlspecialchars($rec['complaint_affidavit'])) .'</div>
+
+    <div class="section-text">
+      Dahil doon, ako/kami ay sumasamo ng sumusunod na kaluwagan…:
+    </div>
+    <div class="underline">'. nl2br(htmlspecialchars($rec['pleading_statement'])) .'</div>
+
+    <div style="margin-top:40px; text-align:right;">
+      <span class="sign-line"></span><br>
+      Nagrereklamo
+    </div>
+  </div>
+
+  <!-- PAGE BREAK -->
+  <div class="page-break"></div>
+
+  <!-- SUMMON (PATAWAG) -->
+  <table class="header-table">
+    <tr>
+      <td style="width:20%"><img src="'. $srcA .'" class="logo"></td>
+      <td style="width:60%" class="header-text">
+        Republic of the Philippines<br>
+        Province of Camarines Norte<br>
+        Municipality of Daet<br>
+        <strong>BARANGAY MAGANG</strong><br>
+        <span class="agency">TANGGAPAN NG LUPONG TAGAPAMAYAPA</span>
+      </td>
+      <td style="width:20%"><img src="'. $srcB .'" class="logo"></td>
+    </tr>
+  </table>
+  <hr>
+
+  <div class="content">
+    <table class="info" style="float:left;">
+      <tr><td><strong>Patawag Blg.:</strong></td>
+          <td class="value">'. htmlspecialchars($tid) .'</td></tr>
+      <tr><td><strong>Para sa usapin:</strong></td>
+          <td class="value">'. htmlspecialchars($rec['complaint_type']) .'</td></tr>
+    </table>
+    <table class="info" style="float:right;">
+      <tr><td><strong>Petsa:</strong></td>
+          <td class="value">'. $summonDate .'</td></tr>
+      <tr><td><strong>Oras:</strong></td>
+          <td class="value">'. $summonTime .'</td></tr>
+    </table>
+    <div style="clear:both;"></div>
+
+    <table class="info">
+      <tr><td><strong>Isinumbong:</strong></td>
+          <td class="value">'. htmlspecialchars($rec['complainant_name']) .'</td></tr>
+      <tr><td><strong>Address:</strong></td>
+          <td class="value">'. htmlspecialchars($rec['complainant_address']) .'</td></tr>
+      <tr><td><strong>Isinakdal:</strong></td>
+          <td class="value">'. htmlspecialchars($rec['respondent_name']) .'</td></tr>
+      <tr><td><strong>Address:</strong></td>
+          <td class="value">'. htmlspecialchars($rec['respondent_address']) .'</td></tr>
     </table>
 
-    <div class="clear"></div>
-
-    <!-- SUMBONG section -->
-    <div class="section-title">SUMBONG</div>
-    <div class="sumbong-content">
-      <div class="section-text">
-        Ako/kami sa pamamagitan nito ay nagrereklamo laban sa mga pinangalanang isinakdal sa
-        itaas, sa pagkakalabag ng aking/naming karapatan at pansariling kapakanan sa sumusunod na
-        dahilan:
-      </div>
-      <div class="underline-block">
-        <u>' . nl2br(htmlspecialchars($rec['complaint_affidavit'])) . '</u>
-      </div>
-
-      <!-- Dahil Doon section -->
-      <div class="section-text2">
-        Dahil doon, ako/kami ay sumasamo ng sumusunod na kaluwagan/kabayaran ay
-        ipinagkaloob sa akin/amin alinsunod sa batas at/o pagkamakatao:
-      </div>
-      <div class="underline-block">
-        <u>' . nl2br(htmlspecialchars($rec['pleading_statement'])) . '</u>
-      </div>
+    <div class="section-title">PATAWAG (SUMMON)</div>
+    <div class="section-text">
+      Kay: <strong>'. htmlspecialchars($rec['respondent_name']) .'</strong><br>
+      Sa pamamagitan nito ay ipinatawag kayo na humarap sa tanggapan ng Lupong Tagapamayapa,
+      Barangay Magang, Daet, Camarines Norte, sa petsa <strong>'. $summonDate .'</strong>
+      ng ganap na ika-<strong>'. $summonTime .'</strong>, upang sagutin ang sumbong na isinampa
+      laban sa inyo ukol sa <em>'. htmlspecialchars($rec['complaint_type']) .'</em>.
     </div>
-
-    <!-- Signature and acknowledgment block -->
-    <div class="signatories-section">
-      <div class="signatory1">
-        <div class="line"></div>
-        <p>Nagrereklamo</p>
-      </div>
-
-      <div class="date-file">
-        Tinanggap at isinasampa ngayon ika- _____________________, 2025.
-      </div>
-
-      <div class="signatory2">
-        <div class="punong-barangay"><strong>EDUARDO C. ASIAO</strong></div>
-        <p>Punong Barangay/Lupon Chairman</p>
-      </div>
+    <div class="section-text">
+      Kung hindi kayo magpakita, maaari kayong pagmultahin o pagkakulong alinsunod sa batas.
     </div>
+  </div>
 
-
-
-  </div><!-- /.content -->
 </body>
 </html>
 ';
 
-// 6) Generate PDF
+// 7) Render PDF
 $options = new Options();
-$options->set('isRemoteEnabled', false); // base64 doesn't need remote access
+$options->set('isRemoteEnabled', false);
 $dompdf = new Dompdf($options);
 $dompdf->loadHtml($html);
 $dompdf->setPaper('a4', 'portrait');
 $dompdf->render();
-$dompdf->stream("complaint_{$tid}.pdf", ["Attachment" => false]);
+$dompdf->stream("complaint_and_summon_{$tid}.pdf", ["Attachment" => false]);
 exit;
 ?>

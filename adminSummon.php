@@ -329,7 +329,7 @@ $stmt->close();
       <!-- Schedule Summon Modal -->
       <div class="modal fade" id="scheduleSummonModal" tabindex="-1" aria-labelledby="scheduleSummonModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-          <form id="scheduleSummonForm" method="POST" action="functions/process_katarungang_pambarangay.php" class="modal-content">
+          <form id="scheduleSummonForm" method="POST" action="functions/process_new_katarungang_pambarangay.php" class="modal-content">
             <div class="modal-header bg-warning text-dark">
               <h5 class="modal-title" id="scheduleSummonModalLabel">Schedule Summon</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal"></button>

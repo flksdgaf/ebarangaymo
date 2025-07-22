@@ -1,6 +1,18 @@
 <?php
 // functions/login_process.php
 session_start();
+
+// if (isset($_SESSION['loggedInUserRole'])) {
+//     $role = $_SESSION['loggedInUserRole'];
+
+//     if ($role === 'Resident') {
+//         header('Location: userPanel.php');
+//         exit;
+//     } else {
+//         header('Location: adminPanel.php');
+//         exit;
+//     }
+// }
 include 'dbconn.php';
 $admin_roles = ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper', 'Brgy Kagawad', 'Brgy Treasurer', 'Brgy Lupon'];
 

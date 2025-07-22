@@ -8,7 +8,7 @@ if (isset($_GET['transaction_id'])) {
     // fetch the view row to know its request_type (and ensure Released)
     $vsql = "
       SELECT * 
-        FROM view_general_requests 
+        FROM view_request 
        WHERE transaction_id = ? 
          AND payment_status = 'Paid'
          AND document_status = 'Released'
@@ -100,7 +100,7 @@ $offset = ($page - 1) * $limit;
 // count only released
 $countSql = "
   SELECT COUNT(*) AS total
-    FROM view_general_requests
+    FROM view_request
    WHERE account_id = ?
      AND document_status = 'Released'
 ";
@@ -117,7 +117,7 @@ $sql = "
          full_name,
          request_type,
          DATE_FORMAT(created_at, '%M %d, %Y %h:%i %p') AS formatted_date
-    FROM view_general_requests
+    FROM view_request
    WHERE account_id = ?
      AND document_status = 'Released'
    ORDER BY created_at DESC

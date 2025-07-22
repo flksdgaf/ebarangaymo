@@ -10,11 +10,11 @@ $currentRole = $_SESSION['loggedInUserRole'] ?? '';
 
 // what each role is allowed to do on the request page
 $rolePermissions = [
-  'Brgy Captain'    => ['add','proceed','print','edit','delete'],
-  'Brgy Secretary'  => ['add','proceed','print','edit','delete'],
+  'Brgy Captain' => ['add','proceed','print','edit','delete'],
+  'Brgy Secretary' => ['add','proceed','print','edit','delete'],
   'Brgy Bookkeeper' => ['add','proceed','print','edit','delete'],
-  'Brgy Treasurer'  => [],     // no default actions
-  'Brgy Kagawad'    => [],     // view‑only
+  'Brgy Treasurer' => [], // no default actions
+  'Brgy Kagawad' => [], // view‑only
 ];
 $perms = $rolePermissions[$currentRole] ?? [];
 
@@ -25,6 +25,7 @@ $date_to = $_GET['date_to'] ?? '';
 $payment_method = $_GET['payment_method'] ?? '';
 $payment_status = $_GET['payment_status'] ?? '';
 $document_status = $_GET['document_status'] ?? '';
+$processing_type  = $_GET['processing_type'] ?? '';
 
 $whereClauses = [];
 $bindTypes = '';
@@ -33,14 +34,14 @@ $bindParams = [];
 // GLOBAL SEARCH
 $search = trim($_GET['search'] ?? '');
 if ($search !== '') {
-  $whereClauses[] = "(transaction_id LIKE ? OR full_name LIKE ? OR request_type LIKE ? OR payment_method LIKE ? OR payment_status LIKE ? OR document_status LIKE ?)";
+  $whereClauses[] = "(transaction_id LIKE ? OR full_name LIKE ? OR request_type LIKE ? OR payment_method LIKE ? OR 
+    payment_status LIKE ? OR document_status LIKE ?)";
   $bindTypes .= str_repeat('s', 6);
   $term = "%{$search}%";
   for ($i = 0; $i < 6; $i++) {
     $bindParams[] = $term;
   }
 }
-
 if ($request_type) {
   $whereClauses[] = 'request_type = ?';
   $bindTypes .= 's';
@@ -60,10 +61,7 @@ if ($document_status) {
   $whereClauses[] = 'document_status = ?';
   $bindTypes .= 's';
   $bindParams[] = $document_status;
-} else {
-  $whereClauses[] = "document_status <> 'Released'";
-}
-
+} 
 if ($date_from && $date_to) {
   $whereClauses[] = 'DATE(created_at) BETWEEN ? AND ?';
   $bindTypes .= 'ss';
@@ -79,13 +77,22 @@ if ($date_from && $date_to) {
   $bindParams[] = $date_to;
 }
 
+if ($processing_type !== '') {
+  // match the same CASE expression you use in SELECT
+  $whereClauses[]  = "CASE WHEN ua.role = 'Resident' THEN 'Online' ELSE 'Walk-In' END = ?";
+  $bindTypes .= 's';
+  $bindParams = array_merge($bindParams, [ $processing_type ]);
+}
+
 $whereSQL = $whereClauses ? 'WHERE ' . implode(' AND ', $whereClauses) : '';
 
 $limit = 10; // records per page
 $page = isset($_GET['page_num']) ? max((int)$_GET['page_num'], 1) : 1;
 $offset = ($page - 1) * $limit;
   
-$countSQL = "SELECT COUNT(*) AS total FROM view_request {$whereSQL}";
+// $countSQL = "SELECT COUNT(*) AS total FROM view_request {$whereSQL}";
+$countSQL = "SELECT COUNT(*) AS total FROM view_request r LEFT JOIN user_accounts ua ON ua.account_id = r.account_id {$whereSQL}";
+
 $countStmt = $conn->prepare($countSQL);
 
 if (!empty($bindTypes)) {
@@ -117,7 +124,11 @@ if ($newTid) {
 }
 
 // LIST + FILTERED QUERY 
-$sql = "SELECT transaction_id, full_name, request_type, payment_method, payment_status, document_status, amount, DATE_FORMAT(claim_date, '%b %e, %Y') AS formatted_claim_date, DATE_FORMAT(created_at, '%b %e, %Y') AS formatted_date FROM view_request {$whereSQL} ORDER BY created_at ASC LIMIT ? OFFSET ?";
+// $sql = "SELECT transaction_id, full_name, request_type, payment_method, payment_status, document_status, amount, DATE_FORMAT(claim_date, '%b %e, %Y') AS formatted_claim_date, DATE_FORMAT(created_at, '%b %e, %Y') AS formatted_date FROM view_request {$whereSQL} ORDER BY created_at ASC LIMIT ? OFFSET ?";
+$sql = "SELECT r.transaction_id, r.full_name, r.request_type, r.payment_method, r.payment_status, r.document_status, r.amount, 
+  DATE_FORMAT(r.claim_date,   '%b %e, %Y') AS formatted_claim_date, DATE_FORMAT(r.created_at, '%b %e, %Y') AS formatted_date, 
+    ua.role, CASE WHEN ua.role = 'Resident' THEN 'Online' ELSE 'Walk-In' END AS processing_type FROM view_request r LEFT JOIN 
+      user_accounts ua ON ua.account_id = r.account_id {$whereSQL} ORDER BY r.created_at ASC LIMIT ? OFFSET ?";
 $st = $conn->prepare($sql);
 
 $types = $bindTypes . 'ii';
@@ -179,6 +190,16 @@ $result = $st->get_result();
             <!-- preserve the page -->
             <input type="hidden" name="page" value="adminRequest">
 
+            <!-- Processing Type -->
+            <div class="mb-2">
+              <label class="form-label mb-1">Processing Type</label>
+              <select name="processing_type" class="form-select form-select-sm" style="font-size:.75rem;">
+                <option value="">All</option>
+                <option <?= $processing_type==='Walk-In'?'selected':''?> value="Walk-In">Walk-In</option>
+                <option <?= $processing_type==='Online'?'selected':''?> value="Online">Online</option>
+              </select>
+            </div>
+
             <!-- Request Type -->
             <div class="mb-2">
               <label class="form-label mb-1">Request Type</label>
@@ -186,27 +207,12 @@ $result = $st->get_result();
                 <option value="">All</option>
                 <option <?= $request_type==='Barangay ID'?'selected':''?> value="Barangay ID">Barangay ID</option>
                 <option <?= $request_type==='Business Permit'?'selected':''?> value="Business Permit">Business Permit</option>
-                <!-- <option <?= $request_type==='Equipment Borrowing'?'selected':''?> value="Equipment Borrowing">Equipment Borrowing</option> -->
                 <option <?= $request_type==='Good Moral'?'selected':''?> value="Good Moral">Good Moral</option>
                 <option <?= $request_type==='Guardianship'?'selected':''?> value="Guardianship">Guardianship</option>
                 <option <?= $request_type==='Indigency'?'selected':''?> value="Indigency">Indigency</option>
                 <option <?= $request_type==='Residency'?'selected':''?> value="Residency">Residency</option>
                 <option <?= $request_type==='Solo Parent'?'selected':''?> value="Solo Parent">Solo Parent</option>
               </select>
-            </div>
-            <!-- Date Created -->
-            <div class="mb-2">
-              <label class="form-label mb-1">Date Created</label>
-              <div class="d-flex gap-1">
-                <div class="flex-grow-1">
-                  <small class="text-muted">From</small>
-                  <input type="date" name="date_from" class="form-control form-control-sm" style="font-size:.75rem;" value="<?=htmlspecialchars($date_from)?>">
-                </div>
-                <div class="flex-grow-1">
-                  <small class="text-muted">To</small>
-                  <input type="date" name="date_to" class="form-control form-control-sm" style="font-size:.75rem;" value="<?=htmlspecialchars($date_to)?>">
-                </div>
-              </div>
             </div>
 
             <!-- Payment Method -->
@@ -243,6 +249,21 @@ $result = $st->get_result();
               </select>
             </div>
 
+            <!-- Date Created -->
+            <div class="mb-2">
+              <label class="form-label mb-1">Date Created</label>
+              <div class="d-flex gap-1">
+                <div class="flex-grow-1">
+                  <small class="text-muted">From</small>
+                  <input type="date" name="date_from" class="form-control form-control-sm" style="font-size:.75rem;" value="<?=htmlspecialchars($date_from)?>">
+                </div>
+                <div class="flex-grow-1">
+                  <small class="text-muted">To</small>
+                  <input type="date" name="date_to" class="form-control form-control-sm" style="font-size:.75rem;" value="<?=htmlspecialchars($date_to)?>">
+                </div>
+              </div>
+            </div>
+
             <div class="d-flex">
               <a href="?page=adminRequest" class="btn btn-sm btn-outline-secondary me-2">Reset</a>
               <button type="submit" class="btn btn-sm btn-success flex-grow-1">Apply</button>
@@ -272,6 +293,14 @@ $result = $st->get_result();
           <?php endforeach; ?>
         </ul>
       </div>
+
+      <?php if ($processing_type !== ''): ?>
+        <div class="ms-3 align-self-center">
+          <small class="text-muted">
+            Showing <strong><?= htmlspecialchars($processing_type) ?></strong> requests
+          </small>
+        </div>
+      <?php endif; ?>
 
       <!-- Add New Request Modal -->
       <div class="modal fade" id="addRequestModal" data-bs-backdrop="static" data-bs-keyboard="false"tabindex="-1" aria-labelledby="addRequestModalLabel" aria-hidden="true">
@@ -427,25 +456,6 @@ $result = $st->get_result();
                   <!-- this will display the existing filename -->
                   <div id="currentPhotoName" class="form-text text-muted d-none"></div>
                 </div>
-
-                <!-- Section Title: Payment Details -->
-                <div class="col-12 mt-4">
-                  <h6 class="fw-bold fs-5" style="color: #13411F;">Payment Details</h6>
-                  <hr class="my-2">
-                </div>
-
-                <!-- Payment Method & Preferred Claim Date -->  
-                <div class="row gy-2">
-                  <div class="col-12 col-md-3">
-                    <label class="form-label fw-bold">Payment Method</label>
-                    <select name="barangay_id_payment_method" id="paymentMethodSelect" class="form-select form-select-sm" required>
-                      <option value="">Select…</option>
-                      <option value="GCash">GCash</option>
-                      <option value="Brgy Payment Device">Brgy Payment Device</option>
-                      <option value="Over-the-Counter">Over-the-Counter</option>
-                    </select>
-                  </div>
-                </div>
               </div>
             </template>
 
@@ -552,25 +562,6 @@ $result = $st->get_result();
                     <input name="business_permit_full_address" type="text" class="form-control form-control-sm" required>
                   </div>
                 </div>
-
-                <!-- Section Title: Payment Details -->
-                <div class="col-12 mt-4">
-                  <h6 class="fw-bold fs-5" style="color: #13411F;">Payment Details</h6>
-                  <hr class="my-2">
-                </div>
-
-                <!-- Payment Method & Preferred Claim Date -->
-                <div class="row gy-2">
-                  <div class="col-12 col-md-3">
-                    <label class="form-label fw-bold">Payment Method</label>
-                    <select name="business_permit_payment_method" id="paymentMethodSelect" class="form-select form-select-sm" required>
-                      <option value="">Select…</option>
-                      <option value="GCash">GCash</option>
-                      <option value="Brgy Payment Device">Brgy Payment Device</option>
-                      <option value="Over-the-Counter">Over-the-Counter</option>
-                    </select>
-                  </div>
-                </div>
               </div>
             </template>
 
@@ -657,29 +648,6 @@ $result = $st->get_result();
                 <div class="col-12">
                   <label class="form-label fw-bold">Purpose</label>
                   <textarea name="good_moral_purpose" class="form-control form-control-sm" rows="2" placeholder="State the purpose of Good Moral" required></textarea>
-                </div>
-
-                <!-- Section Title: Payment Details -->
-                <div class="col-12 mt-4">
-                  <h6 class="fw-bold fs-5" style="color: #13411F;">Payment Details</h6>
-                  <hr class="my-2">
-                </div>
-
-                <!-- Payment Method & Preferred Claim Date -->
-                <div class="row gy-2">
-                  <div class="col-12 col-md-3">
-                    <label class="form-label fw-bold">Payment Method</label>
-                    <select name="good_moral_payment_method" class="form-select form-select-sm" required>
-                      <option value="">Select…</option>
-                      <option>GCash</option>
-                      <option>Brgy Payment Device</option>
-                      <option>Over-the-Counter</option>
-                    </select>
-                  </div>
-                  <!-- <div class="col-12 col-md-6">
-                    <label class="form-label fw-bold">Preferred Claim Date</label>
-                    <input name="claim_date" type="date" class="form-control form-control-sm" required >
-                  </div> -->
                 </div>
               </div>
             </template> 
@@ -771,25 +739,6 @@ $result = $st->get_result();
                 <div class="col-12">
                   <label class="form-label fw-bold">Purpose</label>
                   <textarea name="guardianship_purpose" class="form-control form-control-sm" rows="2" placeholder="State the purpose of guardianship" required></textarea>
-                </div>
-
-                <!-- Section Title: Payment Details -->
-                <div class="col-12 mt-4">
-                  <h6 class="fw-bold fs-5" style="color: #13411F;">Payment Details</h6>
-                  <hr class="my-2">
-                </div>
-
-                <!-- Payment Method & Preferred Claim Date -->
-                <div class="row gy-2">
-                  <div class="col-12 col-md-3">
-                    <label class="form-label fw-bold">Payment Method</label>
-                    <select name="guardianship_payment_method" class="form-select form-select-sm" required>
-                      <option value="">Select…</option>
-                      <option>GCash</option>
-                      <option>Brgy Payment Device</option>
-                      <option>Over-the-Counter</option>
-                    </select>
-                  </div>
                 </div>
               </div>
             </template>
@@ -940,24 +889,715 @@ $result = $st->get_result();
                   <label class="form-label fw-bold">Purpose</label>
                   <textarea name="residency_purpose" class="form-control form-control-sm" rows="2" placeholder="State the purpose of residency" required></textarea>
                 </div>
-
-                <!-- Section Title: Payment Details -->
-                <div class="col-12 mt-4">
-                  <h6 class="fw-bold fs-5" style="color: #13411F;">Payment Details</h6>
+              </div>
+            </template>
+            
+            <!-- SOLO PARENT TEMPLATE -->
+            <template id="tpl-Solo Parent">
+              <div class="row gy-2">
+                <div class="col-12">
+                  <h6 class="fw-bold fs-5" style="color: #13411F;">Solo Parent Details</h6>
                   <hr class="my-2">
                 </div>
 
-                <!-- Row 5: Payment Method & Preferred Claim Date -->
-                <div class="row gy-2">
-                  <div class="col-12 col-md-3">
-                    <label class="form-label fw-bold">Payment Method</label>
-                    <select name="residency_payment_method" class="form-select form-select-sm" required>
-                      <option value="">Select…</option>
-                      <option>GCash</option>
-                      <option>Brgy Payment Device</option>
-                      <option>Over-the-Counter</option>
+                <!-- Row 1: First, Middle, Last, Suffix -->
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">First Name</label>
+                  <input name="solo_parent_first_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
+                  <input name="solo_parent_middle_name" type="text" class="form-control form-control-sm">
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Last Name</label>
+                  <input name="solo_parent_last_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
+                  <input name="solo_parent_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
+                </div>
+
+                <!-- <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Full Name</label>
+                  <input name="full_name" type="text" class="form-control form-control-sm" required>
+                </div> -->
+
+                <!-- Row 2: Civil Status & Age -->
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Age</label>
+                  <input name="solo_parent_age" type="number" min="0" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Civil Status</label>
+                  <select name="solo_parent_civil_status" class="form-select form-select-sm" required>
+                    <option value="">Select…</option>
+                    <option>Separated</option>
+                    <option>Widowed</option>
+                  </select>
+                </div>
+
+                <!-- Row 3: Full Address & Years as Solo Parent -->
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Purok</label>
+                  <div class="d-flex gap-2">
+                    <select name="solo_parent_purok" class="form-select form-select-sm" required>
+                      <option value="">Purok…</option>
+                      <option>Purok 1</option>
+                      <option>Purok 2</option>
+                      <option>Purok 3</option>
+                      <option>Purok 4</option>
+                      <option>Purok 5</option>
+                      <option>Purok 6</option>
                     </select>
                   </div>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Years as Solo Parent</label>
+                  <input name="solo_parent_years_solo_parent" type="number" min="0" class="form-control form-control-sm" placeholder="e.g. 2" required>
+                </div>
+
+                <div class="col-12">
+                  <h6 class="fw-bold fs-5" style="color: #13411F;">Child's Details</h6>
+                  <hr class="my-2">
+                </div>
+
+                <!-- Row 4: Child’s Name, Sex & Age -->
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">First Name</label>
+                  <input name="solo_parent_child_first_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
+                  <input name="solo_parent_child_middle_name" type="text" class="form-control form-control-sm">
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Last Name</label>
+                  <input name="solo_parent_child_last_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
+                  <input name="solo_parent_child_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
+                </div>
+
+                <!-- <div class="col-12 col-md-5">
+                  <label class="form-label fw-bold">Child’s Full Name</label>
+                  <input name="child_name" type="text" class="form-control form-control-sm" required>
+                </div> -->
+
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Child’s Sex</label>
+                  <select name="solo_parent_child_sex" class="form-select form-select-sm" required>
+                    <option value="">Select…</option>
+                    <option>Male</option>
+                    <option>Female</option>
+                  </select>
+                </div>
+
+                <!-- <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Child’s Sex</label>
+                  <input name="child_sex" type="text" class="form-control form-control-sm" required>
+                </div> -->
+
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Child’s Age</label>
+                  <input name="solo_parent_child_age" type="number" min="0" class="form-control form-control-sm" required>
+                </div>
+
+                <!-- <div class="col-12 col-md-4">
+                  <label class="form-label fw-bold">Child’s Age</label>
+                  <input name="child_age" type="text" class="form-control form-control-sm" required>
+                </div> -->
+
+                <!-- Row 5: Purpose -->
+                <div class="col-12">
+                  <label class="form-label fw-bold">Purpose</label>
+                  <textarea name="solo_parent_purpose" class="form-control form-control-sm" rows="2" placeholder="State the purpose of solo parent" required></textarea>
+                </div>
+              </div>
+            </template>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit Request Modal -->
+      <div class="modal fade" id="editRequestModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="editRequestModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width:90vw;">
+          <div class="modal-content">
+            <div class="modal-header text-white" style="background-color: #13411F;">
+              <h5 class="modal-title" id="editRequestModalLabel">Edit Request</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editRequestForm" method="POST" action="functions/process_edit_request.php" enctype="multipart/form-data">
+              <div class="modal-body">
+                <input type="hidden" name="transaction_id" id="edit_transaction_id" value="">
+                <input type="hidden" name="request_type" id="edit_request_type" value="">
+                <input type="hidden" name="admin_account_id" value="<?= $userId ?>">
+
+                <!-- This is where we’ll clone the same dynamic fields -->
+                <div class="row g-3" id="editDynamicFields"></div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-success">Save Changes</button>
+              </div>
+            </form>
+
+            <!-- EDIT BARANGAY ID TEMPLATE -->
+            <template id="tpl-Barangay ID">
+              <div class="row gy-2">
+                <!-- Section Title: Personal Details -->
+                <div class="col-12">
+                  <h6 class="fw-bold fs-5" style="color: #13411F;">Personal Details</h6>
+                  <hr class="my-2">
+                </div>
+                
+                <!-- Type of Transaction -->
+                <div class="col-12 d-flex align-items-center">
+                  <span class="form-label fw-bold mb-2 me-4">Type of Transaction:</span>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="barangay_id_transaction_type" id="edit_barangay_id_txNew" value="New Application" required>
+                    <label class="form-check-label mb-0" for="edit_barangay_id_txNew">New Application</label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="barangay_id_transaction_type" id="edit_barangay_id_txRenewal" value="Renewal">
+                    <label class="form-check-label mb-0" for="edit_barangay_id_txRenewal">Renewal</label>
+                  </div>
+                </div>
+
+                <!-- Full Name -->
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">First Name</label>
+                  <input name="barangay_id_first_name" id="edit_barangay_id_first_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
+                  <input name="barangay_id_middle_name" id="edit_barangay_id_middle_name" type="text" class="form-control form-control-sm">
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Last Name</label>
+                  <input name="barangay_id_last_name" id="edit_barangay_id_last_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>          
+                  <input name="barangay_id_suffix" id="edit_barangay_id_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
+                </div>
+
+                <!-- Purok, Birthday & Birth Place -->
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Purok</label>
+                  <div class="d-flex gap-2">
+                    <select name="barangay_id_purok" id="edit_barangay_id_purok" class="form-select form-select-sm" required>
+                      <option value="">Select…</option>
+                      <option>Purok 1</option>
+                      <option>Purok 2</option>
+                      <option>Purok 3</option>
+                      <option>Purok 4</option>
+                      <option>Purok 5</option>
+                      <option>Purok 6</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Birthday</label>
+                  <input name="barangay_id_dob" id="edit_barangay_id_dob" type="date" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-bold">Birth Place</label>
+                  <div class="row">
+                    <div class="col">
+                      <input type="text" name="barangay_id_birth_place" id="edit_barangay_id_birth_place" class="form-control form-control-sm" placeholder="Municipality / Province" required/>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Civil Status, Religion, Height & Weight-->
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Civil Status</label>
+                  <select name="barangay_id_civil_status" id="edit_barangay_id_civil_status" class="form-select form-select-sm" required>
+                    <option value="">Select…</option>
+                    <option>Single</option>
+                    <option>Married</option>
+                    <option>Divorced</option>
+                    <option>Separated</option>
+                    <option>Widowed</option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Religion</label>
+                  <select name="barangay_id_religion" id="edit_barangay_id_religionSelect" class="form-select form-select-sm" required>
+                    <option value="">Select…</option>
+                    <option>Roman Catholic</option>
+                    <option>Islam</option>
+                    <option>Iglesia ni Cristo</option>
+                    <option value="Other">Others</option>
+                  </select>
+                  <!-- This appears only when “Others” is selected -->
+                  <input name="barangay_id_religion_other" id="edit_barangay_id_religionOtherInput" type="text" class="form-control form-control-sm mt-2 d-none" placeholder="Please specify religion">
+                </div>
+                <div class="col-12 col-md-2">
+                  <label class="form-label fw-bold">Height (ft)</label>
+                  <input name="barangay_id_height" id="edit_barangay_id_height" type="decimal" min="0" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-2">
+                  <label class="form-label fw-bold">Weight (kg)</label>
+                  <input name="barangay_id_weight" id="edit_barangay_id_weight" type="decimal" min="0" class="form-control form-control-sm" required>
+                </div>
+
+                <!-- Emergency Contact Person Name & Number -->
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-bold">Emergency Contact Person</label>
+                  <input name="barangay_id_emergency_contact_person" id="edit_barangay_id_emergency_contact_person" type="text" class="form-control form-control-sm" required>
+                </div>     
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-bold">Emergency Contact Number</label>
+                  <input name="barangay_id_emergency_contact_number" id="edit_barangay_id_emergency_contact_number" type="tel" class="form-control form-control-sm" required>
+                </div>    
+
+                <!-- Formal Picture -->
+                <div class="col-12 col-md-6">
+                  <div class="form-check d-inline-block">
+                    <input class="form-check-input" type="checkbox" id="edit_barangay_id_requirePhotoCheck">
+                    <label class="form-check-label fs-6" for="edit_barangay_id_requirePhotoCheck"></label>
+                  </div>
+                  <label class="form-label fw-bold">1×1 Formal Picture</label>
+                  <input id="edit_barangay_id_photoInput" name="barangay_id_photo" type="file" accept="image/*" class="form-control form-control-sm" disabled>
+                  <!-- this will display the existing filename -->
+                  <div id="edit_barangay_id_currentPhotoName" class="form-text text-muted d-none"></div>
+                </div>
+              </div>
+            </template>
+
+            <!-- BUSINESS PERMIT TEMPLATE -->
+            <template id="tpl-Business Permit">
+              <div class="row gy-2">
+                <!-- Section Title -->
+                <div class="col-12">
+                  <h6 class="fw-bold fs-5" style="color: #13411F;">Personal Details</h6>
+                  <hr class="my-2">
+                </div>
+
+                <!-- Type of Transaction -->
+                <div class="col-12 d-flex align-items-center">
+                  <span class="form-label fw-bold mb-2 me-4">Type of Transaction:</span>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="business_permit_transaction_type" id="bpNew" value="New Application" required>
+                    <label class="form-check-label mb-0" for="business_permit_bpNew">New Application</label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="business_permit_transaction_type" id="bpRenewal" value="Renewal">
+                    <label class="form-check-label mb-0" for="business_permit_bpRenewal">Renewal</label>
+                  </div>
+                </div>
+
+                <!-- Full Name -->
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">First Name</label>
+                  <input name="business_permit_first_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
+                  <input name="business_permit_middle_name" type="text" class="form-control form-control-sm">
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Last Name</label>
+                  <input name="business_permit_last_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
+                  <input name="business_permit_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
+                </div>
+
+                <!-- <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Full Name</label>
+                  <input name="full_name" type="text" class="form-control form-control-sm" required>
+                </div> -->
+
+                <!-- Barangay, Purok, Age, & Civil Status -->
+                <div class="col-12 col-md-2">
+                  <label class="form-label fw-bold">Age</label>
+                  <input name="business_permit_age" type="number" min="0" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-2">
+                  <label class="form-label fw-bold">Civil Status</label>
+                  <select name="business_permit_civil_status" class="form-select form-select-sm" required>
+                    <option value="">Select…</option>
+                    <option>Single</option>
+                    <option>Married</option>
+                    <option>Divorced</option>
+                    <option>Separated</option>
+                    <option>Widowed</option>
+                  </select>
+                </div>
+                
+                <div class="col-12 col-md-2">
+                  <label class="form-label fw-bold">Purok</label>
+                  <div class="d-flex gap-2">
+                    <select name="business_permit_purok" class="form-select form-select-sm" required>
+                      <option value="">Select…</option>
+                      <option>Purok 1</option>
+                      <option>Purok 2</option>
+                      <option>Purok 3</option>
+                      <option>Purok 4</option>
+                      <option>Purok 5</option>
+                      <option>Purok 6</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-12 col-md-3 mb-3">
+                  <label class="form-label fw-bold">Barangay</label>
+                  <input name="business_permit_barangay" type="text" class="form-control form-control-sm" required>
+                </div>
+
+                <div class="col-12">
+                  <h6 class="fw-bold fs-5" style="color: #13411F;">Business Details</h6>
+                  <hr class="my-2">
+                </div>
+
+                <!-- Name of Business & Type of Business -->
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Name of Business</label>
+                  <input name="business_permit_name_of_business" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3 me-1">
+                  <label class="form-label fw-bold">Type of Business</label>
+                  <input name="business_permit_type_of_business" type="text" class="form-control form-control-sm" required>
+                </div>
+
+                <!-- Business Address -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-bold">Business Full Address</label>
+                  <div class="d-flex gap-2">
+                    <input name="business_permit_full_address" type="text" class="form-control form-control-sm" required>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <!-- GOOD MORAL TEMPLATE -->
+            <template id="tpl-Good Moral">
+              <div class="row gy-2">
+                <!-- Section Title: Personal Details -->
+                <div class="col-12">
+                  <h6 class="fw-bold fs-5" style="color: #13411F;">Personal Details</h6>
+                  <hr class="my-2">
+                </div>
+
+                <!-- Row 1: Full Name & Civil Status -->
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">First Name</label>
+                  <input name="good_moral_first_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
+                  <input name="good_moral_middle_name" type="text" class="form-control form-control-sm">
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Last Name</label>
+                  <input name="good_moral_last_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
+                  <input name="good_moral_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
+                </div>
+
+                <!-- <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Full Name</label>
+                  <input name="full_name" type="text" class="form-control form-control-sm" required>
+                </div> -->
+
+                <!-- Row 2: Civil Status, Sex & Age -->
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Civil Status</label>
+                  <select name="good_moral_civil_status" class="form-select form-select-sm" required>
+                    <option value="">Select…</option>
+                    <option>Single</option>
+                    <option>Married</option>
+                    <option>Divorced</option>
+                    <option>Separated</option>
+                    <option>Widowed</option>
+                  </select>
+                </div>
+
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Sex</label>
+                  <select name="good_moral_sex" class="form-select form-select-sm" required>
+                    <option value="">Select…</option>
+                    <option>Male</option>
+                    <option>Female</option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-2">
+                  <label class="form-label fw-bold">Age</label>
+                  <input name="good_moral_age" type="number" min="0" class="form-control form-control-sm" required>
+                </div>
+
+                <!-- Full Address -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-bold">Full Address</label>
+                  <input name="good_moral_subdivision" type="text" class="form-control form-control-sm" placeholder="Street / Subdivision / Lot / Block" required/>
+                </div>
+
+                <div class="col-12 col-md-2">
+                  <label class="form-label fw-bold">Purok</label>
+                  <div class="d-flex gap-2">
+                    <select name="good_moral_purok" class="form-select form-select-sm" required>
+                      <option value="">Select…</option>
+                      <option>Purok 1</option>
+                      <option>Purok 2</option>
+                      <option>Purok 3</option>
+                      <option>Purok 4</option>
+                      <option>Purok 5</option>
+                      <option>Purok 6</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Purpose -->
+                <div class="col-12">
+                  <label class="form-label fw-bold">Purpose</label>
+                  <textarea name="good_moral_purpose" class="form-control form-control-sm" rows="2" placeholder="State the purpose of Good Moral" required></textarea>
+                </div>
+              </div>
+            </template> 
+
+            <!-- GUARDIANSHIP TEMPLATE -->
+            <template id="tpl-Guardianship">
+              <div class="row gy-2">
+                <div class="col-12">
+                  <h6 class="fw-bold fs-5" style="color: #13411F;">Guardian Details</h6>
+                  <hr class="my-2">
+                </div>
+
+                <!-- Row 1: Guardian Full Name, Civil Status, Age -->
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">First Name</label>
+                  <input name="guardianship_first_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
+                  <input name="guardianship_middle_name" type="text" class="form-control form-control-sm">
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Last Name</label>
+                  <input name="guardianship_last_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
+                  <input name="guardianship_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
+                </div>
+
+                <!-- <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Full Name</label>
+                  <input name="full_name" type="text" class="form-control form-control-sm" required>
+                </div> -->
+
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Civil Status</label>
+                  <select name="guardianship_civil_status" class="form-select form-select-sm" required>
+                    <option value="">Select…</option>
+                    <option>Single</option>
+                    <option>Married</option>
+                    <option>Divorced</option>
+                    <option>Separated</option>
+                    <option>Widowed</option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Age</label>
+                  <input name="guardianship_age" type="number" min="0" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3 mb-3">
+                  <label class="form-label fw-bold">Purok</label>
+                  <div class="d-flex gap-2">
+                    <select name="guardianship_purok" class="form-select form-select-sm" required>
+                      <option value="">Select…</option>
+                      <option>Purok 1</option>
+                      <option>Purok 2</option>
+                      <option>Purok 3</option>
+                      <option>Purok 4</option>
+                      <option>Purok 5</option>
+                      <option>Purok 6</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <h6 class="fw-bold fs-5" style="color: #13411F;">Child's Details</h6>
+                  <hr class="my-2">
+                </div>
+
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">First Name</label>
+                  <input name="child_first_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
+                  <input name="child_middle_name" type="text" class="form-control form-control-sm">
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Last Name</label>
+                  <input name="child_last_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
+                  <input name="child_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
+                </div>
+
+                <!-- Row 3: Purpose -->
+                <div class="col-12">
+                  <label class="form-label fw-bold">Purpose</label>
+                  <textarea name="guardianship_purpose" class="form-control form-control-sm" rows="2" placeholder="State the purpose of guardianship" required></textarea>
+                </div>
+              </div>
+            </template>
+
+            <!-- INDIGENCY TEMPLATE -->
+            <template id="tpl-Indigency">
+              <div class="row gy-2">
+                <div class="col-12">
+                  <h6 class="fw-bold fs-5" style="color: #13411F;">Personal Details</h6>
+                  <hr class="my-2">
+                </div>
+
+                <!-- Row 1: First, Middle, Last, Suffix -->
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">First Name</label>
+                  <input name="indigency_first_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
+                  <input name="indigency_middle_name" type="text" class="form-control form-control-sm">
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Last Name</label>
+                  <input name="indigency_last_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
+                  <input name="indigency_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
+                </div>
+
+                <!-- <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Full Name</label>
+                  <input name="full_name" type="text" class="form-control form-control-sm" required>
+                </div> -->
+
+                <!-- Row 2: Civil Status & Age -->
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Age</label>
+                  <input name="indigency_age" type="number" min="0" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Civil Status</label>
+                  <select name="indigency_civil_status" class="form-select form-select-sm" required>
+                    <option value="">Select…</option>
+                    <option>Single</option>
+                    <option>Married</option>
+                    <option>Divorced</option>
+                    <option>Separated</option>
+                    <option>Widowed</option>
+                  </select>
+                </div>
+                
+                <!-- Row 3: Full Address -->
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Purok</label>
+                  <div class="d-flex gap-2">
+                    <select name="indigency_purok" class="form-select form-select-sm" required>
+                      <option value="">Select…</option>
+                      <option>Purok 1</option>
+                      <option>Purok 2</option>
+                      <option>Purok 3</option>
+                      <option>Purok 4</option>
+                      <option>Purok 5</option>
+                      <option>Purok 6</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Row 4: Purpose -->
+                <div class="col-12">
+                  <label class="form-label fw-bold">Purpose</label>
+                  <textarea name="indigency_purpose" class="form-control form-control-sm" rows="2" placeholder="State the purpose of indigency" required></textarea>
+                </div>
+              </div>
+            </template>
+
+            <!-- RESIDENCY TEMPLATE -->
+            <template id="tpl-Residency">
+              <div class="row gy-2">
+                <div class="col-12">
+                  <h6 class="fw-bold fs-5" style="color: #13411F;">Residency Details</h6>
+                  <hr class="my-2">
+                </div>
+
+                <!-- Row 1: First, Middle, Last, Suffix -->
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">First Name</label>
+                  <input name="residency_first_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
+                  <input name="residency_middle_name" type="text" class="form-control form-control-sm">
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Last Name</label>
+                  <input name="residency_last_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
+                  <input name="residency_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
+                </div>
+
+                <!-- <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Full Name</label>
+                  <input name="full_name" type="text" class="form-control form-control-sm" required>
+                </div> -->
+
+                <!-- Row 2: Civil Status & Age -->
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Age</label>
+                  <input name="residency_age" type="number" min="0" class="form-control form-control-sm" required>
+                </div>
+
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Civil Status</label>
+                  <select name="residency_civil_status" class="form-select form-select-sm" required>
+                    <option value="">Select…</option>
+                    <option>Single</option>
+                    <option>Married</option>
+                    <option>Divorced</option>
+                    <option>Separated</option>
+                    <option>Widowed</option>
+                  </select>
+                </div>
+                
+                <!-- Row 3: Full Address & Years Residing -->
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Purok</label>
+                  <div class="d-flex gap-2">
+                    <select name="residency_purok" class="form-select form-select-sm" required>
+                      <option value="">Select…</option>
+                      <option>Purok 1</option>
+                      <option>Purok 2</option>
+                      <option>Purok 3</option>
+                      <option>Purok 4</option>
+                      <option>Purok 5</option>
+                      <option>Purok 6</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Years Residing Here</label>
+                  <input name="residency_residing_years" type="number" min="0" class="form-control form-control-sm" placeholder="e.g. 5" required>
+                </div>
+
+                <!-- Row 4: Purpose -->
+                <div class="col-12">
+                  <label class="form-label fw-bold">Purpose</label>
+                  <textarea name="residency_purpose" class="form-control form-control-sm" rows="2" placeholder="State the purpose of residency" required></textarea>
                 </div>
               </div>
             </template>
@@ -1084,31 +1724,12 @@ $result = $st->get_result();
                   <label class="form-label fw-bold">Purpose</label>
                   <textarea name="solo_parent_purpose" class="form-control form-control-sm" rows="2" placeholder="State the purpose of solo parent" required></textarea>
                 </div>
-
-                <!-- Section Title: Payment Details -->
-                <div class="col-12 mt-4">
-                  <h6 class="fw-bold fs-5" style="color: #13411F;">Payment Details</h6>
-                  <hr class="my-2">
-                </div>
-
-                <!-- Row 6: Payment Method & Preferred Claim Date -->
-                <div class="row gy-2">
-                  <div class="col-12 col-md-3">
-                    <label class="form-label fw-bold">Payment Method</label>
-                    <select name="solo_parent_payment_method" class="form-select form-select-sm" required>
-                      <option value="">Select…</option>
-                      <option>GCash</option>
-                      <option>Brgy Payment Device</option>
-                      <option>Over-the-Counter</option>
-                    </select>
-                  </div>
-                </div>
               </div>
             </template>
-
           </div>
         </div>
       </div>
+
 
       <!-- Record Payment Modal -->
       <div class="modal fade" id="recordModal" tabindex="-1" aria-labelledby="recordModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
@@ -1164,7 +1785,7 @@ $result = $st->get_result();
       <!-- preserve pagination & filters -->
       <input type="hidden" name="page" value="adminRequest">
       <input type="hidden" name="page_num" value="1">
-      <?php foreach (['request_type','date_from','date_to','payment_method','payment_status','document_status'] as $f): 
+      <?php foreach (['request_type','date_from','date_to','payment_method','payment_status','document_status','processing_type'] as $f): 
           if (!empty($_GET[$f])): ?>
           <input type="hidden" name="<?= $f?>" value="<?= htmlspecialchars($_GET[$f]) ?>">
       <?php endif; endforeach; ?>
@@ -1205,16 +1826,43 @@ $result = $st->get_result();
                 <td><?= $tid ?></td>
                 <td><?= htmlspecialchars($row['full_name']) ?></td>
                 <td><?= htmlspecialchars($row['request_type']) ?></td>
-                <td><?= htmlspecialchars($row['payment_status']) ?></td>
-                <td><?= htmlspecialchars($row['document_status']) ?></td>
+                <td>
+                  <?php 
+                    $ps = $row['payment_status'] ?? '';
+                    switch ($ps) {
+                      case 'Paid': $c = 'bg-success'; break;
+                      case 'Unpaid': $c = 'bg-danger';  break;
+                      default: $c = 'bg-secondary'; 
+                    }
+                  ?>
+                  <span class="badge <?= $c ?>">
+                    <?= htmlspecialchars($ps ?: '—') ?>
+                  </span>
+                </td>
+                <td>
+                  <?php 
+                    $ds = $row['document_status'] ?? '';
+                    switch ($ds) {
+                      case 'For Verification': $c = 'bg-warning'; break;
+                      case 'Processing': $c = 'bg-info'; break;
+                      case 'Ready To Release': $c = 'bg-primary'; break;
+                      case 'Released': $c = 'bg-success'; break;
+                      case 'Rejected': $c = 'bg-danger'; break;
+                      default: $c = 'bg-secondary';
+                    }
+                  ?>
+                  <span class="badge <?= $c ?>">
+                    <?= htmlspecialchars($ds) ?>
+                  </span>
+                </td>
                 <td><?= htmlspecialchars($row['formatted_date']) ?></td>
                 <?php if (!empty($perms) || $currentRole === 'Brgy Treasurer'): ?>
                   <td class="text-center">
                     <?php
                       $canProceed = in_array('proceed', $perms, true) && $row['document_status'] === 'Ready to Release';
-                      $canPrint   = in_array('print', $perms, true) && $row['payment_status'] === 'Paid';
-                      $canEdit    = in_array('edit', $perms, true);
-                      $canDelete  = in_array('delete', $perms, true);
+                      $canPrint = in_array('print', $perms, true) && $row['payment_status'] === 'Paid';
+                      $canEdit = in_array('edit', $perms, true);
+                      $canDelete = in_array('delete', $perms, true);
                     ?>
 
                     <?php if ($canProceed): ?>
@@ -1368,7 +2016,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // grab the transaction ID from the row
     const row = btn.closest('tr');
-    const tid = row.dataset.id;  // you already set data-id="<?= $tid ?>"
+    const tid = row.dataset.id;  // you already set data-id="<=? $tid ?>"
 
     // open the certificate page in a new tab (auto-prints)
     window.open(`functions/print_certificate.php?transaction_id=${encodeURIComponent(tid)}`, '_blank');
@@ -1450,5 +2098,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  const editModalEl = document.getElementById('editRequestModal');
+  const editModal = new bootstrap.Modal(editModalEl);
+   
+  document.querySelectorAll('.request-btn-edit').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tr = btn.closest('tr');
+      const tid = tr.getAttribute('data-id');
+
+      editModal.show();
+    });
+  });
 });
 </script>

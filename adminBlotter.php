@@ -409,6 +409,21 @@ $stmt->close();
         </div>
       </div>
 
+      <!-- View Blotter Modal -->
+      <div class="modal fade" id="viewBlotterModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="viewBlotterModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width:90vw;">
+          <div class="modal-content">
+            <div class="modal-header text-white" style="background-color: #13411F;">
+              <h5 class="modal-title" id="viewBlotterModalLabel">Record Preview</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="height:80vh; padding:0;">
+              <iframe id="blotterPreviewFrame" style="border:none; width:100%; height:100%;" src="" allowfullscreen>
+              </iframe>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- Delete Confirmation Modal -->
       <div class="modal fade" id="deleteBlotterModal" tabindex="-1" aria-labelledby="deleteBlotterModalLabel" aria-hidden="true">
@@ -471,21 +486,27 @@ $stmt->close();
                 </td>
                 <td class="text-nowrap text-center">
                   <!-- Print -->
-                  <button class="btn btn-sm btn-primary print-btn" data-id="<?= $tid ?>">
+                  <!-- <button class="btn btn-sm btn-primary blotter-print-btn" data-id="<?= $tid ?>">
                     <span class="material-symbols-outlined" style="font-size: 12px;">
                       print
+                    </span>
+                  </button> -->
+
+                  <button class="btn btn-sm btn-warning blotter-view-btn" data-id="<?= $tid ?>">
+                    <span class="material-symbols-outlined" style="font-size: 12px;">
+                      visibility
                     </span>
                   </button>
                   
                   <!-- Edit -->
-                  <button class="btn btn-sm btn-success edit-btn">
+                  <button class="btn btn-sm btn-primary blotter-edit-btn">
                     <span class="material-symbols-outlined" style="font-size: 12px;">
                       stylus
                     </span>
                   </button>
 
                   <!-- Delete -->
-                  <button class="btn btn-sm btn-danger delete-btn" data-id="<?= $tid ?>" data-bs-toggle="modal" data-bs-target="#deleteBlotterModal">
+                  <button class="btn btn-sm btn-danger blotter-delete-btn" data-id="<?= $tid ?>" data-bs-toggle="modal" data-bs-target="#deleteBlotterModal">
                     <span class="material-symbols-outlined" style="font-size: 12px;">
                       delete
                     </span>
@@ -575,16 +596,12 @@ document.addEventListener('DOMContentLoaded', () => {
   respCheck.addEventListener('change', blotter_toggleRespondent);
   blotter_toggleRespondent();
 
-  document.querySelectorAll('.print-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tid = btn.getAttribute('data-id');
-      // open the PDF in a new tab/window
-      window.open(
-        'functions/print_blotter.php?transaction_id=' + encodeURIComponent(tid),
-        '_blank'
-      );
-    });
-  });
+  // document.querySelectorAll('.blotter-print-btn').forEach(btn => {
+  //   btn.addEventListener('click', () => {
+  //     const tid = btn.getAttribute('data-id');
+  //     window.open('functions/print_blotter.php?transaction_id=' + encodeURIComponent(tid),'_blank');
+  //   });
+  // });
 
   // 1) Grab Edit modal + form + fields
   const editModalEl = document.getElementById('editBlotterModal');
@@ -602,7 +619,7 @@ document.addEventListener('DOMContentLoaded', () => {
   edit_toggleRespondent();
 
   // 3) Wire up all .edit-btn clicks
-  document.querySelectorAll('.edit-btn').forEach(btn => {
+  document.querySelectorAll('.blotter-edit-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const tr = btn.closest('tr');
       const tid = tr.getAttribute('data-id');
@@ -711,7 +728,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const deleteIdInput = document.getElementById('deleteTransactionId');
   const deleteLabel = document.getElementById('deleteTransactionIdLabel');
 
-  document.querySelectorAll('.delete-btn').forEach(button => {
+  document.querySelectorAll('.blotter-delete-btn').forEach(button => {
     button.addEventListener('click', () => {
       const tid = button.getAttribute('data-id');
       deleteIdInput.value = tid;
@@ -737,6 +754,24 @@ document.addEventListener('DOMContentLoaded', () => {
         alert('Error: ' + (data.error || 'Failed to delete.'));
       }
     });
+  });
+
+  const viewModalEl = document.getElementById('viewBlotterModal');
+  const viewModal = new bootstrap.Modal(viewModalEl);
+  const previewFrame = document.getElementById('blotterPreviewFrame');
+
+  document.querySelectorAll('.blotter-view-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tid = btn.getAttribute('data-id');
+      // point iframe at your existing PDF-generator
+      previewFrame.src = 'functions/print_blotter.php?transaction_id=' + encodeURIComponent(tid);
+      viewModal.show();
+    });
+  });
+
+  // Clear iframe when closing, to stop PDF load in background
+  viewModalEl.addEventListener('hidden.bs.modal', () => {
+    previewFrame.src = '';
   });
 });
 </script>

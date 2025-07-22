@@ -9,7 +9,7 @@ if (isset($_GET['transaction_id'])) {
     // 1a) fetch from the view (only if it belongs to this user)
     $vsql = "
       SELECT *
-        FROM view_general_requests
+        FROM view_request
        WHERE transaction_id = ?
          AND account_id     = ?
        LIMIT 1
@@ -92,7 +92,7 @@ $offset = ($page - 1) * $limit;
 // count total
 $countSql = "
   SELECT COUNT(*) AS total
-    FROM view_general_requests
+    FROM view_request
    WHERE account_id = ?
      AND document_status <> 'Released'
 ";
@@ -109,7 +109,7 @@ $sql = "
          full_name,
          request_type,
          DATE_FORMAT(created_at, '%M %d, %Y %h:%i %p') AS formatted_date
-    FROM view_general_requests
+    FROM view_request
    WHERE account_id = ?
      AND document_status <> 'Released'
    ORDER BY created_at ASC

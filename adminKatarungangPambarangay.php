@@ -77,23 +77,48 @@ $bp = [
 
 // 2) fetch page of rows with JOIN to fetch affidavits
 $sql = "
-   SELECT
-        k.transaction_id,
-        c.complainant_name,
-        c.respondent_name,
-        k.complaint_type AS subject_pb,
-        c.complaint_status,
-        k.complainant_affidavit,
-        k.respondent_affidavit,
-        k.scheduled_at,
-        DATE_FORMAT(k.scheduled_at, '%b %e, %Y %l:%i %p') AS formatted_sched,
-        k.complaint_stage
-    FROM katarungang_pambarangay_records k
-    LEFT JOIN complaint_records c ON c.transaction_id = k.transaction_id
-    $whereSQL
-    ORDER BY k.transaction_id ASC
-    LIMIT ? OFFSET ?
+  SELECT
+     k.transaction_id,
+     c.complainant_name,
+     c.respondent_name,
+     k.complaint_type       AS subject_pb,
+     c.complaint_status,
+     CASE k.complaint_stage
+       WHEN 'Punong Barangay'    THEN k.schedule_punong_barangay
+       WHEN 'Unang Patawag'      THEN k.schedule_unang_patawag
+       WHEN 'Ikalawang Patawag'  THEN k.schedule_ikalawang_patawag
+       ELSE k.schedule_ikatlong_patawag
+     END AS scheduled_at,
+     CASE k.complaint_stage
+       WHEN 'Unang Patawag'      THEN k.complainant_affidavit_unang_patawag
+       WHEN 'Ikalawang Patawag'  THEN k.complainant_affidavit_ikalawang_patawag
+       WHEN 'Ikatlong Patawag'   THEN k.complainant_affidavit_ikatlong_patawag
+       ELSE NULL
+     END AS complainant_affidavit,
+     CASE k.complaint_stage
+       WHEN 'Unang Patawag'      THEN k.respondent_affidavit_unang_patawag
+       WHEN 'Ikalawang Patawag'  THEN k.respondent_affidavit_ikalawang_patawag
+       WHEN 'Ikatlong Patawag'   THEN k.respondent_affidavit_ikatlong_patawag
+       ELSE NULL
+     END AS respondent_affidavit,
+     k.complaint_stage,
+     DATE_FORMAT(
+       CASE k.complaint_stage
+         WHEN 'Punong Barangay'   THEN k.schedule_punong_barangay
+         WHEN 'Unang Patawag'     THEN k.schedule_unang_patawag
+         WHEN 'Ikalawang Patawag' THEN k.schedule_ikalawang_patawag
+         ELSE k.schedule_ikatlong_patawag
+       END,
+       '%b %e, %Y %l:%i %p'
+     ) AS formatted_sched
+   FROM katarungang_pambarangay_records k
+   LEFT JOIN complaint_records c 
+     ON c.transaction_id = k.transaction_id
+   $whereSQL
+   ORDER BY k.transaction_id ASC
+   LIMIT ? OFFSET ?
 ";
+
 $stmt = $conn->prepare($sql);
 
 // bind params + pagination
@@ -240,7 +265,7 @@ $stmt->close();
                         </div>
                         <div class="col-12 d-flex justify-content-end gap-2">
                           <a href="#" id="printSummonBtn" target="_blank" class="btn btn-sm btn-primary">
-                            Print Summon
+                            Print Complaint & Summon
                           </a>
                         </div>
                       </div>
@@ -468,17 +493,15 @@ $stmt->close();
                 <td><?= $row['formatted_sched'] ? htmlspecialchars($row['formatted_sched']) : '—' ?></td>
                 <td><?= htmlspecialchars($row['complaint_stage']) ?></td>
                 <td class="text-center">
-                  <?php if ($isCleared): ?>
-                    <!-- View -->
-                    <button class="btn btn-sm btn-warning view-katarungan-btn">
-                      <span class="material-symbols-outlined" style="font-size: 12px;">visibility</span>
-                    </button>
-                  <?php else: ?>
-                    <!-- Edit -->
-                    <button class="btn btn-sm btn-success edit-katarungan-btn">
-                      <span class="material-symbols-outlined" style="font-size: 12px;">stylus</span>
-                    </button>
-                  <?php endif; ?>
+                  <!-- View -->
+                  <!-- <button class="btn btn-sm btn-warning view-katarungan-btn">
+                    <span class="material-symbols-outlined" style="font-size: 12px;">visibility</span>
+                  </button> -->
+
+                  <!-- Edit -->
+                  <button class="btn btn-sm btn-success edit-katarungan-btn">
+                    <span class="material-symbols-outlined" style="font-size: 12px;">stylus</span>
+                  </button>
 
                   <!-- Delete -->
                   <button class="btn btn-sm btn-danger delete-katarungan-btn">

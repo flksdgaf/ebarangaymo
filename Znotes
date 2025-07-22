@@ -1,0 +1,28 @@
+BARANGAY ROLES:
+ALL ACTIONS:
+- Brgy Captain
+- Brgy Secretary
+- Brgy Bookkeeper
+
+VIEW ONLY:
+- Brgy Kagawad
+
+TRANSACTIONS ONLY:
+- Brgy Treasurer
+
+KATARUNGANG PAMBARANGAY ONLY:
+- Brgy Lupon
+
+UPDATES NEEDED:
+• Sign Up: Upload image muna bago mag input
+• Include notification kapag may new avcount na veverify like red dot or (10)
+• dapat kapag naapprove account, d na dapat irefresh. realtime na maupdate na pwede na magrequest service
+• include verification and confirmation sa pagbago ng role tapos papainput ulit ang pass
+• Treasurer: Tanggalin ibang info sa complain & blotter 
+• Include tab for alin ang nagawan at hindi pa nagagawan ng OR
+• change color  sa status
+• still include age range sa age report
+• include display list sa transaction reports
+• include notification sa mga involve sa mga patawag
+
+• verify if may proceeding info na sa punong barangay

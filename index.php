@@ -1,4 +1,16 @@
 <?php 
+// session_start();
+// if (isset($_SESSION['loggedInUserRole'])) {
+//     $role = $_SESSION['loggedInUserRole'];
+
+//     if ($role === 'Resident') {
+//         header('Location: userPanel.php');
+//         exit;
+//     } else {
+//         header('Location: adminPanel.php');
+//         exit;
+//     }
+// }
 require_once 'functions/dbconn.php';
 $page = 'index';
 include 'includes/header.php'; 

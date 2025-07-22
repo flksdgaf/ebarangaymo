@@ -9,7 +9,7 @@ $sql = "
          full_name,
          request_type,
          DATE_FORMAT(created_at, '%M %d, %Y %h:%i %p') AS formatted_date
-    FROM view_general_requests
+    FROM view_request
    WHERE account_id = ?
      AND document_status <> 'Released'
    ORDER BY created_at ASC

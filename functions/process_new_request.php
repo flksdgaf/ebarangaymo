@@ -20,7 +20,7 @@ $userId = $_SESSION['loggedInUserID'];
 $requestType = $_POST['request_type'] ?? '';
 
 // HARD CODE PAYMENT STATUS FOR TESTING
-$paymentStatus = 'Paid';
+// $paymentStatus = 'Paid';
 
 switch($requestType) {
   case 'Barangay ID':
@@ -46,7 +46,7 @@ switch($requestType) {
     $weight = (float)$_POST['barangay_id_weight'];
     $contactPerson = $_POST['barangay_id_emergency_contact_person'];
     $contactNo = $_POST['barangay_id_emergency_contact_number'];
-    $paymentMethod = $_POST['barangay_id_payment_method'];
+    $paymentMethod = 'Over-the-Counter';
     $documentStatus = 'Processing';
     // $claimDate = $_POST['claim_date'];
 
@@ -73,17 +73,21 @@ switch($requestType) {
     $stmt->close();
 
     // 4) Insert into barangay_id_requests
-    $sql = "INSERT INTO barangay_id_requests (account_id, transaction_id, transaction_type, full_name, purok, birth_date, birth_place, civil_status, religion, height, weight, emergency_contact_person, emergency_contact_number, formal_picture, claim_date, payment_method, document_status, payment_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL,?,?,?)";
+    $sql = "INSERT INTO barangay_id_requests (account_id, transaction_id, transaction_type, full_name, purok, birth_date, birth_place, 
+            civil_status, religion, height, weight, emergency_contact_person, emergency_contact_number, formal_picture, claim_date, 
+            payment_method, document_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL,?,?)";
     $ins = $conn->prepare($sql);
-    $ins->bind_param('issssssssddssssss', $userId, $transactionId, $transactionType, $fullName, $purok, $birthDate, $birthPlace, 
-    $civilStatus, $religion, $height, $weight, $contactPerson, $contactNo, $formalPicName, $paymentMethod, $documentStatus, $paymentStatus);
+    $ins->bind_param('issssssssddsssss', $userId, $transactionId, $transactionType, $fullName, $purok, $birthDate, $birthPlace, 
+    $civilStatus, $religion, $height, $weight, $contactPerson, $contactNo, $formalPicName, $paymentMethod, $documentStatus);
     $ins->execute();
     $ins->close();
 
     // ACTIVITY LOGGING 
     $admin_roles = ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper', 'Brgy Kagawad', 'Brgy Treasurer', 'Brgy Lupon'];
     if (in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
-        $logStmt = $conn->prepare("INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description) VALUES (?,?,?,?,?,?)");    
+        $logStmt = $conn->prepare("INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description) 
+        VALUES (?,?,?,?,?,?)");    
+        
         $admin_id = $_SESSION['loggedInUserID'];
         $role = $_SESSION['loggedInUserRole'];     
         $action = 'CREATE';
@@ -122,7 +126,7 @@ switch($requestType) {
     $businessName = trim($_POST['business_permit_name_of_business'] ?? '');
     $businessType = trim($_POST['business_permit_type_of_business'] ?? '');
     $fullAddress = trim($_POST['business_permit_full_address'] ?? '');
-    $paymentMethod = $_POST['business_permit_payment_method'] ?? '';
+    $paymentMethod = 'Over-the-Counter';
     $documentStatus = 'Processing';
     // $claimDate = $_POST['claim_date'] ?? '';
     // $amount = (float)$_POST['amount'] ?? 0.0;
@@ -141,10 +145,10 @@ switch($requestType) {
     $stmt->close();
 
     // 4) Insert into business_permit_requests
-    $sql = "INSERT INTO business_permit_requests (account_id, transaction_id, transaction_type, full_name, purok, barangay, age, civil_status, name_of_business, type_of_business, full_address, claim_date, payment_method, document_status, payment_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,NULL,?,?,?)";
+    $sql = "INSERT INTO business_permit_requests (account_id, transaction_id, transaction_type, full_name, purok, barangay, age, civil_status, name_of_business, type_of_business, full_address, claim_date, payment_method, document_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,NULL,?,?)";
     $ins = $conn->prepare($sql);
-    $ins->bind_param('isssssisssssss', $userId, $transactionId, $transactionType, $fullName, $purok, $barangay, $age, $civilStatus,
-    $businessName, $businessType, $fullAddress, $paymentMethod, $documentStatus, $paymentStatus);
+    $ins->bind_param('isssssissssss', $userId, $transactionId, $transactionType, $fullName, $purok, $barangay, $age, $civilStatus,
+    $businessName, $businessType, $fullAddress, $paymentMethod, $documentStatus);
     $ins->execute();
     $ins->close();
 
@@ -188,7 +192,7 @@ switch($requestType) {
     $subdivision = trim($_POST['good_moral_subdivision'] ?? '');
     // $fullAddress = "{$subdivision}, {$purok}, {$barangay}";
     $purpose = trim($_POST['good_moral_purpose'] ?? '');
-    $paymentMethod = $_POST['good_moral_payment_method'] ?? '';
+    $paymentMethod = 'Over-the-Counter';
     $documentStatus = 'Processing';
     // $claimDate = $_POST['claim_date'] ?? '';
 
@@ -206,9 +210,9 @@ switch($requestType) {
     $stmt->close();
 
     // 3) Insert into good_moral_requests
-    $sql = "INSERT INTO good_moral_requests (account_id, transaction_id, full_name, civil_status, sex, age, purok, subdivision, purpose, claim_date, payment_method, document_status, payment_status) VALUES (?,?,?,?,?,?,?,?,?,NULL,?,?,?)";
+    $sql = "INSERT INTO good_moral_requests (account_id, transaction_id, full_name, civil_status, sex, age, purok, subdivision, purpose, claim_date, payment_method, document_status) VALUES (?,?,?,?,?,?,?,?,?,NULL,?,?)";
     $ins = $conn->prepare($sql);
-    $ins->bind_param('issssissssss', $userId, $transactionId, $fullName, $civilStatus, $sex, $age, $purok, $subdivision, $purpose, $paymentMethod, $documentStatus, $paymentStatus);
+    $ins->bind_param('issssisssss', $userId, $transactionId, $fullName, $civilStatus, $sex, $age, $purok, $subdivision, $purpose, $paymentMethod, $documentStatus);
     $ins->execute();
     $ins->close();
 
@@ -262,7 +266,7 @@ switch($requestType) {
     // $childName = trim($_POST['child_name'] ?? '');
 
     $purpose = trim($_POST['guardianship_purpose'] ?? '');
-    $paymentMethod = $_POST['guardianship_payment_method'] ?? '';
+    $paymentMethod = 'Over-the-Counter';
     $documentStatus = 'Processing';
 
     // 2) Generate next transaction_id
@@ -279,9 +283,9 @@ switch($requestType) {
     $stmt->close();
     
     // 3) Insert into guardianship_request
-    $sql = "INSERT INTO guardianship_requests (account_id, transaction_id, full_name, civil_status, age, purok, child_name, purpose, claim_date, payment_method, document_status, payment_status) VALUES (?,?,?,?,?,?,?,?,NULL,?,?,?)";
+    $sql = "INSERT INTO guardianship_requests (account_id, transaction_id, full_name, civil_status, age, purok, child_name, purpose, claim_date, payment_method, document_status) VALUES (?,?,?,?,?,?,?,?,NULL,?,?)";
     $ins = $conn->prepare($sql);
-    $ins->bind_param('isssissssss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $fullNameChild, $purpose, $paymentMethod, $documentStatus, $paymentStatus);
+    $ins->bind_param('isssisssss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $fullNameChild, $purpose, $paymentMethod, $documentStatus);
     $ins->execute();
     $ins->close();
 
@@ -386,7 +390,7 @@ switch($requestType) {
     // $subdivision = trim($_POST['subdivision'] ?? '');
     $yearsResiding = (int) ($_POST['residency_residing_years'] ?? 0);
     $purpose = trim($_POST['residency_purpose'] ?? '');
-    $paymentMethod = $_POST['residency_payment_method'] ?? '';
+    $paymentMethod = 'Over-the-Counter';
     $documentStatus = 'Processing';
     // $claimDate = $_POST['claim_date'] ?? '';
 
@@ -404,9 +408,9 @@ switch($requestType) {
     $stmt->close();
 
     // 4) Insert into residency_requests
-    $sql = "INSERT INTO residency_requests (account_id, transaction_id, full_name, civil_status, age, purok, residing_years, purpose, payment_method, claim_date, document_status, payment_status) VALUES (?,?,?,?,?,?,?,?,?,NULL,?,?)";
+    $sql = "INSERT INTO residency_requests (account_id, transaction_id, full_name, civil_status, age, purok, residing_years, purpose, payment_method, claim_date, document_status) VALUES (?,?,?,?,?,?,?,?,?,NULL,?)";
     $ins = $conn->prepare($sql);
-    $ins->bind_param('isssisissss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $yearsResiding, $purpose, $paymentMethod, $documentStatus, $paymentStatus);
+    $ins->bind_param('isssisisss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $yearsResiding, $purpose, $paymentMethod, $documentStatus);
     $ins->execute();
     $ins->close();
 
@@ -464,7 +468,7 @@ switch($requestType) {
     // $childAge = (int) ($_POST['child_age'] ?? 0);
     $childAge = trim($_POST['solo_parent_child_age'] ?? '');
     $purpose = trim($_POST['solo_parent_purpose'] ?? '');
-    $paymentMethod = $_POST['solo_parent_payment_method'] ?? '';
+    $paymentMethod = 'Over-the-Counter';
     $documentStatus = 'Processing';
     // $claimDate = $_POST['claim_date'] ?? '';
 
@@ -482,9 +486,9 @@ switch($requestType) {
     $stmt->close();
 
     // 4) Insert into solo_parent_requests
-    $sql = "INSERT INTO solo_parent_requests (account_id, transaction_id, full_name, civil_status, age, purok, years_solo_parent, child_name, child_age, child_sex, purpose, payment_method, claim_date, document_status, payment_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,NULL,?,?)";
+    $sql = "INSERT INTO solo_parent_requests (account_id, transaction_id, full_name, civil_status, age, purok, years_solo_parent, child_name, child_age, child_sex, purpose, payment_method, claim_date, document_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,NULL,?)";
     $ins = $conn->prepare($sql);
-    $ins->bind_param('isssisisisssss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $yearsSoloParent, $fullNameChild, $childAge, $childSex, $purpose, $paymentMethod, $documentStatus, $paymentStatus);
+    $ins->bind_param('isssisisissss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $yearsSoloParent, $fullNameChild, $childAge, $childSex, $purpose, $paymentMethod, $documentStatus);
     $ins->execute();
     $ins->close();
 

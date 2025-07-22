@@ -99,9 +99,9 @@ $stmt->close();
     <div class="alert alert-success alert-dismissible fade show d-flex align-items-center" role="alert">
       <div>New complaint record <strong><?= htmlspecialchars($id) ?></strong> added!</div>
       <div class="ms-3 d-flex align-items-center">
-        <a href="#" data-tid="<?= htmlspecialchars($id) ?>" class="btn btn-sm btn-outline-success me-2 print-alert-btn">
+        <!-- <a href="#" data-tid="<?= htmlspecialchars($id) ?>" class="btn btn-sm btn-outline-success me-2 print-alert-btn">
           Print Complaint
-        </a>
+        </a> -->
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
       </div>
     </div>
@@ -329,7 +329,7 @@ $stmt->close();
       <!-- Schedule Summon Modal -->
       <div class="modal fade" id="scheduleSummonModal" tabindex="-1" aria-labelledby="scheduleSummonModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-          <form id="scheduleSummonForm" method="POST" action="functions/process_schedule_complaint.php" class="modal-content">
+          <form id="scheduleSummonForm" method="POST" action="functions/process_katarungang_pambarangay.php" class="modal-content">
             <div class="modal-header bg-warning text-dark">
               <h5 class="modal-title" id="scheduleSummonModalLabel">Schedule Summon</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -339,11 +339,11 @@ $stmt->close();
 
               <div class="mb-3">
                 <label for="scheduled_date" class="form-label">Select Date</label>
-                <input type="date" name="scheduled_date" id="scheduled_date" class="form-control" required>
+                <input type="date" name="scheduled_date" id="scheduled_date" class="form-control" value="<?= date('Y-m-d') ?>" required>
               </div>
               <div class="mb-3">
                 <label for="scheduled_time" class="form-label">Select Time</label>
-                <input type="time" name="scheduled_time" id="scheduled_time" class="form-control" required>
+                <input type="time" name="scheduled_time" id="scheduled_time" class="form-control" value="<?= date('H:i') ?>"  required>
               </div>
             </div>
             <div class="modal-footer">
@@ -515,6 +515,13 @@ $stmt->close();
                 <td><?= htmlspecialchars($row['complaint_status']) ?></td> 
                 <!-- <td><?= htmlspecialchars($row['formatted_created']) ?></td> -->
                 <td class="text-center text-nowrap">
+                  <!-- Print -->
+                  <!-- <button class="btn btn-sm btn-success print-btn-complaint">
+                    <span class="material-symbols-outlined" style="font-size: 12px;">
+                      print
+                    </span>
+                  </button> -->
+
                   <!-- Schedule -->
                   <button class="btn btn-sm btn-warning schedule-btn-complaint">
                     <span class="material-symbols-outlined" style="font-size: 12px;">
@@ -522,15 +529,8 @@ $stmt->close();
                     </span>
                   </button>
 
-                  <!-- Print -->
-                  <button class="btn btn-sm btn-primary print-btn-complaint">
-                    <span class="material-symbols-outlined" style="font-size: 12px;">
-                      print
-                    </span>
-                  </button>
-
                   <!-- Edit -->
-                  <button class="btn btn-sm btn-success edit-btn-complaint">
+                  <button class="btn btn-sm btn-primary edit-btn-complaint">
                     <span class="material-symbols-outlined" style="font-size: 12px;">
                       stylus
                     </span>
@@ -588,13 +588,10 @@ $stmt->close();
 
 <script>
 
-function printComplaint(transactionId) {
-  if (!transactionId) return alert('No transaction ID provided.');
-  window.open(
-    'functions/print_complaint.php?transaction_id=' + encodeURIComponent(transactionId),
-    '_blank'
-  );
-}
+// function printComplaint(transactionId) {
+//   if (!transactionId) return alert('No transaction ID provided.');
+//   window.open('functions/print_complaint.php?transaction_id=' + encodeURIComponent(transactionId),'_blank');
+// }
 
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('searchFormSummon');
@@ -631,19 +628,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  document.querySelectorAll('.print-btn-complaint').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tid = btn.closest('tr').dataset.id;
-      printComplaint(tid);
-    });
-  });
+  // document.querySelectorAll('.print-btn-complaint').forEach(btn => {
+  //   btn.addEventListener('click', () => {
+  //     const tid = btn.closest('tr').dataset.id;
+  //     printComplaint(tid);
+  //   });
+  // });
 
-  document.querySelectorAll('.print-alert-btn').forEach(link => {
-    link.addEventListener('click', e => {
-      e.preventDefault();
-      printComplaint(link.dataset.tid);
-    });
-  });
+  // document.querySelectorAll('.print-alert-btn').forEach(link => {
+  //   link.addEventListener('click', e => {
+  //     e.preventDefault();
+  //     printComplaint(link.dataset.tid);
+  //   });
+  // });
 
   const editModalEl = document.getElementById('editComplaintModal');
   const editModal = new bootstrap.Modal(editModalEl);

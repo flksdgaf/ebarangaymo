@@ -70,7 +70,7 @@ $limit = 10; // records per page
 $page = isset($_GET['page_num']) ? max((int)$_GET['page_num'], 1) : 1;
 $offset = ($page - 1) * $limit;
   
-$countSQL = "SELECT COUNT(*) AS total FROM view_general_requests {$whereSQL}";
+$countSQL = "SELECT COUNT(*) AS total FROM view_request {$whereSQL}";
 $countStmt = $conn->prepare($countSQL);
 
 if ($whereClauses) {
@@ -91,7 +91,7 @@ $countStmt->close();
 // If there’s a new transaction, fetch its request_type
 $newType = '';
 if ($newTid) {
-  $q = $conn->prepare("SELECT request_type FROM view_general_requests WHERE transaction_id = ? LIMIT 1");
+  $q = $conn->prepare("SELECT request_type FROM view_request WHERE transaction_id = ? LIMIT 1");
   $q->bind_param('s', $newTid);
   $q->execute();
   $r = $q->get_result()->fetch_assoc();
@@ -102,7 +102,7 @@ if ($newTid) {
 }
 
 // LIST + FILTERED QUERY 
-$sql = "SELECT transaction_id, full_name, request_type, payment_method, payment_status, document_status, DATE_FORMAT(created_at, '%b %e, %Y') AS formatted_date FROM view_general_requests {$whereSQL} ORDER BY created_at ASC LIMIT ? OFFSET ?";
+$sql = "SELECT transaction_id, full_name, request_type, payment_method, payment_status, document_status, DATE_FORMAT(created_at, '%b %e, %Y') AS formatted_date FROM view_request {$whereSQL} ORDER BY created_at ASC LIMIT ? OFFSET ?";
 $st = $conn->prepare($sql);
 
 $types = $bindTypes . 'ii';

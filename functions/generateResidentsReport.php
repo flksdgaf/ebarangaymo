@@ -1,15 +1,15 @@
 <?php
+require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/dbconn.php';
 
-$purok     = $_GET['purok']     ?? '';
-$exactAge  = $_GET['exact_age'] ?? '';
-$format    = $_GET['format']    ?? '';
+use Dompdf\Dompdf;
+use Dompdf\Options;
 
-if ($purok === '' || $format === '') {
-    exit('Missing required filters.');
-}
+$purok     = $_POST['purok']     ?? 'all';
+$exactAge  = $_POST['exact_age'] ?? '';
+$format    = $_POST['format']    ?? 'preview';
 
-// 1) Build SQL
+// 1. Generate SQL
 if ($purok === 'all') {
     $parts = [];
     for ($i = 1; $i <= 6; $i++) {
@@ -21,29 +21,37 @@ if ($purok === 'all') {
     $baseSql = "SELECT *, {$n} AS purok FROM purok{$n}_rbi";
 }
 
-// 2) Fetch all data
 $stmt = $conn->prepare("$baseSql ORDER BY purok ASC, full_name ASC");
 $stmt->execute();
 $res = $stmt->get_result();
 $rows = $res->fetch_all(MYSQLI_ASSOC);
+$stmt->close();
 
-// 3) Helper for age calculation
+// 2. Helper to calculate age
 function calc_age($bdate) {
     $dob = new DateTime($bdate);
     return $dob->diff(new DateTime())->y;
 }
 
-// 4) Validate and apply age filter (if needed)
-$validAge = is_numeric($exactAge) && $exactAge >= 1 && $exactAge <= 150;
-
-if ($validAge) {
-    $exactAge = (int)$exactAge;
-    $rows = array_filter($rows, function($r) use ($exactAge) {
-        return calc_age($r['birthdate']) === $exactAge;
+// 3. Filter by age
+if (is_numeric($exactAge) && $exactAge >= 1 && $exactAge <= 150) {
+    $ageFilter = (int)$exactAge;
+    $rows = array_filter($rows, function($r) use ($ageFilter) {
+        return calc_age($r['birthdate']) === $ageFilter;
     });
+    $ageLabel = "{$ageFilter}";
+} else {
+    // Get min/max age for display
+    $ages = array_map(fn($r) => calc_age($r['birthdate']), $rows);
+    $minAge = min($ages);
+    $maxAge = max($ages);
+    $ageLabel = "{$minAge} - {$maxAge}";
 }
 
 $totalRecords = count($rows);
+$purokLabel = $purok === 'all' ? '1 - 6' : $purok;
+
+ob_start();
 ?>
 <!DOCTYPE html>
 <html>
@@ -51,87 +59,78 @@ $totalRecords = count($rows);
   <meta charset="UTF-8">
   <title>Resident Report</title>
   <style>
-    @page { size: A4; margin: 1in; }
-    html, body { margin:0; padding:0; background:#ccc; }
-    .page {
-      width: 8.27in; height: 11.69in; background: white;
-      margin: 20px auto; padding: 1in;
-      box-shadow: 0 0 10px rgba(0,0,0,0.3);
-      box-sizing: border-box; overflow: hidden;
-    }
-    body, .page { font-family: "Arial", serif; font-size: 12pt; }
-    .header { text-align: center; line-height: 1.5; }
-    .header strong { font-size: 13pt; }
-    h2 {
-      text-align: center; margin-top: 30px;
-      text-transform: uppercase;
-    }
-    table {
-      width: 100%; border-collapse: collapse; margin-top: 30px;
-    }
+    @page { size: A4; margin: 48px; }
+    body { font-family: Arial, sans-serif; font-size: 10pt; background: #fff; margin: 0; padding: 0; }
+    .page { width: 100%; max-width: 700px; margin: 0 auto; padding: 10px; }
+    .center-text { text-align: center; }
+    .title { font-size: 14pt; font-weight: bold; margin-bottom: 10px; }
+    .subtitle { font-size: 11pt;}
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
     th, td {
-      border: 1px solid #000; padding: 6px 8px;
+      border: 1px solid #000;
+      padding: 6px 8px;
       text-align: center;
     }
-    tfoot td {
-      font-weight: bold; padding: 6px 8px;
-    }
-    tfoot .left  { text-align: left; }
-    tfoot .right { text-align: right; }
-    @media print {
-      html, body { background: white; }
-      .page { box-shadow: none; margin: 0; }
-    }
+    th { background: #eee; }
+    .left { text-align: left; }
+    .right { text-align: right; }
   </style>
 </head>
 <body>
   <div class="page">
-    <div class="header">
-      <div>Republic of the Philippines</div>
-      <div>Province of Camarines Norte</div>
-      <div>Municipality of Daet</div>
-      <div><strong>Barangay Magang</strong></div>
+    <div class="center-text">
+      <p class="title">BARANGAY MAGANG </br> DAET, CAMARINES NORTE</p>
+      <!-- <p class="title"></p> -->
+      <p class="subtitle">LIST OF <?= htmlspecialchars($ageLabel) ?> YEARS OLD </br> PUROK <?= htmlspecialchars($purokLabel) ?></p>
+      <!-- <p class="subtitle"></p> -->
     </div>
-
-    <h2>Resident Report</h2>
-
     <table>
       <thead>
         <tr>
-          <th>Purok</th>
+          <th>No.</th>
           <th>Full Name</th>
-          <th>Birthdate</th>
-          <th>Age</th>
           <th>Sex</th>
+          <th>Age</th>
+          <th>Birthdate</th>
         </tr>
       </thead>
       <tbody>
         <?php if ($totalRecords > 0): ?>
-          <?php foreach ($rows as $r): 
-            $age = calc_age($r['birthdate']); ?>
+          <?php $counter = 1; ?>
+          <?php foreach ($rows as $r): ?>
             <tr>
-              <td><?= htmlspecialchars($r['purok']) ?></td>
+              <td><?= $counter++ ?></td>
               <td><?= htmlspecialchars($r['full_name']) ?></td>
-              <td><?= date('F j, Y', strtotime($r['birthdate'])) ?></td>
-              <td><?= $age ?></td>
               <td><?= htmlspecialchars($r['sex']) ?></td>
+              <td><?= calc_age($r['birthdate']) ?></td>
+              <td><?= date('F j, Y', strtotime($r['birthdate'])) ?></td>
             </tr>
           <?php endforeach; ?>
         <?php else: ?>
-          <tr><td colspan="5">No residents found for these filters.</td></tr>
+          <tr><td colspan="5">No residents found for the selected filters.</td></tr>
         <?php endif; ?>
       </tbody>
       <tfoot>
         <tr>
-          <td colspan="3" class="left">Total Records: <?= $totalRecords ?></td>
-          <td colspan="2" class="right"></td>
+          <td colspan="5" class="left">Total Records: <?= $totalRecords ?></td>
         </tr>
       </tfoot>
     </table>
   </div>
-
-  <script>
-    window.addEventListener('DOMContentLoaded', () => window.print());
-  </script>
 </body>
 </html>
+<?php
+$html = ob_get_clean();
+
+if ($format === 'pdf') {
+    $options = new Options();
+    $options->set('isRemoteEnabled', false);
+    $dompdf = new Dompdf($options);
+    $dompdf->loadHtml($html);
+    $dompdf->setPaper('letter', 'portrait');
+    $dompdf->render();
+    $dompdf->stream("Resident_Report.pdf", ['Attachment' => false]);
+    exit;
+} else {
+    echo $html;
+}

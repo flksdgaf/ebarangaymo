@@ -5,35 +5,34 @@ require_once __DIR__ . '/dbconn.php';
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
-// Fetch the record
-$tid = $_GET['transaction_id'] ?? die('Missing transaction_id');
-$stmt = $conn->prepare("SELECT client_name, client_address, respondent_name, respondent_address, created_at FROM blotter_records WHERE transaction_id = ?");
-$stmt->bind_param('s', $tid);
-$stmt->execute();
-$data = $stmt->get_result()->fetch_assoc();
-$stmt->close();
+$reportType = $_GET['report_type'] ?? '';
+$dateFrom   = $_GET['date_from'] ?? '';
+$dateTo     = $_GET['date_to'] ?? '';
+$format     = $_GET['format'] ?? 'preview';
 
-if (!$data) die('Record not found');
-
-// Helper: Reformat "Lastname, Firstname Middlename" → "Firstname Middlename Lastname"
-function reformatName($name) {
-    $parts = explode(',', $name);
-    if (count($parts) == 2) {
-        $last = trim($parts[0]);
-        $firstMiddle = trim($parts[1]);
-        return $firstMiddle . ' ' . $last;
-    }
-    return $name; // fallback if not in expected format
+if (!$reportType || !$dateFrom || !$dateTo || $format !== 'preview') {
+    exit('Invalid or missing parameters.');
 }
 
-// Assign & format variables
-$clientName = reformatName($data['client_name']);
-$clientAddress = $data['client_address'];
-$respondentName = reformatName($data['respondent_name']);
-$respondentAddress = $data['respondent_address'];
-$createdAt = date('Y-m-d', strtotime($data['created_at']));
-$formattedDate = date('F j, Y', strtotime($createdAt));
+// Fetch records from official_receipt_records
+$stmt = $conn->prepare("SELECT receipt_number, client_name, amount_paid, date_issued FROM official_receipt_records WHERE request_type = ? AND date_issued BETWEEN ? AND ?");
+$stmt->bind_param('sss', $reportType, $dateFrom, $dateTo);
+$stmt->execute();
+$result = $stmt->get_result();
 
+$rows = [];
+$total = 0;
+while ($row = $result->fetch_assoc()) {
+    $rows[] = $row;
+    $total += $row['amount_paid'];
+}
+$stmt->close();
+
+// Format date range for display
+$formattedFrom = date('F j, Y', strtotime($dateFrom));
+$formattedTo   = date('F j, Y', strtotime($dateTo));
+
+// Build the PDF HTML
 ob_start();
 ?>
 <!DOCTYPE html>
@@ -43,43 +42,75 @@ ob_start();
   <style>
     body {
       font-family: 'Times New Roman', Times, serif;
-      margin: 0;
-      padding: 50px 60px;
+      margin: 50px;
       font-size: 13pt;
-    }
-    .content {
-      text-align: justify;
-      width: 100%;
-    }
-    .certification-title {
-      font-size: 18pt;
       text-align: center;
-      font-weight: bold;
-      text-decoration: underline;
+    }
+    h2 {
+      margin-bottom: 5px;
+    }
+    h4 {
+      margin-top: 0;
       margin-bottom: 30px;
     }
-    p {
-      text-indent: 50px;
-      margin-bottom: 20px;
-      line-height: 1.6;
+    table {
+      margin: 0 auto;
+      width: 90%;
+      border-collapse: collapse;
+      font-size: 12pt;
     }
-    .no-indent {
-      text-indent: 0;
-      font-size: 13pt;
-      margin-bottom: 20px;
+    th, td {
+      border: 1px solid black;
+      padding: 8px 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    .total-row td {
+      font-weight: bold;
+      text-align: right;
+    }
+    .total-label {
+      text-align: right;
+      padding-right: 10px;
     }
   </style>
 </head>
 <body>
-  <div class="content">
-    <p class="certification-title">KATUNAYAN</p>
 
-    <p class="no-indent"><strong>SA KINAUUKULAN:</strong></p>
+  <h2>Collection Report</h2>
+  <h4><?= htmlspecialchars($reportType) ?> (<?= $formattedFrom ?> to <?= $formattedTo ?>)</h4>
 
-    <p>
-      Ito ay nagpapatunay na si <strong><?= htmlspecialchars($clientName) ?></strong>, taga <?= htmlspecialchars($clientAddress) ?> ay nagtungo sa tanggapan ng Punong Barangay noong <?= $formattedDate ?> upang ireklamo si <strong><?= htmlspecialchars($respondentName) ?></strong> na taga <?= htmlspecialchars($respondentAddress) ?>.
-    </p>
-  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Receipt #</th>
+        <th>Client Name</th>
+        <th>Date Issued</th>
+        <th>Amount Paid (&#8369;)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <?php if (count($rows) === 0): ?>
+        <tr><td colspan="4">No records found.</td></tr>
+      <?php else: ?>
+        <?php foreach ($rows as $r): ?>
+        <tr>
+          <td><?= htmlspecialchars($r['receipt_number']) ?></td>
+          <td><?= htmlspecialchars($r['client_name']) ?></td>
+          <td><?= date('F j, Y', strtotime($r['date_issued'])) ?></td>
+          <td><?= number_format($r['amount_paid'], 2) ?></td>
+        </tr>
+        <?php endforeach; ?>
+        <tr class="total-row">
+          <td colspan="3" class="total-label">Total Collected</td>
+          <td><?= number_format($total, 2) ?></td>
+        </tr>
+      <?php endif; ?>
+    </tbody>
+  </table>
+
 </body>
 </html>
 <?php
@@ -92,6 +123,5 @@ $dompdf = new Dompdf($options);
 $dompdf->loadHtml($html);
 $dompdf->setPaper('letter', 'portrait');
 $dompdf->render();
-$dompdf->stream("Blotter_Certificate_{$tid}.pdf", ['Attachment' => false]);
+$dompdf->stream("Collection_Report_{$reportType}_{$dateFrom}_to_{$dateTo}.pdf", ['Attachment' => false]);
 exit;
-?>

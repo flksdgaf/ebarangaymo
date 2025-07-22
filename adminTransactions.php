@@ -1,7 +1,7 @@
 <?php
 require 'functions/dbconn.php';
 // Fetch report types from database or define statically
-$reportTypes = ['Barangay ID','Barangay Clearance','Certification','Business Permit','Equipment Borrowing','Cash Incentives'];
+$reportTypes = ['All','Barangay ID', 'Business Permit', 'Good Moral', 'Guardianship', 'Indigency', 'Residency', 'Solo Parent'];
 ?>
 
 <title>eBarangay Mo | Generate Reports</title>
@@ -21,16 +21,13 @@ $reportTypes = ['Barangay ID','Barangay Clearance','Certification','Business Per
         Resident Reports
       </button>
     </h2>
-    <div id="collapseResident" class="accordion-collapse collapse"
-        aria-labelledby="headingResident"
-        data-bs-parent="#adminAccordion">
+    <div id="collapseResident" class="accordion-collapse collapse" aria-labelledby="headingResident" data-bs-parent="#adminAccordion">
       <div class="accordion-body p-0">
         <div class="card border-0">
           <div class="card-body">
-            <form id="residentReportForm" method="get" action="functions/generateResidentsReport.php">
+
+            <form method="post" action="functions/generateResidentsReport.php" target="_blank" id="residentReportForm">
               <div class="row align-items-end g-3 mb-4">
-                
-                <!-- Purok filter -->
                 <div class="col-md-4">
                   <label for="filterPurok" class="form-label">Purok</label>
                   <select id="filterPurok" name="purok" class="form-select">
@@ -40,28 +37,19 @@ $reportTypes = ['Barangay ID','Barangay Clearance','Certification','Business Per
                     <?php endfor; ?>
                   </select>
                 </div>
-
-                <!-- Exact Age input -->
                 <div class="col-md-4">
                   <label for="filterAge" class="form-label">Age</label>
                   <input type="number" id="filterAge" name="exact_age" class="form-control" min="0" placeholder="All">
                 </div>
-
-
-                <!-- Buttons -->
                 <div class="col-md-4 text-end">
-                  <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">
-                    CSV
-                  </button>
-                  <button type="button"
-                          id="generateResidentPDFBtn"
-                          class="btn btn-success">
-                    PDF
-                  </button>
+                  <button type="button" id="previewResidentBtn" class="btn btn-outline-success me-2">Preview</button>
+                  <button type="submit" name="format" value="pdf" class="btn btn-success">PDF</button>
                 </div>
-
               </div>
             </form>
+
+            <div id="residentPreviewOutput" class="mt-4"></div>
+
           </div>
         </div>
       </div>
@@ -80,74 +68,32 @@ $reportTypes = ['Barangay ID','Barangay Clearance','Certification','Business Per
           <div class="card border-0">
             <div class="card-body">
 
-              <form method="post" action="functions/generate_collection_report.php" target="_blank">
-                <div class="row align-items-end g-3 mb-4">
-                  <div class="col-md-3">
-                    <label for="collectionReportType" class="form-label">Report Type</label>
-                    <select id="collectionReportType" name="report_type" class="form-select" required>
-                      <?php foreach($reportTypes as $type): ?>
-                      <option value="<?= htmlspecialchars($type) ?>"><?= htmlspecialchars($type) ?></option>
-                      <?php endforeach; ?>
-                    </select>
-                  </div>
-                  <div class="col-md-3">
-                    <label for="collectionFrom" class="form-label">From</label>
-                    <input type="date" id="collectionFrom" name="date_from" class="form-control" required>
-                  </div>
-                  <div class="col-md-3">
-                    <label for="collectionTo" class="form-label">To</label>
-                    <input type="date" id="collectionTo" name="date_to" class="form-control" required>
-                  </div>
-                  <div class="col-md-3 text-end">
-                    <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">CSV</button>
-                    <button type="submit" name="format" value="pdf" class="btn btn-success">PDF</button>
-                  </div>
+            <form method="post" action="functions/generateCollectionReport.php" target="_blank" id="collectionForm">
+              <div class="row align-items-end g-3 mb-4">
+                <div class="col-md-3">
+                  <label for="collectionReportType" class="form-label">Report Type</label>
+                  <select id="collectionReportType" name="report_type" class="form-select" required>
+                    <?php foreach($reportTypes as $type): ?>
+                    <option value="<?= htmlspecialchars($type) ?>"><?= htmlspecialchars($type) ?></option>
+                    <?php endforeach; ?>
+                  </select>
                 </div>
-              </form>
-
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Official Receipt Reports -->
-    <div class="accordion-item">
-      <h2 class="accordion-header" id="headingOfficialReceipts">
-        <button class="accordion-button collapsed text-success fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOfficialReceipts" aria-expanded="false" aria-controls="collapseOfficialReceipts">
-          Official Receipt Reports
-        </button>
-      </h2>
-      <div id="collapseOfficialReceipts" class="accordion-collapse collapse" aria-labelledby="headingOfficialReceipts" data-bs-parent="#adminAccordion">
-        <div class="accordion-body p-0">
-          <div class="card border-0">
-            <div class="card-body">
-
-              <form method="post" action="functions/generate_official_receipt_report.php" target="_blank">
-                <div class="row align-items-end g-3 mb-4">
-                  <div class="col-md-3">
-                    <label for="receiptReportType" class="form-label">Report Type</label>
-                    <select id="receiptReportType" name="report_type" class="form-select" required>
-                      <option value="all">All</option>
-                      <?php foreach($reportTypes as $type): ?>
-                      <option value="<?= htmlspecialchars($type) ?>"><?= htmlspecialchars($type) ?></option>
-                      <?php endforeach; ?>
-                    </select>
-                  </div>
-                  <div class="col-md-3">
-                    <label for="receiptFrom" class="form-label">From</label>
-                    <input type="date" id="receiptFrom" name="date_from" class="form-control" required>
-                  </div>
-                  <div class="col-md-3">
-                    <label for="receiptTo" class="form-label">To</label>
-                    <input type="date" id="receiptTo" name="date_to" class="form-control" required>
-                  </div>
-                  <div class="col-md-3 text-end">
-                    <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">CSV</button>
-                    <button type="button" id="generateOfficialReceiptPDFBtn" class="btn btn-success">PDF</button>
-                  </div>
+                <div class="col-md-3">
+                  <label for="collectionFrom" class="form-label">From</label>
+                  <input type="date" id="collectionFrom" name="date_from" class="form-control" required>
                 </div>
-              </form>
+                <div class="col-md-3">
+                  <label for="collectionTo" class="form-label">To</label>
+                  <input type="date" id="collectionTo" name="date_to" class="form-control" required>
+                </div>
+                <div class="col-md-3 text-end">
+                  <button type="button" id="previewCollectionBtn" class="btn btn-outline-success me-2">Preview</button>
+                  <button type="submit" name="format" value="pdf" class="btn btn-success">PDF</button>
+                </div>
+              </div>
+            </form>
+
+            <div id="collectionPreviewOutput" class="mt-4"></div>
 
             </div>
           </div>
@@ -279,23 +225,41 @@ $reportTypes = ['Barangay ID','Barangay Clearance','Certification','Business Per
 
   <script>
     // Resident PDF generation
-    document.getElementById('generateResidentPDFBtn').addEventListener('click', () => {
-      const purok = document.getElementById('filterPurok').value;
-      const ageInput = document.getElementById('filterAge').value.trim();
-      
-      if (ageInput !== '' && (!/^\d+$/.test(ageInput) || ageInput < 1 || ageInput > 150)) {
-        alert("Please enter a valid age between 1 and 150 or leave it blank to fetch all.");
-        return;
-      }
+    document.getElementById('previewResidentBtn').addEventListener('click', function () {
+      const form = document.getElementById('residentReportForm');
+      const formData = new FormData(form);
+      formData.append('format', 'preview');
 
-      const params = new URLSearchParams({
-        purok,
-        exact_age: ageInput,
-        format: 'pdf'
+      fetch(form.action, {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('residentPreviewOutput').innerHTML = html;
+      })
+      .catch(err => {
+        document.getElementById('residentPreviewOutput').innerHTML = '<p class="text-danger">Preview failed to load.</p>';
       });
+    });
 
-      const url = `functions/generateResidentsReport.php?${params.toString()}`;
-      window.open(url, 'ResidentReportWindow', 'width=1000,height=800,resizable=yes,scrollbars=yes');
+    // Collection Report
+    document.getElementById('previewCollectionBtn').addEventListener('click', function () {
+      const form = document.getElementById('collectionForm');
+      const formData = new FormData(form);
+      formData.append('format', 'preview');
+
+      fetch(form.action, {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('collectionPreviewOutput').innerHTML = html;
+      })
+      .catch(err => {
+        document.getElementById('collectionPreviewOutput').innerHTML = '<p class="text-danger">Failed to load preview.</p>';
+      });
     });
 
     // Blotter PDF generation

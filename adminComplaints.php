@@ -17,11 +17,11 @@ $userId = (int) $_SESSION['loggedInUserID'];
         Complaint
       </button>
     </li>
-    <!-- <li class="nav-item" role="presentation">
+    <li class="nav-item" role="presentation">
       <button class="nav-link" id="katarungan-tab" data-bs-toggle="tab" data-bs-target="#katarungan-pane" type="button" role="tab">
         Katarungang Pambarangay
       </button>
-    </li> -->
+    </li>
   </ul>
 
   <div class="tab-content mt-3">
@@ -30,6 +30,9 @@ $userId = (int) $_SESSION['loggedInUserID'];
     </div>
     <div class="tab-pane fade" id="summon-pane" role="tabpanel">
       <?php include 'adminSummon.php'; ?>
+    </div>
+    <div class="tab-pane fade" id="katarungan-pane" role="tabpanel">
+      <?php include 'adminKatarungangPambarangay.php'; ?>
     </div>
   </div>
 </div>
@@ -41,7 +44,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   // decide which pane had activity
   let pane = 'blotter';
   if (params.has('summon_search') || params.has('summon_page')) pane = 'summon';
-  // if (params.has('katarungan_search') || params.has('katarungan_page')) pane = 'katarungan';
+  if (params.has('katarungan_search') || params.has('katarungan_page')) pane = 'katarungan';
 
   // show that pane
   const trigger = document.getElementById(`${pane}-tab`);

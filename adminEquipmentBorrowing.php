@@ -50,7 +50,7 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
           </thead>
           <tbody>
             <?php if (empty($equipments)): ?>
-              <tr><td colspan="6" class="text-center py-3">No equipment found.</td></tr>
+              <tr><td colspan="7" class="text-center py-3">No equipment found.</td></tr>
             <?php else: foreach($equipments as $eq): ?>
               <tr>
                 <td><?= htmlspecialchars($eq['equipment_sn']) ?></td>
@@ -112,7 +112,7 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
           </thead>
           <tbody>
             <?php if (empty($borrows)): ?>
-              <tr><td colspan="9" class="text-center py-3">No borrow requests.</td></tr>
+              <tr><td colspan="7" class="text-center py-3">No borrow requests.</td></tr>
             <?php else: foreach($borrows as $br): ?>
               <tr>
                 <td><?= htmlspecialchars($br['resident_name']) ?></td>

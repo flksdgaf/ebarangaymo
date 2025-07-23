@@ -113,7 +113,7 @@ $result = $stmt->get_result();
             <?php endwhile; ?>
           <?php else: ?>
             <tr>
-              <td colspan="5" class="text-center">No completed transactions found.</td>
+              <td colspan="7" class="text-center">No completed transactions found.</td>
             </tr>
           <?php endif; ?>
         </tbody>

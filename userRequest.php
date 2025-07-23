@@ -147,7 +147,7 @@ $result = $st->get_result();
               </tr>
             <?php endwhile; ?>
           <?php else: ?>
-            <tr><td colspan="4" class="text-center">No requests found.</td></tr>
+            <tr><td colspan="7" class="text-center">No requests found.</td></tr>
           <?php endif; ?>
         </tbody>
       </table>

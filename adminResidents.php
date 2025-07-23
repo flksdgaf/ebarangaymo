@@ -110,7 +110,7 @@ $stmt->close();
         </thead>
         <tbody>
           <?php if (empty($allRows)): ?>
-            <tr><td colspan="9" class="text-center">No data for Purok <?= $purokNum ?></td></tr>
+            <tr><td colspan="7" class="text-center">No data for Purok <?= $purokNum ?></td></tr>
           <?php else: ?>
             <?php foreach ($allRows as $row):
               // map enum to CSS color

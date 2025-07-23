@@ -157,7 +157,7 @@ $result = $st->get_result();
             <?php endwhile; ?>
           <?php else: ?>
             <tr>
-              <td colspan="4" class="text-center">No released transactions found.</td>
+              <td colspan="7" class="text-center">No released transactions found.</td>
             </tr>
           <?php endif; ?>
         </tbody>

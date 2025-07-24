@@ -411,15 +411,30 @@ $stmt->close();
 
       <!-- View Blotter Modal -->
       <div class="modal fade" id="viewBlotterModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="viewBlotterModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width:90vw;">
-          <div class="modal-content">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 820px; width: 100%;">
+          <div class="modal-content" style="height: auto; display: flex; flex-direction: column;">
+            <!-- Modal Header -->
             <div class="modal-header text-white" style="background-color: #13411F;">
-              <h5 class="modal-title" id="viewBlotterModalLabel">Record Preview</h5>
+              <h5 class="modal-title" id="viewBlotterModalLabel">Blotter Record Preview</h5>
               <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" style="height:80vh; padding:0;">
-              <iframe id="blotterPreviewFrame" style="border:none; width:100%; height:100%;" src="" allowfullscreen>
-              </iframe>
+
+            <!-- Modal Body with Preview -->
+            <div style="background-color: #ccc; padding: 20px;">
+              <iframe id="blotterPreviewFrame" style="border: none; width: 100%; height: 1123px; background: #ccc;" src="" allowfullscreen></iframe>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="modal-footer justify-content-between px-4 py-2" style="background-color: #f8f9fa;">
+              <span class="text-muted">Preview only — use the buttons below to save or print</span>
+              <div>
+                <button class="btn btn-outline-success me-2" id="printBlotterBtn">
+                  <i class="bi bi-printer"></i> Print
+                </button>
+                <a id="downloadPDFLink" class="btn btn-success" href="#" target="_blank">
+                  <i class="bi bi-download"></i> Save as PDF
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -763,11 +778,23 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.blotter-view-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const tid = btn.getAttribute('data-id');
-      // point iframe at your existing PDF-generator
-      previewFrame.src = 'functions/print_blotter.php?transaction_id=' + encodeURIComponent(tid);
+      const baseUrl = 'functions/print_blotter.php?transaction_id=' + encodeURIComponent(tid);
+
+      // Set iframe preview (preview mode)
+      previewFrame.src = baseUrl;
+
+      // Update the Save as PDF button
+      document.getElementById('downloadPDFLink').href = baseUrl + '&download=1';
+
+      // Update the Print button to open a clean print tab
+      document.getElementById('printBlotterBtn').onclick = () => {
+        window.open(baseUrl + '&print=1', '_blank');
+      };
+
       viewModal.show();
     });
   });
+
 
   // Clear iframe when closing, to stop PDF load in background
   viewModalEl.addEventListener('hidden.bs.modal', () => {

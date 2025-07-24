@@ -50,8 +50,64 @@ $stmt->execute();
 $rec = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
-if (!$rec) {
-  exit('Record not found');
+// 3.1) Fetch Brgy. Captain name using account_id from purok tables
+$captainName = '';
+$res = $conn->query("SELECT account_id FROM user_accounts WHERE role = 'Brgy Captain' LIMIT 1");
+if ($res && $row = $res->fetch_assoc()) {
+    $captainId = $row['account_id'];
+    $purokTables = ['purok1_rbi', 'purok2_rbi', 'purok3_rbi', 'purok4_rbi', 'purok5_rbi'];
+    foreach ($purokTables as $table) {
+        $stmt = $conn->prepare("SELECT full_name FROM $table WHERE account_id = ? LIMIT 1");
+        $stmt->bind_param("i", $captainId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($data = $result->fetch_assoc()) {
+            // Reformat: Surname, Firstname Middlename -> Firstname M. Surname
+            $parts = explode(',', $data['full_name']);
+            if (count($parts) === 2) {
+                $surname = trim($parts[0]);
+                $firstMiddle = trim($parts[1]);
+                $fmParts = explode(' ', $firstMiddle);
+                $firstname = $fmParts[0] ?? '';
+                $middlename = $fmParts[1] ?? '';
+                $middleInitial = $middlename ? strtoupper($middlename[0]) . '.' : '';
+                $captainName = strtoupper("$firstname $middleInitial $surname");
+            }
+            $stmt->close();
+            break;
+        }
+        $stmt->close();
+    }
+}
+
+// 3.2) Split complainant address into parts
+$complainantBarangay = '';
+$complainantMunicipality = '';
+$complainantProvince = '';
+
+$addressParts = explode(',', $rec['complainant_address']);
+$complainantBarangay = trim($addressParts[0] ?? '');
+$complainantMunicipality = trim($addressParts[1] ?? '');
+$complainantProvince = trim($addressParts[2] ?? '');
+
+$complainantMunicipalityProvince = $complainantMunicipality;
+if ($complainantProvince) {
+    $complainantMunicipalityProvince .= ', ' . $complainantProvince;
+}
+
+// 3.3) Split respondent address into parts
+$respondentBarangay = '';
+$respondentMunicipality = '';
+$respondentProvince = '';
+
+$respAddressParts = explode(',', $rec['respondent_address']);
+$respondentBarangay = trim($respAddressParts[0] ?? '');
+$respondentMunicipality = trim($respAddressParts[1] ?? '');
+$respondentProvince = trim($respAddressParts[2] ?? '');
+
+$respondentMunicipalityProvince = $respondentMunicipality;
+if ($respondentProvince) {
+    $respondentMunicipalityProvince .= ', ' . $respondentProvince;
 }
 
 // 4) Prepare logos
@@ -75,6 +131,29 @@ if ($dtRaw) {
   $summonDate = $summonTime = '—';
 }
 
+// 5.1) Format Filipino date
+function getFilipinoMonth($monthNumber) {
+  $months = [
+    1 => 'Enero', 2 => 'Pebrero', 3 => 'Marso',
+    4 => 'Abril', 5 => 'Mayo', 6 => 'Hunyo',
+    7 => 'Hulyo', 8 => 'Agosto', 9 => 'Setyembre',
+    10 => 'Oktubre', 11 => 'Nobyembre', 12 => 'Disyembre'
+  ];
+  return $months[(int)$monthNumber] ?? '';
+}
+
+$filDateRaw = $rec['scheduled_at'] ?? null;
+if ($filDateRaw) {
+  $filDateObj = new DateTime($filDateRaw);
+  $day = $filDateObj->format('j'); // Day without leading zero
+  $year = $filDateObj->format('Y');
+  $monthNum = $filDateObj->format('n'); // 1-12
+  $filipinoMonth = getFilipinoMonth($monthNum);
+  $formattedFilipinoDate = $day . ' ng ' . $filipinoMonth . '</u>, ' . $year . '</strong>';
+} else {
+  $formattedFilipinoDate = 'ika-<u>— ng —</u>, —';
+}
+
 // 6) Build the combined HTML
 $html = '
 <!doctype html>
@@ -86,22 +165,27 @@ $html = '
     .header-table { width:100%; border-collapse:collapse; margin-bottom:6px; }
     .header-table td { text-align:center; vertical-align:middle; }
     .logo { height:100px; }
-    .header-text { font-size:16px; font-weight:bold; line-height:1.3; }
+    .header-text { font-size:16px; line-height:1.3; }
     .header-text .agency { display:block; margin-top:6px; }
     hr { border:none; border-top:3px solid #000; margin:4px 0; }
-    .content { margin:0.5in 0.75in; font-size:14px; }
-    table.info, table.meta { border-collapse:collapse; margin-bottom:16px; }
+    .content { margin:0.2in 0.5in; font-size: 16px; }
+    table.info, table.meta { border-collapse:collapse; margin-bottom:16px; line-height: 0.8;}
     table.info td, table.meta td { padding:4px 6px; white-space:nowrap; }
-    .info .value, .meta .value { border-bottom:1px solid #000; padding-left:4px; }
-    .section-title { text-align:center; font-weight:bold; margin:16px 0 8px; }
-    .section-text { text-indent:0.5in; margin-bottom:12px; line-height:1.5; text-align:justify; }
-    .underline { border-bottom:1px solid #000; padding:4px; margin-bottom:16px; }
-    .sign-line { display:inline-block; border-top:1px solid #000; width:200px; margin-top:40px; }
+    table.meta { text-align: right; }
+    .section-title { text-align:center; margin:16px 0 0; }
+    .section-text { text-indent:0.5in; line-height:1.2; text-align:justify; }
+    .line { border-bottom: 5px solid #000; margin-bottom: 3px;}
+    .line2 { border-bottom: 2px solid #000;}
+    .underline { text-align: justify;}
+    .sign-line { display:inline-block; border-top:1px solid #000; width:160px; margin-top:40px; text-indent:0.5in;}
+    .footer-captain {text-align: center; margin-top: 80px; font-size: 16px; line-height: 1.2; margin-left: 300px;}
+    .footer-captain strong { text-transform: uppercase; }
     .page-break { page-break-before:always; }
   </style>
 </head>
 <body>
 
+  <!-- COMPLAINT / SUMBONG -->
   <!-- HEADER -->
   <table class="header-table">
     <tr>
@@ -110,112 +194,189 @@ $html = '
         Republic of the Philippines<br>
         Province of Camarines Norte<br>
         Municipality of Daet<br>
-        <strong>BARANGAY MAGANG</strong><br>
-        <span class="agency">TANGGAPAN NG LUPONG TAGAPAMAYAPA</span>
+        <strong>BARANGAY MAGANG<br>
+        <span class="agency">TANGGAPAN NG LUPONG TAGAPAMAYAPA</strong></span>
       </td>
       <td style="width:20%"><img src="'. $srcB .'" class="logo"></td>
     </tr>
   </table>
-  <hr>
+  <div class="line"></div>
+  <div class="line2"></div>
 
-  <!-- COMPLAINT (SUMBONG) -->
   <div class="content">
-    <table class="info" style="float:left;">
-      <tr><td><strong>Name:</strong></td>
-          <td class="value">'. htmlspecialchars($rec['complainant_name']) .'</td></tr>
-      <tr><td><strong>Address:</strong></td>
-          <td class="value">'. htmlspecialchars($rec['complainant_address']) .'</td></tr>
-      <tr><td></td><td>Nagrereklamo</td></tr>
-      <tr><td><strong>Name:</strong></td>
-          <td class="value">'. htmlspecialchars($rec['respondent_name']) .'</td></tr>
-      <tr><td><strong>Address:</strong></td>
-          <td class="value">'. htmlspecialchars($rec['respondent_address']) .'</td></tr>
-      <tr><td></td><td>Inirereklamo</td></tr>
+    <table class="meta" style="float:right;">
+      <tr><td>Barangay kaso blg. <u> '. htmlspecialchars($tid) .'</u></td></tr>
+      <tr><td>Para: <u> '. htmlspecialchars($rec['complaint_type']) .'</u></td></tr>
     </table>
 
-    <table class="meta" style="float:right;">
-      <tr><td><strong>Case No.:</strong></td>
-          <td class="value">'. htmlspecialchars($tid) .'</td></tr>
-      <tr><td><strong>Type:</strong></td>
-          <td class="value">'. htmlspecialchars($rec['complaint_type']) .'</td></tr>
+    <table class="info" style="float:left; margin-top:50px;">
+      <tr>
+        <td>Name:</td>
+        <td class="value"><u>'. htmlspecialchars($rec['complainant_name']) .'</u></td></tr>
+      <tr>
+        <td>Address:</td>
+        <td class="value"><u>'. htmlspecialchars($rec['complainant_address']) .'</u></td></tr>
+      <tr><td></td><td>Nagrereklamo</td></tr><br>
+      <tr>
+        <td>Name:</td>
+        <td class="value"><u>'. htmlspecialchars($rec['respondent_name']) .'</u></td></tr>
+      <tr>
+        <td>Address:</td>
+        <td class="value"><u>'. htmlspecialchars($rec['respondent_address']) .'</u></td></tr>
+      <tr><td></td><td>Inirereklamo</td></tr>
     </table>
     <div style="clear:both;"></div>
 
-    <div class="section-title">SUMBONG</div>
+    <div class="section-title"><strong>SUMBONG</strong></div><br>
     <div class="section-text">
-      Ako/kami sa pamamagitan nito ay nagrereklamo laban sa mga pinangalanang isinakdal sa itaas…:
+      Ako/kami sa pamamagitan nito ay nagrereklamo laban sa mga pinangalanan isinakdal sa
+      itaas, sa pagkakalabag ng aking/naming karapatan at pansariling kapakanan sa sumusunod na
+      dahilan: 
     </div>
-    <div class="underline">'. nl2br(htmlspecialchars($rec['complaint_affidavit'])) .'</div>
+    <div class="underline"><u>'. nl2br(htmlspecialchars($rec['complaint_affidavit'])) .'</u></div><br>
 
     <div class="section-text">
-      Dahil doon, ako/kami ay sumasamo ng sumusunod na kaluwagan…:
+      Dahil doon, ako/kami ay sumasamo ng sumusunod na kaluwagan/kabayaran ay
+      ipinagkaloob sa akin/amin ng alinsunod sa batas at/o pagkamakatao:
     </div>
-    <div class="underline">'. nl2br(htmlspecialchars($rec['pleading_statement'])) .'</div>
+    <div class="underline"><u>'. nl2br(htmlspecialchars($rec['pleading_statement'])) .'</u></div><br>
 
-    <div style="margin-top:40px; text-align:right;">
+    <div style="margin-top:40px; text-align:right; ">
       <span class="sign-line"></span><br>
-      Nagrereklamo
+      <span class="sign-label" style="margin-right:27px;">Nagrereklamo</span>
+    </div><br>
+
+    <div class="section-text">
+      Tinanggap at isinasampa ngayon ika-<u>'. $formattedFilipinoDate .'.
+    </div>
+
+    <div class="footer-captain">
+      <strong>'. htmlspecialchars($captainName) .'</strong><br>
+      Punong Barangay/Lupon Chairman
     </div>
   </div>
 
   <!-- PAGE BREAK -->
   <div class="page-break"></div>
 
+
+
   <!-- SUMMON (PATAWAG) -->
   <table class="header-table">
     <tr>
       <td style="width:20%"><img src="'. $srcA .'" class="logo"></td>
       <td style="width:60%" class="header-text">
-        Republic of the Philippines<br>
+        <strong>Republic of the Philippines<br>
         Province of Camarines Norte<br>
         Municipality of Daet<br>
-        <strong>BARANGAY MAGANG</strong><br>
-        <span class="agency">TANGGAPAN NG LUPONG TAGAPAMAYAPA</span>
+        BARANGAY MAGANG<br>
+        <span class="agency">OFFICE OF THE PUNONG BARANGAY</strong></span>
       </td>
       <td style="width:20%"><img src="'. $srcB .'" class="logo"></td>
     </tr>
   </table>
-  <hr>
+  <div class="line"></div>
+  <div class="line2"></div>
 
   <div class="content">
-    <table class="info" style="float:left;">
-      <tr><td><strong>Patawag Blg.:</strong></td>
-          <td class="value">'. htmlspecialchars($tid) .'</td></tr>
-      <tr><td><strong>Para sa usapin:</strong></td>
-          <td class="value">'. htmlspecialchars($rec['complaint_type']) .'</td></tr>
+    <table class="meta" style="float:right;">
+      <tr><td>Kaso ng Barangay Blg.: <u>'. htmlspecialchars($tid) .'</u></td></tr>
+      <tr><td>Para: <strong>'. htmlspecialchars($rec['complaint_type']) .'</strong></td></tr>
     </table>
-    <table class="info" style="float:right;">
-      <tr><td><strong>Petsa:</strong></td>
-          <td class="value">'. $summonDate .'</td></tr>
-      <tr><td><strong>Oras:</strong></td>
-          <td class="value">'. $summonTime .'</td></tr>
+
+    <table class="info" style="float:left; margin-top:50px;">
+      <tr><td class="value"><strong>'. htmlspecialchars($rec['complainant_name']) .'</strong></td></tr>
+      <tr><td class="value">'. htmlspecialchars($complainantBarangay) .',</td></tr>
+      <tr><td class="value">'. htmlspecialchars($complainantMunicipalityProvince) .'</td></tr>
+      <tr><td class="label">Nagrereklamo</td></tr><br>
+
+      <tr><td style="padding-left: 70px;">- laban sa -</td></tr><br>
+
+      <tr><td class="value"><strong>'. htmlspecialchars($rec['respondent_name']) .'</strong></td></tr>
+      <tr><td class="value">'. htmlspecialchars($respondentBarangay) .'</td></tr>
+      <tr><td class="value">'. htmlspecialchars($respondentMunicipalityProvince) .'</td></tr>
+      <tr><td class="label">Inirereklamo</td></tr>
     </table>
     <div style="clear:both;"></div>
 
-    <table class="info">
-      <tr><td><strong>Isinumbong:</strong></td>
-          <td class="value">'. htmlspecialchars($rec['complainant_name']) .'</td></tr>
-      <tr><td><strong>Address:</strong></td>
-          <td class="value">'. htmlspecialchars($rec['complainant_address']) .'</td></tr>
-      <tr><td><strong>Isinakdal:</strong></td>
-          <td class="value">'. htmlspecialchars($rec['respondent_name']) .'</td></tr>
-      <tr><td><strong>Address:</strong></td>
-          <td class="value">'. htmlspecialchars($rec['respondent_address']) .'</td></tr>
-    </table>
+    <div class="section-title"><strong>- PATAWAG -</strong><br>(SUMMON)</div><br>
+    <div class="kay">Kay: <u>'. htmlspecialchars($rec['complainant_name']) .' at '. htmlspecialchars($rec['respondent_name']) .'</u></div><br>
+    <div class="isinumbong" style=" text-align: center;"><br>Isinumbong</div><br><br>
+    <div class="section-text">
+      Ikaw/kayo ay sa pamamagitan nito ay ipinatawag para humarap sa akin ng
+      personal, kasama ang inyong saksi sa ika-<strong>'. $formattedFilipinoDate .'</strong>
+      ng ganap na ika <strong>'. $summonTime .'</strong> ng
+      umaga/hapon upang sagutin ang sumbong na isinampa sa akin, kalakip nito ang sipi, para
+      ayusin ng mahinahon/pagkasunduin ang inyong sigalutan ng nagsusumbong.
+    </div><br>
 
-    <div class="section-title">PATAWAG (SUMMON)</div>
     <div class="section-text">
-      Kay: <strong>'. htmlspecialchars($rec['respondent_name']) .'</strong><br>
-      Sa pamamagitan nito ay ipinatawag kayo na humarap sa tanggapan ng Lupong Tagapamayapa,
-      Barangay Magang, Daet, Camarines Norte, sa petsa <strong>'. $summonDate .'</strong>
-      ng ganap na ika-<strong>'. $summonTime .'</strong>, upang sagutin ang sumbong na isinampa
-      laban sa inyo ukol sa <em>'. htmlspecialchars($rec['complaint_type']) .'</em>.
+      Ikaw/kayo sa pamamagitan nito ay binabalaan na kapag ikaw/kayo ay tumanggi o
+      sinadyang hindi magpakita sa pagtalima sa pagtawag, ikaw ay maaaring pagbawalan na
+      magsampa ng ganting demanda na nagmula sa nabanggit ng nasasakdal.
+    </div><br>
+
+    <div class="section-text">
+      Huwag na hindi o di kaya ay harapin ang parusang pagsuway sa utos ng hukuman.
+    </div><br>
+
+    <div class="section-text">
+      Ngayong ika-'. $formattedFilipinoDate .'.
     </div>
-    <div class="section-text">
-      Kung hindi kayo magpakita, maaari kayong pagmultahin o pagkakulong alinsunod sa batas.
+
+    <div class="footer-captain">
+      <strong>'. htmlspecialchars($captainName) .'</strong><br>
+      Punong Barangay/Lupon Chairman
     </div>
   </div>
 
+  <!-- PAGE BREAK -->
+  <div class="page-break"></div>
+
+
+
+  <!-- ULAT NG OPISYAL (Officer’s Return) -->
+  <div class="content">
+    <div class="section-title"><strong>ULAT NG OPISYAL (Officer’s Return)</strong></div><br>
+
+    <div class="section-text">
+      Aking dinala ang patawag na ito sa nasasakdal noong ika ______ ng __________, 20___ at sa nasasakdal 
+      noong ika ____ ng ____________, 20____ sa pamamagitan:<br>
+      Isinasakdal/mga isinasakdal
+    </div><br>
+
+    <table style="width:100%; font-size:16px; border-collapse:collapse;">
+      <tr><td style="width:100%;">_______________________ 1. Ibinigay sa kaniya/kanila ang nasabing patawag ng personal,</td></tr>
+      <tr><td>_______________________ 2. Ibinigay sa kaniya/kanila ang nasabing patawag at siya/sila ay</td></tr>
+      <tr><td style="padding-left: 190px;">Tumangging tanggapin ito,</td></tr>
+      <tr><td>_______________________ 3. Iniwan ang nasabing patawag sa kanya/kanilang tahanan kay</td></tr>
+      <tr><td style="padding-left: 300px;">_______________________</td></tr>
+      <tr><td style="padding-left: 365px;">Pangalan</td></tr>
+      <tr><td>_______________________ 4. Iniwan ang nabanggit na patawag sa kaniya/kanilang</td></tr>
+      <tr><td style="padding-left: 190px;">Tanggapan/lugar ng pinaglilingkuran kay</td></tr>
+      <tr><td style="padding-left: 300px;">_______________________</td></tr>
+      <tr><td style="padding-left: 365px;">Pangalan</td></tr>
+      <tr><td style="padding-left: 250px;">Isang maykakayahan taong namamahala doon.</td></tr>
+    </table>
+
+    <br><br>
+    <div class="section-text">
+      Tinanggap ng isinasakdal/mga isinasakdal<br>
+      Kinatawan/mga kinatawan:
+    </div><br><br>
+
+    <table style="width:100%; text-align:center; font-size:16px;">
+      <tr>
+        <td>________________________________<br>(Lagda)</td>
+        <td>________________________________<br>(Petsa)</td>
+      </tr>
+      <tr><td><br></td><td><br></td></tr>
+      <tr>
+        <td>________________________________<br>(Lagda)</td>
+        <td>________________________________<br>(Petsa)</td>
+      </tr>
+    </table>
+  </div>
 </body>
 </html>
 ';

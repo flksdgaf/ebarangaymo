@@ -51,13 +51,13 @@ if ($document_status) {
 
 // Purok filter for pie chart
 $allPuroks = ['purok1_rbi','purok2_rbi','purok3_rbi','purok4_rbi','purok5_rbi','purok6_rbi'];
-$selectedPurok  = $_GET['purok'] ?? ''; 
+$selectedPurok = $_GET['purok'] ?? ''; 
 if (in_array($selectedPurok, $allPuroks)) {
-    // only the selected purok
-    $purokTables = [ $selectedPurok ];
+  // only the selected purok
+  $purokTables = [ $selectedPurok ];
 } else {
-    // default: all puroks
-    $purokTables = $allPuroks;
+  // default: all puroks
+  $purokTables = $allPuroks;
 }
 
 // EXCLUDE PAID AND RELEASED (NOT FINAL)
@@ -125,15 +125,16 @@ if ($queryString) {
 
   // TOTAL SERVICES
   $serviceTables = [
-      'barangay_id_requests',
-      'business_permit_requests',
-      'good_moral_requests',
-      'guardianship_requests',
-      'indigency_requests',
-      'residency_requests',
-      'solo_parent_requests',
-      // 'blotter_records',
-      // 'summon_records'
+    'barangay_id_requests',
+    'business_permit_requests',
+    'good_moral_requests',
+    'guardianship_requests',
+    'indigency_requests',
+    'residency_requests',
+    'solo_parent_requests',
+    // 'blotter_records',
+    // 'complaint_records',
+    // 'katarungan_pambarangay_records',
   ];
   $serviceCount = 0;
   foreach ($serviceTables as $tbl) {
@@ -159,29 +160,29 @@ if ($queryString) {
   ];
   
   function getAge($birthdate) {
-      $dob = new DateTime($birthdate);
-      return $dob->diff(new DateTime())->y;
+    $dob = new DateTime($birthdate);
+    return $dob->diff(new DateTime())->y;
   }
   foreach ($purokTables as $tbl) {
-      $res = $conn->query("SELECT birthdate FROM {$tbl}");
-      while ($r = $res->fetch_assoc()) {
-          $age = getAge($r['birthdate']);
-          if ($age < 18) {
-            $ageGroups['Children (<18)']++;
-          } elseif ($age < 60) {
-            $ageGroups['Adults (18–59)']++;
-          } else {
-            $ageGroups['Senior Citizens (60+)']++;
-          }
+    $res = $conn->query("SELECT birthdate FROM {$tbl}");
+    while ($r = $res->fetch_assoc()) {
+      $age = getAge($r['birthdate']);
+      if ($age < 18) {
+        $ageGroups['Children (<18)']++;
+      } elseif ($age < 60) {
+        $ageGroups['Adults (18–59)']++;
+      } else {
+        $ageGroups['Senior Citizens (60+)']++;
       }
+    }
   }
 
   // BUILD STATS ARRAY FOR DASHBOARD
   $stats = [
-      ['icon' => 'group', 'label' => 'Users', 'count' => $userCount],
-      ['icon' => 'description', 'label' => 'Service Requests', 'count' => $serviceCount],
-      ['icon' => 'diversity_3', 'label' => 'Residents', 'count' => $residentsCount],
-      ['icon' => 'person_add', 'label' => 'Account Requests', 'count' => $pendingRequests],
+    ['icon' => 'group', 'label' => 'Users', 'count' => $userCount],
+    ['icon' => 'description', 'label' => 'Service Requests', 'count' => $serviceCount],
+    ['icon' => 'diversity_3', 'label' => 'Residents', 'count' => $residentsCount],
+    ['icon' => 'person_add', 'label' => 'Account Requests', 'count' => $pendingRequests],
   ];
   ?>
   
@@ -232,15 +233,6 @@ if ($queryString) {
         <?php endif; ?>
       </div>
     </div>
-
-    <!-- New Card #2 (spans 6 cols on md+) -->
-    <!-- <div class="col-md-6 col-sm-12">
-      <div class="card shadow-sm text-center p-3">
-        <span class="material-symbols-outlined fs-1 text-success">insights</span>
-        <h2 class="fw-bold"><?= number_format($newMetric2) ?></h2>
-        <p class="text-muted">New Metric 2</p>
-      </div>
-    </div> -->
   </div>
 
   <!-- Recent Requests Table -->
@@ -272,15 +264,15 @@ if ($queryString) {
               </div>
 
               <!-- Payment Method -->
-              <div class="mb-2">
+              <!-- <div class="mb-2">
                 <label class="form-label mb-1">Payment Method</label>
                 <select name="payment_method" class="form-select form-select-sm" style="font-size:.75rem;">
                   <option value="">All</option>
-                  <option <?= $payment_method ==='GCash'?'selected':'' ?> value="GCash">GCash</option>
-                  <option <?= $payment_method ==='Brgy Payment Device'?'selected':'' ?> value="Brgy Payment Device">Brgy Payment Device</option>
-                  <option <?= $payment_method ==='Over-the-Counter'?'selected':'' ?> value="Over-the-Counter">Over-the-Counter</option>
+                  <option <= $payment_method ==='GCash'?'selected':'' ?> value="GCash">GCash</option>
+                  <option <= $payment_method ==='Brgy Payment Device'?'selected':'' ?> value="Brgy Payment Device">Brgy Payment Device</option>
+                  <option <= $payment_method ==='Over-the-Counter'?'selected':'' ?> value="Over-the-Counter">Over-the-Counter</option>
                 </select>
-              </div>
+              </div> -->
 
               <!-- Payment Status -->
               <div class="mb-2">
@@ -313,6 +305,11 @@ if ($queryString) {
           </div>
         </div>
 
+        <!-- NEW: Requests This Week title with count -->
+        <h5 class="card-title mb-0 mx-3 fs-5 text-muted">
+          Total Requests This Week (<?= number_format($total) ?>)
+        </h5>
+
         <form method="get" id="searchForm" class="d-flex ms-auto me-2">
           <input type="hidden" name="page_num" value="1">
           <?php foreach ([
@@ -339,11 +336,11 @@ if ($queryString) {
         <table class="table table-hover align-middle text-start">
           <thead class="table-light">
             <tr>
-              <th>Transaction No.</th>
-              <th>Name</th>
-              <th>Request</th>
-              <th>Payment Status</th>
-              <th>Document Status</th>
+              <th class="text-nowrap">Transaction No.</th>
+              <th class="text-nowrap">Name</th>
+              <th class="text-nowrap">Request</th>
+              <th class="text-nowrap">Payment Status</th>
+              <th class="text-nowrap">Document Status</th>
             </tr>
           </thead>
           <tbody>
@@ -368,11 +365,11 @@ if ($queryString) {
                 }
               ?>
               <tr>
-                <td><?= $txn ?></td>
-                <td><?= $name ?></td>
-                <td><?= $req ?></td>
-                <td><span class="badge <?= $payClass ?>"><?= $ps ?></span></td>
-                <td><span class="badge <?= $docClass ?>"><?= $ds ?></span></td>
+                <td class="text-nowrap"><?= $txn ?></td>
+                <td class="text-nowrap"><?= $name ?></td>
+                <td class="text-nowrap"><?= $req ?></td>
+                <td class="text-nowrap"><span class="badge <?= $payClass ?>"><?= $ps ?></span></td>
+                <td class="text-nowrap"><span class="badge <?= $docClass ?>"><?= $ds ?></span></td>
               </tr>
               <?php endwhile; ?>
             <?php else: ?>

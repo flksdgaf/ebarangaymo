@@ -15,7 +15,7 @@ $role = trim($_POST['role']);
 $purok= (int)$_POST['purok'];
 
 // validate role
-$valid = ['Resident','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Treasurer', 'Brgy Lupon'];
+$valid = ['Resident','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Treasurer', 'Lupon Tagapamayapa'];
 if (!in_array($role,$valid,true)) {
   http_response_code(400);
   exit('Bad role');

@@ -4,30 +4,30 @@
 require 'dbconn.php';
 session_start();
 if (!($_SESSION['auth'] ?? false)) {
-    header('HTTP/1.1 403 Forbidden');
-    exit('Not authorized');
+  header('HTTP/1.1 403 Forbidden');
+  exit('Not authorized');
 }
 
 $pageNum = $_POST['katarungan_page'] ?? 1;
 
 // 1) Grab POST
-$txn        = $_POST['transaction_id']    ?? '';
-$currStage  = $_POST['current_stage']     ?? '';
-$nextDate   = $_POST['next_date']         ?? '';
-$nextTime   = $_POST['next_time']         ?? '';
+$txn = $_POST['transaction_id'] ?? '';
+$currStage = $_POST['current_stage'] ?? '';
+$nextDate = $_POST['next_date'] ?? '';
+$nextTime = $_POST['next_time'] ?? '';
 
 if (!$txn || !$currStage || !$nextDate || !$nextTime) {
-    exit('Missing data');
+  exit('Missing data');
 }
 
 // 2) Map to next stage
 $map = [
-  'Punong Barangay'    => 'Unang Patawag',
-  'Unang Patawag'      => 'Ikalawang Patawag',
-  'Ikalawang Patawag'  => 'Ikatlong Patawag',
+  'Punong Barangay' => 'Unang Patawag',
+  'Unang Patawag' => 'Ikalawang Patawag',
+  'Ikalawang Patawag' => 'Ikatlong Patawag',
 ];
 if (! isset($map[$currStage])) {
-    exit('Invalid current_stage');
+  exit('Invalid current_stage');
 }
 $nextStage = $map[$currStage];
 
@@ -39,13 +39,7 @@ $scheduleCol = "schedule_{$colSuffix}";
 $dt = $nextDate . ' ' . $nextTime;
 
 // 5) UPDATE the KP record’s schedule _and_ complaint_stage
-$sql = "
-  UPDATE katarungang_pambarangay_records
-  SET
-    {$scheduleCol}    = ?,
-    complaint_stage   = ?
-  WHERE transaction_id = ?
-";
+$sql = "UPDATE katarungang_pambarangay_records SET {$scheduleCol} = ?, complaint_stage = ? WHERE transaction_id = ?";
 $stmt = $conn->prepare($sql);
 if ($stmt === false) {
   die("Prepare failed: " . $conn->error);
@@ -58,7 +52,6 @@ if (!$stmt->execute()) {
   die("Execute failed: " . $stmt->error);
 }
 $stmt->close();
-
 
 // 6) Update complaint_records.status to the new stage
 // $sql2 = "UPDATE complaint_records
@@ -79,3 +72,4 @@ $stmt->close();
 // 7) Redirect back
 header("Location: ../adminPanel.php?page=adminComplaints&katarungan_page=$pageNum&cleared_tid=" . urlencode($txn));
 exit;
+?>

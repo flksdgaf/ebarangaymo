@@ -6,6 +6,16 @@ $userId = (int) ($_SESSION['loggedInUserID'] ?? 0);
 $search = trim($_GET['katarungan_search'] ?? '');
 $date_from = $_GET['katarungan_date_from'] ?? '';
 $date_to = $_GET['katarungan_date_to'] ?? '';
+$complaint_stage = $_GET['complaint_stage'] ?? '';
+
+// build base query string for pagination links
+$bp = [
+    'page' => 'adminComplaints',
+    'katarungan_search' => $search,
+    'katarungan_date_from' => $date_from,
+    'katarungan_date_to' => $date_to,
+    'complaint_stage' => $complaint_stage,
+];
 
 // build query filters
 $whereClauses = [];
@@ -15,9 +25,9 @@ $bindParams = [];
 // global search on transaction_id or affidavit content
 if ($search !== '') {
   $term = "%{$search}%";
-  $whereClauses[] = "(k.transaction_id LIKE ? OR c.complaint_affidavit LIKE ? OR k.complainant_affidavit_unang_patawag LIKE ? OR k.complainant_affidavit_ikalawang_patawag LIKE ? OR k.complainant_affidavit_ikatlong_patawag LIKE ? OR k.respondent_affidavit_unang_patawag LIKE ? OR k.respondent_affidavit_ikalawang_patawag LIKE ? OR k.respondent_affidavit_ikatlong_patawag LIKE ?)";
-  $bindTypes  .= str_repeat('s', 8);
-  $bindParams = array_merge($bindParams, array_fill(0, 8, $term));
+  $whereClauses[] = "(k.transaction_id LIKE ? OR k.schedule_punong_barangay LIKE ? OR k.schedule_unang_patawag LIKE ? OR k.schedule_ikalawang_patawag LIKE ? OR k.schedule_ikatlong_patawag LIKE ? OR k.complaint_stage LIKE ?)";
+  $bindTypes .= str_repeat('s', 6);
+  $bindParams = array_merge($bindParams, array_fill(0, 6, $term));
 }
 
 // (B) Date-range filter on the *same* CASE expression you use in SELECT
@@ -36,6 +46,13 @@ if ($date_from && $date_to) {
     $whereClauses[] = "(DATE($dateExpr) <= ?)";
     $bindTypes .= 's';
     $bindParams = array_merge($bindParams, [$date_to]);
+}
+
+// filter by Complaint Stage
+if ($complaint_stage !== '') {
+  $whereClauses[] = 'k.complaint_stage = ?';
+  $bindTypes .= 's';
+  $bindParams[] = $complaint_stage;
 }
 
 $whereSQL = $whereClauses ? 'WHERE ' . implode(' AND ', $whereClauses) : '';
@@ -64,128 +81,43 @@ $totalRows = $countStmt->get_result()->fetch_assoc()['total'];
 $totalPages = ceil($totalRows / $limit);
 $countStmt->close();
 
-// build base query string for pagination links
-$bp = [
-    'page' => 'adminComplaints',
-    'katarungan_search' => $search,
-    'katarungan_date_from' => $date_from,
-    'katarungan_date_to' => $date_to,
-];
-
 // 2) fetch page of rows with JOIN to fetch affidavits
-// $sql = "
-//   SELECT
-//      k.transaction_id,
-//      c.complainant_name,
-//      c.respondent_name,
-//      k.complaint_type       AS subject_pb,
-//      c.complaint_status,
-//      CASE k.complaint_stage
-//        WHEN 'Punong Barangay'    THEN k.schedule_punong_barangay
-//        WHEN 'Unang Patawag'      THEN k.schedule_unang_patawag
-//        WHEN 'Ikalawang Patawag'  THEN k.schedule_ikalawang_patawag
-//        ELSE k.schedule_ikatlong_patawag
-//      END AS scheduled_at,
-//      CASE k.complaint_stage
-//        WHEN 'Unang Patawag'      THEN k.complainant_affidavit_unang_patawag
-//        WHEN 'Ikalawang Patawag'  THEN k.complainant_affidavit_ikalawang_patawag
-//        WHEN 'Ikatlong Patawag'   THEN k.complainant_affidavit_ikatlong_patawag
-//        ELSE NULL
-//      END AS complainant_affidavit,
-//      CASE k.complaint_stage
-//        WHEN 'Unang Patawag'      THEN k.respondent_affidavit_unang_patawag
-//        WHEN 'Ikalawang Patawag'  THEN k.respondent_affidavit_ikalawang_patawag
-//        WHEN 'Ikatlong Patawag'   THEN k.respondent_affidavit_ikatlong_patawag
-//        ELSE NULL
-//      END AS respondent_affidavit,
-//      k.complaint_stage,
-//      DATE_FORMAT(
-//        CASE k.complaint_stage
-//          WHEN 'Punong Barangay'   THEN k.schedule_punong_barangay
-//          WHEN 'Unang Patawag'     THEN k.schedule_unang_patawag
-//          WHEN 'Ikalawang Patawag' THEN k.schedule_ikalawang_patawag
-//          ELSE k.schedule_ikatlong_patawag
-//        END,
-//        '%b %e, %Y %l:%i %p'
-//      ) AS formatted_sched
-//    FROM katarungang_pambarangay_records k
-//    LEFT JOIN complaint_records c 
-//      ON c.transaction_id = k.transaction_id
-//    $whereSQL
-//    ORDER BY k.transaction_id ASC
-//    LIMIT ? OFFSET ?
-// ";
-
-// $sql = "
-//   SELECT
-//     k.transaction_id,
-//     c.complainant_name,
-//     c.respondent_name,
-//     k.complaint_type AS subject_pb,
-//     c.complaint_status,
-//     $dateExpr AS scheduled_at,
-//     CASE k.complaint_stage
-//       WHEN 'Unang Patawag' THEN k.complainant_affidavit_unang_patawag
-//       WHEN 'Ikalawang Patawag' THEN k.complainant_affidavit_ikalawang_patawag
-//       WHEN 'Ikatlong Patawag' THEN k.complainant_affidavit_ikatlong_patawag
-//       ELSE NULL
-//     END AS complainant_affidavit,
-  
-//     CASE k.complaint_stage
-//       WHEN 'Unang Patawag' THEN k.respondent_affidavit_unang_patawag
-//       WHEN 'Ikalawang Patawag' THEN k.respondent_affidavit_ikalawang_patawag
-//       WHEN 'Ikatlong Patawag' THEN k.respondent_affidavit_ikatlong_patawag
-//       ELSE NULL
-//     END AS respondent_affidavit,
-  
-//     k.complaint_stage,
-//     DATE_FORMAT($dateExpr,'%b %e, %Y %l:%i %p') AS formatted_sched
-
-//   FROM katarungang_pambarangay_records k
-//   LEFT JOIN complaint_records c ON c.transaction_id = k.transaction_id
-//   $whereSQL
-//   ORDER BY k.transaction_id ASC
-//   LIMIT ? OFFSET ?
-// ";
-
 $sql = "
   SELECT
     k.transaction_id,
     c.complainant_name,
     c.respondent_name,
-    k.complaint_type             AS subject_pb,
-    c.complaint_status,
+    k.complaint_type AS subject_pb,
+    c.complaint_status AS master_status,
     
-    k.schedule_punong_barangay   AS sched_pb,
-    k.schedule_unang_patawag     AS sched_1st,
+    k.schedule_punong_barangay AS sched_pb,
+    k.schedule_unang_patawag AS sched_1st,
     k.schedule_ikalawang_patawag AS sched_2nd,
-    k.schedule_ikatlong_patawag  AS sched_3rd,
+    k.schedule_ikatlong_patawag AS sched_3rd,
 
-    k.complainant_affidavit_unang_patawag     AS aff_1st,
+    k.complainant_affidavit_unang_patawag AS aff_1st,
     k.complainant_affidavit_ikalawang_patawag AS aff_2nd,
-    k.complainant_affidavit_ikatlong_patawag  AS aff_3rd,
+    k.complainant_affidavit_ikatlong_patawag AS aff_3rd,
 
-    k.respondent_affidavit_unang_patawag     AS affr_1st,
+    k.respondent_affidavit_unang_patawag AS affr_1st,
     k.respondent_affidavit_ikalawang_patawag AS affr_2nd,
-    k.respondent_affidavit_ikatlong_patawag  AS affr_3rd,
+    k.respondent_affidavit_ikatlong_patawag AS affr_3rd,
 
     k.complaint_stage,
-
     $dateExpr AS scheduled_at,
-
     DATE_FORMAT($dateExpr, '%b %e, %Y %l:%i %p') AS formatted_sched,
 
     CASE k.complaint_stage
-      WHEN 'Unang Patawag'     THEN k.complainant_affidavit_unang_patawag
+      WHEN 'Unang Patawag' THEN k.complainant_affidavit_unang_patawag
       WHEN 'Ikalawang Patawag' THEN k.complainant_affidavit_ikalawang_patawag
-      WHEN 'Ikatlong Patawag'  THEN k.complainant_affidavit_ikatlong_patawag
+      WHEN 'Ikatlong Patawag' THEN k.complainant_affidavit_ikatlong_patawag
       ELSE NULL
     END AS complainant_affidavit,
 
     CASE k.complaint_stage
-      WHEN 'Unang Patawag'     THEN k.respondent_affidavit_unang_patawag
+      WHEN 'Unang Patawag' THEN k.respondent_affidavit_unang_patawag
       WHEN 'Ikalawang Patawag' THEN k.respondent_affidavit_ikalawang_patawag
-      WHEN 'Ikatlong Patawag'  THEN k.respondent_affidavit_ikatlong_patawag
+      WHEN 'Ikatlong Patawag' THEN k.respondent_affidavit_ikatlong_patawag
       ELSE NULL
     END AS respondent_affidavit
 
@@ -243,18 +175,31 @@ $stmt->close();
             <input type="hidden" name="katarungan_search" value="<?= htmlspecialchars($search) ?>">
             <input type="hidden" name="katarungan_date_from" value="<?= htmlspecialchars($date_from) ?>">
             <input type="hidden" name="katarungan_date_to" value="<?= htmlspecialchars($date_to) ?>">
-            <input type="hidden" name="katarungan_page"  value="1">
+            <input type="hidden" name="complaint_stage" value="<?= htmlspecialchars($complaint_stage) ?>">
+            <input type="hidden" name="katarungan_page" value="1">
+
+            <!-- Complaint Stage -->
+            <div class="mb-2">
+              <label class="form-label mb-1">Complaint Stage</label>
+              <select name="complaint_stage" class="form-select form-select-sm" style="font-size:.75rem;">
+                <option value="">All</option>
+                <option <?= $complaint_stage==='Punong Barangay' ? 'selected' : '' ?> value="Punong Barangay">Punong Barangay</option>
+                <option <?= $complaint_stage==='Unang Patawag' ? 'selected' : '' ?> value="Unang Patawag">Unang Patawag</option>
+                <option <?= $complaint_stage==='Ikalawang Patawag' ? 'selected' : '' ?> value="Ikalawang Patawag">Ikalawang Patawag</option>
+                <option <?= $complaint_stage==='Ikatlong Patawag' ? 'selected' : '' ?> value="Ikatlong Patawag">Ikatlong Patawag</option>
+              </select>
+            </div>
 
             <div class="mb-2">
               <label class="form-label mb-1">Scheduled Date</label>
               <div class="d-flex gap-1">
                 <div class="flex-grow-1">
                   <small class="text-muted">From</small>
-                  <input type="date" name="katarungan_date_from" class="form-control form-control-sm" value="<?=htmlspecialchars($date_from)?>">
+                  <input type="date" name="katarungan_date_from" class="form-control form-control-sm" style="font-size:.75rem;" value="<?=htmlspecialchars($date_from)?>">
                 </div>
                 <div class="flex-grow-1">
                   <small class="text-muted">To</small>
-                  <input type="date" name="katarungan_date_to" class="form-control form-control-sm" value="<?=htmlspecialchars($date_to)?>">
+                  <input type="date" name="katarungan_date_to" class="form-control form-control-sm" style="font-size:.75rem;" value="<?=htmlspecialchars($date_to)?>">
                 </div>
               </div>
             </div>
@@ -272,6 +217,7 @@ $stmt->close();
         <input type="hidden" name="page" value="adminComplaints">
         <input type="hidden" name="katarungan_date_from" value="<?= htmlspecialchars($date_from) ?>">
         <input type="hidden" name="katarungan_date_to" value="<?= htmlspecialchars($date_to) ?>">
+        <input type="hidden" name="complaint_stage" value="<?= htmlspecialchars($complaint_stage) ?>">
         <input type="hidden" name="katarungan_page" value="1">
 
         <div class="input-group input-group-sm">
@@ -297,6 +243,7 @@ $stmt->close();
               <input type="hidden" name="transaction_id" id="edit_katarungan_tid">
               <input type="hidden" name="action_type" id="actionType">
               <input type="hidden" name="stage" id="affidavit_stage">
+              <input type="hidden" name="katarungan_page" value="<?= htmlspecialchars($page) ?>">
 
               <div class="modal-body px-4 py-3">
                 <!-- Complaint Information -->
@@ -377,6 +324,7 @@ $stmt->close();
                           <button type="button" class="btn btn-sm btn-outline-secondary edit-affidavit-btn" data-stage="1st">Edit</button>
                           <button type="submit" class="btn btn-sm btn-success save-affidavit-btn d-none" data-stage="1st">Save</button>
                           <button type="button" class="btn btn-sm btn-danger cancel-affidavit-btn d-none" data-stage="1st">Cancel</button>
+                          <!-- <a href="#" class="btn btn-sm btn-primary print-summon-btn" data-stage="1st">Print Summon</a> -->
                         </div>
                       </div>
                     </div>
@@ -405,6 +353,7 @@ $stmt->close();
                           <button type="button" class="btn btn-sm btn-outline-secondary edit-affidavit-btn" data-stage="2nd">Edit</button>
                           <button type="submit" class="btn btn-sm btn-success save-affidavit-btn d-none" data-stage="2nd">Save</button>
                           <button type="button" class="btn btn-sm btn-danger cancel-affidavit-btn d-none" data-stage="2nd">Cancel</button>
+                          <!-- <a href="#" class="btn btn-sm btn-primary print-summon-btn" data-stage="2nd">Print Summon</a> -->
                         </div>
                       </div>
                     </div>
@@ -433,6 +382,7 @@ $stmt->close();
                           <button type="button" class="btn btn-sm btn-outline-secondary edit-affidavit-btn" data-stage="3rd">Edit</button>
                           <button type="submit" class="btn btn-sm btn-success save-affidavit-btn d-none" data-stage="3rd">Save</button>
                           <button type="button" class="btn btn-sm btn-danger cancel-affidavit-btn d-none" data-stage="3rd">Cancel</button>
+                          <!-- <a href="#" class="btn btn-sm btn-primary print-summon-btn" data-stage="3rd">Print Summon</a> -->
                         </div>
                       </div>
                     </div>
@@ -444,6 +394,7 @@ $stmt->close();
               <div class="modal-footer justify-content">
                 <button type="submit" id="clearBtn" class="btn btn-outline-success">Cleared</button>
                 <button type="button" id="proceedBtn" class="btn btn-success">Proceed to Next Patawag</button>
+                <button type="button" id="proceedMunicipalBtn" class="btn btn-success" hidden>Proceed to Municipal Court</button>
               </div>
             </form>
           </div>
@@ -543,6 +494,7 @@ $stmt->close();
                 data-3rd-aff="<?= htmlspecialchars($row['aff_3rd']) ?>"
                 data-3rd-affr="<?= htmlspecialchars($row['affr_3rd']) ?>" 
                 
+                data-master-status="<?= htmlspecialchars($row['master_status']) ?>"
                 data-complaint-status="<?= htmlspecialchars($row['complaint_stage'] ?? '') ?>"
               >
                 <td><?= $tid ?></td>
@@ -557,9 +509,9 @@ $stmt->close();
                   </button>
 
                   <!-- Delete -->
-                  <button class="btn btn-sm btn-danger delete-katarungan-btn">
+                  <!-- <button class="btn btn-sm btn-danger delete-katarungan-btn">
                     <span class="material-symbols-outlined" style="font-size: 12px;">delete</span>
-                  </button>
+                  </button> -->
                 </td>
               </tr>
             <?php endwhile; ?>
@@ -604,7 +556,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Search reset/clear
   const form = document.getElementById('searchFormKatarungan');
   const input = document.getElementById('searchInputKatarungan');
-  const btn   = document.getElementById('searchBtnKatarungan');
+  const btn = document.getElementById('searchBtnKatarungan');
   const hasSearch = <?= json_encode($search !== '') ?>;
 
   btn.addEventListener('click', () => {
@@ -620,7 +572,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // ——— NEW: lock/unlock tabs by complaint_status ———
       const status = tr.dataset.complaintStatus; 
-      const order  = ['Punong Barangay', 'Unang Patawag', 'Ikalawang Patawag', 'Ikatlong Patawag'];
+      const order = ['Punong Barangay', 'Unang Patawag', 'Ikalawang Patawag', 'Ikatlong Patawag'];
       const maxTab = order.indexOf(status);
       document.querySelectorAll('#summonTab .nav-link').forEach((tabBtn, idx) => {
         if (idx <= maxTab) {
@@ -633,6 +585,17 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       // ———————————————————————————————
 
+      const master = tr.dataset.masterStatus; // the real complaint_records.complaint_status
+      const stage = tr.dataset.complaintStatus; // Punong Barangay / Unang… / Ikalawang… / Ikatlong…
+      const proceedBtn = document.getElementById('proceedBtn');
+      const proceed = document.getElementById('proceedBtn');
+      const muni = document.getElementById('proceedMunicipalBtn');
+
+      // Show/hide footer buttons based on stage and status
+      proceedBtn.hidden = !(master !== 'Cleared' && (stage === 'Punong Barangay' || stage === 'Unang Patawag' || stage === 'Ikalawang Patawag'));
+      muni.hidden = !(master !== 'Cleared' && stage === 'Ikatlong Patawag');
+      clearBtn.hidden = (master === 'Cleared' || stage === 'Municipal Court');
+     
       // 1) inject transaction_id
       document.getElementById('edit_katarungan_tid').value = tid;
       
@@ -683,14 +646,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // ─── NOW POPULATE THE AFFIDAVITS ───
       document.querySelector('#tab1st [name="complainant_affidavit_1st"]').value = tr.dataset['1stAff']  || '';
-      document.querySelector('#tab1st [name="respondent_affidavit_1st"]').value  = tr.dataset['1stAffr'] || '';
+      document.querySelector('#tab1st [name="respondent_affidavit_1st"]').value = tr.dataset['1stAffr'] || '';
       document.querySelector('#tab2nd [name="complainant_affidavit_2nd"]').value = tr.dataset['2ndAff']  || '';
-      document.querySelector('#tab2nd [name="respondent_affidavit_2nd"]').value  = tr.dataset['2ndAffr'] || '';
+      document.querySelector('#tab2nd [name="respondent_affidavit_2nd"]').value = tr.dataset['2ndAffr'] || '';
       document.querySelector('#tab3rd [name="complainant_affidavit_3rd"]').value = tr.dataset['3rdAff']  || '';
-      document.querySelector('#tab3rd [name="respondent_affidavit_3rd"]').value  = tr.dataset['3rdAffr'] || '';
+      document.querySelector('#tab3rd [name="respondent_affidavit_3rd"]').value = tr.dataset['3rdAffr'] || '';
 
       // 4) set the Print button URL
-      document.getElementById('printSummonBtn').href = `functions/print_complaint.php?transaction_id=${encodeURIComponent(tid)}`;
+      // document.getElementById('printSummonBtn').href = `functions/print_complaint.php?transaction_id=${encodeURIComponent(tid)}`;
 
        // ── **NEW**: activate the tab that matches the current stage ────────────────
       const tabButtons = Array.from(document.querySelectorAll('#summonTab .nav-link'));
@@ -708,7 +671,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // map each stage to its next stage label
   const nextStageMap = {
     'Punong Barangay': 'Unang Patawag',
-    'Unang Patawag':   'Ikalawang Patawag',
+    'Unang Patawag': 'Ikalawang Patawag',
     'Ikalawang Patawag':'Ikatlong Patawag'
   };
 
@@ -727,14 +690,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // set up modal
     document.getElementById('sched_txn').value = txn;
     document.getElementById('sched_current_stage').value = currStage;
-    document.getElementById('sched_prompt').textContent = 
-      `Schedule "${nextStage}" for Case ${txn}:`;
+    document.getElementById('sched_prompt').textContent = `Schedule "${nextStage}" for Case ${txn}:`;
 
     // show modal
     new bootstrap.Modal(document.getElementById('scheduleNextModal')).show();
   });
 
-  document.getElementById('clearBtn').addEventListener('click', function() {
+  document.getElementById('clearBtn').addEventListener('click', () => {
     document.getElementById('actionType').value = 'clear';
   });
 
@@ -749,11 +711,19 @@ document.addEventListener('DOMContentLoaded', () => {
   // });
   
   // Save button for affidavit: set stage + action_type before form submit
+  // document.querySelectorAll('.save-affidavit-btn').forEach(btn => {
+  //   btn.addEventListener('click', () => {
+  //     const stage = btn.dataset.stage;
+  //     document.getElementById('affidavit_stage').value = stage;
+  //     document.getElementById('actionType').value = 'clear'; // marks that we're saving affidavit edits
+  //   });
+  // });
+
+  // Save affidavit
   document.querySelectorAll('.save-affidavit-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const stage = btn.dataset.stage;
-      document.getElementById('affidavit_stage').value = stage;
-      document.getElementById('actionType').value = 'clear'; // marks that we're saving affidavit edits
+      document.getElementById('actionType').value = 'save';
+      document.getElementById('affidavit_stage').value = btn.dataset.stage;
     });
   });
 
@@ -761,8 +731,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const aff1 = document.querySelector(`[name="complainant_affidavit_${stage}"]`);
     const aff2 = document.querySelector(`[name="respondent_affidavit_${stage}"]`);
 
-    const editBtn   = document.querySelector(`.edit-affidavit-btn[data-stage="${stage}"]`);
-    const saveBtn   = document.querySelector(`.save-affidavit-btn[data-stage="${stage}"]`);
+    const editBtn = document.querySelector(`.edit-affidavit-btn[data-stage="${stage}"]`);
+    const saveBtn = document.querySelector(`.save-affidavit-btn[data-stage="${stage}"]`);
     const cancelBtn = document.querySelector(`.cancel-affidavit-btn[data-stage="${stage}"]`);
 
     if (editing) {
@@ -804,6 +774,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
       toggleAffidavitEditMode(stage, false);
     });
+  });
+
+  document.getElementById('proceedMunicipalBtn').addEventListener('click', () => {
+    document.getElementById('actionType').value = 'municipal';
+    document.getElementById('katarunganForm').submit();
+  });
+
+
+  document.getElementById('printSummonBtn').addEventListener('click', function(e) {
+    e.preventDefault();
+
+    const tid  = document.getElementById('edit_katarungan_tid').value;
+    const date = document.querySelector('[name="scheduled_date_pb"]').value;
+    const time = document.querySelector('[name="scheduled_time_pb"]').value;
+
+    if (!date || !time) {
+      alert('Schedule date and time are required.');
+      return;
+    }
+
+    const url = `functions/print_complaint.php?transaction_id=${encodeURIComponent(tid)}&date=${encodeURIComponent(date)}&time=${encodeURIComponent(time)}&stage=Punong Barangay`;
+    window.open(url, '_blank');
   });
 
 });

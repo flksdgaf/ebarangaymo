@@ -7,89 +7,82 @@ $logoUrl = 'images/' . $info['logo'];
 
 $menuItems = [
   [
-    'id'    => 'adminDashboard',
+    'id' => 'adminDashboard',
     'label' => 'Dashboard',
-    'icon'  => 'home',
-    'href'  => 'adminDashboard.php',
-    'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Treasurer','Brgy Lupon']
+    'icon' => 'home',
+    'href' => 'adminDashboard.php',
+    'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Treasurer','Lupon Tagapamayapa']
   ],
   [
-    'id'    => 'adminRequest',
+    'id' => 'adminRequest',
     'label' => 'Document Request',
-    'icon'  => 'description',
-    'href'  => 'adminRequest.php',
+    'icon' => 'description',
+    'href' => 'adminRequest.php',
     'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Treasurer']
   ],
   [
-    'id'    => 'adminEquipmentBorrowing',
+    'id' => 'adminEquipmentBorrowing',
     'label' => 'Equipment Borrowing',
-    'icon'  => 'inventory_2',
-    'href'  => 'adminEquipmentBorrowing.php',
+    'icon' => 'inventory_2',
+    'href' => 'adminEquipmentBorrowing.php',
     'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad']
   ],
   [
-    'id'    => 'adminComplaints',
+    'id' => 'adminComplaints',
     'label' => 'Blotter & Complaints',
-    'icon'  => 'gavel',
-    'href'  => 'adminComplaints.php',
-    'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Treasurer','Brgy Lupon']
+    'icon' => 'gavel',
+    'href' => 'adminComplaints.php',
+    'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Treasurer','Lupon Tagapamayapa']
   ],
   [
-    'id'    => 'adminResidents',
+    'id' => 'adminResidents',
     'label' => 'Residents',
-    'icon'  => 'people',
-    'href'  => 'adminResidents.php',
+    'icon' => 'people',
+    'href' => 'adminResidents.php',
     'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad']
   ],
   [
-    'id'    => 'adminVerifications',
+    'id' => 'adminVerifications',
     'label' => 'Account Verifications',
-    'icon'  => 'verified_user',
-    'href'  => 'adminVerifications.php',
+    'icon' => 'verified_user',
+    'href' => 'adminVerifications.php',
     'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad']
   ],
   [
-    'id'    => 'adminHistory',
+    'id' => 'adminHistory',
     'label' => 'Transaction History',
-    'icon'  => 'history',
-    'href'  => 'adminHistory.php',
+    'icon' => 'history',
+    'href' => 'adminHistory.php',
     'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Treasurer']
   ],
   [
-    'id'    => 'adminTransactions',
+    'id' => 'adminTransactions',
     'label' => 'Generate Reports',
-    'icon'  => 'bar_chart',
-    'href'  => 'adminTransactions.php',
+    'icon' => 'bar_chart',
+    'href' => 'adminTransactions.php',
     'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Treasurer']
   ],
   [
-    'id'    => 'adminWebsite',
+    'id' => 'adminWebsite',
     'label' => 'Website Configuration',
-    'icon'  => 'web',
-    'href'  => 'adminWebsite.php',
+    'icon' => 'web',
+    'href' => 'adminWebsite.php',
     'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad']
   ],
   [
-    'id'    => 'adminDeviceStatus',
+    'id' => 'adminDeviceStatus',
     'label' => 'Device Status',
-    'icon'  => 'devices',
-    'href'  => 'adminDeviceStatus.php',
+    'icon' => 'devices',
+    'href' => 'adminDeviceStatus.php',
     'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad']
   ],
   [
-    'id'    => 'adminLogs',
+    'id' => 'adminLogs',
     'label' => 'Activity Logs',
-    'icon'  => 'receipt_long',
-    'href'  => 'adminLogs.php',
+    'icon' => 'receipt_long',
+    'href' => 'adminLogs.php',
     'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad']
-  ],
-//   [
-//     'id'    => 'settings',
-//     'label' => 'Settings',
-//     'icon'  => 'settings',
-//     'href'  => 'adminSettings.php',
-//     'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad']
-//   ],
+  ]
 ];
 
 $currentRole = $_SESSION['loggedInUserRole'] ?? '';
@@ -125,72 +118,6 @@ $currentRole = $_SESSION['loggedInUserRole'] ?? '';
                 </li>
             <?php endif; ?>
         <?php endforeach; ?>
-        <!-- <li>
-            <a href="adminPanel.php?page=adminDashboard" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminDashboard') ? 'active' : '' ?>">
-            <span class="material-symbols-outlined me-2">dashboard</span>
-            Dashboard
-            </a>
-        </li>
-        <li>
-            <a href="adminPanel.php?page=adminRequest" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminRequest') ? 'active' : '' ?>">
-            <span class="material-symbols-outlined me-2">description</span>
-            Document Request
-            </a>
-        </li>
-        <li>
-            <a href="adminPanel.php?page=adminEquipmentBorrowing" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminEquipmentBorrowing') ? 'active' : '' ?>">
-            <span class="material-symbols-outlined me-2">hand_package</span>
-            Equipment Borrowing
-            </a>
-        </li>
-        <li>
-            <a href="adminPanel.php?page=adminComplaints" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminComplaints') ? 'active' : '' ?>">
-            <span class="material-symbols-outlined me-2">release_alert</span>
-            Blotter & Complaints
-            </a>
-        </li>
-        <li>
-            <a href="adminPanel.php?page=adminResidents" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminResidents') ? 'active' : '' ?>">
-            <span class="material-symbols-outlined me-2">folder_shared</span>
-            Residents
-            </a>
-        </li>
-        <li>
-            <a href="adminPanel.php?page=adminVerifications" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminVerifications') ? 'active' : '' ?>">
-            <span class="material-symbols-outlined me-2">verified</span>
-            Account Verifications
-            </a>
-        </li>
-        <li>
-            <a href="adminPanel.php?page=adminHistory" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminHistory') ? 'active' : '' ?>">
-            <span class="material-symbols-outlined me-2">history</span>
-            Transaction History
-            </a>
-        </li>
-        <li>
-            <a href="adminPanel.php?page=adminTransactions" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminTransactions') ? 'active' : '' ?>">
-            <span class="material-symbols-outlined me-2">receipt_long</span>
-            Generate Reports
-            </a>
-        </li>
-        <li>
-            <a href="adminPanel.php?page=adminWebsite" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminWebsite') ? 'active' : '' ?>">
-            <span class="material-symbols-outlined me-2">web</span>
-            Website Configuration
-            </a>
-        </li>
-        <li>
-            <a href="adminPanel.php?page=adminDeviceStatus" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminDeviceStatus') ? 'active' : '' ?>">
-            <span class="material-symbols-outlined me-2">devices</span>
-            Device Status
-            </a>
-        </li>
-        <li>
-            <a href="adminPanel.php?page=adminLogs" class="nav-link d-flex align-items-center <?= ($currentPage === 'adminLogs') ? 'active' : '' ?>">
-            <span class="material-symbols-outlined me-2">badge</span>
-            Activity Logs
-            </a>
-        </li> -->
     </ul>
 </nav>
 

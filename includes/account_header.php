@@ -93,7 +93,7 @@ if ($stmt) {
 }
 
 $profilePic = "profilePictures/default_profile_pic.png";
-$fullName   = "User";
+$fullName = "User";
 
 // if we found a record in one of the purok tables, use it
 if (isset($result) && $result->num_rows === 1) {
@@ -108,7 +108,7 @@ $stmt->close();
 $role = $_SESSION['loggedInUserRole'] ?? '';
 
 // ACESS LEVELS ( ALL ACCESS - ALL ACCESS - ALL ACCESS - VIEWING ONLY - TRANSACTIONS - KATARAUNGANG PAMBARANGAY)
-$admin_roles = ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper', 'Brgy Kagawad', 'Brgy Treasurer', 'Brgy Lupon'];
+$admin_roles = ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper', 'Brgy Kagawad', 'Brgy Treasurer', 'Lupon Tagapamayapa'];
 
 if (in_array($role, $admin_roles)) {
     $settingsHref = 'adminPanel.php?page=adminSettings';
@@ -239,13 +239,7 @@ if (in_array($role, $admin_roles)) {
                 <div class="row">
                 <!-- Profile Picture -->
                 <div class="col-md-4 text-center mb-4 mb-md-0">
-                    <img
-                    src="profilePictures/<?php echo htmlspecialchars($profileData['profile_picture']); ?>"
-                    class="rounded-circle border-3 border-dark"
-                    width="140" height="140"
-                    style="object-fit: cover;"
-                    alt="Profile Picture"
-                    >
+                    <img src="profilePictures/<?php echo htmlspecialchars($profileData['profile_picture']); ?>" class="rounded-circle border-3 border-dark" width="140" height="140" style="object-fit: cover;" alt="Profile Picture">
                 </div>
                 
                 <!-- Details -->
@@ -257,13 +251,13 @@ if (in_array($role, $admin_roles)) {
                         $fields = [
                             'full_name' => 'Full Name:',
                             'birthdate' => 'Birthdate:',
-                            'sex'    => 'Sex:',
+                            'sex' => 'Sex:',
                             'civil_status' => 'Civil Status:',
-                            'blood_type'   => 'Blood Type:',
+                            'blood_type' => 'Blood Type:',
                             'birth_registration_number' => 'Birth Reg. No:',
                             'highest_educational_attainment' => 'Education:',
-                            'occupation'   => 'Occupation:',
-                            'purok'        => 'Purok:'
+                            'occupation' => 'Occupation:',
+                            'purok' => 'Purok:'
                         ];
                         foreach ($fields as $key => $label): ?>
                             <dt class="col-sm-5 text-secondary"><?php echo $label; ?></dt>

@@ -57,7 +57,7 @@ if (!$ins->execute()) {
 $ins->close();
 
 // 6) UPDATE ORIGINAL complaint_records
-$upd = $conn->prepare("UPDATE complaint_records SET complaint_status = 'Scheduled' WHERE transaction_id = ?");
+$upd = $conn->prepare("UPDATE complaint_records SET complaint_status = 'On-Going' WHERE transaction_id = ?");
 $upd->bind_param("s", $transaction_id);
 $upd->execute();
 $upd->close();

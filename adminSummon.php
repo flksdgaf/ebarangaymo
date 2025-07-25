@@ -7,6 +7,7 @@ $newTid = $_GET['transaction_id'] ?? '';
 $search = trim($_GET['summon_search'] ?? '');
 $date_from = $_GET['summon_date_from'] ?? '';
 $date_to = $_GET['summon_date_to'] ?? '';
+$status = $_GET['status'] ?? '';
 
 // build a Summon-only query array
 $bp = [
@@ -14,6 +15,7 @@ $bp = [
   'summon_search' => $search,
   'summon_date_from' => $date_from,
   'summon_date_to' => $date_to,
+  'status' => $status, 
 ];
 
 $whereClauses = [];
@@ -22,10 +24,10 @@ $bindParams = [];
 
 // global search across key columns
 if ($search !== '') {
-  $whereClauses[] = "(transaction_id LIKE ? OR complainant_name LIKE ? OR respondent_name LIKE ? OR complaint_type LIKE ?)";
-  $bindTypes .= str_repeat('s', 4);
+  $whereClauses[] = "(transaction_id LIKE ? OR complainant_name LIKE ? OR respondent_name LIKE ? OR complaint_type LIKE ? OR complaint_status LIKE ?)";
+  $bindTypes .= str_repeat('s', 5);
   $term = "%{$search}%";
-  $bindParams = array_merge($bindParams, array_fill(0, 4, $term));
+  $bindParams = array_merge($bindParams, array_fill(0, 5, $term));
 }
 
 // date-range filtering on created_at
@@ -42,6 +44,13 @@ if ($date_from && $date_to) {
   $whereClauses[] = 'DATE(created_at) <= ?';
   $bindTypes .= 's';
   $bindParams[] = $date_to;
+}
+
+// filter by status
+if ($status !== '') {
+  $whereClauses[] = 'complaint_status = ?';
+  $bindTypes .= 's';
+  $bindParams[] = $status;
 }
 
 $whereSQL = $whereClauses ? 'WHERE ' . implode(' AND ', $whereClauses) : '';
@@ -172,7 +181,19 @@ $stmt->close();
             <input type="hidden" name="summon_search" value="<?=htmlspecialchars($search)?>">
             <input type="hidden" name="summon_date_from" value="<?=htmlspecialchars($date_from)?>">
             <input type="hidden" name="summon_date_to" value="<?=htmlspecialchars($date_to)?>">
+            <input type="hidden" name="status" value="<?=htmlspecialchars($status)?>">
             <input type="hidden" name="summon_page" value="1">
+
+            <!-- Status -->
+            <div class="mb-2">
+              <label class="form-label mb-1">Complaint Status</label>
+              <select name="status" class="form-select form-select-sm" style="font-size:.75rem;">
+                <option value="">All</option>
+                <option <?= $status==='Pending' ? 'selected' : '' ?> value="Pending">Pending</option>
+                <option <?= $status==='Scheduled' ? 'selected' : '' ?> value="Scheduled">Scheduled</option>
+                <option <?= $status==='Cleared' ? 'selected' : '' ?> value="Cleared">Cleared</option>
+              </select>
+            </div>
 
             <!-- Date Filed -->
             <div class="mb-2">
@@ -209,6 +230,7 @@ $stmt->close();
         <input type="hidden" name="page" value="adminComplaints">
         <input type="hidden" name="summon_date_from" value="<?=htmlspecialchars($date_from)?>">
         <input type="hidden" name="summon_date_to" value="<?=htmlspecialchars($date_to)?>">
+        <input type="hidden" name="status" value="<?=htmlspecialchars($status)?>">
         <input type="hidden" name="summon_page_num" value="1">
 
         <div class="input-group input-group-sm">

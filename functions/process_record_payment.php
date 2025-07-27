@@ -25,16 +25,16 @@ $stmt->close();
 
 // 2) Insert into official_receipt_records
 $ins = $conn->prepare("
-  INSERT INTO official_receipt_records
-    (transaction_id, request_type, full_name,
+  INSERT INTO transaction_history
+    (transaction_id, full_name, request_type,
      payment_method, or_number, amount_paid, issued_date)
   VALUES (?,?,?,?,?,?,?)"
 );
 $ins->bind_param(
   'sssssss',
   $tid,
-  $requestType,
   $fullName,
+  $requestType,
   $_POST['payment_method'],  // come from hidden form or lookup
   $or,
   $amt,

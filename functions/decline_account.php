@@ -62,9 +62,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $stmt3->close();
 
   // Redirect back, optionally to declined view
-  header("Location: ../adminPanel.php?page=adminVerifications");
+  header("Location: ../adminPanel.php?page=adminVerifications&declined_account_id={$accountId}");
   exit;
 }
 // If not POST, reject
-header("Location: /adminPanel.php?page=adminVerifications");
+header("Location: /adminPanel.php?page=adminVerifications&declined_account_id={$accountId}");
 exit;

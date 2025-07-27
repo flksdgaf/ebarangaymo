@@ -22,6 +22,7 @@ $religion        = $_POST['religion'];
 $contactperson   = $_POST['contactperson'];
 $claimDate       = $_POST['claimdate'];
 $paymentMethod   = $_POST['paymentMethod'];
+$requestSource = 'Online';
 
 // 2) Handle file upload
 $formalPicName = null;
@@ -53,16 +54,16 @@ $stmt->close();
 // 4) Insert into barangay_id_requests
 $stmt = $conn->prepare("
   INSERT INTO barangay_id_requests
-    (account_id, transaction_id, transaction_type, full_name, address,
-     height, weight, birthdate, birthplace, civil_status, religion,
-     contact_person, formal_picture, claim_date, payment_method)
-  VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    (account_id, transaction_id, transaction_type, full_name, purok,
+     height, weight, birth_date, birth_place, civil_status, religion,
+     emergency_contact_person, formal_picture, claim_date, payment_method, request_source)
+  VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
 ");
 $stmt->bind_param(
-    "issssddssssssss",
+    "issssddsssssssss",
     $userId, $transactionId, $transactionType, $fullName, $address,
     $height, $weight, $birthdate, $birthplace, $civilstatus,
-    $religion, $contactperson, $formalPicName, $claimDate, $paymentMethod
+    $religion, $contactperson, $formalPicName, $claimDate, $paymentMethod, $requestSource
 );
 $stmt->execute();
 $stmt->close();

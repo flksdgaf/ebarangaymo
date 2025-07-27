@@ -59,7 +59,7 @@ $sql = "
     amount_paid,
     or_number,     
     issued_date
-  FROM view_history
+  FROM view_transaction_history
   {$whereSQL}
   ORDER BY issued_date DESC
 ";
@@ -104,11 +104,11 @@ $result = $stmt->get_result();
             <?php while ($row = $result->fetch_assoc()): ?>
               <tr>
                 <td><?= htmlspecialchars($row['transaction_id']) ?></td>
-                <td><?= htmlspecialchars($row['full_name'])       ?></td>
-                <td><?= htmlspecialchars($row['request_type'])     ?></td>
-                <td><?= number_format($row['amount_paid'], 2)     ?></td>
+                <td><?= htmlspecialchars($row['full_name']) ?></td>
+                <td><?= htmlspecialchars($row['request_type']) ?></td>
+                <td><?= number_format($row['amount_paid'], 2) ?></td>
                 <td><?= htmlspecialchars($row['or_number'] ?? '—')?></td>
-                <td><?= htmlspecialchars($row['issued_date'])      ?></td>
+                <td><?= htmlspecialchars($row['issued_date'] ?? '—') ?></td>
               </tr>
             <?php endwhile; ?>
           <?php else: ?>

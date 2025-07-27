@@ -84,7 +84,8 @@ $data = $dataRes->fetch_assoc();
 $rowStmt->close();
 
 // 4.5) Update document_status to 'Released' (or another appropriate status)
-$updateStmt = $conn->prepare("UPDATE `$table` SET document_status = 'Ready to Release' WHERE transaction_id = ?");
+// $updateStmt = $conn->prepare("UPDATE `$table` SET document_status = 'Ready to Release' WHERE transaction_id = ?");
+$updateStmt = $conn->prepare("UPDATE `$table` SET document_status = 'Ready to Release' WHERE transaction_id = ? AND document_status <> 'Released'");
 $updateStmt->bind_param('s', $transactionId);
 $updateStmt->execute();
 $updateStmt->close();

@@ -22,10 +22,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $upd->close();
 
     // Redirect back to the declined view
-    header("Location: ../adminPanel.php?page=adminVerifications");
+    header("Location: ../adminPanel.php?page=adminVerifications&deleted_account_id={$accountId}");
     exit;
 }
 
 // If not POST, simply redirect back
-header("Location: ../adminPanel.php?page=adminVerifications");
+header("Location: ../adminPanel.php?page=adminVerifications&deleted_account_id={$accountId}");
 exit;

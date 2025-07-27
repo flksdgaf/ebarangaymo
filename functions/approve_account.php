@@ -124,7 +124,7 @@ if ($r->error) die("Delete pending failed: ".$r->error);
 $r->close();
 
 // 6) Redirect
-header("Location: ../adminPanel.php?page=adminVerifications");
+header("Location: ../adminPanel.php?page=adminVerifications&approved_account_id={$accountId}");
 exit;
 
 // $map = [

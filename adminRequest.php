@@ -20,9 +20,9 @@ $onlineCount = (int) $conn->query(
 
 // what each role is allowed to do on the request page
 $rolePermissions = [
-  'Brgy Captain' => ['add','proceed','print','edit','delete'],
-  'Brgy Secretary' => ['add','proceed','print','edit','delete'],
-  'Brgy Bookkeeper' => ['add','proceed','print','edit','delete'],
+  'Brgy Captain' => ['add','proceed','print','edit','delete','reject'],
+  'Brgy Secretary' => ['add','proceed','print','edit','delete','reject'],
+  'Brgy Bookkeeper' => ['add','proceed','print','edit','delete','reject'],
   'Brgy Treasurer' => [], // no default actions
   'Brgy Kagawad' => [], // view‑only
 ];
@@ -103,7 +103,6 @@ if ($processing_type !== '') {
 $whereSQL = $whereClauses ? 'WHERE ' . implode(' AND ', $whereClauses) : '';
 
 $limit = 10; // records per page
-// $page = isset($_GET['page_num']) ? max((int)$_GET['page_num'], 1) : 1;
 $page = max((int)($_GET['request_page'] ?? 1), 1);
 $offset = ($page - 1) * $limit;
   
@@ -175,19 +174,19 @@ $result = $st->get_result();
     </div>
   <?php endif; ?>
 
-  <?php if (isset($_GET['updated_request_id'])): ?>
+  <!-- <php if (isset($_GET['updated_request_id'])): ?>
     <div class="alert alert-success alert-dismissible fade show" role="alert">
-      Document Request record <strong><?= htmlspecialchars($_GET['updated_request_id']) ?></strong> updated successfully!
+      Document Request record <strong><= htmlspecialchars($_GET['updated_request_id']) ?></strong> updated successfully!
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
-  <?php endif; ?>
+  <php endif; ?> -->
 
-  <?php if (isset($_GET['nochange']) && $_GET['nochange'] == 1): ?>
+  <!-- <php if (isset($_GET['nochange']) && $_GET['nochange'] == 1): ?>
     <div class="alert alert-warning alert-dismissible fade show" role="alert">
       <strong>No changes detected.</strong> No fields were updated.
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
-  <?php endif; ?>
+  <php endif; ?> -->
 
   <?php if ($id = ($_GET['payment_transaction_id'] ?? false)): ?>
     <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -303,10 +302,6 @@ $result = $st->get_result();
 
       <!-- Add New Request button -->
       <div class="dropdown ms-3">
-        <!-- <button class="btn btn-sm btn-success dropdown-toggle" type="button" id="addRequestDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-          <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">add</span>
-            Add New Request
-        </button> -->
         <?php if (in_array('add', $perms, true)): ?>
           <button class="btn btn-sm btn-success dropdown-toggle" type="button" id="addRequestDropdown" data-bs-toggle="dropdown" aria-expanded="false">
             <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">add</span>
@@ -392,11 +387,6 @@ $result = $st->get_result();
                   <input name="barangay_id_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
                 </div>
 
-                <!-- <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Full Name</label>
-                  <input name="full_name" type="text" class="form-control form-control-sm" required>
-                </div> -->
-
                 <!-- Purok, Birthday & Birth Place -->
                 <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">Purok</label>
@@ -422,12 +412,6 @@ $result = $st->get_result();
                     <div class="col">
                       <input type="text" name="barangay_id_birth_place" class="form-control form-control-sm" placeholder="Municipality / Province" required/>
                     </div>
-                    <!-- <div class="col">
-                      <input type="text" name="birth_municipality" class="form-control form-control-sm" placeholder="Locality / Municipality" required/>
-                    </div>
-                    <div class="col">
-                      <input type="text" name="birth_province" class="form-control form-control-sm" placeholder="Province" required/>
-                    </div> -->
                   </div>
                 </div>
 
@@ -528,11 +512,6 @@ $result = $st->get_result();
                   <input name="business_permit_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
                 </div>
 
-                <!-- <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Full Name</label>
-                  <input name="full_name" type="text" class="form-control form-control-sm" required>
-                </div> -->
-
                 <!-- Barangay, Purok, Age, & Civil Status -->
                 <div class="col-12 col-md-2">
                   <label class="form-label fw-bold">Age</label>
@@ -621,11 +600,6 @@ $result = $st->get_result();
                   <input name="good_moral_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
                 </div>
 
-                <!-- <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Full Name</label>
-                  <input name="full_name" type="text" class="form-control form-control-sm" required>
-                </div> -->
-
                 <!-- Row 2: Civil Status, Sex & Age -->
                 <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">Civil Status</label>
@@ -706,11 +680,6 @@ $result = $st->get_result();
                   <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
                   <input name="guardianship_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
                 </div>
-
-                <!-- <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Full Name</label>
-                  <input name="full_name" type="text" class="form-control form-control-sm" required>
-                </div> -->
 
                 <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">Civil Status</label>
@@ -798,11 +767,6 @@ $result = $st->get_result();
                   <input name="indigency_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
                 </div>
 
-                <!-- <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Full Name</label>
-                  <input name="full_name" type="text" class="form-control form-control-sm" required>
-                </div> -->
-
                 <!-- Row 2: Civil Status & Age -->
                 <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">Age</label>
@@ -869,11 +833,6 @@ $result = $st->get_result();
                   <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
                   <input name="residency_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
                 </div>
-
-                <!-- <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Full Name</label>
-                  <input name="full_name" type="text" class="form-control form-control-sm" required>
-                </div> -->
 
                 <!-- Row 2: Civil Status & Age -->
                 <div class="col-12 col-md-3">
@@ -947,11 +906,6 @@ $result = $st->get_result();
                   <input name="solo_parent_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
                 </div>
 
-                <!-- <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Full Name</label>
-                  <input name="full_name" type="text" class="form-control form-control-sm" required>
-                </div> -->
-
                 <!-- Row 2: Civil Status & Age -->
                 <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">Age</label>
@@ -1009,11 +963,6 @@ $result = $st->get_result();
                   <input name="solo_parent_child_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
                 </div>
 
-                <!-- <div class="col-12 col-md-5">
-                  <label class="form-label fw-bold">Child’s Full Name</label>
-                  <input name="child_name" type="text" class="form-control form-control-sm" required>
-                </div> -->
-
                 <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">Child’s Sex</label>
                   <select name="solo_parent_child_sex" class="form-select form-select-sm" required>
@@ -1023,20 +972,10 @@ $result = $st->get_result();
                   </select>
                 </div>
 
-                <!-- <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Child’s Sex</label>
-                  <input name="child_sex" type="text" class="form-control form-control-sm" required>
-                </div> -->
-
                 <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">Child’s Age</label>
                   <input name="solo_parent_child_age" type="number" min="0" class="form-control form-control-sm" required>
                 </div>
-
-                <!-- <div class="col-12 col-md-4">
-                  <label class="form-label fw-bold">Child’s Age</label>
-                  <input name="child_age" type="text" class="form-control form-control-sm" required>
-                </div> -->
 
                 <!-- Row 5: Purpose -->
                 <div class="col-12">
@@ -1065,7 +1004,6 @@ $result = $st->get_result();
                 <!-- inside your form, right after the hidden transaction_id -->
                 <input type="hidden" name="payment_method" id="recordPaymentMethodHidden">
 
-
                 <div class="mb-3">
                   <label for="paymentMethodRecord" class="form-label">Payment Method</label>
                   <input type="text" class="form-control" id="paymentMethodRecord" disabled>
@@ -1082,13 +1020,13 @@ $result = $st->get_result();
                 </div>
 
                 <div class="mb-3">
-                  <label for="issuedDateRecord" class="form-label">Issued Date</label>
-                  <input type="date" class="form-control" id="issuedDateRecord" name="issued_date" required>
+                  <label for="amountPaidRecord" class="form-label">Amount Paid</label>
+                  <input type="number" step="0.01" class="form-control" id="amountPaidRecord" name="amount_paid" placeholder="Enter Amount Paid" required>
                 </div>
 
                 <div class="mb-3">
-                  <label for="amountPaidRecord" class="form-label">Amount Paid</label>
-                  <input type="number" step="0.01" class="form-control" id="amountPaidRecord" name="amount_paid" placeholder="Enter Amount Paid" required>
+                  <label for="issuedDateRecord" class="form-label">Issued Date</label>
+                  <input type="date" class="form-control" id="issuedDateRecord" name="issued_date" required>
                 </div>
               </div>
               <div class="modal-footer">
@@ -1099,28 +1037,58 @@ $result = $st->get_result();
           </div>
         </div>
       </div>
+      
+      <!-- Reject Reason Modal -->
+      <div class="modal fade" id="rejectReasonModal" tabindex="-1" aria-labelledby="rejectReasonModalLabel" aria-hidden="true"data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <form id="rejectReasonForm" method="POST" action="functions/process_reject_request.php">
+              <div class="modal-header">
+                <h5 class="modal-title" id="rejectReasonModalLabel">Reject Request</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <input type="hidden" name="transaction_id" id="rejectTransactionId">
+
+                <div class="mb-3">
+                  <label for="rejectionReason" class="form-label">Reason for Rejection</label>
+                  <textarea class="form-control" name="rejection_reason" id="rejectionReason" rows="3" required></textarea>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                  Cancel
+                </button>
+                <button type="submit" class="btn btn-danger">
+                  Reject Request
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
 
       <form method="get" id="searchForm" class="d-flex ms-auto me-2">
-      <!-- preserve pagination & filters -->
-      <input type="hidden" name="page" value="adminRequest">
+        <!-- preserve pagination & filters -->
+        <input type="hidden" name="page" value="adminRequest">
 
-      <!-- preserve tab + reset to page 1 -->
-      <input type="hidden" name="request_source" value="<?= htmlspecialchars($processing_type) ?>">
-      <input type="hidden" name="request_page" value="1">
+        <!-- preserve tab + reset to page 1 -->
+        <input type="hidden" name="request_source" value="<?= htmlspecialchars($processing_type) ?>">
+        <input type="hidden" name="request_page" value="1">
 
-      <?php foreach (['request_type','date_from','date_to','payment_method','payment_status','document_status','processing_type'] as $f): 
-          if (!empty($_GET[$f])): ?>
-          <input type="hidden" name="<?= $f?>" value="<?= htmlspecialchars($_GET[$f]) ?>">
-      <?php endif; endforeach; ?>
+        <?php foreach (['request_type','date_from','date_to','payment_method','payment_status','document_status','processing_type'] as $f): 
+            if (!empty($_GET[$f])): ?>
+            <input type="hidden" name="<?= $f?>" value="<?= htmlspecialchars($_GET[$f]) ?>">
+        <?php endif; endforeach; ?>
 
-      <div class="input-group input-group-sm">
-          <input name="search" id="searchInput" type="text" class="form-control" placeholder="Search…" value="<?= htmlspecialchars($search) ?>">
-          <button type="button" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" id="searchBtn">
-          <span class="material-symbols-outlined" id="searchIcon">
-              <?= !empty($search) ? 'close' : 'search' ?>
-          </span>
-          </button>
-      </div>
+        <div class="input-group input-group-sm">
+            <input name="search" id="searchInput" type="text" class="form-control" placeholder="Search…" value="<?= htmlspecialchars($search) ?>">
+            <button type="button" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" id="searchBtn">
+            <span class="material-symbols-outlined" id="searchIcon">
+                <?= !empty($search) ? 'close' : 'search' ?>
+            </span>
+            </button>
+        </div>
       </form>
     </div>
 
@@ -1134,10 +1102,10 @@ $result = $st->get_result();
             <th class="text-nowrap">Payment Status</th>
             <th class="text-nowrap">Document Status</th>
             <th class="text-nowrap">Date Created</th>
-            <!-- <th class="text-nowrap text-center">Action</th> -->
-             <?php if (!empty($perms) || $currentRole === 'Brgy Treasurer'): ?>
+            <th class="text-nowrap text-center">Action</th>
+             <!-- <php if (!empty($perms) || $currentRole === 'Brgy Treasurer'): ?>
               <th class="text-nowrap text-center">Action</th>
-            <?php endif; ?>
+            <php endif; ?> -->
           </tr>
         </thead>
         <tbody>
@@ -1166,8 +1134,8 @@ $result = $st->get_result();
                   <?php 
                     $ds = $row['document_status'] ?? '';
                     switch ($ds) {
-                      case 'For Verification': $c = 'bg-warning'; break;
-                      case 'Processing': $c = 'bg-info'; break;
+                      case 'For Verification': $c = 'bg-info'; break;
+                      case 'Processing': $c = 'bg-warning'; break;
                       case 'Ready To Release': $c = 'bg-primary'; break;
                       case 'Released': $c = 'bg-success'; break;
                       case 'Rejected': $c = 'bg-danger'; break;
@@ -1182,49 +1150,49 @@ $result = $st->get_result();
                 <?php if (!empty($perms) || $currentRole === 'Brgy Treasurer'): ?>
                   <td class="text-center">
                     <?php
-                      $canProceed = in_array('proceed', $perms, true) && $row['document_status'] === 'Ready to Release';
-                      $canPrint = in_array('print', $perms, true) && $row['payment_status'] === 'Paid';
+                      $isPaid = ($row['payment_status'] === 'Paid');
+                      $isReady = ($row['document_status'] === 'Ready to Release');
+                      $isRejected = ($row['document_status'] === 'Rejected');
+                      $canPrint = in_array('print', $perms, true) && $isPaid;
+                      $canProceed = in_array('proceed', $perms, true) && $isPaid && $isReady;
                       $canEdit = in_array('edit', $perms, true);
-                      $canDelete = in_array('delete', $perms, true);
+                      $canReject = in_array('reject', $perms, true) && !$isPaid && ! $isReady && !$isRejected; 
                     ?>
+                    <?php if (in_array($currentRole, ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper'], true)): ?>
+                    <!-- Print -->
+                    <button type="button" class="btn btn-sm btn-warning request-btn-print" title="Print <?= $tid ?>"
+                      <?= $canPrint ? '' : 'disabled' ?>>
+                      <span class="material-symbols-outlined" style="font-size:13px">print</span>
+                    </button>
 
-                    <?php if ($canProceed): ?>
-                      <button type="button" class="btn btn-sm btn-success request-btn-release" title="Release <?= $tid ?>">
-                        <span class="material-symbols-outlined" style="font-size: 13px;">
-                          check
-                        </span>
-                      </button>
-                    <?php endif; ?>
+                    <!-- Edit -->
+                    <button type="button" class="btn btn-sm btn-primary request-btn-edit" title="Edit <?= $tid ?>"
+                      <?= $canEdit ? '' : 'disabled' ?>>
+                      <span class="material-symbols-outlined" style="font-size:13px">stylus</span>
+                    </button>
 
-                    <?php if ($canPrint): ?>
-                      <button type="button" class="btn btn-sm btn-warning request-btn-print" title="Print <?= $tid ?>">
-                        <span class="material-symbols-outlined" style="font-size: 13px;">
-                          print
-                        </span>
-                      </button>
-                    <?php endif; ?>
+                    <!-- Proceed -->
+                    <button type="button" class="btn btn-sm btn-success request-btn-release" title="Release <?= $tid ?>"
+                      <?= $canProceed ? '' : 'disabled' ?>>
+                      <span class="material-symbols-outlined" style="font-size:13px">check</span>
+                    </button>
 
-                    <?php if ($canEdit): ?>
-                      <button type="button" class="btn btn-sm btn-primary request-btn-edit" title="Edit <?= $tid ?>">
-                        <span class="material-symbols-outlined" style="font-size: 13px;">
-                          stylus
-                        </span>
-                      </button>
-                    <?php endif; ?>
+                    <!-- Reject -->
+                    <button type="button" class="btn btn-sm btn-danger request-btn-reject" title="Reject <?= $tid ?>"
+                      <?= $canReject ? '' : 'disabled' ?>>
+                      <span class="material-symbols-outlined" style="font-size:13px">close</span>
+                    </button>
 
-                    <?php if ($canDelete): ?>
-                      <button type="button" class="btn btn-sm btn-danger request-delete-btn" title="Delete <?= $tid ?>">
+                    <!-- <php if ($canDelete): ?> -->
+                      <!-- <button type="button" class="btn btn-sm btn-danger request-delete-btn" title="Delete <= $tid ?>">
                         <span class="material-symbols-outlined" style="font-size: 13px;">
                           delete
                         </span>
-                      </button>
-                    <?php endif; ?>
+                      </button> -->
+                    <!-- <php endif; ?> -->
 
-                    <?php if ($currentRole === 'Brgy Treasurer'): ?>
-                      <button type="button" class="btn btn-sm btn-info request-record-btn"
-                              data-id="<?= htmlspecialchars($row['transaction_id']) ?>"
-                              data-payment-method="<?= htmlspecialchars($row['payment_method']) ?>"
-                              data-amount-paid="<?= htmlspecialchars($row['amount'] ?? '') ?>">
+                    <?php elseif ($currentRole === 'Brgy Treasurer'): ?>
+                      <button type="button" class="btn btn-sm btn-info request-record-btn" data-id="<?= htmlspecialchars($row['transaction_id']) ?>" data-payment-method="<?= htmlspecialchars($row['payment_method']) ?>" data-amount-paid="<?= htmlspecialchars($row['amount'] ?? '') ?>">
                         <span class="material-symbols-outlined" style="font-size: 13px;">
                           receipt
                         </span>
@@ -1346,37 +1314,39 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   const recordModal = new bootstrap.Modal('#recordModal');
-  const tidInput   = document.getElementById('recordTransactionId');
-  const pmInput    = document.getElementById('paymentMethodRecord');
-  const pmHidden   = document.getElementById('recordPaymentMethodHidden');
-  const refRow     = document.getElementById('refRow');
-  const refInput   = document.getElementById('referenceNumberRecord');
-  const orInput    = document.getElementById('orNumberRecord');
+  const tidInput = document.getElementById('recordTransactionId');
+  const pmInput = document.getElementById('paymentMethodRecord');
+  const pmHidden = document.getElementById('recordPaymentMethodHidden');
+  const refRow = document.getElementById('refRow');
+  const refInput = document.getElementById('referenceNumberRecord');
+  const orInput = document.getElementById('orNumberRecord');
   const issuedInput= document.getElementById('issuedDateRecord');
-  const amtInput   = document.getElementById('amountPaidRecord');
+  const amtInput = document.getElementById('amountPaidRecord');
 
   document.querySelectorAll('.request-record-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const tid = btn.dataset.id;
-      const pm  = btn.dataset.paymentMethod || '';
+      const pm = btn.dataset.paymentMethod || '';
       const ref = btn.dataset.referenceNumber || '';
-      const or  = btn.dataset.orNumber || '';
+      const or = btn.dataset.orNumber || '';
+      const amt = btn.dataset.amountPaid || '';
+
       // always start fresh
-      tidInput.value    = tid;
-      pmInput.value     = pm;
-      pmHidden.value    = pm;          // ensure it submits
-      refInput.value    = ref;
-      orInput.value     = or;
+      tidInput.value = tid;
+      pmInput.value = pm;
+      pmHidden.value = pm; // ensure it submits
+      refInput.value = ref;
+      orInput.value = or;
       issuedInput.value = '';
-      amtInput.value    = '';          // clear old amount
+      amtInput.value = amt; // clear old amount
 
       // toggle GCash reference field
       if (pm === 'GCash') {
         refRow.style.display = 'block';
-        refInput.required    = true;
+        refInput.required = true;
       } else {
         refRow.style.display = 'none';
-        refInput.required    = false;
+        refInput.required = false;
       }
 
       recordModal.show();
@@ -1420,5 +1390,14 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   });
+
+  document.querySelectorAll('.request-btn-reject').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tid = btn.closest('tr').dataset.id;
+      document.getElementById('rejectTransactionId').value = tid;
+      new bootstrap.Modal(document.getElementById('rejectReasonModal')).show();
+    });
+  });
+
 });
 </script>

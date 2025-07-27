@@ -19,19 +19,46 @@ if ($res0) {
 <title>eBarangay Mo | Account Verifications</title>
 
 <div class="container-fluid p-3">
-  <div class="d-flex justify-content-end mb-2">
-    <div class="dropdown">
-      <button class="btn btn-secondary dropdown-toggle" type="button" id="viewDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-        Current Pending Accounts
-      </button>
-      <ul class="dropdown-menu" aria-labelledby="viewDropdown">
-        <li><button class="dropdown-item" data-view="pending">Current Pending Accounts</button></li>
-        <li><button class="dropdown-item" data-view="declined">Declined Accounts</button></li>
-      </ul>
+  <?php if ($id = ($_GET['approved_account_id'] ?? false)): ?>
+    <div class="alert alert-success alert-dismissible fade show d-flex align-items-center" role="alert">
+      <div>Account record: <strong><?= htmlspecialchars($id) ?></strong> successfully added!</div>
+      <div class="ms-3 d-flex align-items-center">
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
     </div>
-  </div>
+  <?php endif; ?>
+
+  <?php if ($id = ($_GET['declined_account_id'] ?? false)): ?>
+    <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center" role="alert">
+      <div>Account record: <strong><?= htmlspecialchars($id) ?></strong> declined!</div>
+      <div class="ms-3 d-flex align-items-center">
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    </div>
+  <?php endif; ?>
+
+  <?php if ($id = ($_GET['deleted_account_id'] ?? false)): ?>
+    <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center" role="alert">
+      <div>Account record: <strong><?= htmlspecialchars($id) ?></strong> permanently deleted!</div>
+      <div class="ms-3 d-flex align-items-center">
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    </div>
+  <?php endif; ?>
+  
   <div class="card shadow-sm p-3">
     <div class="card-body p-0">
+      <div class="d-flex justify-content-end mb-2">
+        <div class="dropdown">
+          <button class="btn btn-secondary dropdown-toggle" type="button" id="viewDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            Current Pending Accounts
+          </button>
+          <ul class="dropdown-menu" aria-labelledby="viewDropdown">
+            <li><button class="dropdown-item" data-view="pending">Current Pending Accounts</button></li>
+            <li><button class="dropdown-item" data-view="declined">Declined Accounts</button></li>
+          </ul>
+        </div>
+      </div>
       <div class="table-responsive admin-table" style="height:500px;overflow-y:auto;">
         <table class="table mb-0 align-middle text-start" id="requestsTable">
           <thead class="table-light">

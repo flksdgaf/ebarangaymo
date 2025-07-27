@@ -8,12 +8,12 @@ $logoUrl = 'images/' . $info['logo'];
 
 <nav id="sidebar" class="sidebar">
     <div class="text-center mb-4 mt-3">
-        <div class="d-flex justify-content-center align-items-center gap-2">
+        <div class="d-flex justify-content-center align-items-center gap-2 mb-3">
             <img src="images/good_governance_logo.png" alt="Good Governance Logo" style="width: 50px;">
             <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Barangay Magang Logo" style="width: 50px;">
         </div>
-        <h1 class="mt-3 mb-1">eBarangay Mo</h1>
-        <h2 class="text-uppercase">Barangay Services Portal of <?= htmlspecialchars($info['name']) ?>, <?= htmlspecialchars($info['address']) ?></h2>
+        <h1 class="mt-1 mb-1"><?= htmlspecialchars($info['name']) ?></h1>
+        <h2 class="text-uppercase"><?= htmlspecialchars($info['address']) ?></h2>
         <hr class="custom-hr">
 
         <button class="btn btn-sm" id="close-btn">

@@ -60,17 +60,23 @@ $result = $st->get_result();
     transform: translateY(-75%);
 }
 
+.gradient-text {
+    background: linear-gradient(to bottom, #2A9245, #0D2C15);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
 </style>
 
 <title>eBarangay Mo | Dashboard</title>
 <!-- CAROUSEL SECTION -->
-<div class="row g-3 py-5 px-5">
+<div class="row g-3 py-4 px-3">
     <div class="col-md-12">
 
+        
         <div class="card p-4 shadow-sm mb-3">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="fw-bold mb-0">Announcements</h5>
-            </div>
+            <h3 class="gradient-text fw-bold mb-1">ANNOUNCEMENTS</h3>
+            <div class="d-flex justify-content-between align-items-center mb-3"></div>
 
             <div class="carousel-wrapper">
                 <div class="carousel-blur-bg"></div> 
@@ -116,7 +122,7 @@ $result = $st->get_result();
 
         <div class="card shadow-sm p-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="fw-bold mb-0">My Recent Requests</h5>
+                <h4 class="gradient-text fw-bold mb-0">MY RECENT REQUESTS</h4>
             </div>
             <div class="table-responsive" style="height:180px; overflow-y:auto;">
             <table class="table align-middle text-start table-hover">

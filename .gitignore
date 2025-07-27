@@ -9,3 +9,5 @@ vendor/
 Thumbs.db
 .idea/
 *.swp
+
+payment_test.php

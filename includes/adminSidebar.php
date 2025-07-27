@@ -5,6 +5,40 @@ include 'functions/dbconn.php';
 $info = $conn->query("SELECT logo, name, address FROM barangay_info WHERE id=1")->fetch_assoc();
 $logoUrl = 'images/' . $info['logo'];
 
+// 1. how many ONLINE requests awaiting verification?
+  $newDocReqs = (int)$conn->query(
+    "SELECT COUNT(*) FROM view_request 
+     WHERE request_source = 'Online' 
+       AND document_status = 'For Verification'"
+  )->fetch_row()[0];
+
+  // 2. how many account‐verification requests pending?
+  //    (assumes you have a table like `account_requests` or `user_accounts`
+  //     with status='Pending' for new sign‑ups)
+  $newAcctReqs = (int)$conn->query(
+    "SELECT COUNT(*) FROM pending_accounts
+     WHERE time_creation > NOW() - INTERVAL 1 DAY"
+  )->fetch_row()[0];
+  // 3. how many newly VERIFIED residents? (to show in Residents tab)
+  //    if you want to alert “hey, new profiles have just gone live”,
+  //    you might track `verified_at` vs. last time admin looked,
+  //    but for simplicity here we’ll count those verified in the last 24h:
+  $newResidents = (int)$conn->query(
+    "SELECT COUNT(*) FROM user_accounts
+     WHERE role = 'Approved'"
+  )->fetch_row()[0];
+
+  // map sidebar‐item IDs → badge counts
+  $badges = [
+    'adminRequest' => $newDocReqs,
+    'adminVerifications' => $newAcctReqs,
+    'adminResidents' => $newResidents,
+    // leave the others at zero until you add them:
+    'adminEquipmentBorrowing' => 0,
+    'adminDeviceStatus' => 0,
+    // etc.
+  ];
+
 $menuItems = [
   [
     'id' => 'adminDashboard',
@@ -90,7 +124,7 @@ $currentRole = $_SESSION['loggedInUserRole'] ?? '';
 
 <nav id="sidebar" class="sidebar">
     <div class="text-center mb-4 mt-3">
-        <div class="d-flex justify-content-center align-items-center gap-2">
+        <div class="d-flex justify-content-center align-items-center gap-2 mb-3">
             <img src="images/good_governance_logo.png" alt="Good Governance Logo" style="width: 50px;">
             <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Barangay Magang Logo" style="width: 50px;">
         </div>
@@ -108,16 +142,35 @@ $currentRole = $_SESSION['loggedInUserRole'] ?? '';
     ?>
 
     <ul class="nav flex-column gap-1">
-        <?php foreach ($menuItems as $item): ?>
-            <?php if (in_array($currentRole, $item['roles'], true)): ?>
-                <li>
-                <a href="adminPanel.php?page=<?= urlencode($item['id']) ?>" class="nav-link d-flex align-items-center <?= ($currentPage === $item['id']) ? 'active' : '' ?>">
-                    <span class="material-symbols-outlined me-2"><?= htmlspecialchars($item['icon']) ?></span>
-                    <?= htmlspecialchars($item['label']) ?>
-                </a>
-                </li>
-            <?php endif; ?>
-        <?php endforeach; ?>
+      <?php foreach ($menuItems as $item): ?>
+        <?php if (in_array($currentRole, $item['roles'], true)): ?>
+            <li>
+            <a href="adminPanel.php?page=<?= urlencode($item['id']) ?>" class="nav-link d-flex align-items-center <?= ($currentPage === $item['id']) ? 'active' : '' ?>">
+                <span class="material-symbols-outlined me-2"><?= htmlspecialchars($item['icon']) ?></span>
+                <?= htmlspecialchars($item['label']) ?>
+            </a>
+            </li>
+        <?php endif; ?>
+      <?php endforeach; ?>
+
+      <!-- <php foreach ($menuItems as $item): ?>
+        <php if (in_array($currentRole, $item['roles'], true)): ?>
+          <php 
+            $isActive = $currentPage === $item['id'] ? 'active' : '';
+            // lookup badge count (default 0)
+            $count = $badges[$item['id']] ?? 0;
+          ?>
+          <li>
+            <a href="adminPanel.php?page=<= urlencode($item['id']) ?>" class="nav-link d-flex align-items-center <= $isActive ?>">
+              <span class="material-symbols-outlined me-2"><= htmlspecialchars($item['icon']) ?></span>
+              <= htmlspecialchars($item['label']) ?>
+              <php if ($count > 0): ?>
+                <span class="badge bg-danger rounded-pill"><= $count ?></span>
+              <php endif; ?>
+            </a>
+          </li>
+        <php endif; ?>
+      <php endforeach; ?> -->
     </ul>
 </nav>
 

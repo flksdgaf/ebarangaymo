@@ -1,0 +1,11 @@
+# Environment files (keep your secrets local)
+.env
+
+# Composer dependencies (optional to ignore or not)
+vendor/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.idea/
+*.swp

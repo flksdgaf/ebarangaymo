@@ -291,7 +291,7 @@ if ($queryString) {
                   <option value="">All</option>
                   <option <?= $document_status ==='For Verification'?'selected':'' ?> value="For Verification">For Verification</option>
                   <option <?= $document_status ==='Processing'?'selected':'' ?> value="Processing">Processing</option>
-                  <option <?= $document_status ==='Ready To Release'?'selected':'' ?> value="Ready To Release">Ready To Release</option>
+                  <option <?= $document_status ==='Ready to Release'?'selected':'' ?> value="Ready to Release">Ready to Release</option>
                   <option <?= $document_status ==='Released'?'selected':'' ?> value="Released">Released</option>
                   <option <?= $document_status ==='Rejected'?'selected':'' ?> value="Rejected">Rejected</option>
                 </select>
@@ -358,7 +358,7 @@ if ($queryString) {
                 switch ($ds) {
                   case 'For Verification': $docClass = 'for-verification-status'; break;
                   case 'Processing': $docClass = 'processing-status'; break;
-                  case 'Ready To Release': $docClass = 'ready-to-release-status'; break;
+                  case 'Ready to Release': $docClass = 'ready-to-release-status'; break;
                   case 'Released': $docClass = 'released-status'; break;
                   case 'Rejected': $docClass = 'rejected-status'; break;
                   default: $docClass = ''; break;

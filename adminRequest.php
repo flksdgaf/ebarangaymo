@@ -15,7 +15,7 @@ $walkInCount = (int) $conn->query(
 
 // New Online requests are considered ones that are in "For Verification"
 $onlineCount = (int) $conn->query(
-  "SELECT COUNT(*) FROM view_request WHERE request_source = 'Online' AND document_status = 'For Verification'"
+  "SELECT COUNT(*) FROM view_request WHERE request_source = 'Online' AND document_status = 'Processing'"
 )->fetch_row()[0];
 
 // what each role is allowed to do on the request page
@@ -27,6 +27,11 @@ $rolePermissions = [
   'Brgy Kagawad' => [], // view‑only
 ];
 $perms = $rolePermissions[$currentRole] ?? [];
+
+// $fullAccessRoles = ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper'];
+// $viewOnlyRoles  = ['Brgy Kagawad'];
+// $treasurerRoles = ['Brgy Treasurer'];
+// $allRoles = array_merge($fullAccessRoles, $viewOnlyRoles, $treasurerRoles);
 
 // FILTER SETUP
 $request_type = $_GET['request_type'] ?? '';
@@ -46,6 +51,9 @@ if (! in_array($processing_type, $validSources, true)) {
 $whereClauses = [];
 $bindTypes = '';
 $bindParams = [];
+
+// by default hide finished requests
+$whereClauses[] = "r.document_status NOT IN ('Released','Rejected')";
 
 // GLOBAL SEARCH
 $search = trim($_GET['search'] ?? '');
@@ -188,6 +196,13 @@ $result = $st->get_result();
     </div>
   <php endif; ?> -->
 
+  <?php if (! empty($_GET['rejected_id'])): ?>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="rejectSuccessAlert">
+      Request <strong><?= htmlspecialchars($_GET['rejected_id']) ?></strong> has been <strong>rejected</strong>.
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <?php endif; ?>
+
   <?php if ($id = ($_GET['payment_transaction_id'] ?? false)): ?>
     <div class="alert alert-success alert-dismissible fade show" role="alert">
        Payment for <strong><?= htmlspecialchars($id) ?></strong> recorded successfully!
@@ -195,11 +210,13 @@ $result = $st->get_result();
     </div>
   <?php endif; ?>
 
+  <div id="pageAlerts"></div>
+
   <ul class="nav nav-tabs mb-3">
     <li class="nav-item">
       <a href="?<?= http_build_query(array_merge($_GET, ['request_source'=>'Walk-In','request_page'=>1])) ?>"
         class="nav-link <?= $processing_type==='Walk-In' ? 'active' : '' ?>">
-        Walk‑In <span class="badge bg-secondary"><?= $walkInCount ?></span>
+        Walk‑In <!-- <span class="badge bg-secondary"><= $walkInCount ?></span> -->
       </a>
     </li>
     <li class="nav-item">
@@ -302,12 +319,14 @@ $result = $st->get_result();
 
       <!-- Add New Request button -->
       <div class="dropdown ms-3">
+        <!-- <php if (in_array($currentRole, ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper'])): ?> -->
         <?php if (in_array('add', $perms, true)): ?>
           <button class="btn btn-sm btn-success dropdown-toggle" type="button" id="addRequestDropdown" data-bs-toggle="dropdown" aria-expanded="false">
             <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">add</span>
             Add New Request
           </button>
         <?php endif; ?>
+        <!-- <php endif; ?> -->
 
         <ul class="dropdown-menu" aria-labelledby="addRequestDropdown">
           <?php foreach (['Barangay ID','Business Permit','Good Moral','Guardianship','Indigency','Residency','Solo Parent'] as $type): ?> <!-- 'Equipment Borrowing' -->
@@ -454,8 +473,8 @@ $result = $st->get_result();
                   <input name="barangay_id_emergency_contact_person" type="text" class="form-control form-control-sm" required>
                 </div>     
                 <div class="col-12 col-md-4">
-                  <label class="form-label fw-bold">Emergency Contact Number</label>
-                  <input name="barangay_id_emergency_contact_number" type="tel" class="form-control form-control-sm" required>
+                  <label class="form-label fw-bold">Emergency Contact Address</label>
+                  <input name="barangay_id_emergency_contact_address" type="text" class="form-control form-control-sm" required>
                 </div>    
 
                 <!-- Formal Picture -->
@@ -989,6 +1008,37 @@ $result = $st->get_result();
         </div>
       </div>
 
+      <!-- Edit Request Modal -->
+      <div class="modal fade" id="editRequestModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="editRequestModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width:90vw;">
+          <div class="modal-content">
+            
+            <!-- Header -->
+            <div class="modal-header text-white" style="background-color: #13411F;">
+              <h5 class="modal-title" id="editRequestModalLabel">Edit Request</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <!-- Form -->
+            <form id="editRequestForm" method="POST" action="functions/process_edit_request.php" enctype="multipart/form-data">
+              
+              <div class="modal-body">
+                <!-- carry over identifying info -->
+                <input type="hidden" name="transaction_id" id="editTransactionId" value="">
+                <input type="hidden" name="request_type" id="editRequestType" value="">
+                <!-- your JS will inject the fields here -->
+                <div class="row g-3" id="editDynamicFields"></div>
+              </div>
+              
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-success">Save Changes</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
       <!-- Record Payment Modal -->
       <div class="modal fade" id="recordModal" tabindex="-1" aria-labelledby="recordModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-dialog-centered">
@@ -1037,26 +1087,62 @@ $result = $st->get_result();
           </div>
         </div>
       </div>
-      
+
+      <!-- Confirm Release Modal -->
+      <div class="modal fade" id="confirmReleaseModal" tabindex="-1" aria-labelledby="confirmReleaseLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+              <h5 class="modal-title" id="confirmReleaseLabel">Confirm Release</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <p id="confirmReleaseMessage">Are you sure you want to mark this record as Released?</p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" id="confirmReleaseBtn" class="btn btn-success">Release</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Reject Reason Modal -->
-      <div class="modal fade" id="rejectReasonModal" tabindex="-1" aria-labelledby="rejectReasonModalLabel" aria-hidden="true"data-bs-backdrop="static" data-bs-keyboard="false">
+      <div class="modal fade" id="rejectReasonModal" tabindex="-1" aria-labelledby="rejectReasonModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
             <form id="rejectReasonForm" method="POST" action="functions/process_reject_request.php">
-              <div class="modal-header">
-                <h5 class="modal-title" id="rejectReasonModalLabel">Reject Request</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+
+              <!-- Header -->
+              <div class="modal-header bg-danger text-white">
+                <span class="material-symbols-outlined me-2">warning</span>
+                <h5 class="modal-title flex-grow-1" id="rejectReasonModalLabel">
+                  Reject Request
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
+
+              <!-- Body -->
               <div class="modal-body">
                 <input type="hidden" name="transaction_id" id="rejectTransactionId">
 
+                <!-- Personalized Description -->
+                <p id="rejectDescription" class="mb-3 text-muted fst-italic">
+                  <!-- JS will set: e.g. “Please state the reason below for declining Juano Dela Cruz’s request (ID 100000107).” -->
+                </p>
+
+                <!-- Reason Field -->
                 <div class="mb-3">
-                  <label for="rejectionReason" class="form-label">Reason for Rejection</label>
-                  <textarea class="form-control" name="rejection_reason" id="rejectionReason" rows="3" required></textarea>
+                  <label for="rejectionReason" class="form-label fw-bold">
+                    Reason for Rejection
+                  </label>
+                  <textarea class="form-control" name="rejection_reason" id="rejectionReason" rows="4" required placeholder="Enter reason here…"></textarea>
                 </div>
               </div>
+
+              <!-- Footer -->
               <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
                   Cancel
                 </button>
                 <button type="submit" class="btn btn-danger">
@@ -1102,10 +1188,9 @@ $result = $st->get_result();
             <th class="text-nowrap">Payment Status</th>
             <th class="text-nowrap">Document Status</th>
             <th class="text-nowrap">Date Created</th>
-            <th class="text-nowrap text-center">Action</th>
-             <!-- <php if (!empty($perms) || $currentRole === 'Brgy Treasurer'): ?>
+            <?php if ($currentRole !== 'Brgy Kagawad'): ?>
               <th class="text-nowrap text-center">Action</th>
-            <php endif; ?> -->
+            <?php endif; ?>
           </tr>
         </thead>
         <tbody>
@@ -1353,51 +1438,137 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  const confirmModalEl = document.getElementById('confirmReleaseModal');
+  const confirmModal = new bootstrap.Modal(confirmModalEl);
+  const confirmBtn = document.getElementById('confirmReleaseBtn');
+  let pendingTid, pendingType, pendingRow;
+
   document.querySelectorAll('.request-btn-release').forEach(btn => {
     btn.addEventListener('click', () => {
-      const row = btn.closest('tr');
-      const tid = row.dataset.id;
-      const requestType = row.querySelector('td:nth-child(3)').textContent.trim();
+      // stash context
+      pendingRow = btn.closest('tr');
+      pendingTid = pendingRow.dataset.id;
+      pendingType = pendingRow.querySelector('td:nth-child(3)').textContent.trim();
 
-      if (!tid || !requestType) {
-        alert('Missing transaction ID or request type.');
-        return;
+      if (!pendingTid || !pendingType) {
+        // fallback, though this should never happen
+        return alert('Missing data');
       }
 
-      if (!confirm('Are you sure you want to mark this record as released?')) {
-        return;
-      }
-
-      fetch('functions/update_document_status.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `transaction_id=${encodeURIComponent(tid)}&request_type=${encodeURIComponent(requestType)}`
-      })
-      .then(res => res.text())
-      .then(response => {
-        if (response === 'success') {
-          alert('This record has been marked as Released.');
-          // Optionally update the status in the DOM
-          row.querySelector('td:nth-child(5)').textContent = 'Released';
-          btn.disabled = true;
-        } else {
-          alert('Failed to update status: ' + response);
-        }
-      })
-      .catch(err => {
-        console.error(err);
-        alert('An error occurred while updating status.');
-      });
+      // update modal text if you want to personalize:
+      document.getElementById('confirmReleaseMessage').textContent = `Are you sure you want to mark ${pendingTid} as Released?`;
+      confirmModal.show();
     });
   });
+
+  // Grab our new alerts container
+  const alertsDiv = document.getElementById('pageAlerts');
+
+  // When the user clicks “Yes, Release” in the modal:
+  confirmBtn.addEventListener('click', () => {
+    confirmBtn.disabled = true;
+
+    fetch('functions/update_document_status.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `transaction_id=${encodeURIComponent(pendingTid)}&request_type=${encodeURIComponent(pendingType)}`
+    })
+    .then(res => res.text())
+    .then(response => {
+      confirmBtn.disabled = false;
+      confirmModal.hide();
+
+      if (response === 'success') {
+        // update the badge inline
+        const badge = pendingRow.querySelector('td:nth-child(5) .badge');
+        badge?.classList.replace(badge.classList.item(1), 'bg-success');
+        badge.textContent = 'Released';
+
+        // disable the button
+        pendingRow.querySelector('.request-btn-release').disabled = true;
+
+        // show the alert
+        const html = `
+          <div class="alert alert-success alert-dismissible fade show" role="alert">
+            Record <strong>${pendingTid}</strong> has been marked as <strong>Released</strong>.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        `;
+        alertsDiv.insertAdjacentHTML('beforeend', html);
+
+        // **remove this row from the table**
+        pendingRow.remove();
+
+      } else {
+        alert('Failed to update status: ' + response);
+      }
+    })
+    .catch(err => {
+      confirmBtn.disabled = false;
+      confirmModal.hide();
+      console.error(err);
+      alert('An error occurred while updating status.');
+    });
+  });
+
+  const rejectModalEl = document.getElementById('rejectReasonModal');
+  const rejectModal = new bootstrap.Modal(rejectModalEl);
 
   document.querySelectorAll('.request-btn-reject').forEach(btn => {
     btn.addEventListener('click', () => {
-      const tid = btn.closest('tr').dataset.id;
+      const row = btn.closest('tr');
+      const tid = row.dataset.id;
+      const name = row.querySelector('td:nth-child(2)').textContent.trim();
+
       document.getElementById('rejectTransactionId').value = tid;
-      new bootstrap.Modal(document.getElementById('rejectReasonModal')).show();
+      document.getElementById('rejectDescription').textContent = `Action cannot be undone. Please state the reason below for declining ${name}’s request (${tid}).`;
+
+      rejectModal.show();
     });
   });
 
+  const editModalEl = document.getElementById('editRequestModal');
+  const editModal = new bootstrap.Modal(editModalEl);
+  const editFieldsCont = document.getElementById('editDynamicFields');
+  const editTidInput = document.getElementById('editTransactionId');
+  const editTypeInput = document.getElementById('editRequestType');
+  const editTitle = document.getElementById('editRequestModalLabel');
+  
+  document.querySelectorAll('.request-btn-edit').forEach(btn => {
+    btn.addEventListener('click', () => {
+      // 1) pull transaction ID + request type from the row
+      const row = btn.closest('tr');
+      const tid = row.dataset.id;
+      const type = row.querySelector('td:nth-child(3)').textContent.trim();
+      
+      // 2) set hidden inputs
+      editTidInput.value  = tid;
+      editTypeInput.value = type;
+      
+      // 3) update modal title
+      editTitle.textContent = `Edit ${type}`;
+      
+      // 4) inject the template for this type
+      editFieldsCont.innerHTML = '';
+      const tpl = document.getElementById('tpl-' + type);
+      if (tpl) {
+        editFieldsCont.appendChild(tpl.content.cloneNode(true));
+      } else {
+        editFieldsCont.innerHTML = '<div class="col-12 text-muted">No editable fields for this request type.</div>';
+      }
+      
+      // 5) (optional) prefill any fields you already have in the table
+      //    e.g. full name, date, etc:
+      const inputs = editFieldsCont.querySelectorAll('input, select, textarea');
+      inputs.forEach(input => {
+        const name = input.name;
+        // a crude example: if your <td>s have data-* attributes you could do:
+        // input.value = row.dataset[name] || '';
+      });
+      
+      // 6) show the modal
+      editModal.show();
+    });
+  });
 });
 </script>

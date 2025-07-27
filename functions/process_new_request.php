@@ -45,7 +45,7 @@ switch($requestType) {
     $height = (float)$_POST['barangay_id_height'];
     $weight = (float)$_POST['barangay_id_weight'];
     $contactPerson = $_POST['barangay_id_emergency_contact_person'];
-    $contactNo = $_POST['barangay_id_emergency_contact_number'];
+    $contactAddress = $_POST['barangay_id_emergency_contact_address'];
     $paymentMethod = 'Over-the-Counter';
     $documentStatus = 'Processing';
     // $claimDate = $_POST['claim_date'];
@@ -74,11 +74,11 @@ switch($requestType) {
 
     // 4) Insert into barangay_id_requests
     $sql = "INSERT INTO barangay_id_requests (account_id, transaction_id, transaction_type, full_name, purok, birth_date, birth_place, 
-            civil_status, religion, height, weight, emergency_contact_person, emergency_contact_number, formal_picture, claim_date, 
+            civil_status, religion, height, weight, emergency_contact_person, emergency_contact_address, formal_picture, claim_date, 
             payment_method, document_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL,?,?)";
     $ins = $conn->prepare($sql);
     $ins->bind_param('issssssssddsssss', $userId, $transactionId, $transactionType, $fullName, $purok, $birthDate, $birthPlace, 
-    $civilStatus, $religion, $height, $weight, $contactPerson, $contactNo, $formalPicName, $paymentMethod, $documentStatus);
+    $civilStatus, $religion, $height, $weight, $contactPerson, $contactAddress, $formalPicName, $paymentMethod, $documentStatus);
     $ins->execute();
     $ins->close();
 

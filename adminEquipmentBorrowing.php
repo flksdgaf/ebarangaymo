@@ -21,7 +21,7 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
   </style>
 </head>
 <body>
-<div class="container py-4">
+<div class="container py-3">
 
   <!-- ──────────────────────────────── -->
   <!-- Card #1: List of Equipment -->
@@ -50,7 +50,7 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
           </thead>
           <tbody>
             <?php if (empty($equipments)): ?>
-              <tr><td colspan="7" class="text-center py-3">No equipment found.</td></tr>
+              <tr><td colspan="7" class="text-center">No equipment found.</td></tr>
             <?php else: foreach($equipments as $eq): ?>
               <tr>
                 <td><?= htmlspecialchars($eq['equipment_sn']) ?></td>
@@ -112,7 +112,7 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
           </thead>
           <tbody>
             <?php if (empty($borrows)): ?>
-              <tr><td colspan="7" class="text-center py-3">No borrow requests.</td></tr>
+              <tr><td colspan="7" class="text-center">No borrow requests.</td></tr>
             <?php else: foreach($borrows as $br): ?>
               <tr>
                 <td><?= htmlspecialchars($br['resident_name']) ?></td>

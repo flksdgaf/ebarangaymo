@@ -37,7 +37,7 @@ $table = $typeMap[$requestType];
 $requestFields = [
   'barangay_id_requests' => [
     'transaction_id', 'request_type', 'transaction_type', 'full_name', 'purok', 'birth_date', 'birth_place', 
-    'civil_status', 'religion', 'height', 'weight', 'emergency_contact_person', 'emergency_contact_number', 
+    'civil_status', 'religion', 'height', 'weight', 'emergency_contact_person', 'emergency_contact_address', 
     'formal_picture', 'payment_method', 'amount', 'created_at'
   ],
   'business_permit_requests' => [

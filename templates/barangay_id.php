@@ -23,7 +23,7 @@ $religion      = $data['religion'] ?? '';
 $height        = $data['height'] ?? '';
 $weight        = $data['weight'] ?? '';
 $emergencyName = $data['emergency_contact_person'] ?? '';
-$emergencyNo   = $data['emergency_contact_number'] ?? '';
+$emergencyAddress   = $data['emergency_contact_address'] ?? '';
 $formalPic     = $data['formal_picture'] ?? '';
 $paymentMethod = $data['payment_method'] ?? '';
 $amount        = $data['amount'] ?? '';
@@ -64,7 +64,7 @@ ob_start();
       <div class="field"><span class="label">Religion:</span> <span><?= htmlspecialchars($religion) ?></span></div>
       <div class="field"><span class="label">Height:</span> <span><?= htmlspecialchars($height) ?> ft</span></div>
       <div class="field"><span class="label">Weight:</span> <span><?= htmlspecialchars($weight) ?> kg</span></div>
-      <div class="field"><span class="label">Emergency Contact:</span> <span><?= htmlspecialchars($emergencyName) ?> - <?= htmlspecialchars($emergencyNo) ?></span></div>
+      <div class="field"><span class="label">Emergency Contact:</span> <span><?= htmlspecialchars($emergencyName) ?> - <?= htmlspecialchars($emergencyAddress) ?></span></div>
       <div class="field"><span class="label">Payment Method:</span> <span><?= htmlspecialchars($paymentMethod) ?></span></div>
       <div class="field"><span class="label">Amount Paid:</span> <span><?= htmlspecialchars(number_format((float)$amount, 2)) ?></span></div>
       <div class="field"><span class="label">Created At:</span> <span><?= htmlspecialchars(date('F j, Y g:i A', strtotime($createdAt))) ?></span></div>

@@ -10,7 +10,7 @@ $tableMap = [
     'cols' => [
       'transaction_type','full_name','purok','birth_date','birth_place',
       'civil_status','religion','height','weight',
-      'emergency_contact_person','emergency_contact_number',
+      'emergency_contact_person','emergency_contact_address',
       'formal_picture','claim_date','payment_method'
     ]
   ],

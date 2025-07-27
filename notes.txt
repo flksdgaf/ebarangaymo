@@ -1,0 +1,30 @@
+BARANGAY ROLES
+ALL ACTIONS
+- Brgy Captain
+- Brgy Secretary
+- Brgy Bookkeeper
+
+VIEW ONLY but all tabs
+- Brgy Kagawad
+
+TRANSACTIONS ONLY
+- Brgy Treasurer
+
+KATARUNGANG PAMBARANGAY ONLY
+- Brgy Lupon
+
+UPDATES NEEDED
+ Sign Up - Upload image muna bago mag input DI PARIN
+ Include notification kapag may new account na veverify like red dot o  DI PARIN
+ dapat kapag naapprove account, d na dapat irefresh. realtime na maupdate na pwede na magrequest service DI PARIN
+ include verification an confirmation sa pagbago ng role tapos papainput ulit ang pas DI PARIN
+ Treasurer - Tanggalin ibang info sa complain & blotter DI PARIN
+ Include tab fo alin ang nagawan at hindi pa nagagawan ng OR DI PARIN
+ change color  sa status SLIGHT SIYA NA
+ still include age rang sa age report SIYA NA
+ include display lis sa transaction reports DI PARIN ATA
+ include notification sa mga involve sa mga patawag DI PARIN
+
+ verify i may proceeding info na sa punong barangay DI PA NAVEVERIFY
+
+- LAGYAN NG NOTIF ANG ACCOUNT VERIFICATIONS 

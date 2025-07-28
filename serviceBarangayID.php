@@ -2,10 +2,10 @@
 require 'functions/dbconn.php';
 
 // Ensure the user is authenticated.
-if (!isset($_SESSION['auth']) || $_SESSION['auth'] !== true) {
-    header("Location: index.php");
-    exit();
-}
+// if (!isset($_SESSION['auth']) || $_SESSION['auth'] !== true) {
+//     header("Location: index.php");
+//     exit();
+// }
 
 $userId = $_SESSION['loggedInUserID'];
 $transactionId = $_GET['tid'] ?? null;
@@ -13,9 +13,9 @@ $t = $transactionId ? true : false;
 
 // --- 1) Check for existing Brgy-ID record: Renewal vs. New Application
 $stmtID = $conn->prepare("
-    SELECT * 
-    FROM barangay_id_accounts 
-    WHERE account_id = ? 
+    SELECT *  
+    FROM barangay_id_accounts  
+    WHERE account_id = ?  
     LIMIT 1
 ");
 $stmtID->bind_param("i", $userId);
@@ -25,10 +25,10 @@ $resID = $stmtID->get_result();
 $isRenewal = false;
 if ($resID && $resID->num_rows === 1) {
     $isRenewal = true;
-    $rowID       = $resID->fetch_assoc();
+    $rowID = $resID->fetch_assoc();
     // *** ADDED: pull in existing values
     $fullName       = $rowID['full_name'];
-    $fullAddress    = $rowID['address'];
+    $userPurok      = $rowID['purok'];          // now fetch purok instead of full address
     $height         = $rowID['height'];
     $weight         = $rowID['weight'];
     $birthdate      = $rowID['birthdate'];
@@ -40,13 +40,13 @@ if ($resID && $resID->num_rows === 1) {
 }
 $stmtID->close();
 
-// --- 2) If NEW, get basic info from user_profiles (and leave editable fields blank)
+// --- 2) If NEW, get basic info from purok tables (and leave editable fields blank)
 if (!$isRenewal) {
-    // build the UNION of all purok tables (no per-SELECT LIMIT)
+    // build the UNION of all purok tables (no per-SELECT LIMIT), now also selecting purok label
     $unionSql = [];
     for ($i = 1; $i <= 6; $i++) {
         $unionSql[] = "
-            SELECT full_name, birthdate, civil_status
+            SELECT full_name, birthdate, civil_status, 'Purok $i' AS purok
               FROM purok{$i}_rbi
              WHERE account_ID = ?
         ";
@@ -67,11 +67,13 @@ if (!$isRenewal) {
         $fullName    = $r['full_name'];
         $birthdate   = $r['birthdate'];
         $civilstatus = $r['civil_status'];
+        $userPurok   = $r['purok'];             // capture purok from the union result
     } else {
         // not found in any purok table
         $fullName    = '';
         $birthdate   = '';
         $civilstatus = '';
+        $userPurok   = '';                     // default to empty
     }
     $stmt->close();
 
@@ -91,9 +93,9 @@ $transactionType = $isRenewal ? 'Renewal' : 'New Application';
 $chosenPayment = null;
 if ($transactionId) {
     $stmt = $conn->prepare("
-      SELECT payment_method 
+      SELECT payment_method  
        FROM barangay_id_requests
-       WHERE transaction_id = ? 
+       WHERE transaction_id = ?  
        LIMIT 1
     ");
     $stmt->bind_param("s", $transactionId);
@@ -106,10 +108,11 @@ if ($transactionId) {
 }
 ?>
 
+
 <link rel="stylesheet" href="serviceBarangayID.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-<div class="container pb-2">
+<div class="container py-4 px-3">
     <div class="progress-container">
         <div class="stepss">
 
@@ -151,10 +154,10 @@ if ($transactionId) {
         </div>
     </div>
 
-    <div class="card shadow-sm p-5 mb-5 mt-5">
-        <h4 class="mb-3 text-success display-6 fw-bold" id="mainHeader">APPLICATION FORM</h4>
-        <p id="subHeader">Provide the necessary details to apply for your Barangay ID.</p>
-        <hr id="mainHr">
+    <div class="card shadow-sm px-5 py-5 mb-5 mt-4">
+        <h2 class="mb-1 text-success fw-bold" id="mainHeader"></h2>
+        <p id="subHeader" class="mb-2">Provide the necessary details to apply for your Barangay ID.</p>
+        <hr id="mainHr" class="mb-4">
 
         <form id="barangayIDForm" action="functions/serviceBarangayID_submit.php" method="POST" enctype="multipart/form-data">
             <div class="step <?php echo $transactionId ? 'completed' : 'active-step'; ?>">
@@ -182,42 +185,43 @@ if ($transactionId) {
                 </div>
                 </div>
 
-                <!-- FULL ADDRESS (always readonly) -->
+                <!-- PUROK DROPDOWN (prefilled and required) -->
                 <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Full Address</label>
+                <label class="col-md-4 text-start fw-bold">Purok</label>
                 <div class="col-md-8">
-                    <input type="text" id="address" name="address"
-                        class="form-control custom-input"
-                        required
-                        value="<?php echo htmlspecialchars($fullAddress); ?>">
+                    <select id="purok" name="purok" class="form-control custom-input" required>
+                        <option value="">Select Purok</option>
+                        <?php
+                        $puroks = ['Purok 1', 'Purok 2', 'Purok 3', 'Purok 4', 'Purok 5', 'Purok 6'];
+                        foreach ($puroks as $p) {
+                            $selected = ($userPurok === $p) ? 'selected' : '';
+                            echo "<option value=\"$p\" $selected>$p</option>";
+                        }
+                        ?>
+                    </select>
                 </div>
                 </div>
 
-                <!-- HEIGHT (editable always) -->
+                <!-- HEIGHT AND WEIGHT (editable always) -->
                 <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Height (in feet)</label>
-                <div class="col-md-8">
+                <label class="col-md-4 text-start fw-bold">Height & Weight</label>
+                <div class="col-md-4">
                     <input type="text" id="height" name="height"
-                        class="form-control custom-input"
-                        required
-                        value="<?php echo htmlspecialchars($height); ?>">
+                    class="form-control custom-input" 
+                    required placeholder="Height (in feet)" 
+                    value="<?= htmlspecialchars($height) ?>">
+                </div>
+                <div class="col-md-4">
+                    <input type="text" id="weight" name="weight" 
+                    class="form-control custom-input" required 
+                    placeholder="Weight (in kilograms)" 
+                    value="<?= htmlspecialchars($weight) ?>">
                 </div>
                 </div>
 
-                <!-- WEIGHT (editable always) -->
+                <!-- BIRTHDATE (always readonly) -->
                 <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Weight (in kilograms)</label>
-                <div class="col-md-8">
-                    <input type="number" id="weight" name="weight"
-                        class="form-control custom-input"
-                        required
-                        value="<?php echo htmlspecialchars($weight); ?>">
-                </div>
-                </div>
-
-                <!-- BIRTHDAY (always readonly) -->
-                <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Birthday</label>
+                <label class="col-md-4 text-start fw-bold">Birthdate</label>
                 <div class="col-md-8">
                     <input type="date" id="birthday" name="birthday"
                         class="form-control custom-input"
@@ -232,9 +236,10 @@ if ($transactionId) {
                 <div class="col-md-8">
                     <input type="text" id="birthplace" name="birthplace"
                         class="form-control custom-input"
-                        required
+                        required placeholder="City, Province"
                         <?php echo $isRenewal ? 'readonly' : ''; ?>
-                        value="<?php echo htmlspecialchars($birthplace); ?>">
+                        value="<?php echo htmlspecialchars($birthplace); ?>"
+                    >
                 </div>
                 </div>
 
@@ -262,7 +267,7 @@ if ($transactionId) {
                 <div class="col-md-8">
                     <input type="text" id="religion" name="religion"
                         class="form-control custom-input"
-                        required
+                        required placeholder="Enter Religion"
                         value="<?php echo htmlspecialchars($religion); ?>">
                 </div>
                 </div>
@@ -273,9 +278,32 @@ if ($transactionId) {
                 <div class="col-md-8">
                     <input type="text" id="contactperson" name="contactperson"
                         class="form-control custom-input"
-                        required
+                        required placeholder="First Name | MI. | Surname"
                         value="<?php echo htmlspecialchars($contactperson); ?>">
                 </div>
+                </div>
+
+                <!-- CONTACT PERSON ADDRESS (editable) -->
+                <div class="row mb-3">
+                  <label class="col-md-4 text-start fw-bold">
+                    Contact Person Address
+                  </label>
+                  <div class="col-md-8">
+                    <input
+                      type="text"
+                      id="contactAddress"
+                      name="emergency_contact_address"
+                      class="form-control custom-input"
+                      required
+                      placeholder="City, Province"
+                      value="<?php
+                        // if editing existing request, pre-fill:
+                        echo isset($existingRequest['emergency_contact_address'])
+                             ? htmlspecialchars($existingRequest['emergency_contact_address'])
+                             : '';
+                      ?>"
+                    >
+                  </div>
                 </div>
 
                 <!-- FORMAL PICTURE (always editable; required only on NEW) -->
@@ -291,7 +319,7 @@ if ($transactionId) {
 
                 <!-- CLAIM DATE (always editable) -->
                 <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">When would you prefer to claim your Brgy. ID?</label>
+                <label class="col-md-4 text-start fw-bold">Please select preferred claim date</label>
                 <div class="col-md-8">
                     <input type="date" id="claimdate" name="claimdate"
                         class="form-control custom-input"
@@ -302,89 +330,164 @@ if ($transactionId) {
             
             <!-- Step 2: Payment -->
             <div class="step <?php echo $transactionId ? 'completed' : ''; ?>">
-                <div class="payment-container p-3 text-center">
-                    <h5 class="fw-bold mb-4">Select preferred Payment Method</h5>
+            <div class="payment-container p-4 border rounded shadow-sm bg-green">
+                <div class="row g-4">
 
-                    <!-- Use Bootstrap’s btn-group to attach the buttons -->
-                    <div class="btn-group btn-group-lg mb-4" role="group" aria-label="Payment Methods">
-                        
-                        <!-- GCash -->
-                        <button type="button" class="btn btn-outline-success disabled payment-btn" data-method="GCash">
-                            <img src="images/gcash_logo.png" alt="GCash" class="mb-2 payment-icon">
-                            <span class="fw-bold fs-6">GCash</span>
-                        </button>
+                <!-- LEFT COLUMN: Fee -->
+                <div class="col-md-4">
+                    <div class="fee-box p-4 rounded shadow-sm border bg-light text-center">
+                        <h5 class="fw-bold text-success mb-2">Barangay ID Fee</h5>
+                        <div class="display-6 fw-bold text-dark mb-2">₱100.00</div>
+                        <p class="text-muted small mb-0">
+                            Settle the fee using your preferred<br>payment method on the right.
+                        </p>
+                    </div>
+                </div>
 
-                        <!-- Barangay Device -->
-                        <button type="button" class="btn btn-outline-success payment-btn active" data-method="Brgy Payment Device">
-                            <span class="material-symbols-outlined mb-2 payment-icon">payments</span>
-                            <span class="fw-bold fs-6">Brgy. Payment Device</span>
-                        </button>
+                <!-- RIGHT COLUMN: Payment Methods + Instructions -->
+                <div class="col-md-8 text-center">
+                    <h6 class="fw-bold mb-3">Select Preferred Payment Method</h6>
 
-                        <!-- Over‑the‑Counter (now uses a “paid” icon) -->
-                        <button type="button" class="btn btn-outline-success payment-btn" data-method="Over-the-Counter">
-                            <span class="material-symbols-outlined mb-2 payment-icon">paid</span>
-                            <span class="fw-bold fs-6">Over-the-Counter</span>
-                        </button>
+                    <div class="btn-group btn-group-lg mb-4 flex-wrap justify-content-center" role="group" aria-label="Payment Methods">
+                    <!-- GCash -->
+                    <button type="button" class="btn btn-outline-success disabled payment-btn" data-method="GCash">
+                        <img src="images/gcash_logo.png" alt="GCash" class="mb-2 payment-icon">
+                        <span class="label fw-bold">GCash</span>
+                    </button>
+
+                    <!-- Barangay Device -->
+                    <button type="button" class="btn btn-outline-success payment-btn active" data-method="Brgy Payment Device">
+                        <span class="material-symbols-outlined mb-2 payment-icon">payments</span>
+                        <span class="label fw-bold">Brgy. Payment Device</span>
+                    </button>
+
+                    <!-- Over‑the‑Counter -->
+                    <button type="button" class="btn btn-outline-success payment-btn" data-method="Over-the-Counter">
+                        <span class="material-symbols-outlined mb-2 payment-icon">paid</span>
+                        <span class="label fw-bold">Over-the-Counter</span>
+                    </button>
                     </div>
 
-                    <!-- instructions panels -->
+                    <!-- Instructions -->
                     <div id="payment-instructions">
-                        <div class="payment-instruction d-none" data-method="GCash">
-                            <ol>
-                                <li>Open your GCash app and scan the QR code below to pay.</li>
-                                <li>Enter the exact amount: <strong>₱XX.XX</strong>.</li>
-                                <li>Confirm the transaction.</li>
-                                <li>Download or screenshot the confirmation receipt.</li>
-                                <li>Upload the receipt in the next step.</li>
-                            </ol>
-                        </div>
-                        <div class="payment-instruction" data-method="Brgy Payment Device">
-                            <ol>
-                                <h4 class="fw-bold mb-4 fs-6">HOW TO USE:</h4>
-                                <li>Submit your application and wait for a generated QR code in the last step.</li>
-                                <li>Download or screenshot the generated QR code.</li>
-                                <li>Go to the designated Barangay Payment Device located at the barangay hall.</li>
-                                <li>Scan the generated QR code to the device to begin your transaction.</li>
-                                <li>Insert the coins or paper bills until the required amount is reached.</li>
-                                <li>Wait for the confirmation screen and printed receipt.</li>
-                                <li>Submit the receipt to the Clerk and claim your Barangay ID.</li>
-                            </ol>
-                        </div>
-                        <div class="payment-instruction d-none" data-method="Over-the-Counter">
-                            <ol>
-                                <h4 class="fw-bold mb-4 fs-6">HOW TO USE:</h4>
-                                <li>Visit the Barangay Treasurer at the barangay hall.</li>
-                                <li>Present your application transaction number.</li>
-                                <li>Pay the transaction fee in cash.</li>
-                                <li>Obtain the official receipt from the treasurer.</li>
-                                <li>Keep the receipt for claim on your Barangay ID.</li>
-                            </ol>
-                        </div>
+                    <div class="payment-instruction d-none" data-method="GCash">
+                        <ol>
+                        <h4 class="fw-bold mb-3 fs-6">HOW TO USE:</h4>
+                          <li>Once redirected to GCash, send exactly ₱100.00.</li>
+                          <li>Confirm your payment.</li>
+                          <li>Download or screenshot the confirmation receipt.</li>
+                          <li>After being redirected back to the website, upload the receipt.</li>
+                          <li>Claim your ID at the barangay on your selected claim date.</li>
+                        </ol>
                     </div>
 
-                    <!-- hidden field so PHP can see it on submit -->
+                    <div class="payment-instruction" data-method="Brgy Payment Device">
+                        <ol>
+                        <h4 class="fw-bold mb-3 fs-6">HOW TO USE:</h4>
+                        <li>Submit your application and download the generated <strong>QR code</strong>.</li>
+                        <li>Go to the <strong>Barangay Payment Device</strong> located at the barangay hall.</li>
+                        <li>Scan the code and insert <strong>₱100.00</strong>.</li>
+                        <li>Wait for the confirmation and printed receipt.</li>
+                        <li>Submit the receipt and claim your Barangay ID.</li>
+                        </ol>
+                    </div>
+
+                    <div class="payment-instruction d-none" data-method="Over-the-Counter">
+                        <ol>
+                        <h4 class="fw-bold mb-3 fs-6">HOW TO USE:</h4>
+                            <li>Submit your application and save the given <strong>Transaction Number</strong>.</li>
+                            <li>Go to the Barangay Treasurer and present your Transaction Number.</li>
+                            <li>Pay <strong>₱100.00</strong> in cash.</li>
+                            <li>Receive the official receipt.</li>
+                            <li>Claim your ID at the Barangay Record Keeper.</li>
+                        </ol>
+                    </div>
+                    </div>
+
+                    <!-- Hidden input to capture method -->
                     <input type="hidden" id="paymentMethod" name="paymentMethod" value="Brgy Payment Device">
                 </div>
+
+                </div>
             </div>
+            </div>
+
 
             <!-- Step 3: Summary / Review -->
             <div class="step <?php echo $transactionId ? 'completed' : ''; ?>">
-                <div class="summary-container p-3">
-                    <p><strong>Transaction Type:</strong> <span id="summarytransactionType"></span></p>
-                    <p><strong>Full Name:</strong> <span id="summaryFullName"></span></p>
-                    <p><strong>Address:</strong> <span id="summaryAddress"></span></p>
-                    <p><strong>Height:</strong> <span id="summaryHeight"></span></p>
-                    <p><strong>Weight:</strong> <span id="summaryWeight"></span></p>
-                    <p><strong>Birthday:</strong> <span id="summaryBirthdate"></span></p>
-                    <p><strong>Birthplace:</strong> <span id="summaryBirthplace"></span></p>
-                    <p><strong>Civil Status:</strong> <span id="summaryCivilStatus"></span></p>
-                    <p><strong>Religion:</strong> <span id="summaryReligion"></span></p>
-                    <p><strong>Contact Person:</strong> <span id="summaryContactPerson"></span></p>
-                    <p><strong>Claim Date:</strong> <span id="summaryClaimDate"></span></p>
+            <div class="row justify-content-center">
+                <div class="col-md-10 col-lg-8 col-xl-6">
+                <div class="summary-container p-4 rounded shadow-sm border">
 
-                    <!-- ADD: payment method summary -->
-                    <p><strong>Payment Method:</strong> <span id="summaryPaymentMethod"></span></p>
+                    <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="fw-bold">Transaction Type:</span>
+                        <span class="text-success" id="summarytransactionType"></span>
+                    </li>
+
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="fw-bold">Full Name:</span>
+                        <span class="text-success" id="summaryFullName"></span>
+                    </li>
+
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="fw-bold">Purok:</span>
+                        <span class="text-success" id="summaryPurok"></span>
+                    </li>
+
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="fw-bold">Height:</span>
+                        <span class="text-success" id="summaryHeight"></span>
+                    </li>
+
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="fw-bold">Weight:</span>
+                        <span class="text-success" id="summaryWeight"></span>
+                    </li>
+
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="fw-bold">Birthdate:</span>
+                        <span class="text-success" id="summaryBirthdate"></span>
+                    </li>
+
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="fw-bold">Birthplace:</span>
+                        <span class="text-success" id="summaryBirthplace"></span>
+                    </li>
+
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="fw-bold">Civil Status:</span>
+                        <span class="text-success" id="summaryCivilStatus"></span>
+                    </li>
+
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="fw-bold">Religion:</span>
+                        <span class="text-success" id="summaryReligion"></span>
+                    </li>
+
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="fw-bold">Contact Person:</span>
+                        <span class="text-success" id="summaryContactPerson"></span>
+                    </li>
+
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="fw-bold">Contact Person Address:</span>
+                        <span class="text-success" id="summaryContactAddress"></span>
+                    </li>
+
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="fw-bold">Claim Date:</span>
+                        <span class="text-success" id="summaryClaimDate"></span>
+                    </li>
+
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="fw-bold">Payment Method:</span>
+                        <span class="text-success" id="summaryPaymentMethod"></span>
+                    </li>
+                    </ul>
                 </div>
+                </div>
+            </div>
             </div>
 
             <!-- Step 4: Submission -->

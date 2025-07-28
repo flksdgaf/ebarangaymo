@@ -15,13 +15,13 @@ document.addEventListener("DOMContentLoaded", function () {
     const instructionPanels = document.querySelectorAll('.payment-instruction');
     const hiddenPaymentInput = document.getElementById('paymentMethod');
 
-    const confirmationModalEl = document.getElementById("confirmationModal"); // ← ADDED
-    const confirmationModal = new bootstrap.Modal(confirmationModalEl);     // ← ADDED
-    const confirmSubmitBtn = document.getElementById("confirmSubmitBtn");    
+    const confirmationModalEl = document.getElementById("confirmationModal");
+    const confirmationModal = new bootstrap.Modal(confirmationModalEl);
+    const confirmSubmitBtn = document.getElementById("confirmSubmitBtn");
 
     // Initial state
     updateNavigation();
-    setupPaymentControls(); // ADDED
+    setupPaymentControls();
 
     nextBtn.addEventListener('click', () => {
         let isValid = true;
@@ -31,15 +31,15 @@ document.addEventListener("DOMContentLoaded", function () {
             isValid = false;
         }
 
-        // Validate required inputs on steps 1 &  if any
+        // Validate required inputs on step 1
         if (currentStep === 1) {
             document.querySelectorAll(".step.active-step input[required], .step.active-step select[required]")
               .forEach(field => {
                 if (!field.value.trim()) {
                     isValid = false;
-                    field.classList.add("is-invalid");
+                    field.classList.add('is-invalid');
                 } else {
-                    field.classList.remove("is-invalid");
+                    field.classList.remove('is-invalid');
                 }
             });
         }
@@ -96,8 +96,8 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    confirmSubmitBtn.addEventListener('click', () => {                        // ← ADDED
-        document.getElementById("barangayIDForm").submit();                   // ← ADDED
+    confirmSubmitBtn.addEventListener('click', () => {
+        document.getElementById("barangayIDForm").submit();
     });
 
     function updateNavigation() {
@@ -122,19 +122,16 @@ document.addEventListener("DOMContentLoaded", function () {
             backBtn.style.visibility = 'hidden';
             nextBtn.textContent = "Back to Home";
             nextBtn.replaceWith(nextBtn.cloneNode(true));
-            const newNext = document.getElementById('nextBtn') || document.querySelector('#nextBtn');
-            newNext.addEventListener('click', () => {
+            document.getElementById('nextBtn').addEventListener('click', () => {
                 window.location.href = 'userPanel.php?page=userDashboard';
             });
         }
     }
 
-    
     function populateSummary() {
-        // existing fields...
         document.getElementById("summarytransactionType").textContent = document.getElementById("transactiontype").value;
         document.getElementById("summaryFullName").textContent        = document.getElementById("fullname").value;
-        document.getElementById("summaryAddress").textContent         = document.getElementById("address").value;
+        document.getElementById("summaryPurok").textContent           = document.getElementById("purok").value;
         document.getElementById("summaryHeight").textContent          = document.getElementById("height").value;
         document.getElementById("summaryWeight").textContent          = document.getElementById("weight").value;
         document.getElementById("summaryBirthdate").textContent       = document.getElementById("birthday").value;
@@ -142,22 +139,21 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("summaryCivilStatus").textContent     = document.getElementById("civilstatus").value;
         document.getElementById("summaryReligion").textContent        = document.getElementById("religion").value;
         document.getElementById("summaryContactPerson").textContent   = document.getElementById("contactperson").value;
+        document.getElementById("summaryContactAddress").textContent  = document.getElementById("contactAddress").value;
         document.getElementById("summaryClaimDate").textContent       = document.getElementById("claimdate").value;
         document.getElementById("summaryPaymentMethod").textContent   = hiddenPaymentInput.value;
     }
 
-    // ADDED: handle payment method UI
+
     function setupPaymentControls() {
         paymentButtons.forEach(btn => {
             btn.addEventListener('click', () => {
-                // toggle active class
                 paymentButtons.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
 
                 const method = btn.dataset.method;
                 hiddenPaymentInput.value = method;
 
-                // show matching panel
                 instructionPanels.forEach(panel => {
                     panel.classList.toggle('d-none', panel.dataset.method !== method);
                 });

@@ -212,12 +212,19 @@
   color: white;
   width: 100%;
   min-height: 120px;
-  max-width: 500px;
+  max-width: 550px;
   margin: 0 auto; 
   text-decoration: none;
   gap: 15px; 
   flex-shrink: 0;
   flex-grow: 1;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.service-card:hover {
+    transform: scale(1.03);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  z-index: 1;
 }
 
 .service-card > .icon {
@@ -242,7 +249,7 @@
   margin: 0;
 }
 
-.service-card:hover {
+/* .service-card:hover {
   transform: scale(1.05);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
   cursor: pointer;
@@ -252,7 +259,8 @@
   font-size: 12px;
   flex-shrink: 0;
   flex-grow: 1;
-}
+} */
+
 
 /* Responsive tweaks */
 @media (max-width: 576px) {

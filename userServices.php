@@ -75,19 +75,10 @@ if (!$purokTable) {
                       <i class="fas fa-chair icon"></i>
                       <div>
                           <h4>Equipment Borrowing</h4>
-                          <p>Pagpapahiram ng kagamitan mula sa barangay para sa pansamantalang gamit, ayon sa itinakdang alituntunin at iskedyul.</p>
+                          <p>Pagpapahiram ng kagamitan ng barangay para sa pansamantalang gamit.</p>
                       </div>
                   </a>
               </div>
-              <!-- <div class="col d-flex">
-                  <a href="#" class="service-card dark-green w-100">
-                      <i class="fas fa-money-bill icon"></i>
-                      <div>
-                          <h4>Cash Incentives</h4>
-                          <p>Pagbibigay ng insentibong pera bilang pagkilala at parangal sa mga mag-aaral na may natatanging tagumpay sa akademiko.</p>
-                      </div>
-                  </a>
-              </div> -->
           </div>
       </div>
   </div>

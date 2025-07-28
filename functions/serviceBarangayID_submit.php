@@ -12,7 +12,8 @@ $userId = $_SESSION['loggedInUserID'];
 // 1) Collect posted fields
 $transactionType = $_POST['transactiontype'];
 $fullName        = $_POST['fullname'];
-$address         = $_POST['address'];
+$purok           = $_POST['purok'];
+// $address         = $_POST['address'];
 $height          = $_POST['height'];
 $weight          = $_POST['weight'];
 $birthdate       = $_POST['birthday'];
@@ -20,6 +21,7 @@ $birthplace      = $_POST['birthplace'];
 $civilstatus     = $_POST['civilstatus'];
 $religion        = $_POST['religion'];
 $contactperson   = $_POST['contactperson'];
+$contactaddress  = $_POST['emergency_contact_address'];
 $claimDate       = $_POST['claimdate'];
 $paymentMethod   = $_POST['paymentMethod'];
 $requestSource = 'Online';
@@ -56,14 +58,14 @@ $stmt = $conn->prepare("
   INSERT INTO barangay_id_requests
     (account_id, transaction_id, transaction_type, full_name, purok,
      height, weight, birth_date, birth_place, civil_status, religion,
-     emergency_contact_person, formal_picture, claim_date, payment_method, request_source)
-  VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+     emergency_contact_person, emergency_contact_address, formal_picture, claim_date, payment_method, request_source)
+  VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
 ");
 $stmt->bind_param(
-    "issssddsssssssss",
-    $userId, $transactionId, $transactionType, $fullName, $address,
+    "issssddssssssssss",
+    $userId, $transactionId, $transactionType, $fullName, $purok,
     $height, $weight, $birthdate, $birthplace, $civilstatus,
-    $religion, $contactperson, $formalPicName, $claimDate, $paymentMethod, $requestSource
+    $religion, $contactperson, $contactaddress, $formalPicName, $claimDate, $paymentMethod, $requestSource
 );
 $stmt->execute();
 $stmt->close();

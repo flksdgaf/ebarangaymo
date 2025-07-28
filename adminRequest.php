@@ -15,7 +15,7 @@ $walkInCount = (int) $conn->query(
 
 // New Online requests are considered ones that are in "For Verification"
 $onlineCount = (int) $conn->query(
-  "SELECT COUNT(*) FROM view_request WHERE request_source = 'Online' AND document_status = 'Processing'"
+  "SELECT COUNT(*) FROM view_request WHERE request_source = 'Online' AND document_status = 'Processing' OR document_status = 'For Verification'"
 )->fetch_row()[0];
 
 // what each role is allowed to do on the request page

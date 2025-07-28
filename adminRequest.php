@@ -10,12 +10,16 @@ $currentRole = $_SESSION['loggedInUserRole'] ?? '';
 
 // New Walk-In requests are considered ones that are in "Processing"
 $walkInCount = (int) $conn->query(
-  "SELECT COUNT(*) FROM view_request WHERE request_source = 'Walk-In' AND document_status = 'Processing'"
+  "SELECT COUNT(*) FROM view_request WHERE request_source = 'Walk-In' AND document_status = 'Processing' AND payment_method = 'Walk-In'"
 )->fetch_row()[0];
 
 // New Online requests are considered ones that are in "For Verification"
 $onlineCount = (int) $conn->query(
-  "SELECT COUNT(*) FROM view_request WHERE request_source = 'Online' AND document_status = 'Processing' OR document_status = 'For Verification'"
+  "SELECT COUNT(*) FROM view_request WHERE request_source = 'Online' AND document_status = 'Processing' OR document_status = 'For Verification' AND payment_method = 'GCash'"
+)->fetch_row()[0];
+
+$brgyPaymentDevice = (int) $conn->query(
+  "SELECT COUNT(*) FROM view_request WHERE request_source = 'Online' AND payment_method = 'Brgy Payment Device'"
 )->fetch_row()[0];
 
 // what each role is allowed to do on the request page
@@ -42,7 +46,8 @@ $payment_status = $_GET['payment_status'] ?? '';
 $document_status = $_GET['document_status'] ?? '';
 
 // Normalize and default to "Walk-In" if no source is specified
-$validSources = ['Walk-In','Online'];
+// $validSources = ['Walk-In','Online'];
+$validSources = ['Walk‑In','Online','Brgy Payment Device'];
 $processing_type = $_GET['request_source'] ?? 'Walk-In';
 if (! in_array($processing_type, $validSources, true)) {
   $processing_type = 'Walk-In';
@@ -225,6 +230,15 @@ $result = $st->get_result();
         Online <span class="badge bg-secondary"><?= $onlineCount ?></span>
       </a>
     </li>
+    <?php if ($currentRole === 'Brgy Treasurer'): ?>
+      <li class="nav-item">
+        <a href="?<?= http_build_query(array_merge($_GET, ['request_source'=>'Brgy Payment Device','request_page'=> 1])) ?>"
+          class="nav-link <?= $processing_type ==='Brgy Payment Device' ? 'active' : '' ?>">
+          Brgy Payment Device
+          <span class="badge bg-secondary"><?= $brgyPaymentDevice ?></span>
+        </a>
+      </li>
+    <?php endif; ?>
   </ul>
 
   <div class="card shadow-sm p-3">

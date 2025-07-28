@@ -1,155 +1,191 @@
 <?php
 session_start();
 require 'dbconn.php';
-if (!isset($_SESSION['auth'])) exit('No auth');
 
-// map type → table + editable columns
-$tableMap = [
-  'Barangay ID' => [
-    'table' => 'barangay_id_requests',
-    'cols' => [
-      'transaction_type','full_name','purok','birth_date','birth_place',
-      'civil_status','religion','height','weight',
-      'emergency_contact_person','emergency_contact_address',
-      'formal_picture','claim_date','payment_method'
-    ]
-  ],
+// --- Authentication & redirect config (same as new) ---
+if (!isset($_SESSION['auth']) || $_SESSION['auth'] !== true) {
+    header("Location: ../index.php");
+    exit();
+}
 
-  'Business Permit' => [
-    'table' => 'business_permit_requests',
-    'cols' => [
-      'transaction_type','full_name','purok','barangay','age','civil_status','name_of_business','type_of_business',
-      'full_address','claim_date','payment_method'
-        ]
-    ],
-    
-    'Good Moral' => [
-        'table' => 'good_moral_requests',
-        'cols' => [
-            'full_name','civil_status','sex','age','purok','subdivision','purpose',
-            'claim_date','payment_method'
-        ]
-    ],
+$role = $_SESSION['loggedInUserRole'] ?? '';
+if ($role === 'SuperAdmin') {
+    $redirectBase = 'superAdminPanel.php';
+    $redirectPage = 'superAdminRequest';
+} else {
+    $redirectBase = 'adminPanel.php';
+    $redirectPage = 'adminRequest';
+}
 
-    'Guardianship' => [
-        'table' => 'guardianship_requests',
-        'cols' => [
-            'full_name','civil_status','age','purok','child_name','purpose',
-            'claim_date','payment_method'
-        ]
-    ],
+$userId        = $_SESSION['loggedInUserID'];
+$requestType   = $_POST['request_type']     ?? '';
+$transactionId = $_POST['transaction_id']   ?? '';
 
-    'Indigency' => [
-        'table' => 'indigency_requests',
-        'cols' => [
-            'full_name','civil_status','age','purok','purpose',
-            'claim_date'
-        ]
-    ],
+if (!$requestType || !$transactionId) {
+    die("Missing request type or transaction ID");
+}
 
-    'Residency' => [
-        'table' => 'residency_requests',
-        'cols' => [
-            'full_name','civil_status','age','purok','residing_years',
-            'purpose','claim_date','payment_method'
-        ]
-    ],
-
-    'Solo Parent' => [
-        'table' => 'solo_parent_requests',
-        'cols' => [
-            'full_name','civil_status','age','purok','years_solo_parent',
-            'child_name','child_sex','child_age','purpose','claim_date','payment_method'
-        ]
-    ]
-
+// Map to the proper table
+$mapping = [
+  'Barangay ID'     => 'barangay_id_requests',
+  'Business Permit' => 'business_permit_requests',
+  'Good Moral'      => 'good_moral_requests',
+  'Guardianship'    => 'guardianship_requests',
+  'Indigency'       => 'indigency_requests',
+  'Residency'       => 'residency_requests',
+  'Solo Parent'     => 'solo_parent_requests',
 ];
-
-$type = $_POST['request_type'] ?? '';
-$tid  = $_POST['transaction_id'] ?? '';
-if (!isset($tableMap[$type])) {
-  die("Unknown type");
+$table = $mapping[$requestType] ?? null;
+if (!$table) {
+    die("Unknown request type: {$requestType}");
 }
 
-$meta = $tableMap[$type];
-$table = $meta['table'];
-$cols  = $meta['cols'];
-
-// 1) fetch existing
-$stmt = $conn->prepare("SELECT " . implode(',', $cols) . " FROM `{$table}` WHERE transaction_id = ? LIMIT 1");
-$stmt->bind_param('s', $tid);
-$stmt->execute();
-$existing = $stmt->get_result()->fetch_assoc() ?: [];
-$stmt->close();
-
-// 2) collect incoming & detect changes
-$updates = [];
-$params  = [];
-$types   = '';
-foreach ($cols as $col) {
-  if ($col === 'formal_picture') {
-    if (!empty($_FILES['photo']['name']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
-      $fn = uniqid().'_'.basename($_FILES['photo']['name']);
-      move_uploaded_file($_FILES['photo']['tmp_name'], __DIR__.'/../barangayIDpictures/'.$fn);
-      $incoming = $fn;
-    } else {
-      continue;  // no change if no new file
+// Helper to log activity
+function logAction($conn, $transactionId, $tableName, $description) {
+    $admin_roles = ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Treasurer','Lupon Tagapamayapa'];
+    if (in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
+        $stmt = $conn->prepare("
+          INSERT INTO activity_logs
+            (admin_id, role, action, table_name, record_id, description)
+          VALUES (?, ?, 'UPDATE', ?, ?, ?)
+        ");
+        $stmt->bind_param(
+          'issss',
+          $_SESSION['loggedInUserID'],
+          $_SESSION['loggedInUserRole'],
+          $tableName,
+          $transactionId,
+          $description
+        );
+        $stmt->execute();
+        $stmt->close();
     }
-  } else {
-    // map date→dob, etc
-    $name = $col==='birth_date' ? 'dob' : $col;
-    $incoming = $_POST[$name] ?? '';
-  }
-
-  // compare strings (NULL vs '')
-  $orig = $existing[$col] ?? null;
-  if ((string)$incoming !== (string)$orig) {
-    $updates[] = "`{$col}` = ?";
-    $params[]  = $incoming;
-    // pick bind‐type
-    $types .= is_numeric($incoming) && $col!=='birth_date' ? 'd' : 's';
-  }
 }
 
-// 3) if nothing changed
-if (empty($updates)) {
-  header("Location: ../adminPanel.php?page=adminRequest&nochange=1");
-  exit;
+// --- Branch by type ---
+switch ($requestType) {
+  case 'Barangay ID':
+    // collect form fields
+    $transactionType       = $_POST['barangay_id_transaction_type'];
+    $fn                    = trim($_POST['barangay_id_first_name']);
+    $mn                    = trim($_POST['barangay_id_middle_name']);
+    $ln                    = trim($_POST['barangay_id_last_name']);
+    $sn                    = trim($_POST['barangay_id_suffix']);
+    $fullName              = "{$ln}" . ($sn?" {$sn}":"") . ", {$fn}" . ($mn?" {$mn}":"");
+    $purok                 = $_POST['barangay_id_purok'];
+    $birthDate             = $_POST['barangay_id_dob'];
+    $birthPlace            = trim($_POST['barangay_id_birth_place']);
+    $civilStatus           = $_POST['barangay_id_civil_status'];
+    $religion              = $_POST['barangay_id_religion']==='Other'
+                              ? $_POST['barangay_id_religion_other']
+                              : $_POST['barangay_id_religion'];
+    $height                = (float)$_POST['barangay_id_height'];
+    $weight                = (float)$_POST['barangay_id_weight'];
+    $contactPerson         = trim($_POST['barangay_id_emergency_contact_person']);
+    $contactAddress        = trim($_POST['barangay_id_emergency_contact_address']); // adjust name
+    // handle optional photo upload
+    $newPhotoName = null;
+    if (!empty($_FILES['barangay_id_photo']['name']) && $_FILES['barangay_id_photo']['error']===UPLOAD_ERR_OK) {
+      $uploadDir = __DIR__ . '/../barangayIDpictures/';
+      if (!is_dir($uploadDir)) mkdir($uploadDir,0755,true);
+      $newPhotoName = uniqid() . '_' . basename($_FILES['barangay_id_photo']['name']);
+      move_uploaded_file($_FILES['barangay_id_photo']['tmp_name'], $uploadDir.$newPhotoName);
+    }
+
+    // prepare UPDATE
+    $sql = "
+      UPDATE {$table}
+         SET transaction_type             = ?,
+             full_name                    = ?,
+             purok                        = ?,
+             birth_date                   = ?,
+             birth_place                  = ?,
+             civil_status                 = ?,
+             religion                     = ?,
+             height                       = ?,
+             weight                       = ?,
+             emergency_contact_person     = ?,
+             emergency_contact_address    = ?,
+             formal_picture               = COALESCE(?, formal_picture)
+       WHERE transaction_id = ?
+    ";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param(
+      'ssssssddssss',
+      $transactionType,
+      $fullName,
+      $purok,
+      $birthDate,
+      $birthPlace,
+      $civilStatus,
+      $religion,
+      $height,
+      $weight,
+      $contactPerson,
+      $contactAddress,
+      $newPhotoName,
+      $transactionId
+    );
+    $stmt->execute();
+    $stmt->close();
+
+    logAction($conn, $transactionId, $table, 'Edited Barangay ID Request');
+    break;
+
+  case 'Business Permit':
+    // collect your POST fields...
+    $transactionType = $_POST['business_permit_transaction_type'];
+    // assemble fullName etc...
+    // then UPDATE business_permit_requests SET ... WHERE transaction_id = ?
+    // Example skeleton:
+    /*
+    $sql = "
+      UPDATE {$table}
+         SET transaction_type       = ?,
+             full_name              = ?,
+             purok                  = ?,
+             barangay               = ?,
+             age                    = ?,
+             civil_status           = ?,
+             name_of_business       = ?,
+             type_of_business       = ?,
+             full_address           = ?
+       WHERE transaction_id = ?
+    ";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param(
+      'ssssisssss',
+      $transactionType,
+      $fullName,
+      $purok,
+      $barangay,
+      $age,
+      $civilStatus,
+      $businessName,
+      $businessType,
+      $fullAddress,
+      $transactionId
+    );
+    $stmt->execute();
+    $stmt->close();
+
+    logAction($conn, $transactionId, $table, 'Edited Business Permit Request');
+    */
+    break;
+
+  // TODO: replicate the pattern above for each of:
+  //  - Good Moral
+  //  - Guardianship
+  //  - Indigency
+  //  - Residency
+  //  - Solo Parent
+
+  default:
+    // nothing else
+    break;
 }
 
-// 4) build & run UPDATE
-$updates[] = "`updated_at` = NOW()";
-$sql = "UPDATE `{$table}` SET " . implode(',', $updates) . " WHERE transaction_id = ?";
-$params[] = $tid;
-$types   .= 's';
-
-$up = $conn->prepare($sql);
-$up->bind_param($types, ...$params);
-$up->execute();
-$up->close();
-
-// 5) log activity
-$log = $conn->prepare("
-  INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description)
-  VALUES (?,?,?,?,?,?)
-");
-$action = 'UPDATE';
-$desc   = "Updated {$type} Request";
-$log->bind_param(
-  'isssss',
-  $_SESSION['loggedInUserID'],
-  $_SESSION['loggedInUserRole'],
-  $action,
-  $table,
-  $tid,
-  $desc
-);
-$log->execute();
-$log->close();
-
-// 6) redirect back with success
-header("Location: ../adminPanel.php?page=adminRequest&updated_request_id=$tid");
+// redirect back
+header("Location: ../{$redirectBase}?page={$redirectPage}&edited_id={$transactionId}");
 exit;
 ?>
-
-<!-- MAY BABAGUHIN DITO -->

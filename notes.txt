@@ -28,3 +28,14 @@ UPDATES NEEDED
  verify i may proceeding info na sa punong barangay DI PA NAVEVERIFY
 
 - LAGYAN NG NOTIF ANG ACCOUNT VERIFICATIONS 
+
+
+
+TO DO LIST:
+
+(DASHBOARD TAB)
+- different views for user roles.
+
+(DOCUMENT REQUEST TAB)
+- fix walk-in and online
+- fix edit button

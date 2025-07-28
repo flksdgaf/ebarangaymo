@@ -2,12 +2,12 @@
 .env
 
 # Composer dependencies (optional to ignore or not)
-vendor/
+# vendor/
 
 # OS/editor noise
-.DS_Store
-Thumbs.db
-.idea/
-*.swp
+# .DS_Store
+# Thumbs.db
+# .idea/
+# *.swp
 
-payment_test.php
+# payment_test.php

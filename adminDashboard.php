@@ -2,6 +2,20 @@
 require 'functions/dbconn.php';
 $userId = (int)$_SESSION['loggedInUserID'];
 
+$currentRole = $_SESSION['loggedInUserRole'] ?? '';
+
+// what each role is allowed to do on the request page
+$rolePermissions = [
+  'Brgy Captain' => [],
+  'Brgy Secretary' => [],
+  'Brgy Bookkeeper' => [],
+  'Brgy Treasurer' => [], 
+  'Brgy Kagawad' => [], 
+  'Lupon Tagapamayapa' => [],
+];
+
+$perms = $rolePermissions[$currentRole] ?? [];
+
 // PAGINATION SETUP
 $page_num = isset($_GET['page_num']) && is_numeric($_GET['page_num']) ? (int)$_GET['page_num'] : 1;
 $limit = 10; 

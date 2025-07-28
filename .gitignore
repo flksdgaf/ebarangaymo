@@ -5,7 +5,7 @@
 # vendor/
 
 # OS/editor noise
-.DS_Store
-Thumbs.db
-.idea/
-*.swp
+# .DS_Store
+# Thumbs.db
+# .idea/
+# *.swp

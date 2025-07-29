@@ -272,15 +272,15 @@ $result = $st->get_result();
             </div>
 
             <!-- Payment Method -->
-            <div class="mb-2">
+            <!-- <div class="mb-2">
               <label class="form-label mb-1">Payment Method</label>
               <select name="payment_method" class="form-select form-select-sm" style="font-size:.75rem;">
                 <option value="">All</option>
-                <option <?= $payment_method==='GCash'?'selected':''?> value="GCash">GCash</option>
-                <option <?= $payment_method==='Brgy Payment Device'?'selected':''?> value="Brgy Payment Device">Brgy Payment Device</option>
-                <option <?= $payment_method==='Over-the-Counter'?'selected':''?> value="Over-the-Counter">Over-the-Counter</option>
+                <option <= $payment_method==='GCash'?'selected':''?> value="GCash">GCash</option>
+                <option <= $payment_method==='Brgy Payment Device'?'selected':''?> value="Brgy Payment Device">Brgy Payment Device</option>
+                <option <= $payment_method==='Over-the-Counter'?'selected':''?> value="Over-the-Counter">Over-the-Counter</option>
               </select>
-            </div>
+            </div> -->
 
             <!-- Payment Status -->
             <div class="mb-2">
@@ -1022,6 +1022,32 @@ $result = $st->get_result();
         </div>
       </div>
 
+      <!-- View Request Modal -->
+      <div class="modal fade" id="viewRequestModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="viewRequestModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width:820px; width:100%">
+          <div class="modal-content" style="display:flex; flex-direction:column;">
+            <div class="modal-header text-white" style="background-color:#13411F;">
+              <h5 class="modal-title" id="viewRequestModalLabel">Document Request Preview</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div style="background:#ccc; padding:20px;">
+              <iframe id="requestPreviewFrame" style="border:none; width:100%; height:1123px; background:#ccc;" src="" allowfullscreen></iframe>
+            </div>
+            <div class="modal-footer justify-content-between px-4 py-2" style="background:#f8f9fa;">
+              <span class="text-muted">Preview only — use the buttons below to save or print</span>
+              <div>
+                <button class="btn btn-outline-success me-2" id="printRequestBtn">
+                  <i class="bi bi-printer"></i> Print
+                </button>
+                <a id="downloadRequestPDF" class="btn btn-success" href="#" target="_blank">
+                  <i class="bi bi-download"></i> Save as PDF
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Edit Request Modal -->
       <div class="modal fade" id="editRequestModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="editRequestModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width:90vw;">
@@ -1054,48 +1080,56 @@ $result = $st->get_result();
       </div>
 
       <!-- Record Payment Modal -->
-      <div class="modal fade" id="recordModal" tabindex="-1" aria-labelledby="recordModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-        <div class="modal-dialog modal-dialog-centered">
+      <div class="modal fade" id="recordModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="recordModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
           <div class="modal-content">
-            <!-- 1) Form now has action + method -->
+            <!-- Header -->
+            <div class="modal-header text-white" style="background-color: #13411F;">
+              <h5 class="modal-title" id="recordModalLabel">
+                <i class="bi bi-receipt me-2"></i>
+                Record Payment
+              </h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
             <form id="recordForm" action="functions/process_record_payment.php" method="POST">
-              <div class="modal-header">
-                <h5 class="modal-title" id="recordModalLabel">Record Payment</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-              </div>
               <div class="modal-body">
                 <input type="hidden" name="transaction_id" id="recordTransactionId">
-                <!-- inside your form, right after the hidden transaction_id -->
                 <input type="hidden" name="payment_method" id="recordPaymentMethodHidden">
 
-                <div class="mb-3">
-                  <label for="paymentMethodRecord" class="form-label">Payment Method</label>
-                  <input type="text" class="form-control" id="paymentMethodRecord" disabled>
-                </div>
+                <div class="row g-3">
+                  <!-- Row 1: Payment Method & Amount Paid -->
+                  <div class="col-md-6">
+                    <label for="paymentMethodRecord" class="form-label fw-bold">Payment Method</label>
+                    <input type="text" class="form-control form-control-sm" id="paymentMethodRecord" disabled>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="amountPaidRecord" class="form-label fw-bold">Amount Paid</label>
+                    <input type="number" step="0.01" class="form-control form-control-sm" id="amountPaidRecord" name="amount_paid" disabled>
+                  </div>
 
-                <div id="refRow" class="mb-3" style="display:none;">
-                  <label for="referenceNumberRecord" class="form-label">Reference Number</label>
-                  <input type="text" class="form-control" id="referenceNumberRecord" name="reference_number" placeholder="Enter Reference Number">
-                </div>
+                  <!-- Row 2: OR Number & Issued Date -->
+                  <div class="col-md-6">
+                    <label for="orNumberRecord" class="form-label fw-bold">OR Number</label>
+                    <input type="text" class="form-control form-control-sm" id="orNumberRecord" name="or_number" placeholder="Enter OR Number" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="issuedDateRecord" class="form-label fw-bold">Issued Date</label>
+                    <input type="date" class="form-control form-control-sm" id="issuedDateRecord" name="issued_date" required>
+                  </div>
 
-                <div class="mb-3">
-                  <label for="orNumberRecord" class="form-label">OR Number</label>
-                  <input type="text" class="form-control" id="orNumberRecord" name="or_number" placeholder="Enter OR Number" required>
-                </div>
-
-                <div class="mb-3">
-                  <label for="amountPaidRecord" class="form-label">Amount Paid</label>
-                  <input type="number" step="0.01" class="form-control" id="amountPaidRecord" name="amount_paid" placeholder="Enter Amount Paid" required>
-                </div>
-
-                <div class="mb-3">
-                  <label for="issuedDateRecord" class="form-label">Issued Date</label>
-                  <input type="date" class="form-control" id="issuedDateRecord" name="issued_date" required>
+                  <!-- Row 3: Reference Number (GCash only) -->
+                  <div class="col-md-6" id="refRow" style="display:none;">
+                    <label for="referenceNumberRecord" class="form-label fw-bold">Reference Number</label>
+                    <input type="text" class="form-control form-control-sm" id="referenceNumberRecord" name="reference_number" placeholder="Enter Reference Number">
+                  </div>
                 </div>
               </div>
+
+              <!-- Footer -->
               <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn btn-primary">Save Payment</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-success btn-sm">Save Payment</button>
               </div>
             </form>
           </div>
@@ -1156,12 +1190,8 @@ $result = $st->get_result();
 
               <!-- Footer -->
               <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                  Cancel
-                </button>
-                <button type="submit" class="btn btn-danger">
-                  Reject Request
-                </button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-danger">Reject Request</button>
               </div>
             </form>
           </div>
@@ -1259,9 +1289,15 @@ $result = $st->get_result();
                     ?>
                     <?php if (in_array($currentRole, ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper'], true)): ?>
                     <!-- Print -->
-                    <button type="button" class="btn btn-sm btn-warning request-btn-print" title="Print <?= $tid ?>"
-                      <?= $canPrint ? '' : 'disabled' ?>>
+                    <!-- <button type="button" class="btn btn-sm btn-warning request-btn-print" title="Print <?= $tid ?>"
+                      <= $canPrint ? '' : 'disabled' ?>>
                       <span class="material-symbols-outlined" style="font-size:13px">print</span>
+                    </button> -->
+
+                    <!-- View -->
+                    <button type="button" class="btn btn-sm btn-warning request-btn-view" title="View <?= $tid ?>"
+                      <?= $canPrint ? '' : 'disabled' ?>>
+                      <span class="material-symbols-outlined" style="font-size:13px">visibility</span>
                     </button>
 
                     <!-- Edit -->
@@ -1400,17 +1436,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  document.addEventListener('click', (e) => {
-    const btn = e.target.closest('.request-btn-print');
-    if (!btn) return;
+  // document.addEventListener('click', (e) => {
+  //   const btn = e.target.closest('.request-btn-print');
+  //   if (!btn) return;
 
-    // grab the transaction ID from the row
-    const row = btn.closest('tr');
-    const tid = row.dataset.id;  // you already set data-id="<=? $tid ?>"
+  //   // grab the transaction ID from the row
+  //   const row = btn.closest('tr');
+  //   const tid = row.dataset.id;  // you already set data-id="<=? $tid ?>"
 
-    // open the certificate page in a new tab (auto-prints)
-    window.open(`functions/print_certificate.php?transaction_id=${encodeURIComponent(tid)}`, '_blank');
-  });
+  //   // open the certificate page in a new tab (auto-prints)
+  //   window.open(`functions/print_certificate.php?transaction_id=${encodeURIComponent(tid)}`, '_blank');
+  // });
 
   const recordModal = new bootstrap.Modal('#recordModal');
   const tidInput = document.getElementById('recordTransactionId');
@@ -1485,7 +1521,8 @@ document.addEventListener('DOMContentLoaded', () => {
     fetch('functions/update_document_status.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `transaction_id=${encodeURIComponent(pendingTid)}&request_type=${encodeURIComponent(pendingType)}`
+      body: `transaction_id=${encodeURIComponent(pendingTid)}&request_type=${encodeURIComponent(pendingType)}
+      &admin_id=${encodeURIComponent(adminId)}` // not yet final
     })
     .then(res => res.text())
     .then(response => {
@@ -1583,6 +1620,39 @@ document.addEventListener('DOMContentLoaded', () => {
       // 6) show the modal
       editModal.show();
     });
+  });
+
+    // --- View Preview for Requests ---
+  const viewReqModalEl = document.getElementById('viewRequestModal');
+  const viewReqModal = new bootstrap.Modal(viewReqModalEl);
+  const previewReqFrame = document.getElementById('requestPreviewFrame');
+  const printReqBtn = document.getElementById('printRequestBtn');
+  const downloadReqPDF = document.getElementById('downloadRequestPDF');
+
+  document.querySelectorAll('.request-btn-view').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tid = btn.closest('tr').dataset.id;
+      // the endpoint that renders the printable certificate
+      const baseUrl = `functions/print_certificate.php?transaction_id=${encodeURIComponent(tid)}`;
+
+      // set the iframe preview
+      previewReqFrame.src = baseUrl;
+
+      // set Download link
+      downloadReqPDF.href = baseUrl + '&download=1';
+
+      // set Print button
+      printReqBtn.onclick = () => {
+        window.open(baseUrl + '&print=1', '_blank');
+      };
+
+      viewReqModal.show();
+    });
+  });
+
+  // clear iframe on close
+  viewReqModalEl.addEventListener('hidden.bs.modal', () => {
+    previewReqFrame.src = '';
   });
 });
 </script>

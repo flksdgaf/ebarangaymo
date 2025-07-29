@@ -76,9 +76,7 @@ switch ($requestType) {
     $birthDate             = $_POST['barangay_id_dob'];
     $birthPlace            = trim($_POST['barangay_id_birth_place']);
     $civilStatus           = $_POST['barangay_id_civil_status'];
-    $religion              = $_POST['barangay_id_religion']==='Other'
-                              ? $_POST['barangay_id_religion_other']
-                              : $_POST['barangay_id_religion'];
+    $religion = $_POST['barangay_id_religion'] === 'Other' ? $_POST['barangay_id_religion_other'] : $_POST['barangay_id_religion'];
     $height                = (float)$_POST['barangay_id_height'];
     $weight                = (float)$_POST['barangay_id_weight'];
     $contactPerson         = trim($_POST['barangay_id_emergency_contact_person']);
@@ -111,7 +109,7 @@ switch ($requestType) {
     ";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param(
-      'ssssssddssss',
+      'sssssssddssss',
       $transactionType,
       $fullName,
       $purok,

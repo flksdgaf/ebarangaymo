@@ -58,8 +58,8 @@ $updateStmt->close();
 $insertStmt = $conn->prepare("
   INSERT INTO transaction_history (
     transaction_id, full_name, request_type, payment_method,
-    amount_paid, issued_date,
-    action_type, action_details) VALUES (?, ?, ?, ?, NULL, NULL, 'Rejected', ?)
+    amount_paid, issued_date, 
+    action_details) VALUES (?, ?, ?, ?, NULL, NULL, ?)
 ");
 $insertStmt->bind_param("sssss", $transactionId, $fullName, $requestType, $paymentMethod, $reason);
 $insertStmt->execute();

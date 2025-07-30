@@ -39,3 +39,5 @@ TO DO LIST:
 (DOCUMENT REQUEST TAB)
 - fix walk-in and online
 - fix edit button
+
+errors for view of request and katarungan tabs - need to do today!

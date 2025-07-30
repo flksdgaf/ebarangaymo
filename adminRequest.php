@@ -1096,6 +1096,7 @@ $result = $st->get_result();
               <div class="modal-body">
                 <input type="hidden" name="transaction_id" id="recordTransactionId">
                 <input type="hidden" name="payment_method" id="recordPaymentMethodHidden">
+                <input type="hidden" name="amount_paid" id="amountPaidHidden">
 
                 <div class="row g-3">
                   <!-- Row 1: Payment Method & Amount Paid -->
@@ -1295,7 +1296,7 @@ $result = $st->get_result();
                     </button> -->
 
                     <!-- View -->
-                    <button type="button" class="btn btn-sm btn-warning request-btn-view" title="View <?= $tid ?>"
+                    <button type="button" class="btn btn-sm btn-warning request-btn-view" data-id="<?= htmlspecialchars($row['transaction_id']) ?>" title="View <?= $tid ?>"
                       <?= $canPrint ? '' : 'disabled' ?>>
                       <span class="material-symbols-outlined" style="font-size:13px">visibility</span>
                     </button>
@@ -1455,8 +1456,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const refRow = document.getElementById('refRow');
   const refInput = document.getElementById('referenceNumberRecord');
   const orInput = document.getElementById('orNumberRecord');
-  const issuedInput= document.getElementById('issuedDateRecord');
+  const issuedInput = document.getElementById('issuedDateRecord');
   const amtInput = document.getElementById('amountPaidRecord');
+  const amtHidden = document.getElementById('amountPaidHidden');
 
   document.querySelectorAll('.request-record-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1470,18 +1472,23 @@ document.addEventListener('DOMContentLoaded', () => {
       tidInput.value = tid;
       pmInput.value = pm;
       pmHidden.value = pm; // ensure it submits
-      refInput.value = ref;
+
+      amtInput.value = amt; // clear old amount
+      amtHidden.value = amt;
+
       orInput.value = or;
       issuedInput.value = '';
-      amtInput.value = amt; // clear old amount
 
       // toggle GCash reference field
       if (pm === 'GCash') {
         refRow.style.display = 'block';
         refInput.required = true;
+        refInput.value = ref;
+
       } else {
         refRow.style.display = 'none';
         refInput.required = false;
+        refInput.value = '';
       }
 
       recordModal.show();
@@ -1622,7 +1629,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-    // --- View Preview for Requests ---
+  // --- View Preview for Requests ---
   const viewReqModalEl = document.getElementById('viewRequestModal');
   const viewReqModal = new bootstrap.Modal(viewReqModalEl);
   const previewReqFrame = document.getElementById('requestPreviewFrame');
@@ -1631,7 +1638,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.querySelectorAll('.request-btn-view').forEach(btn => {
     btn.addEventListener('click', () => {
-      const tid = btn.closest('tr').dataset.id;
+      // const tid = btn.closest('tr').dataset.id;
+      const tid = btn.getAttribute('data-id');
+
       // the endpoint that renders the printable certificate
       const baseUrl = `functions/print_certificate.php?transaction_id=${encodeURIComponent(tid)}`;
 

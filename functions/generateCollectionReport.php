@@ -18,7 +18,7 @@ if (!$from || !$to || $type === '') {
 if (strtolower($type) === 'all') {
     $stmt = $conn->prepare("
         SELECT or_number, full_name, request_type, amount_paid, issued_date
-        FROM official_receipt_records
+        FROM view_transaction_history
         WHERE issued_date BETWEEN ? AND ?
         ORDER BY issued_date ASC, or_number ASC
     ");
@@ -26,7 +26,7 @@ if (strtolower($type) === 'all') {
 } else {
     $stmt = $conn->prepare("
         SELECT or_number, full_name, request_type, amount_paid, issued_date
-        FROM official_receipt_records
+        FROM view_transaction_history
         WHERE issued_date BETWEEN ? AND ? AND request_type = ?
         ORDER BY issued_date ASC, or_number ASC
     ");

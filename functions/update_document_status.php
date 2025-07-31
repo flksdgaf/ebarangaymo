@@ -28,14 +28,50 @@ if (!isset($typeMap[$requestType])) {
 
 $table = $typeMap[$requestType];
 
-$stmt = $conn->prepare("UPDATE `$table` SET document_status = 'Released' WHERE transaction_id = ?");
-$stmt->bind_param('s', $transactionId);
-if ($stmt->execute()) {
-  echo 'success';
-} else {
+// $stmt = $conn->prepare("UPDATE `$table` SET document_status = 'Released' WHERE transaction_id = ?");
+// $stmt->bind_param('s', $transactionId);
+// if ($stmt->execute()) {
+//   echo 'success';
+// } else {
+//   http_response_code(500);
+//   echo 'Failed to update';
+// }
+// $stmt->close();
+// $conn->close();
+
+// ── 1) Update the document_status ────────────────────────────
+$update = $conn->prepare("UPDATE `$table` SET document_status = 'Released' WHERE transaction_id = ?");
+$update->bind_param('s', $transactionId);
+
+if (! $update->execute()) {
   http_response_code(500);
   echo 'Failed to update';
+  exit;
 }
-$stmt->close();
+$update->close();
+
+// ── 2) Get full name from view_request ───────────────────────
+$fetch = $conn->prepare("SELECT full_name FROM view_request WHERE transaction_id = ?");
+$fetch->bind_param('s', $transactionId);
+$fetch->execute();
+$result = $fetch->get_result();
+
+$fullName = '';
+if ($result && $row = $result->fetch_assoc()) {
+  $fullName = $row['full_name'];
+}
+$fetch->close();
+
+// ── 3) Insert into transaction_history ───────────────────────
+$log = $conn->prepare(
+  "INSERT INTO transaction_history (transaction_id, full_name, request_type, action_details)
+   VALUES (?, ?, ?, 'Released')"
+);
+$log->bind_param('sss', $transactionId, $fullName, $requestType);
+$log->execute();
+$log->close();
+
+// ── 4) Done ──────────────────────────────────────────────────
+echo 'success';
 $conn->close();
 ?>

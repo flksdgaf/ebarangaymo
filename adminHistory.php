@@ -29,9 +29,9 @@ if ($requestType) {
   $bindParams[]   = $requestType;
 }
 
-// Filter by issued_date
+// Filter by sort_date
 if ($date_from && $date_to) {
-  $whereClauses[] = 'DATE(issued_date) BETWEEN ? AND ?';
+  $whereClauses[] = 'DATE(sort_date) BETWEEN ? AND ?';
   $bindTypes     .= 'ss';
   $bindParams[]   = $date_from;
   $bindParams[]   = $date_to;
@@ -51,17 +51,32 @@ $whereSQL = $whereClauses
   : '';
 
 // ── QUERY FROM view_history ─────────────────────────────────────────────────────
+// $sql = "
+//   SELECT
+//     transaction_id,
+//     full_name,
+//     request_type,
+//     amount_paid,
+//     or_number,     
+//     issued_date
+//   FROM view_transaction_history
+//   {$whereSQL}
+//   ORDER BY issued_date DESC
+// ";
+
 $sql = "
   SELECT
     transaction_id,
     full_name,
     request_type,
     amount_paid,
-    or_number,     
-    issued_date
+    or_number,
+    issued_date,
+    action,
+    sort_date
   FROM view_transaction_history
   {$whereSQL}
-  ORDER BY issued_date DESC
+  ORDER BY sort_date ASC
 ";
 
 $stmt = $conn->prepare($sql);
@@ -97,6 +112,7 @@ $result = $stmt->get_result();
             <th>Amount Paid</th>
             <th>OR Number</th>   
             <th>Issued Date</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -106,9 +122,10 @@ $result = $stmt->get_result();
                 <td><?= htmlspecialchars($row['transaction_id']) ?></td>
                 <td><?= htmlspecialchars($row['full_name']) ?></td>
                 <td><?= htmlspecialchars($row['request_type']) ?></td>
-                <td><?= number_format($row['amount_paid'], 2) ?></td>
+                <td><?= is_null($row['amount_paid']) ? '—' : number_format($row['amount_paid'], 2) ?></td>
                 <td><?= htmlspecialchars($row['or_number'] ?? '—')?></td>
-                <td><?= htmlspecialchars($row['issued_date'] ?? '—') ?></td>
+                <td><?= htmlspecialchars($row['sort_date'] ?? '—') ?></td>
+                <td><?= htmlspecialchars($row['action']) ?></td>
               </tr>
             <?php endwhile; ?>
           <?php else: ?>

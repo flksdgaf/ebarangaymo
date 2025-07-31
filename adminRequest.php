@@ -10,7 +10,7 @@ $currentRole = $_SESSION['loggedInUserRole'] ?? '';
 
 // New Walk-In requests are considered ones that are in "Processing"
 $walkInCount = (int) $conn->query(
-  "SELECT COUNT(*) FROM view_request WHERE ((request_source  = 'Walk-In' AND payment_method = 'Over-the-Counter') OR (request_source  = 'Online' AND payment_method = 'Over-the-Counter')) AND document_status = 'For Verification'"
+  "SELECT COUNT(*) FROM view_request WHERE ((request_source  = 'Walk-In' AND payment_method = 'Over-the-Counter' OR payment_method IS NULL) OR (request_source  = 'Online' AND payment_method = 'Over-the-Counter' OR payment_method IS NULL)) AND document_status = 'For Verification'"
 )->fetch_row()[0];
 
 // New Online requests are considered ones that are in "For Verification"
@@ -117,7 +117,7 @@ if ($processing_type !== '' && $processing_type !== 'Official Receipt Logs') {
   switch ($processing_type) {
     case 'Walk-In':
       // Over-the-counter pane: show only Walk-In source & method
-      $whereClauses[] = "((r.request_source = 'Walk-In' AND r.payment_method = 'Over-the-Counter') OR (r.request_source = 'Online' AND r.payment_method = 'Over-the-Counter'))";
+      $whereClauses[] = "((r.request_source = 'Walk-In' AND r.payment_method = 'Over-the-Counter' OR r.payment_method IS NULL) OR (r.request_source = 'Online' AND r.payment_method = 'Over-the-Counter' OR r.payment_method IS NULL))";
       break;
     case 'Online':
       // GCash pane: only Online source & GCash method
@@ -1264,7 +1264,7 @@ $result = $st->get_result();
             </tr>
           </thead>
           <tbody>
-            <?php $qr = "SELECT v.transaction_id, v.request_type, v.full_name, o.payment_method, o.or_number, o.amount_paid, o.issued_date FROM view_request AS v JOIN official_receipt_records AS o ON v.transaction_id = o.transaction_id ORDER BY o.issued_date DESC ";
+            <?php $qr = "SELECT v.transaction_id, v.request_type, v.full_name, o.payment_method, o.or_number, o.amount_paid, o.issued_date FROM view_request AS v JOIN official_receipt_records AS o ON v.transaction_id = o.transaction_id ORDER BY o.issued_date ASC ";
               $resLogs = $conn->query($qr);
               if ($resLogs->num_rows):
                 while ($r = $resLogs->fetch_assoc()):
@@ -1346,13 +1346,28 @@ $result = $st->get_result();
                   <?php if (!empty($perms) || $currentRole === 'Brgy Treasurer'): ?>
                     <td class="text-center">
                       <?php
-                        $isPaid = ($row['payment_status'] === 'Paid');
+                        // $isIndigency = ($row['request_type'] === 'Indigency');
+                        // $isPaid = ($row['payment_status'] === 'Paid');
+                        // $isReady = ($row['document_status'] === 'Ready to Release');
+                        // $isRejected = ($row['document_status'] === 'Rejected');
+                        // $canPrint = in_array('print', $perms, true) && $isPaid;
+                        // $canProceed = in_array('proceed', $perms, true) && $isPaid && $isReady;
+                        // $canEdit = in_array('edit', $perms, true);
+                        // $canReject = in_array('reject', $perms, true) && !$isPaid && ! $isReady && !$isRejected; 
+                        // $canView = $isIndigency || $canPrint;
+
+                        $isIndigency = ($row['request_type'] === 'Indigency');
+                        $hasPaid = ($row['payment_status'] === 'Paid');
+                        $isPaidOrFree = $hasPaid || $isIndigency;
                         $isReady = ($row['document_status'] === 'Ready to Release');
                         $isRejected = ($row['document_status'] === 'Rejected');
-                        $canPrint = in_array('print', $perms, true) && $isPaid;
-                        $canProceed = in_array('proceed', $perms, true) && $isPaid && $isReady;
+
+                        // permissions
+                        $canView = in_array('print', $perms, true) && $isPaidOrFree || $isIndigency; // always allow view on Indigency
+                        $canPrint = in_array('print', $perms, true) && $isPaidOrFree;
+                        $canProceed = in_array('proceed', $perms, true) && $isPaidOrFree && $isReady;
                         $canEdit = in_array('edit', $perms, true);
-                        $canReject = in_array('reject', $perms, true) && !$isPaid && ! $isReady && !$isRejected; 
+                        $canReject = in_array('reject',  $perms, true) && ! $isPaidOrFree && ! $isReady && ! $isRejected;
                       ?>
                       <?php if (in_array($currentRole, ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper'], true)): ?>
                       <!-- Print -->
@@ -1362,8 +1377,13 @@ $result = $st->get_result();
                       </button> -->
 
                       <!-- View -->
-                      <button type="button" class="btn btn-sm btn-warning request-btn-view" data-id="<?= htmlspecialchars($row['transaction_id']) ?>" title="View <?= $tid ?>"
-                        <?= $canPrint ? '' : 'disabled' ?>>
+                      <!-- <button type="button" class="btn btn-sm btn-warning request-btn-view" data-id="<= htmlspecialchars($row['transaction_id']) ?>" title="View <= $tid ?>"
+                        <= $canView ? '' : 'disabled' ?>>
+                        <span class="material-symbols-outlined" style="font-size:13px">visibility</span>
+                      </button> -->
+
+                      <button type="button" class="btn btn-sm btn-warning request-btn-view" data-id="<?= $tid ?>" title="View <?= $tid ?>"
+                        <?= $canView ? '' : 'disabled' ?>>
                         <span class="material-symbols-outlined" style="font-size:13px">visibility</span>
                       </button>
 
@@ -1715,12 +1735,32 @@ document.addEventListener('DOMContentLoaded', () => {
       previewReqFrame.src = baseUrl;
 
       // set Download link
-      downloadReqPDF.href = baseUrl + '&download=1';
+      // downloadReqPDF.href = baseUrl + '&download=1';
+
+      downloadReqPDF.onclick = () => {
+        downloadReqPDF.href = baseUrl + '&download=1';
+
+        // Optional: Add delay so it starts download before alert
+        setTimeout(() => {
+          alert(`Saved as PDF successfully for ${tid}`);
+          location.reload(); // Refresh the page
+        }, 300);
+      };
 
       // set Print button
+      // printReqBtn.onclick = () => {
+      //   window.open(baseUrl + '&print=1', '_blank');
+      // };
+      
       printReqBtn.onclick = () => {
-        window.open(baseUrl + '&print=1', '_blank');
-      };
+      window.open(baseUrl + '&print=1');
+
+      // Optional: Add delay so it opens before alert
+      setTimeout(() => {
+        alert(`Printed successfully for ${tid}`);
+        location.reload(); // Refresh the page after alert
+      }, 300);
+    };
 
       viewReqModal.show();
     });

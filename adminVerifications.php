@@ -71,7 +71,7 @@ if ($res0) {
           </thead>
           <tbody id="requestsTbody">
             <?php if (empty($initial)): ?>
-              <tr><td colspan="7">No pending requests</td></tr>
+              <tr><td colspan="7" class="text-center">No pending requests</td></tr>
             <?php else: ?>
               <?php foreach ($initial as $row):
                 $fmt = date("F d, Y - h:i A", strtotime($row['time_creation']));

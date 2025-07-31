@@ -222,6 +222,7 @@ $reportTypes = ['All','Barangay ID', 'Business Permit', 'Good Moral', 'Guardians
     </div>
 
   </div>
+</div>
 
   <script>
     // Resident PDF generation
@@ -292,12 +293,3 @@ $reportTypes = ['All','Barangay ID', 'Business Permit', 'Good Moral', 'Guardians
       window.open(url, 'OfficialReceiptReportWindow', 'width=1000,height=800,resizable=yes,scrollbars=yes');
     });
   </script>
-
-
-
-
-
-
-</div>
-
-

@@ -57,11 +57,10 @@ $updateStmt->close();
 // 4. Insert rejection into transaction_history
 $insertStmt = $conn->prepare("
   INSERT INTO transaction_history (
-    transaction_id, full_name, request_type, payment_method,
-    amount_paid, issued_date, 
-    action_details) VALUES (?, ?, ?, ?, NULL, NULL, ?)
+    transaction_id, full_name, request_type, 
+    action_details) VALUES (?, ?, ?, ?)
 ");
-$insertStmt->bind_param("sssss", $transactionId, $fullName, $requestType, $paymentMethod, $reason);
+$insertStmt->bind_param("ssss", $transactionId, $fullName, $requestType, $reason);
 $insertStmt->execute();
 $insertStmt->close();
 

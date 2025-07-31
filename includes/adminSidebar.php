@@ -87,7 +87,7 @@ $menuItems = [
     'label' => 'Transaction History',
     'icon' => 'history',
     'href' => 'adminHistory.php',
-    'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Treasurer']
+    'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad'] //,'Brgy Treasurer'
   ],
   [
     'id' => 'adminTransactions',

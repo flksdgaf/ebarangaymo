@@ -10,16 +10,16 @@ $currentRole = $_SESSION['loggedInUserRole'] ?? '';
 
 // New Walk-In requests are considered ones that are in "Processing"
 $walkInCount = (int) $conn->query(
-  "SELECT COUNT(*) FROM view_request WHERE request_source = 'Walk-In' AND payment_method = 'Walk-In' AND document_status = 'Processing'"
+  "SELECT COUNT(*) FROM view_request WHERE ((request_source  = 'Walk-In' AND payment_method = 'Over-the-Counter') OR (request_source  = 'Online' AND payment_method = 'Over-the-Counter')) AND document_status = 'For Verification'"
 )->fetch_row()[0];
 
 // New Online requests are considered ones that are in "For Verification"
 $onlineCount = (int) $conn->query(
-  "SELECT COUNT(*) FROM view_request WHERE request_source = 'Online' AND payment_method = 'GCash' AND document_status = 'Processing' OR document_status = 'For Verification'"
+  "SELECT COUNT(*) FROM view_request WHERE request_source = 'Online' AND payment_method = 'GCash' AND (document_status = 'Processing' OR document_status = 'For Verification')"
 )->fetch_row()[0];
 
 $brgyPaymentDevice = (int) $conn->query(
-  "SELECT COUNT(*) FROM view_request WHERE request_source = 'Online' AND payment_method = 'Brgy Payment Device' AND document_status = 'Processing' OR document_status = 'For Verification'"
+  "SELECT COUNT(*) FROM view_request WHERE request_source = 'Online' AND payment_method = 'Brgy Payment Device' AND (document_status = 'Processing' OR document_status = 'For Verification')"
 )->fetch_row()[0];
 
 // what each role is allowed to do on the request page
@@ -32,11 +32,6 @@ $rolePermissions = [
 ];
 $perms = $rolePermissions[$currentRole] ?? [];
 
-// $fullAccessRoles = ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper'];
-// $viewOnlyRoles  = ['Brgy Kagawad'];
-// $treasurerRoles = ['Brgy Treasurer'];
-// $allRoles = array_merge($fullAccessRoles, $viewOnlyRoles, $treasurerRoles);
-
 // FILTER SETUP
 $request_type = $_GET['request_type'] ?? '';
 $date_from = $_GET['date_from'] ?? '';
@@ -45,8 +40,7 @@ $payment_method = $_GET['payment_method'] ?? '';
 $payment_status = $_GET['payment_status'] ?? '';
 $document_status = $_GET['document_status'] ?? '';
 
-// Normalize and default to "Walk-In" if no source is specified
-// $validSources = ['Walk-In','Online'];
+// Sources
 $validSources = ['Walk‑In','Online','Brgy Payment Device','Official Receipt Logs'];
 $processing_type = $_GET['request_source'] ?? 'Walk-In';
 if (! in_array($processing_type, $validSources, true)) {
@@ -113,10 +107,27 @@ if ($date_from && $date_to) {
 //   $bindParams[] = $processing_type;
 // }
 
+// if ($processing_type !== '' && $processing_type !== 'Official Receipt Logs') {
+//   $whereClauses[] = "request_source = ?";
+//   $bindTypes .= 's';
+//   $bindParams[] = $processing_type;
+// }
+
 if ($processing_type !== '' && $processing_type !== 'Official Receipt Logs') {
-  $whereClauses[] = "request_source = ?";
-  $bindTypes .= 's';
-  $bindParams[] = $processing_type;
+  switch ($processing_type) {
+    case 'Walk-In':
+      // Over-the-counter pane: show only Walk-In source & method
+      $whereClauses[] = "((r.request_source = 'Walk-In' AND r.payment_method = 'Over-the-Counter') OR (r.request_source = 'Online' AND r.payment_method = 'Over-the-Counter'))";
+      break;
+    case 'Online':
+      // GCash pane: only Online source & GCash method
+      $whereClauses[] = "r.request_source = 'Online' AND r.payment_method = 'GCash'";
+      break;
+    case 'Brgy Payment Device':
+      // Brgy device pane: still Online source, but filter payment_method
+      $whereClauses[] = "r.request_source = 'Online' AND r.payment_method = 'Brgy Payment Device'";
+      break;
+  }
 }
 
 if (
@@ -234,7 +245,7 @@ $result = $st->get_result();
     <li class="nav-item">
       <a href="?<?= http_build_query(array_merge($_GET, ['request_source'=>'Walk-In','request_page'=>1])) ?>"
         class="nav-link <?= $processing_type==='Walk-In' ? 'active' : '' ?>">
-        Over-the-Counter <!-- <span class="badge bg-secondary"><= $walkInCount ?></span> -->
+        Over-the-Counter <span class="badge bg-secondary"><?= $walkInCount ?></span>
       </a>
     </li>
     <li class="nav-item">
@@ -344,24 +355,24 @@ $result = $st->get_result();
 
       <!-- Add New Request button -->
       <?php if ($processing_type === 'Walk-In'): ?>
-        <div class="dropdown ms-3">
-          <!-- <php if (in_array($currentRole, ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper'])): ?> -->
-          <?php if (in_array('add', $perms, true)): ?>
+        <?php if (in_array('add', $perms, true)): ?>
+          <div class="dropdown ms-3">
+            <!-- <php if (in_array($currentRole, ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper'])): ?> -->
             <button class="btn btn-sm btn-success dropdown-toggle" type="button" id="addRequestDropdown" data-bs-toggle="dropdown" aria-expanded="false">
               <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">add</span>
               Add New Request
             </button>
-          <?php endif; ?>
-          <!-- <php endif; ?> -->
-          
-          <ul class="dropdown-menu" aria-labelledby="addRequestDropdown">
-            <?php foreach (['Barangay ID','Business Permit','Good Moral','Guardianship','Indigency','Residency','Solo Parent'] as $type): ?> <!-- 'Equipment Borrowing' -->
-              <li>
-                <button type="button" class="dropdown-item request-trigger" data-type="<?= $type ?>"><?= $type ?></button>
-              </li>
-            <?php endforeach; ?>
-          </ul>
-        </div>
+            <!-- <php endif; ?> -->
+            
+            <ul class="dropdown-menu" aria-labelledby="addRequestDropdown">
+              <?php foreach (['Barangay ID','Business Permit','Good Moral','Guardianship','Indigency','Residency','Solo Parent'] as $type): ?> <!-- 'Equipment Borrowing' -->
+                <li>
+                  <button type="button" class="dropdown-item request-trigger" data-type="<?= $type ?>"><?= $type ?></button>
+                </li>
+              <?php endforeach; ?>
+            </ul>
+          </div>
+        <?php endif; ?>
       <?php endif; ?>
 
       <?php if ($processing_type !== ''): ?>
@@ -1345,7 +1356,7 @@ $result = $st->get_result();
                       ?>
                       <?php if (in_array($currentRole, ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper'], true)): ?>
                       <!-- Print -->
-                      <!-- <button type="button" class="btn btn-sm btn-warning request-btn-print" title="Print <?= $tid ?>"
+                      <!-- <button type="button" class="btn btn-sm btn-warning request-btn-print" title="Print <= $tid ?>"
                         <= $canPrint ? '' : 'disabled' ?>>
                         <span class="material-symbols-outlined" style="font-size:13px">print</span>
                       </button> -->

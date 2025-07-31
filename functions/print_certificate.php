@@ -85,10 +85,23 @@ $rowStmt->close();
 
 // 4.5) Update document_status to 'Released' (or another appropriate status)
 // $updateStmt = $conn->prepare("UPDATE `$table` SET document_status = 'Ready to Release' WHERE transaction_id = ?");
-$updateStmt = $conn->prepare("UPDATE `$table` SET document_status = 'Ready to Release' WHERE transaction_id = ? AND document_status <> 'Released'");
-$updateStmt->bind_param('s', $transactionId);
-$updateStmt->execute();
-$updateStmt->close();
+// $updateStmt = $conn->prepare("UPDATE `$table` SET document_status = 'Ready to Release' WHERE transaction_id = ? AND document_status <> 'Released'");
+// $updateStmt->bind_param('s', $transactionId);
+// $updateStmt->execute();
+// $updateStmt->close();
+
+if ((isset($_GET['print']) && $_GET['print']=='1') || (isset($_GET['download']) && $_GET['download']=='1')) {
+  $updateStmt = $conn->prepare(
+    "UPDATE `$table`
+        SET document_status = 'Ready to Release'
+      WHERE transaction_id = ?
+        AND document_status <> 'Released'"
+  );
+  $updateStmt->bind_param('s', $transactionId);
+  $updateStmt->execute();
+  $updateStmt->close();
+}
+
 
 // 5) Derive template name from table: drop '_requests' suffix
 $templateName = str_replace('_requests', '', $table);

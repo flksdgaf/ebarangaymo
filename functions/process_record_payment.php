@@ -31,25 +31,6 @@ $ins->execute();
 $ins->close();
 
 // 3) Mark the original request paid
-// Map request_type → table
-// $typeMap = [
-//   'Barangay ID' => 'barangay_id_requests',
-//   'Business Permit' => 'business_permit_requests',
-//   'Good Moral' => 'good_moral_requests',
-//   'Guardianship' => 'guardianship_requests',
-//   'Indigency' => 'indigency_requests',
-//   'Residency' => 'residency_requests',
-//   'Solo Parent' => 'solo_parent_requests',
-// ];
-
-// $table = $typeMap[$requestType] ?? null;
-// if ($table) {
-//   $upd = $conn->prepare("UPDATE `$table` SET payment_status='Paid' WHERE transaction_id = ?");
-//   $upd->bind_param('s',$tid);
-//   $upd->execute();
-//   $upd->close();
-// }
-
 if (! $alreadyPaid) {
   $typeMap = [
     'Barangay ID' => 'barangay_id_requests',

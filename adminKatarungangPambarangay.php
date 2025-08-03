@@ -187,6 +187,7 @@ $stmt->close();
                 <option <?= $complaint_stage==='Unang Patawag' ? 'selected' : '' ?> value="Unang Patawag">Unang Patawag</option>
                 <option <?= $complaint_stage==='Ikalawang Patawag' ? 'selected' : '' ?> value="Ikalawang Patawag">Ikalawang Patawag</option>
                 <option <?= $complaint_stage==='Ikatlong Patawag' ? 'selected' : '' ?> value="Ikatlong Patawag">Ikatlong Patawag</option>
+                <option <?= $complaint_stage==='Municipal Court' ? 'selected' : '' ?> value="Municipal Court">Municipal Court</option>
               </select>
             </div>
 
@@ -290,8 +291,8 @@ $stmt->close();
                           <input type="time" name="scheduled_time_pb" class="form-control form-control-sm" disabled>
                         </div>
                         <div class="col-12 d-flex justify-content-end gap-2">
-                          <a href="#" id="printSummonBtn" target="_blank" class="btn btn-sm btn-primary">
-                            Print Complaint & Summon
+                          <a href="#" id="printSummonBtn" class="btn btn-sm btn-primary">
+                            Preview Complaint & Summon
                           </a>
                         </div>
                       </div>
@@ -321,8 +322,9 @@ $stmt->close();
                         <textarea name="respondent_affidavit_1st" rows="2" class="form-control form-control-sm" disabled></textarea>
                         </div>
                         <div class="col-12 d-flex justify-content-end gap-2">
+                          <button type="button" class="btn btn-sm btn-primary preview-summon-btn" data-stage="Unang Patawag">Preview Summon</button>
                           <button type="button" class="btn btn-sm btn-outline-secondary edit-affidavit-btn" data-stage="1st">Edit</button>
-                          <button type="submit" class="btn btn-sm btn-success save-affidavit-btn d-none" data-stage="1st">Save</button>
+                          <button type="submit" class="btn btn-sm btn-outline-success save-affidavit-btn d-none" data-stage="1st">Save</button>
                           <button type="button" class="btn btn-sm btn-danger cancel-affidavit-btn d-none" data-stage="1st">Cancel</button>
                           <!-- <a href="#" class="btn btn-sm btn-primary print-summon-btn" data-stage="1st">Print Summon</a> -->
                         </div>
@@ -350,8 +352,9 @@ $stmt->close();
                           <textarea name="respondent_affidavit_2nd" rows="2" class="form-control form-control-sm" disabled></textarea>
                         </div>
                         <div class="col-12 d-flex justify-content-end gap-2">
+                          <button type="button" class="btn btn-sm btn-primary preview-summon-btn" data-stage="Ikalawang Patawag">Preview Summon</button>
                           <button type="button" class="btn btn-sm btn-outline-secondary edit-affidavit-btn" data-stage="2nd">Edit</button>
-                          <button type="submit" class="btn btn-sm btn-success save-affidavit-btn d-none" data-stage="2nd">Save</button>
+                          <button type="submit" class="btn btn-sm btn-outline-success save-affidavit-btn d-none" data-stage="2nd">Save</button>
                           <button type="button" class="btn btn-sm btn-danger cancel-affidavit-btn d-none" data-stage="2nd">Cancel</button>
                           <!-- <a href="#" class="btn btn-sm btn-primary print-summon-btn" data-stage="2nd">Print Summon</a> -->
                         </div>
@@ -379,15 +382,20 @@ $stmt->close();
                           <textarea name="respondent_affidavit_3rd" rows="2" class="form-control form-control-sm" disabled></textarea>
                         </div>
                         <div class="col-12 d-flex justify-content-end gap-2">
+                          <button type="button" class="btn btn-sm btn-primary preview-summon-btn" data-stage="Ikatlong Patawag">Preview Summon</button>
                           <button type="button" class="btn btn-sm btn-outline-secondary edit-affidavit-btn" data-stage="3rd">Edit</button>
-                          <button type="submit" class="btn btn-sm btn-success save-affidavit-btn d-none" data-stage="3rd">Save</button>
+                          <button type="submit" class="btn btn-sm btn-outline-success save-affidavit-btn d-none" data-stage="3rd">Save</button>
                           <button type="button" class="btn btn-sm btn-danger cancel-affidavit-btn d-none" data-stage="3rd">Cancel</button>
                           <!-- <a href="#" class="btn btn-sm btn-primary print-summon-btn" data-stage="3rd">Print Summon</a> -->
                         </div>
                       </div>
                     </div>
                   </div>
+                </div>
 
+                <!-- Preview -->
+                <div class="preview-wrapper mt-3" style="display:none; height:400px; border:1px solid #ccc; overflow:hidden;">
+                  <iframe id="summonPreviewFrame" style="width:100%; height:100%; border:none;" src=""></iframe>
                 </div>
               </div>
 
@@ -402,29 +410,34 @@ $stmt->close();
       </div>
 
       <!-- Schedule Next Patawag Modal -->
-      <div class="modal fade" id="scheduleNextModal" tabindex="-1" aria-hidden="true">
+      <div class="modal fade" id="scheduleNextModal" tabindex="-1" aria-labelledby="scheduleNextModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
           <form id="scheduleNextForm" class="modal-content" method="POST" action="functions/process_schedule_katarungang_pambarangay.php">
-            <input type="hidden" name="transaction_id" id="sched_txn">
-            <input type="hidden" name="current_stage" id="sched_current_stage">
-            <div class="modal-header">
-              <h5 class="modal-title">Schedule Next Patawag</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <!-- header -->
+            <div class="modal-header text-white" style="background-color: #13411F;">
+              <h5 class="modal-title" id="scheduleNextModalLabel">Schedule Next Patawag</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
+            <!-- body -->
             <div class="modal-body">
-              <p id="sched_prompt">When should the next Patawag be?</p>
-              <div class="mb-3">
-                <label class="form-label">Date</label>
-                <input type="date" name="next_date" class="form-control" required>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Time</label>
-                <input type="time" name="next_time" class="form-control" required>
+              <input type="hidden" name="transaction_id" id="sched_txn">
+              <input type="hidden" name="current_stage" id="sched_current_stage">
+              <p id="sched_prompt" class="mb-3">When should the next Patawag be?</p>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="next_date" class="form-label">Date</label>
+                  <input id="next_date" name="next_date" type="date" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-md-6">
+                  <label for="next_time" class="form-label">Time</label>
+                  <input id="next_time" name="next_time" type="time" class="form-control form-control-sm" required>
+                </div>
               </div>
             </div>
+            <!-- footer -->
             <div class="modal-footer">
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
               <button type="submit" class="btn btn-success">Save Schedule</button>
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             </div>
           </form>
         </div>
@@ -574,15 +587,19 @@ document.addEventListener('DOMContentLoaded', () => {
       const status = tr.dataset.complaintStatus; 
       const order = ['Punong Barangay', 'Unang Patawag', 'Ikalawang Patawag', 'Ikatlong Patawag'];
       const maxTab = order.indexOf(status);
-      document.querySelectorAll('#summonTab .nav-link').forEach((tabBtn, idx) => {
-        if (idx <= maxTab) {
-          tabBtn.classList.remove('disabled');
-          tabBtn.removeAttribute('aria-disabled');
-        } else {
-          tabBtn.classList.add('disabled');
-          tabBtn.setAttribute('aria-disabled','true');
-        }
+      document.querySelectorAll('#summonTab .nav-link').forEach(tabBtn => {
+        tabBtn.classList.remove('disabled');
+        tabBtn.removeAttribute('aria-disabled');
       });
+      // document.querySelectorAll('#summonTab .nav-link').forEach((tabBtn, idx) => {
+      //   if (idx <= maxTab) {
+      //     tabBtn.classList.remove('disabled');
+      //     tabBtn.removeAttribute('aria-disabled');
+      //   } else {
+      //     tabBtn.classList.add('disabled');
+      //     tabBtn.setAttribute('aria-disabled','true');
+      //   }
+      // });
       // ———————————————————————————————
 
       const master = tr.dataset.masterStatus; // the real complaint_records.complaint_status
@@ -610,6 +627,10 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelector('[name="subject_pb"]').value = tr.dataset.pbSubject || '';
       document.querySelector('[name="scheduled_date_pb"]').value = tr.dataset.pbDate || '';
       document.querySelector('[name="scheduled_time_pb"]').value = tr.dataset.pbTime || '';
+
+      const printBtn = document.getElementById('printSummonBtn');
+      printBtn.dataset.date = tr.dataset.pbDate?.split(' ')[0] || '';
+      printBtn.dataset.time = tr.dataset.pbTime || '';
 
       // grab the raw ISO datetime strings
       const dt1 = tr.dataset['1stDt'];
@@ -781,22 +802,60 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('katarunganForm').submit();
   });
 
-
-  document.getElementById('printSummonBtn').addEventListener('click', function(e) {
-    e.preventDefault();
-
-    const tid  = document.getElementById('edit_katarungan_tid').value;
-    const date = document.querySelector('[name="scheduled_date_pb"]').value;
-    const time = document.querySelector('[name="scheduled_time_pb"]').value;
+  document.querySelector('#tabPB #printSummonBtn').addEventListener('click', () => {
+    const tid   = document.getElementById('edit_katarungan_tid').value;
+    const date  = document.querySelector('#tabPB [name="scheduled_date_pb"]').value;
+    const time  = document.querySelector('#tabPB [name="scheduled_time_pb"]').value;
 
     if (!date || !time) {
-      alert('Schedule date and time are required.');
-      return;
+      return alert('Please fill in the Punong Barangay date & time first.');
     }
 
-    const url = `functions/print_complaint.php?transaction_id=${encodeURIComponent(tid)}&date=${encodeURIComponent(date)}&time=${encodeURIComponent(time)}&stage=Punong Barangay`;
-    window.open(url, '_blank');
+    // build your URL exactly as you already do:
+    const url = `functions/print_complaint.php?transaction_id=${encodeURIComponent(tid)}&date=${encodeURIComponent(date)}&time=${encodeURIComponent(time)}&stage=${encodeURIComponent('Punong Barangay')}`;
+
+    // set the iframe, show the container
+    const preview = document.getElementById('summonPreviewFrame');
+    preview.src = url;
+    document.querySelector('#tabPB .preview-wrapper').style.display = 'block';
   });
 
+  // 1) Hide preview whenever a tab is shown
+  document.querySelectorAll('#summonTab button[data-bs-toggle="tab"]')
+    .forEach(btn => btn.addEventListener('shown.bs.tab', () => {
+      document.querySelector('.preview-wrapper').style.display = 'none';
+      document.getElementById('summonPreviewFrame').src = '';
+    }));
+
+  // 2) Unified click‐handler for all preview buttons
+  document.querySelectorAll('.preview-summon-btn, #printSummonBtn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      const stage = btn.dataset.stage || 'Punong Barangay';
+      const tid   = document.getElementById('edit_katarungan_tid').value;
+      // pick the right inputs based on stage
+      const map = {
+        'Punong Barangay': ['#tabPB input[name="scheduled_date_pb"]', '#tabPB input[name="scheduled_time_pb"]'],
+        'Unang Patawag': ['#tab1st input[name="scheduled_date_1st"]', '#tab1st input[name="scheduled_time_1st"]'],
+        'Ikalawang Patawag': ['#tab2nd input[name="scheduled_date_2nd"]', '#tab2nd input[name="scheduled_time_2nd"]'],
+        'Ikatlong Patawag': ['#tab3rd input[name="scheduled_date_3rd"]', '#tab3rd input[name="scheduled_time_3rd"]'],
+      };
+      const [dSel, tSel] = map[stage];
+      const date = document.querySelector(dSel).value;
+      const time = document.querySelector(tSel).value;
+      if (!date || !time) return alert(`Please fill in the ${stage} date & time first.`);
+      const url = `functions/print_complaint.php?transaction_id=${encodeURIComponent(tid)}&date=${encodeURIComponent(date)}&time=${encodeURIComponent(time)}&stage=${encodeURIComponent(stage)}`;
+      document.querySelector('.preview-wrapper').style.display = 'block';
+      document.getElementById('summonPreviewFrame').src = url;
+    });
+  });
+
+  const editModalEl = document.getElementById('editKatarunganModal');
+  editModalEl.addEventListener('hidden.bs.modal', () => {
+    const wrapper = document.querySelector('.preview-wrapper');
+    const frame = document.getElementById('summonPreviewFrame');
+    frame.src = '';
+    wrapper.style.display = 'none';
+  });
 });
 </script>

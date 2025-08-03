@@ -16,6 +16,9 @@ if (!($_SESSION['auth'] ?? false)) {
 
 // 2) transaction_id
 $tid = $_GET['transaction_id'] ?? '';
+$stage = $_GET['stage'] ?? 'Punong Barangay';
+$dateOverride = $_GET['date'] ?? null;
+$timeOverride = $_GET['time'] ?? null;
 if (!$tid) {
   exit('Missing transaction_id');
 }
@@ -55,7 +58,7 @@ $captainName = '';
 $res = $conn->query("SELECT account_id FROM user_accounts WHERE role = 'Brgy Captain' LIMIT 1");
 if ($res && $row = $res->fetch_assoc()) {
     $captainId = $row['account_id'];
-    $purokTables = ['purok1_rbi', 'purok2_rbi', 'purok3_rbi', 'purok4_rbi', 'purok5_rbi'];
+    $purokTables = ['purok1_rbi', 'purok2_rbi', 'purok3_rbi', 'purok4_rbi', 'purok5_rbi','purok6_rbi'];
     foreach ($purokTables as $table) {
         $stmt = $conn->prepare("SELECT full_name FROM $table WHERE account_id = ? LIMIT 1");
         $stmt->bind_param("i", $captainId);
@@ -122,14 +125,35 @@ $srcA = 'data:image/png;base64,' . $dataA;
 $srcB = 'data:image/png;base64,' . $dataB;
 
 // 5) Format the summon date/time
-$dtRaw = $rec['scheduled_at'] ?? null;
-if ($dtRaw) {
-  $dt = new DateTime($dtRaw);
-  $summonDate = $dt->format('F j, Y');
-  $summonTime = $dt->format('g:i A');
+if ($dateOverride && $timeOverride) {
+  // Use passed values
+  try {
+    $dt = new DateTime("$dateOverride $timeOverride");
+    $summonDate = $dt->format('F j, Y');
+    $summonTime = $dt->format('g:i A');
+  } catch (Exception $e) {
+    $summonDate = $summonTime = '—';
+  }
 } else {
-  $summonDate = $summonTime = '—';
+  // Use fallback from database
+  $dtRaw = $rec['scheduled_at'] ?? null;
+  if ($dtRaw) {
+    $dt = new DateTime($dtRaw);
+    $summonDate = $dt->format('F j, Y');
+    $summonTime = $dt->format('g:i A');
+  } else {
+    $summonDate = $summonTime = '—';
+  }
 }
+
+// $dtRaw = $rec['scheduled_at'] ?? null;
+// if ($dtRaw) {
+//   $dt = new DateTime($dtRaw);
+//   $summonDate = $dt->format('F j, Y');
+//   $summonTime = $dt->format('g:i A');
+// } else {
+//   $summonDate = $summonTime = '—';
+// }
 
 // 5.1) Format Filipino date
 function getFilipinoMonth($monthNumber) {
@@ -142,16 +166,54 @@ function getFilipinoMonth($monthNumber) {
   return $months[(int)$monthNumber] ?? '';
 }
 
-$filDateRaw = $rec['scheduled_at'] ?? null;
-if ($filDateRaw) {
-  $filDateObj = new DateTime($filDateRaw);
+// $filDateRaw = $rec['scheduled_at'] ?? null;
+// if ($filDateRaw) {
+//   $filDateObj = new DateTime($filDateRaw);
+//   $day = $filDateObj->format('j'); // Day without leading zero
+//   $year = $filDateObj->format('Y');
+//   $monthNum = $filDateObj->format('n'); // 1-12
+//   $filipinoMonth = getFilipinoMonth($monthNum);
+//   $formattedFilipinoDate = $day . ' ng ' . $filipinoMonth . '</u>, ' . $year . '</strong>';
+// } else {
+//   $formattedFilipinoDate = 'ika-<u>— ng —</u>, —';
+// }
+
+if ($dateOverride && $timeOverride) {
+  try {
+    $filDateObj = new DateTime("$dateOverride $timeOverride");
+    $day = $filDateObj->format('j');
+    $year = $filDateObj->format('Y');
+    $monthNum = $filDateObj->format('n');
+    $filipinoMonth = getFilipinoMonth($monthNum);
+    $formattedFilipinoDate = $day . ' ng ' . $filipinoMonth . '</u>, ' . $year . '</strong>';
+  } catch (Exception $e) {
+    $formattedFilipinoDate = 'ika-<u>— ng —</u>, —';
+  }
+} else {
+  $filDateRaw = $rec['scheduled_at'] ?? null;
+  if ($filDateRaw) {
+    $filDateObj = new DateTime($filDateRaw);
+    $day = $filDateObj->format('j');
+    $year = $filDateObj->format('Y');
+    $monthNum = $filDateObj->format('n');
+    $filipinoMonth = getFilipinoMonth($monthNum);
+    $formattedFilipinoDate = $day . ' ng ' . $filipinoMonth . '</u>, ' . $year . '</strong>';
+  } else {
+    $formattedFilipinoDate = 'ika-<u>— ng —</u>, —';
+  }
+}
+
+
+$filDateCreated = $rec['created_fmt'] ?? null;
+if ($filDateCreated) {
+  $filDateObj = new DateTime($filDateCreated);
   $day = $filDateObj->format('j'); // Day without leading zero
   $year = $filDateObj->format('Y');
   $monthNum = $filDateObj->format('n'); // 1-12
   $filipinoMonth = getFilipinoMonth($monthNum);
-  $formattedFilipinoDate = $day . ' ng ' . $filipinoMonth . '</u>, ' . $year . '</strong>';
+  $formattedFilipinoDateCreated = $day . ' ng ' . $filipinoMonth . '</u>, ' . $year . '</strong>';
 } else {
-  $formattedFilipinoDate = 'ika-<u>— ng —</u>, —';
+  $formattedFilipinoDateCreated = 'ika-<u>— ng —</u>, —';
 }
 
 // 6) Build the combined HTML
@@ -247,7 +309,7 @@ $html = '
     </div><br>
 
     <div class="section-text">
-      Tinanggap at isinasampa ngayon ika-<u>'. $formattedFilipinoDate .'.
+      Tinanggap at isinasampa ngayon ika-<u>'. $formattedFilipinoDateCreated .'.
     </div>
 
     <div class="footer-captain">
@@ -321,7 +383,7 @@ $html = '
     </div><br>
 
     <div class="section-text">
-      Ngayong ika-'. $formattedFilipinoDate .'.
+      Ngayong ika-'. $formattedFilipinoDateCreated .'.
     </div>
 
     <div class="footer-captain">

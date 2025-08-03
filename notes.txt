@@ -40,8 +40,6 @@ TO DO LIST:
 - fix walk-in and online
 - fix edit button
 
-errors for view of request and katarungan tabs - need to do today!
-
 
 <!-- <php
 // Define database connection details directly

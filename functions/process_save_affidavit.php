@@ -66,6 +66,11 @@ elseif ($action === 'municipal') {
     $stmt->execute();
     $stmt->close();
 
+    $updateStatus = $conn->prepare("UPDATE complaint_records SET complaint_status = 'Unresolved' WHERE transaction_id = ?");
+    $updateStatus->bind_param('s', $txn);
+    $updateStatus->execute();
+    $updateStatus->close();
+
     header("Location: ../adminPanel.php?page=adminComplaints&katarungan_page=$pageNum&cleared_tid=" . urlencode($txn));
     exit;
 }

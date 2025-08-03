@@ -411,8 +411,8 @@ $stmt->close();
 
       <!-- View Blotter Modal -->
       <div class="modal fade" id="viewBlotterModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="viewBlotterModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" style="max-width: 820px; width: 100%;">
-          <div class="modal-content" style="height: auto; display: flex; flex-direction: column;">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 820px; margin: 30px auto;">
+          <div class="modal-content" style="display: flex; flex-direction: column; max-height: calc(100vh - 60px);">
             <!-- Modal Header -->
             <div class="modal-header text-white" style="background-color: #13411F;">
               <h5 class="modal-title" id="viewBlotterModalLabel">Blotter Record Preview</h5>
@@ -420,13 +420,25 @@ $stmt->close();
             </div>
 
             <!-- Modal Body with Preview -->
-            <div style="background-color: #ccc; padding: 20px;">
-              <iframe id="blotterPreviewFrame" style="border: none; width: 100%; height: 1123px; background: #ccc;" src="" allowfullscreen></iframe>
+            <div class="modal-body p-0" style="flex: 1; overflow: hidden;">
+              <div class="preview-container" style="height: 100%; overflow-y: auto; background-color: #ccc; padding: 20px;">
+                <iframe
+                  id="blotterPreviewFrame"
+                  src=""
+                  allowfullscreen
+                  style="width: 100%; height: 500px; border: none;"
+                ></iframe>
+              </div>
             </div>
 
-            <!-- Action Buttons -->
+            <!-- Action Buttons + Print-with-Header Checkbox -->
             <div class="modal-footer justify-content-between px-4 py-2" style="background-color: #f8f9fa;">
-              <span class="text-muted">Preview only — use the buttons below to save or print</span>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="1" id="printWithHeader">
+                <label class="form-check-label" for="printWithHeader">
+                  Include Header
+                </label>
+              </div>
               <div>
                 <button class="btn btn-outline-success me-2" id="printBlotterBtn">
                   <i class="bi bi-printer"></i> Print
@@ -585,46 +597,32 @@ document.addEventListener('DOMContentLoaded', () => {
     form.submit();
   });
 
+  // ADD-BLOTTER modal reset
   const blotterModalEl = document.getElementById('addBlotterModal');
   const blotterForm = document.getElementById('addBlotterForm');
-
-  // Reset all fields when the modal fully hides
   blotterModalEl.addEventListener('hidden.bs.modal', () => {
     blotterForm.reset();
     blotter_toggleRespondent();
   });
-
-  // Your existing wiring
   const blotterModal = new bootstrap.Modal(blotterModalEl);
   document.getElementById('addBlotterBtn').addEventListener('click', () => blotterModal.show());
 
+  // ADD-BLOTTER respondent toggle
   const respCheck = document.getElementById('hasRespondentCheck');
   const respSection = document.getElementById('respondentSection');
-
   function blotter_toggleRespondent() {
     const show = respCheck.checked;
     respSection.style.display = show ? '' : 'none';
     respSection.querySelectorAll('input, select, textarea').forEach(el => el.disabled = !show);
   }
-
-  // wire up change + initialize
   respCheck.addEventListener('change', blotter_toggleRespondent);
   blotter_toggleRespondent();
 
-  // document.querySelectorAll('.blotter-print-btn').forEach(btn => {
-  //   btn.addEventListener('click', () => {
-  //     const tid = btn.getAttribute('data-id');
-  //     window.open('functions/print_blotter.php?transaction_id=' + encodeURIComponent(tid),'_blank');
-  //   });
-  // });
-
-  // 1) Grab Edit modal + form + fields
+  // EDIT-BLOTTER modal wiring
   const editModalEl = document.getElementById('editBlotterModal');
   const editModal = new bootstrap.Modal(editModalEl);
   const editRespCheck = document.getElementById('edit_hasRespondentCheck');
   const editRespSection = document.getElementById('edit_respondentSection');
-
-  // 2) Respondent toggle logic (same as add)
   function edit_toggleRespondent() {
     const show = editRespCheck.checked;
     editRespSection.style.display = show ? '' : 'none';
@@ -633,172 +631,121 @@ document.addEventListener('DOMContentLoaded', () => {
   editRespCheck.addEventListener('change', edit_toggleRespondent);
   edit_toggleRespondent();
 
-  // 3) Wire up all .edit-btn clicks
   document.querySelectorAll('.blotter-edit-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const tr = btn.closest('tr');
       const tid = tr.getAttribute('data-id');
-      // const status = tr.dataset.status;
-
-      // inject transaction_id
       document.getElementById('edit_transaction_id').value = tid;
-      // document.getElementById('edit_blotter_status').value = status;
 
-      // 2) Read the two name‑cells:
-      const clientFull = tr.children[1].textContent.trim(); // e.g. "Doe Jr., John A."
-      const respondentFull = tr.children[2].textContent.trim(); // e.g. "—" or "Smith, Jane"
+      // parse and populate client name
+      const clientFull = tr.children[1].textContent.trim();
+      const respondentFull = tr.children[2].textContent.trim();
 
-      // Helper to parse "Last[ Suffix], First[ Middle]" into parts
       function parseName(full) {
-        // split into [ leftOfComma, rightOfComma ]
-        const [ left = '', right = '' ] = full.split(/\s*,\s*/);
-
-        // --- LAST & SUFFIX ---
-        // left could be “Britos” or “Britos Jr.” etc
+        const [left = '', right = ''] = full.split(/\s*,\s*/);
         const leftWords = left.trim().split(/\s+/);
         const last   = leftWords[0] || '';
         const suffix = leftWords.slice(1).join(' ') || '';
-
-        // --- FIRST & MIDDLE ---
-        // right could be “Kent Gabriel Villariasa”
         const rightWords = right.trim().split(/\s+/);
-        let first = '';
-        let middle = '';
-
-        if (rightWords.length === 0) {
-          // nothing
-        } else if (rightWords.length === 1) {
+        let first = '', middle = '';
+        if (rightWords.length === 1) {
           first = rightWords[0];
-        } else {
-          // everything except last word → first
+        } else if (rightWords.length > 1) {
           first  = rightWords.slice(0, -1).join(' ');
-          // last word → middle
           middle = rightWords.slice(-1)[0];
         }
-
         return { first, middle, last, suffix };
       }
 
-      // 3) Populate client inputs
       const c = parseName(clientFull);
-      document.getElementById('edit_client_first_name').value = c.first;
+      document.getElementById('edit_client_first_name').value  = c.first;
       document.getElementById('edit_client_middle_name').value = c.middle;
-      document.getElementById('edit_client_last_name').value = c.last;
-      document.getElementById('edit_client_suffix').value = c.suffix;
+      document.getElementById('edit_client_last_name').value   = c.last;
+      document.getElementById('edit_client_suffix').value      = c.suffix;
 
-      // 4) Handle respondent checkbox + fields
       if (respondentFull === '—' || respondentFull === '') {
-        // no respondent
         editRespCheck.checked = false;
         edit_toggleRespondent();
-
-        // clear any existing values
-        [
-          'first_name',
-          'middle_name',
-          'last_name',
-          'suffix',
-          'address'
-        ].forEach(key => {
-          document.getElementById(`edit_respondent_${key}`).value = '';
-        });
-
+        ['first_name','middle_name','last_name','suffix','address']
+          .forEach(key => document.getElementById(`edit_respondent_${key}`).value = '');
       } else {
         editRespCheck.checked = true;
         edit_toggleRespondent();
         const r = parseName(respondentFull);
-        document.getElementById('edit_respondent_first_name').value = r.first;
+        document.getElementById('edit_respondent_first_name').value  = r.first;
         document.getElementById('edit_respondent_middle_name').value = r.middle;
-        document.getElementById('edit_respondent_last_name').value = r.last;
-        document.getElementById('edit_respondent_suffix').value = r.suffix;
+        document.getElementById('edit_respondent_last_name').value   = r.last;
+        document.getElementById('edit_respondent_suffix').value      = r.suffix;
       }
 
-      // 5) For the other complaint fields—if you have them in hidden <td>s or data-attributes—
-      // you could do exactly the same: grab their textContent and assign to
-      // document.getElementById('edit_incident_type').value, etc. 
-      document.getElementById('edit_incident_type').value = tr.children[3].textContent.trim();
-      document.getElementById('edit_incident_date').value = tr.getAttribute('data-incident-date');
-      document.getElementById('edit_incident_time').value = tr.getAttribute('data-incident-time');
-      document.getElementById('edit_incident_place').value = tr.getAttribute('data-incident-place');
-      document.getElementById('edit_incident_description').value = tr.getAttribute('data-incident-desc');
-
-      // 5b) Fill in addresses & complaint details:
-      document.getElementById('edit_client_address').value = tr.dataset.clientAddress;
+      // populate other fields from data-attributes
+      document.getElementById('edit_incident_type').value        = tr.children[3].textContent.trim();
+      document.getElementById('edit_incident_date').value        = tr.dataset.incidentDate;
+      document.getElementById('edit_incident_time').value        = tr.dataset.incidentTime;
+      document.getElementById('edit_incident_place').value       = tr.dataset.incidentPlace;
+      document.getElementById('edit_incident_description').value = tr.dataset.incidentDesc;
+      document.getElementById('edit_client_address').value       = tr.dataset.clientAddress;
       if (editRespCheck.checked) {
         document.getElementById('edit_respondent_address').value = tr.dataset.respondentAddress;
       }
-
-      document.getElementById('edit_incident_date').value = tr.dataset.incidentDate;
-      document.getElementById('edit_incident_time').value = tr.dataset.incidentTime;
-      document.getElementById('edit_incident_place').value = tr.dataset.incidentPlace;
-      document.getElementById('edit_incident_description').value = tr.dataset.incidentDesc;
-
-      // 6) Finally show modal
       editModal.show();
     });
   });
 
+  // DELETE-BLOTTER modal wiring
   const deleteModal = new bootstrap.Modal(document.getElementById('deleteBlotterModal'));
   const deleteForm = document.getElementById('deleteBlotterForm');
-  const deleteIdInput = document.getElementById('deleteTransactionId');
-  const deleteLabel = document.getElementById('deleteTransactionIdLabel');
-
-  document.querySelectorAll('.blotter-delete-btn').forEach(button => {
-    button.addEventListener('click', () => {
-      const tid = button.getAttribute('data-id');
-      deleteIdInput.value = tid;
-      deleteLabel.textContent = tid;
+  document.querySelectorAll('.blotter-delete-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tid = btn.getAttribute('data-id');
+      document.getElementById('deleteTransactionId').value = tid;
+      document.getElementById('deleteTransactionIdLabel').textContent = tid;
     });
   });
-
-  deleteForm.addEventListener('submit', function(e) {
+  deleteForm.addEventListener('submit', e => {
     e.preventDefault();
-
     const formData = new FormData(deleteForm);
-
     fetch('functions/delete_blotter.php', {
       method: 'POST',
       body: formData
     })
-    .then(resp => resp.json())
+    .then(r => r.json())
     .then(data => {
       if (data.success) {
-      deleteModal.hide();
-      window.location.href = window.location.pathname + '?page=adminComplaints&blotter_deleted=' + encodeURIComponent(formData.get('transaction_id'));
-    } else {
+        deleteModal.hide();
+        window.location = window.location.pathname + '?page=adminComplaints&blotter_deleted=' + encodeURIComponent(formData.get('transaction_id'));
+      } else {
         alert('Error: ' + (data.error || 'Failed to delete.'));
       }
     });
   });
 
+  // VIEW-BLOTTER modal wiring + new iframe src / print / download handlers
   const viewModalEl = document.getElementById('viewBlotterModal');
-  const viewModal = new bootstrap.Modal(viewModalEl);
+  const viewModal   = new bootstrap.Modal(viewModalEl);
   const previewFrame = document.getElementById('blotterPreviewFrame');
+  const printBtn    = document.getElementById('printBlotterBtn');
+  const downloadLink= document.getElementById('downloadPDFLink');
 
   document.querySelectorAll('.blotter-view-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const tid = btn.getAttribute('data-id');
-      const baseUrl = 'functions/print_blotter.php?transaction_id=' + encodeURIComponent(tid);
-
-      // Set iframe preview (preview mode)
-      previewFrame.src = baseUrl;
-
-      // Update the Save as PDF button
-      document.getElementById('downloadPDFLink').href = baseUrl + '&download=1';
-
-      // Update the Print button to open a clean print tab
-      document.getElementById('printBlotterBtn').onclick = () => {
-        window.open(baseUrl + '&print=1', '_blank');
+      // iframe preview (preview mode)
+      previewFrame.src = `functions/print_blotter.php?transaction_id=${encodeURIComponent(tid)}`;
+      // PDF download link
+      downloadLink.href = previewFrame.src + '&download=1';
+      // Print opens a clean window
+      printBtn.onclick = () => {
+        window.open(previewFrame.src + '&print=1', '_blank');
       };
-
       viewModal.show();
     });
   });
 
-
-  // Clear iframe when closing, to stop PDF load in background
+  // Clear iframe on close
   viewModalEl.addEventListener('hidden.bs.modal', () => {
     previewFrame.src = '';
   });
 });
 </script>
+

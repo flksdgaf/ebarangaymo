@@ -87,7 +87,7 @@ $sql = "
     k.transaction_id,
     c.complainant_name,
     c.respondent_name,
-    k.complaint_type AS subject_pb,
+    c.complaint_type AS subject_pb,
     c.complaint_status AS master_status,
     
     k.schedule_punong_barangay AS sched_pb,

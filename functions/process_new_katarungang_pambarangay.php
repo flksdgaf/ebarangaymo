@@ -21,18 +21,18 @@ if (!$transaction_id || !$date || !$time) {
 }
 $scheduled_at = $date . ' ' . $time . ':00';
 
-// 3) FETCH complaint_type
-$stmt = $conn->prepare("SELECT complaint_type FROM complaint_records WHERE transaction_id = ?");
-$stmt->bind_param('s', $transaction_id);
-$stmt->execute();
-$result = $stmt->get_result();
-if (!($row = $result->fetch_assoc())) {
-    $stmt->close();
-    header("Location: ../adminPanel.php?page=adminComplaints&summon_page=$pageNum&error=not_found&transaction_id={$transaction_id}");
-    exit;
-}
-$complaint_type = $row['complaint_type'];
-$stmt->close();
+// // 3) FETCH complaint_type
+// $stmt = $conn->prepare("SELECT complaint_type FROM complaint_records WHERE transaction_id = ?");
+// $stmt->bind_param('s', $transaction_id);
+// $stmt->execute();
+// $result = $stmt->get_result();
+// if (!($row = $result->fetch_assoc())) {
+//     $stmt->close();
+//     header("Location: ../adminPanel.php?page=adminComplaints&summon_page=$pageNum&error=not_found&transaction_id={$transaction_id}");
+//     exit;
+// }
+// $complaint_type = $row['complaint_type'];
+// $stmt->close();
 
 // 4) CHECK IF ALREADY SCHEDULED
 $stmt = $conn->prepare("SELECT 1 FROM katarungang_pambarangay_records WHERE transaction_id = ?");
@@ -46,8 +46,11 @@ if ($stmt->get_result()->fetch_row()) {
 $stmt->close();
 
 // 5) INSERT INTO katarungang_pambarangay_records
-$ins = $conn->prepare("INSERT INTO katarungang_pambarangay_records (account_id, transaction_id, complaint_type, complainant_affidavit_unang_patawag, complainant_affidavit_ikalawang_patawag, complainant_affidavit_ikatlong_patawag, respondent_affidavit_unang_patawag, respondent_affidavit_ikalawang_patawag, respondent_affidavit_ikatlong_patawag, complaint_stage, schedule_punong_barangay, schedule_unang_patawag, schedule_ikalawang_patawag, schedule_ikatlong_patawag) VALUES (?, ?, ?, NULL, NULL, NULL, NULL, NULL, NULL, 'Punong Barangay', ?, NULL, NULL, NULL)");
-$ins->bind_param("isss", $account_id, $transaction_id, $complaint_type, $scheduled_at);
+// $ins = $conn->prepare("INSERT INTO katarungang_pambarangay_records (account_id, transaction_id, complaint_type, complainant_affidavit_unang_patawag, complainant_affidavit_ikalawang_patawag, complainant_affidavit_ikatlong_patawag, respondent_affidavit_unang_patawag, respondent_affidavit_ikalawang_patawag, respondent_affidavit_ikatlong_patawag, complaint_stage, schedule_punong_barangay, schedule_unang_patawag, schedule_ikalawang_patawag, schedule_ikatlong_patawag) VALUES (?, ?, ?, NULL, NULL, NULL, NULL, NULL, NULL, 'Punong Barangay', ?, NULL, NULL, NULL)");
+// $ins->bind_param("isss", $account_id, $transaction_id, $complaint_type, $scheduled_at);
+
+$ins = $conn->prepare("INSERT INTO katarungang_pambarangay_records (account_id, transaction_id, complainant_affidavit_unang_patawag, complainant_affidavit_ikalawang_patawag, complainant_affidavit_ikatlong_patawag, respondent_affidavit_unang_patawag, respondent_affidavit_ikalawang_patawag, respondent_affidavit_ikatlong_patawag, complaint_stage, schedule_punong_barangay, schedule_unang_patawag, schedule_ikalawang_patawag, schedule_ikatlong_patawag) VALUES (?, ?, NULL, NULL, NULL, NULL, NULL, NULL, 'Punong Barangay', ?, NULL, NULL, NULL)");
+$ins->bind_param("iss", $account_id, $transaction_id, $scheduled_at);
 
 if (!$ins->execute()) {
     $ins->close();

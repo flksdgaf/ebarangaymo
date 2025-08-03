@@ -190,8 +190,9 @@ $stmt->close();
               <select name="status" class="form-select form-select-sm" style="font-size:.75rem;">
                 <option value="">All</option>
                 <option <?= $status==='Pending' ? 'selected' : '' ?> value="Pending">Pending</option>
-                <option <?= $status==='Scheduled' ? 'selected' : '' ?> value="Scheduled">Scheduled</option>
+                <option <?= $status==='Scheduled' ? 'selected' : '' ?> value="Scheduled">On-Going</option>
                 <option <?= $status==='Cleared' ? 'selected' : '' ?> value="Cleared">Cleared</option>
+                <option <?= $status==='Unresolved' ? 'selected' : '' ?> value="Unresolved">Unresolved</option>
               </select>
             </div>
 
@@ -518,6 +519,25 @@ $stmt->close();
           <?php if ($result->num_rows): ?>
             <?php while ($row = $result->fetch_assoc()): 
               $tid = htmlspecialchars($row['transaction_id']);
+              
+              // Status → colored badge
+              $stat = $row['complaint_status'];
+              switch ($stat) {
+                case 'Pending':
+                  $badgeClass = 'bg-warning text-dark';
+                  break;
+                case 'On-Going':   // or “On-Going”
+                  $badgeClass = 'bg-primary';
+                  break;
+                case 'Cleared':
+                  $badgeClass = 'bg-success';
+                  break;
+                case 'Unresolved':
+                  $badgeClass = 'bg-danger';
+                  break;
+                default:
+                  $badgeClass = 'bg-secondary';
+              }
             ?>
               <tr 
                 data-id="<?= $tid ?>"
@@ -534,8 +554,9 @@ $stmt->close();
                 <td><?= htmlspecialchars($row['complainant_name']) ?></td>
                 <td><?= htmlspecialchars($row['respondent_name']) ?></td>
                 <td><?= htmlspecialchars($row['complaint_type']) ?></td>
-                <td><?= htmlspecialchars($row['complaint_status']) ?></td> 
-                <!-- <td><?= htmlspecialchars($row['formatted_created']) ?></td> -->
+                <td><span class="badge <?= $badgeClass ?>"><?= htmlspecialchars($stat) ?></span></td>
+                <!-- <td><= htmlspecialchars($row['complaint_status']) ?></td>  -->
+                <!-- <td><= htmlspecialchars($row['formatted_created']) ?></td> -->
                 <td class="text-center text-nowrap">
                   <!-- Print -->
                   <!-- <button class="btn btn-sm btn-success print-btn-complaint">

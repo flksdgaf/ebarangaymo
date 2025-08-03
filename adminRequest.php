@@ -130,9 +130,24 @@ if ($processing_type !== '' && $processing_type !== 'Official Receipt Logs') {
   }
 }
 
+// if (
+//   $_SESSION['loggedInUserRole'] === 'Brgy Treasurer' &&
+//   $processing_type === 'Walk-In'
+// ) {
+//   $whereClauses[] = "transaction_id NOT IN (SELECT transaction_id FROM official_receipt_records)";
+// }
+
+// for Treasurer on BOTH Walk-In and Brgy Payment Device panes, hide ones already paid
+
+// if (
+//   $_SESSION['loggedInUserRole'] === 'Brgy Treasurer' && in_array($processing_type, ['Walk-In', 'Brgy Payment Device'], true)
+// ) {
+//   $whereClauses[] = "transaction_id NOT IN (SELECT transaction_id FROM official_receipt_records)";
+// }
+
 if (
   $_SESSION['loggedInUserRole'] === 'Brgy Treasurer' &&
-  $processing_type === 'Walk-In'
+  in_array($processing_type, ['Walk-In','Online','Brgy Payment Device'], true)
 ) {
   $whereClauses[] = "transaction_id NOT IN (SELECT transaction_id FROM official_receipt_records)";
 }
@@ -1332,7 +1347,7 @@ $result = $st->get_result();
                       switch ($ds) {
                         case 'For Verification': $c = 'bg-info'; break;
                         case 'Processing': $c = 'bg-warning'; break;
-                        case 'Ready To Release': $c = 'bg-primary'; break;
+                        case 'Ready to Release': $c = 'bg-primary'; break;
                         case 'Released': $c = 'bg-success'; break;
                         case 'Rejected': $c = 'bg-danger'; break;
                         default: $c = 'bg-secondary';

@@ -115,12 +115,11 @@ if ($transactionId) {
 <div class="container py-4 px-3">
     <div class="progress-container">
         <div class="stepss">
-
             <!-- STEP 1 -->
             <div class="steps">
                 <div class="circle <?php echo $t ? 'completed' : 'active'; ?>" data-step="1">1</div>
                 <div class="step-label <?php echo $t ? 'completed' : 'active'; ?>">
-                APPLICATION FORM
+                    APPLICATION FORM
                 </div>
             </div>
 
@@ -128,7 +127,7 @@ if ($transactionId) {
             <div class="steps">
                 <div class="circle <?php echo $t ? 'completed' : ''; ?>" data-step="2">2</div>
                 <div class="step-label <?php echo $t ? 'completed' : ''; ?>">
-                PAYMENT
+                    PAYMENT
                 </div>
             </div>
 
@@ -136,7 +135,7 @@ if ($transactionId) {
             <div class="steps">
                 <div class="circle <?php echo $t ? 'completed' : ''; ?>" data-step="3">3</div>
                 <div class="step-label <?php echo $t ? 'completed' : ''; ?>">
-                REVIEW &amp; CONFIRMATION
+                    REVIEW &amp; CONFIRMATION
                 </div>
             </div>
 
@@ -144,12 +143,11 @@ if ($transactionId) {
             <div class="steps">
                 <div class="circle <?php echo $t ? 'active' : ''; ?>" data-step="4">4</div>
                 <div class="step-label <?php echo $t ? 'active' : ''; ?>">
-                SUBMISSION
+                    SUBMISSION
                 </div>
             </div>
 
             <div class="progress-line"></div>
-            <!-- fill to 100% if on step 4 -->
             <div class="progress-fill" id="progressFill" style="<?php echo $t ? 'width: 100%;' : ''; ?>"></div>
         </div>
     </div>
@@ -373,7 +371,7 @@ if ($transactionId) {
                     <div class="payment-instruction d-none" data-method="GCash">
                         <ol>
                         <h4 class="fw-bold mb-3 fs-6">HOW TO USE:</h4>
-                          <li>Once redirected to GCash, send exactly ₱100.00.</li>
+                          <li>Once redirected to GCash, send exactly <strong>₱100.00</strong>.</li>
                           <li>Confirm your payment.</li>
                           <li>Download or screenshot the confirmation receipt.</li>
                           <li>After being redirected back to the website, upload the receipt.</li>

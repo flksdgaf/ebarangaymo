@@ -74,24 +74,24 @@ document.addEventListener("DOMContentLoaded", function () {
         { id: 'civil_status',    label: 'Civil Status',    type: 'select',   options: ['Single','Married','Widowed','Separated','Divorced','Unknown']   },
         { id: 'purok',           label: 'Purok',           type: 'select',   options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6']     },
         { id: 'residing_years',  label: 'Years Residing',  type: 'number' },
-        { id: 'claim_date',      label: 'Claim Date',      type: 'date'   },
-        { id: 'purpose',         label: 'Purpose',         type: 'text'   }
+        { id: 'purpose',         label: 'Purpose',         type: 'text'   },
+        { id: 'claim_date',      label: 'Claim Date',      type: 'date'   }
         ],
         indigency: [
         { id: 'full_name',       label: 'Full Name',       type: 'text',     disabled: true },
         { id: 'age',             label: 'Age',             type: 'number',   disabled: true },
         { id: 'civil_status',    label: 'Civil Status',    type: 'select',   options: ['Single','Married','Widowed','Separated','Divorced','Unknown']   },
         { id: 'purok',           label: 'Purok',           type: 'select',   options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6']     },
-        { id: 'claim_date',      label: 'Claim Date',      type: 'date' },
-        { id: 'purpose',         label: 'Purpose',         type: 'text' }
+        { id: 'purpose',         label: 'Purpose',         type: 'text' },
+        { id: 'claim_date',      label: 'Claim Date',      type: 'date' }
         ],
         'good moral': [
         { id: 'full_name',       label: 'Full Name',       type: 'text',     disabled: true },
         { id: 'age',             label: 'Age',             type: 'number',   disabled: true },
         { id: 'civil_status',    label: 'Civil Status',    type: 'select',   options: ['Single','Married','Widowed','Separated','Divorced','Unknown']   },
         { id: 'purok',           label: 'Purok',           type: 'select',   options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6']     },
-        { id: 'claim_date',      label: 'Claim Date',      type: 'date' },
-        { id: 'purpose',         label: 'Purpose',         type: 'text' }
+        { id: 'purpose',         label: 'Purpose',         type: 'text' },
+        { id: 'claim_date',      label: 'Claim Date',      type: 'date' }
         ],
         'solo parent': [
         { id: 'full_name',       label: 'Full Name',       type: 'text',     disabled: true },

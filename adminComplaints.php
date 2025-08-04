@@ -1,11 +1,31 @@
 <?php
 require 'functions/dbconn.php';
 $userId = (int) $_SESSION['loggedInUserID'];
+$role = $_SESSION['loggedInUserRole'] ?? '';
+
 ?>
 
 <title>eBarangay Mo | Complaints</title>
 
 <div class="container-fluid p-3">
+  <?php if ($role === 'Brgy Treasurer'): ?>
+  <!-- Show only the Complaint Transactions tab for Treasurer -->
+  <ul class="nav nav-tabs" id="complaintTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="transactions-tab" data-bs-toggle="tab" data-bs-target="#transactions-pane" type="button" role="tab">
+        Complaint Transactions
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content mt-3">
+    <div class="tab-pane fade show active" id="transactions-pane" role="tabpanel">
+      <?php include 'adminComplaintTransactions.php'; ?>
+    </div>
+  </div>
+
+<?php else: ?>
+  <!-- Show all other tabs for non-Treasurers -->
   <ul class="nav nav-tabs" id="complaintTabs" role="tablist">
     <li class="nav-item" role="presentation">
       <button class="nav-link active" id="blotter-tab" data-bs-toggle="tab" data-bs-target="#blotter-pane" type="button" role="tab">
@@ -35,6 +55,7 @@ $userId = (int) $_SESSION['loggedInUserID'];
       <?php include 'adminKatarungangPambarangay.php'; ?>
     </div>
   </div>
+<?php endif; ?>
 </div>
 
 <script>
@@ -45,6 +66,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   let pane = 'blotter';
   if (params.has('summon_search') || params.has('summon_page')) pane = 'summon';
   if (params.has('katarungan_search') || params.has('katarungan_page')) pane = 'katarungan';
+  if (params.has('transactions_page')) pane = 'transactions'; // Add this line
 
   // show that pane
   const trigger = document.getElementById(`${pane}-tab`);

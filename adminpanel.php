@@ -8,7 +8,7 @@
 <div class="main-content">
     <?php
         // List of allowed pages for security
-        $allowed_pages = ['adminDashboard', 'adminRequest', 'adminServices', 'adminBlotter', 'adminSummon', 'adminKatarungangPambarangay', 'adminComplaints', 'adminResidents', 'adminVerifications', 'adminHistory', 'adminTransactions', 'adminWebsite', 'adminDeviceStatus', 'adminLogs',  'adminSettings', 'adminEquipmentBorrowing'];
+        $allowed_pages = ['adminDashboard', 'adminRequest', 'adminServices', 'adminBlotter', 'adminSummon', 'adminKatarungangPambarangay', 'adminComplaints', 'adminComplaintTransactions', 'adminResidents', 'adminVerifications', 'adminHistory', 'adminTransactions', 'adminWebsite', 'adminDeviceStatus', 'adminLogs',  'adminSettings', 'adminEquipmentBorrowing'];
 
         // Check if the requested page is allowed
         if (in_array($page, $allowed_pages)) {

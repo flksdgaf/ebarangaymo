@@ -8,6 +8,7 @@ $added = $_GET['added'] ?? null;
 // 1) Load all equipment
 $eqRes = $conn->query("SELECT * FROM equipment_list ORDER BY id");
 $equipments = $eqRes->fetch_all(MYSQLI_ASSOC);
+$jsMap = array_column($equipments, 'available_qty', 'equipment_sn');
 
 // 2) Load all borrow requests
 $brRes = $conn->query("SELECT * FROM borrow_requests ORDER BY date DESC, id DESC");
@@ -15,6 +16,8 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
 ?>
 
 <div class="container p-3">
+
+  <!-- Alert for add -->
   <?php if ($added): ?>
     <div class="container mt-3">
       <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -24,15 +27,13 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
     </div>
   <?php endif; ?>
 
+  <!-- Alert for updates -->
   <?php if (($_GET['updated'] ?? '') === 'none'): ?>
     <div class="alert alert-secondary alert-dismissible fade show" role="alert">
       No changes were made. Equipment was not updated.
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
-  <?php endif; ?>
-
-
-  <?php if (($_GET['updated'] ?? '') === 'partial'): ?>
+  <?php elseif (($_GET['updated'] ?? '') === 'partial'): ?>
     <div class="alert alert-warning alert-dismissible fade show" role="alert">
       Equipment was updated, but quantity was not changed because some items are currently borrowed.
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -44,12 +45,34 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
     </div>
   <?php endif; ?>
 
+  <!-- Alert for delete -->
   <?php if (($_GET['deleted'] ?? '') === '1'): ?>
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
       Equipment deleted permanently.
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
+  <?php elseif (($_GET['deleted'] ?? '') === '0' && ($_GET['delete_error'] ?? '') === 'borrowed'): ?>
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+      Cannot delete this equipment because there are existing borrow requests.
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
   <?php endif; ?>
+
+  <!-- Alert for borrow -->
+  <?php if (($_GET['borrowed'] ?? '') === '1'): ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      Borrow request submitted successfully!
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <?php elseif (($_GET['borrow_error'] ?? '') === 'toomany'): ?>
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+      Requested quantity exceeds availability.
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <?php endif; ?>
+
+  <!-- Alert Placeholder -->
+  <div id="statusAlertPlaceholder"></div>
 
   <!-- List of Equipment -->
   <div class="card shadow-sm mb-5">
@@ -58,12 +81,13 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
     </div>
     <div class="card-body p-0">
       <div class="d-flex justify-content-end m-3">
-        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addEquipmentModal">
-          <i class="fas fa-plus me-1"></i> Add New Equipment
+        <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addEquipmentModal">
+          <span class="material-symbols-outlined me-1" style="font-size:1rem; vertical-align:middle;">add</span>
+          Add New Equipment
         </button>
       </div>
-      <div class="table-responsive">
-        <table class="table mb-0 align-middle">
+      <div class="table-responsive admin-table">
+        <table class="table table-hover align-middle text-start">
           <thead class="table-light">
             <tr>
               <th>Equipment SN</th>
@@ -82,7 +106,9 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
                 <td><?= htmlspecialchars($eq['equipment_sn']) ?></td>
                 <td><?= htmlspecialchars($eq['name']) ?></td>
                 <td><?= nl2br(htmlspecialchars($eq['description']))?: '—' ?></td>
-                <td><?= (int)$eq['available_qty'] ?></td>
+                <td class="avail-qty" data-id="<?= $eq['id'] ?>">
+                  <?= (int)$eq['available_qty'] ?>
+                </td>
                 <td><?= (int)$eq['total_qty'] ?></td>
                 <td>
                   <button class="btn btn-sm btn-primary me-1 edit-equipment-btn" data-id="<?= $eq['id'] ?>" data-name="<?= htmlspecialchars($eq['name'], ENT_QUOTES) ?>" data-desc="<?= htmlspecialchars($eq['description'], ENT_QUOTES) ?>" data-total="<?= (int)$eq['total_qty'] ?>">
@@ -107,12 +133,13 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
     </div>
     <div class="card-body p-0">
       <div class="d-flex justify-content-end m-3">
-        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addBorrowModal">
-        <i class="fas fa-plus me-1"></i> Borrow an Equipment
-      </button>
+        <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addBorrowModal">
+          <span class="material-symbols-outlined me-1" style="font-size:1rem; vertical-align:middle;">add</span>
+          Borrow an Equipment
+        </button>
       </div>
-      <div class="table-responsive">
-        <table class="table mb-0 align-middle">
+      <div class="table-responsive admin-table">
+        <table class="table table-hover align-middle text-start">
           <thead class="table-light">
             <tr>
               <th>Resident’s Name</th>
@@ -138,10 +165,19 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
                 <td><?= htmlspecialchars($br['date']) ?></td>
                 <td><?= htmlspecialchars($br['pudo']) ?></td>
                 <td>
-                  <select class="form-select form-select-sm borrow-status" data-id="<?= $br['id'] ?>">
-                    <option <?= $br['status']==='Borrowed' ? 'selected':'' ?>>Borrowed</option>
-                    <option <?= $br['status']==='Returned' ? 'selected':'' ?>>Returned</option>
+                  <select
+                    class="form-select form-select-sm borrow-status"
+                    data-id="<?= $br['id'] ?>"
+                    data-prev="<?= htmlspecialchars($br['status'], ENT_QUOTES) ?>"
+                  >
+                    <option value="Borrowed" <?= $br['status']==='Borrowed' ? 'selected':'' ?>>
+                      Borrowed
+                    </option>
+                    <option value="Returned" <?= $br['status']==='Returned' ? 'selected':'' ?>>
+                      Returned
+                    </option>
                   </select>
+
                 </td>
               </tr>
             <?php endforeach; endif; ?>
@@ -281,8 +317,8 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
               <label for="borrow-pudo" class="form-label">Pick-Up / Drop-Off</label>
               <select id="borrow-pudo" name="pudo" class="form-select" required>
                 <option value="">Choose…</option>
-                <option>Pick Up</option>
-                <option>Drop Off</option>
+                <option value="Pick Up">Pick Up</option>
+                <option value="Drop Off">Drop Off</option>
               </select>
             </div>
           </div>
@@ -298,63 +334,64 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
 </div>
 
 <script>
-  const esnMap = {};
-  // const esnMap = <= json_encode($jsMap) ?>;
+  document.addEventListener('DOMContentLoaded', () => {
+    const esnMap = <?= json_encode($jsMap, JSON_HEX_TAG) ?>;
+    const esnOptions = Object.keys(esnMap);
 
-  // (function(){
-  //   const esnOptions = <= json_encode(array_column($equipments,'equipment_sn')) ?>;
-  //   const input = document.getElementById('borrowedEsn');
-  //   const list = document.getElementById('borrowedEsnList');
+    const input = document.getElementById('borrowedEsn');
+    const list  = document.getElementById('borrowedEsnList');
+    const qtyIn = document.getElementById('borrow-qty');
 
-  //   function rebuildList(items) {
-  //     list.innerHTML = '';
-  //     items.forEach(esn => {
-  //     const li = document.createElement('li');
-  //     li.textContent = esn;
-  //     li.className = 'list-group-item list-group-item-action py-1';
-  //     li.style.cursor = 'pointer';
-  //     li.addEventListener('mousedown', () => {
-  //       input.value = esn;
-  //       list.style.display = 'none';
-  //       input.dispatchEvent(new Event('change')); 
-  //     });
-  //     list.appendChild(li);
-  //     });
-  //     list.style.display = items.length ? 'block' : 'none';
-  //   }
+    function rebuildList(items) {
+      list.innerHTML = '';
+      items.forEach(esn => {
+        const li = document.createElement('li');
+        li.textContent = esn;
+        li.className = 'list-group-item list-group-item-action py-1';
+        li.style.cursor = 'pointer';
+        li.addEventListener('mousedown', () => {
+          input.value = esn;
+          list.style.display = 'none';
+          input.dispatchEvent(new Event('change'));
+        });
+        list.appendChild(li);
+      });
+      list.style.display = items.length ? 'block' : 'none';
+    }
 
-  //   // Show the full list on focus OR click
-  //   input.addEventListener('focus', () => rebuildList(esnOptions));
-  //   input.addEventListener('click', () => rebuildList(esnOptions));
+    // show full list on focus/click
+    input.addEventListener('focus', () => rebuildList(esnOptions));
+    input.addEventListener('click', () => rebuildList(esnOptions));
 
-  //   // Filter as the user types
-  //   input.addEventListener('input', () => {
-  //     const v = input.value.trim().toLowerCase();
-  //     const filtered = v ? esnOptions.filter(e => e.toLowerCase().includes(v)) : esnOptions;
-  //     rebuildList(filtered);
-  //   });
+    // filter as user types
+    input.addEventListener('input', () => {
+      const v = input.value.trim().toLowerCase();
+      const filtered = v
+        ? esnOptions.filter(e => e.toLowerCase().includes(v))
+        : esnOptions;
+      rebuildList(filtered);
+    });
 
-  //   // Hide after blur (small timeout to allow click on an <li>)
-  //   input.addEventListener('blur', () => setTimeout(() => {
-  //       list.style.display = 'none';
-  //   }, 150));
+    // hide after blur (small delay to catch clicks)
+    input.addEventListener('blur', () => setTimeout(() => {
+      list.style.display = 'none';
+    }, 150));
 
-  //   // Also hide if clicking anywhere else
-  //   document.addEventListener('click', e => {
-  //     if (!input.contains(e.target) && !list.contains(e.target)) {
-  //     list.style.display = 'none';
-  //     }
-  //   });
-  //   })();
+    // globally click outside hides
+    document.addEventListener('click', e => {
+      if (!input.contains(e.target) && !list.contains(e.target)) {
+        list.style.display = 'none';
+      }
+    });
 
-  // when ESN changes, cap qty ≤ available
-  // document.getElementById('borrowedEsn').addEventListener('change', function(){
-  //   const chosen = this.value;
-  //   const avail = esnMap[chosen] || 0;    // lookup from your PHP‑generated map
-  //   const qtyIn = document.getElementById('qtyInput');
-  //   qtyIn.max = avail;
-  //   qtyIn.placeholder = avail ? `(max ${avail})` : `(unknown ESN)`;
-  // });
+    // cap qty on ESN change
+    input.addEventListener('change', () => {
+      const avail = esnMap[input.value] || 0;
+      qtyIn.max = avail;
+      qtyIn.value = avail ? Math.min(qtyIn.value||1, avail) : '';
+      qtyIn.placeholder = avail ? `(max ${avail})` : `(unknown ESN)`;
+    });
+  });
 
   // ── Delete Equipment ───────────────────────────
   document.querySelectorAll('.delete-equipment-btn').forEach(btn => {
@@ -394,12 +431,43 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
   });
 
   // ── Status dropdown change (optional AJAX hook) ─
-  document.querySelectorAll('.borrow-status').forEach(sel=>{
-    sel.addEventListener('change', ()=>{
-      fetch('functions/borrow_toggle_status.php', {
-        method:'POST',
-        headers:{'Content-Type':'application/x-www-form-urlencoded'},
-        body:`id=${sel.dataset.id}&status=${sel.value}`
+  document.querySelectorAll('.borrow-status').forEach(sel => {
+    sel.addEventListener('change', () => {
+      const id = sel.dataset.id;
+      const status = sel.value;
+      fetch('/functions/borrow_toggle_status.php', {
+        method: 'POST',
+        headers: {'Content-Type':'application/x-www-form-urlencoded'},
+        body: `id=${id}&status=${encodeURIComponent(status)}`
+      })
+      .then(r => r.json())
+      .then(j => {
+        if (j.error) {
+          alert('Error: ' + j.error);
+          sel.value = sel.dataset.prev;
+        } else {
+          sel.dataset.prev = j.newStatus;
+          const eqCell = document.querySelector(`.avail-qty[data-id="${j.equipmentId}"]`);
+          if (eqCell) eqCell.textContent = j.availableQty;
+
+          const placeholder = document.getElementById('statusAlertPlaceholder');
+          const wrapper = document.createElement('div');
+          wrapper.innerHTML = `
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+              Status updated to <strong>${j.newStatus}</strong>.
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>`;
+          placeholder.append(wrapper);
+
+           setTimeout(() => {
+            const alertNode = bootstrap.Alert.getOrCreateInstance(wrapper.querySelector('.alert'));
+            alertNode.close();
+          }, 3000);
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        sel.value = sel.dataset.prev;
       });
     });
   });

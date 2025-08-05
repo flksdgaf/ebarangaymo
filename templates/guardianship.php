@@ -10,7 +10,7 @@ $brgyLogo = realpath(__DIR__ . '/../images/magang_logo.png');
 $srcGov   = 'data:image/png;base64,' . base64_encode(file_get_contents($govLogo));
 $srcBrgy  = 'data:image/png;base64,' . base64_encode(file_get_contents($brgyLogo));
 
-// 2) Capture the HTML with embedded PHP into $html
+// 2) Get data from the $data array
 $transactionId = $data['transaction_id'] ?? '';
 $requestType   = $data['request_type'] ?? '';
 $fullName      = $data['full_name'] ?? '';
@@ -22,16 +22,16 @@ $purpose       = $data['purpose'] ?? '';
 $paymentMethod = $data['payment_method'] ?? '';
 $amount        = $data['amount'] ?? '';
 $createdAt     = $data['created_at'] ?? '';
-$issuedDate = date('Y-m-d');
+$issuedDate    = date('Y-m-d');
 
-// Format date with suffix (e.g., 21st, 22nd)
+// Format date with suffix and superscript
 function formatWithSuffix($dateString) {
     $day = date('j', strtotime($dateString));
     if ($day % 10 == 1 && $day != 11) $suffix = 'st';
     elseif ($day % 10 == 2 && $day != 12) $suffix = 'nd';
     elseif ($day % 10 == 3 && $day != 13) $suffix = 'rd';
     else $suffix = 'th';
-    return $day . $suffix;
+    return $day . '<sup>' . $suffix . '</sup>';
 }
 
 ob_start();
@@ -67,6 +67,10 @@ ob_start();
       font-size: 13pt;
       margin-bottom: 40px;
     }
+    sup {
+      font-size: 10pt;
+      vertical-align: super;
+    }
   </style>
 </head>
 <body>
@@ -75,15 +79,15 @@ ob_start();
 
     <p>
       This is to certify that <span style="text-transform: uppercase;"><strong><u><?= htmlspecialchars($fullName) ?></u></strong></span>,
-       <?= htmlspecialchars($age) ?> years old, <span style="text-transform: uppercase;"><?= htmlspecialchars($civilStatus) ?></span>, 
+       legal age, <span style="text-transform: uppercase;"><?= htmlspecialchars($civilStatus) ?></span>, 
        is a bonafide resident of <?= htmlspecialchars($purok) ?>, Barangay Magang, Daet, Camarines Norte.
     </p>
     <p>
-      This is to certify further that said person is the legal guardian of <strong><?= htmlspecialchars($childName) ?></strong>.
+      This is to certify further that said person is the legal guardian of <strong><?= strtoupper(htmlspecialchars($childName)) ?></strong>.
     </p>
     <p>
       This certification is issued this <strong><?= formatWithSuffix($issuedDate) ?></strong> day of <?= date('F, Y', strtotime($issuedDate)) ?> 
-      at Barangay Magang, Daet, Camarines Norte upon request of interested person for whatever purposes it may serve.
+      at Barangay Magang, Daet, Camarines Norte upon request of interested person for <strong><?= htmlspecialchars($purpose) ?></strong> purposes.
     </p>
   </div>
 </body>

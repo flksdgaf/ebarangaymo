@@ -23,7 +23,7 @@ $purpose       = $data['purpose'] ?? '';
 $paymentMethod = $data['payment_method'] ?? '';
 $amount        = $data['amount'] ?? '';
 $createdAt     = $data['created_at'] ?? '';
-$issuedDate = date('Y-m-d');
+$issuedDate    = date('Y-m-d');
 
 // Format date with suffix
 function formatWithSuffix($dateStr) {
@@ -82,23 +82,38 @@ ob_start();
     <p class="no-indent"><strong>TO WHOM IT MAY CONCERN:</strong></p>
 
     <p>
-      This is to certify that <strong><u><?= htmlspecialchars($fullName) ?></u></strong>, <?= htmlspecialchars($age) ?> years old, <?= htmlspecialchars($civilStatus) ?>, 
-      is a resident of <?= htmlspecialchars($subdivision) ?>, <?= htmlspecialchars($purok) ?>, Magang, Daet, Camarines Norte.
+      This is to certify that
+      <strong><u><?= htmlspecialchars(strtoupper($fullName)) ?></u></strong>,
+      <strong><?= htmlspecialchars($age) ?></strong> years old,
+      <?= htmlspecialchars(strtoupper($civilStatus)) ?>,
+      is a resident of <?= htmlspecialchars($subdivision) ?>,
+      <?= htmlspecialchars($purok) ?>,
+      Magang, Daet, Camarines Norte.
     </p>
 
     <p>
-      This certifies further that the above-named person is known to me of 
-      <span><strong>GOOD MORAL CHARACTER</strong></span> and that <strong><?= strtolower($sex) === 'male' ? 'he' : (strtolower($sex) === 'female' ? 'she' : 'he/she') ?> 
-      has no derogatory record</strong> on file in this Barangay.
+      This certifies further that the above-named person is known to me of
+      <span><strong>GOOD MORAL CHARACTER</strong></span> and that
+      <strong>
+        <?= strtolower($sex) === 'male'
+            ? 'he'
+            : (strtolower($sex) === 'female'
+                ? 'she'
+                : 'he/she') ?>
+        has no derogatory record
+      </strong> on file in this Barangay.
     </p>
 
     <p>
-      This certification is issued upon request of the above-named person for 
+      This certification is issued upon request of the above-named person for
       <span><strong><?= htmlspecialchars($purpose) ?></strong></span> purposes.
     </p>
 
     <p>
-      Issued this <strong><?= formatWithSuffix($issuedDate) ?></strong> day of <?= date('F, Y', strtotime($issuedDate)) ?> at Barangay Magang, Daet, Camarines Norte.
+      Issued this
+      <strong><?= formatWithSuffix($issuedDate) ?></strong>
+      day of <?= date('F, Y', strtotime($issuedDate)) ?>
+      at Barangay Magang, Daet, Camarines Norte.
     </p>
   </div>
 </body>

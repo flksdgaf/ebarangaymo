@@ -8,8 +8,8 @@
 .progress-line {
     position: absolute;
     top: 27px;
-    left: 10px;
-    right: 10px;
+    left: 0px;
+    right: 0px;
     height: 8px;
     background-color: #61AD41;
     z-index: -1;
@@ -19,8 +19,8 @@
 .progress-fill {
     position: absolute;
     top: 27px;
-    left: 10px;
-    right: 10px;
+    left: 0px;
+    right: 0px;
     height: 8px;
     background-color: #13411F;
     width: 0%;
@@ -28,6 +28,7 @@
     transition: width 0.5s ease-in-out;
     opacity: 100%;
 }
+
 
 .stepss {
     display: flex;

@@ -446,65 +446,86 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function populateSummary() {
+        const type = certInput.value.trim().toLowerCase();
         const container = document.getElementById('summaryContainer');
-        container.innerHTML = '';
 
-        const certTypeKey = certInput.value.trim().toLowerCase();
-        let html = '<div class="container-fluid"><div class="row">';
+        const rows = [
+            ['Type of Certification:', certInput.value || '—'],
+            ['Requesting For:', forSelect.value === 'myself' ? 'Myself' : 'Others'],
+            ['Full Name:', document.querySelector('[name="full_name"]').value || '—'],
+            ['Age:', document.querySelector('[name="age"]').value || '—'],
+            ['Civil Status:', document.querySelector('[name="civil_status"]').value || '—'],
+            ['Purok:', document.querySelector('[name="purok"]').value || '—']
+        ];
 
-        // helper to append a row
-        function appendPair(label, value) {
-            html += `
-            <div class="col-sm-3 mb-2"><strong>${label}</strong></div>
-            <div class="col-sm-9 mb-2">${value}</div>
-            `;
+        // Solo Parent: Child details + years
+        if (type === 'solo parent') {
+            const childNames = Array.from(document.querySelectorAll('[name="child_name[]"]')).map(el => el.value.trim()).filter(Boolean);
+            const childAges  = Array.from(document.querySelectorAll('[name="child_age[]"]')).map(el => el.value.trim()).filter(Boolean);
+            const childSexes = Array.from(document.querySelectorAll('[name="child_sex[]"]')).map(el => el.value.trim()).filter(Boolean);
+
+            childNames.forEach((name, i) => {
+                rows.push([`Child ${i + 1} Name:`, name || '—']);
+                rows.push([`Child ${i + 1} Age:`, childAges[i] || '—']);
+                rows.push([`Child ${i + 1} Sex:`, childSexes[i] || '—']);
+            });
+
+            const years = document.querySelector('[name="years_solo_parent"]')?.value || '—';
+            rows.push(['Years as Solo Parent:', years]);
         }
 
-        // 1) Type + For
-        appendPair('Type of Certification:', certInput.value || '—');
-        appendPair('Requesting For:', forSelect.value === 'myself' ? 'Myself' : 'Others');
+        // Guardianship: Child names only
+        if (type === 'guardianship') {
+            const childNames = Array.from(document.querySelectorAll('[name="child_name[]"]')).map(el => el.value.trim()).filter(Boolean);
 
-        // 2) The four “core” fields
-        ['full_name','age','civil_status','purok'].forEach(fieldName => {
-            const ctrl = document.querySelector(`[name="${fieldName}"]`);
-            appendPair(
-            ctrl.closest('.row').querySelector('label').textContent,
-            ctrl.value || '—'
-            );
+            childNames.forEach((name, i) => {
+                rows.push([`Child ${i + 1} Name:`, name || '—']);
+            });
+        }
+
+        // Residency specific field
+        if (type === 'residency') {
+            rows.push([
+                'Years Residing:',
+                document.querySelector('[name="residing_years"]').value || '—'
+            ]);
+        }
+
+        // Common fields for all types
+        rows.push(
+            ['Claim Date:', document.querySelector('[name="claim_date"]').value || '—'],
+            ['Purpose:', document.querySelector('[name="purpose"]').value || '—'],
+            ['Payment Method:', hiddenPaymentInput.value || '—']
+        );
+
+        // Build HTML
+        let html = `
+            <div class="row justify-content-center">
+                <div class="col-md-10 col-lg-8 col-xl-6">
+                    <div class="summary-container p-4 rounded shadow-sm border">
+                        <ul class="list-group list-group-flush">
+        `;
+
+        rows.forEach(([label, value]) => {
+            html += `
+                <li class="list-group-item d-flex justify-content-between">
+                    <span class="fw-bold">${label}</span>
+                    <span class="text-success">${value}</span>
+                </li>
+            `;
         });
 
-        // 3) If guardianship, combine child_name[] into one line
-        if (certTypeKey === 'guardianship') {
-            const names = Array
-            .from(document.querySelectorAll('input[name="child_name[]"]'))
-            .map(i => i.value.trim())
-            .filter(v => v);
-            appendPair('Child Name(s):', names.length ? names.join(', ') : '—');
-        } else if (certTypeKey === 'solo parent') {
-            const names = Array.from(document.querySelectorAll('input[name="child_name[]"]')).map(i => i.value.trim()).filter(v => v);
-            const ages  = Array.from(document.querySelectorAll('input[name="child_age[]"]')).map(i => i.value.trim()).filter(v => v);
-            const sexes = Array.from(document.querySelectorAll('select[name="child_sex[]"]')).map(s => s.value.trim()).filter(v => v);
+        html += `
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        `;
 
-            appendPair('Child Name(s):', names.length ? names.join(', ') : '—');
-            appendPair('Child Age(s):',  ages.length  ? ages.join(', ')  : '—');
-            appendPair('Child Sex(es):', sexes.length ? sexes.join(', ') : '—');
-            appendPair('Years as a Solo Parent:', document.querySelector('[name="years_solo_parent"]').value || '—');
-        }
-
-        // Now Claim Date 
-        const cd = document.querySelector('[name="claim_date"]');
-        appendPair('Claim Date:', cd.value || '—');
-
-        // Now Purpose
-        const pu = document.querySelector('[name="purpose"]');
-        appendPair('Purpose:', pu.value.trim() || '—');
-
-        // Finally, Payment Method
-        appendPair('Payment Method:', hiddenPaymentInput.value || '—');
-
-        html += '</div></div>';
         container.innerHTML = html;
     }
+
+
 
     // ADDED: handle payment method UI
     function setupPaymentControls() {

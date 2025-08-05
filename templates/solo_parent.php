@@ -13,19 +13,18 @@ $srcBrgy  = 'data:image/png;base64,' . base64_encode(file_get_contents($brgyLogo
 
 $transactionId   = $data['transaction_id'] ?? '';
 $fullName        = $data['full_name'] ?? '';
-$age             = $data['age'] ?? '';
-$civilStatus     = strtolower($data['civil_status'] ?? '');
+$residentAge     = $data['age'] ?? ''; // ✅ Renamed to avoid overwrite
+$civilStatusRaw  = strtolower($data['civil_status'] ?? '');
+$civilStatus     = $civilStatusRaw;
 $purok           = $data['purok'] ?? '';
 $yearsSoloParent = $data['years_solo_parent'] ?? '';
 $purpose         = $data['purpose'] ?? '';
 $parentSex       = strtolower($data['parent_sex'] ?? 'female');
-$issuedDate = date('Y-m-d');
+$issuedDate      = date('Y-m-d');
 
-$pronoun   = ($parentSex === 'male') ? 'his' : 'her';
-$statusTerm = ($civilStatus === 'widowed') ? 'widowed' : 'separated';
+$pronoun = ($parentSex === 'male') ? 'his' : 'her';
 
 $children = [];
-$childAge = $data['child_age'] ?? '';;
 $genderCount = ['Male' => 0, 'Female' => 0];
 $childDescriptions = [];
 
@@ -37,9 +36,9 @@ if (!empty($transactionId)) {
 
     while ($row = $result->fetch_assoc()) {
         $children[] = $row;
-        $name = htmlspecialchars($row['child_name']);
-        $age = htmlspecialchars($row['child_age']);
-        $childDescriptions[] = "<strong>$name</strong>, $childAge years old";
+        $childName = strtoupper(htmlspecialchars($row['child_name']));
+        $childAge = htmlspecialchars($row['child_age']); // ✅ Separate childAge variable
+        $childDescriptions[] = "<strong>$childName</strong>, $childAge years old";
         $genderCount[$row['child_sex']]++;
     }
     $stmt->close();
@@ -52,7 +51,6 @@ $numberText = new NumberFormatter("en", NumberFormatter::SPELLOUT);
 $yearsWord = $yearsSoloParent ? $numberText->format($yearsSoloParent) . ' (' . $yearsSoloParent . ') year' . ($yearsSoloParent > 1 ? 's' : '') : '';
 
 $genderSummaryParts = [];
-
 if ($genderCount['Female'] > 0) {
     $fem = $genderCount['Female'];
     $genderSummaryParts[] = "{$numberText->format($fem)} (" . number_format($fem) . ") " . ($fem > 1 ? 'girls' : 'girl');
@@ -62,6 +60,15 @@ if ($genderCount['Male'] > 0) {
     $genderSummaryParts[] = "{$numberText->format($mal)} (" . number_format($mal) . ") " . ($mal > 1 ? 'boys' : 'boy');
 }
 $genderSummary = implode(' and ', $genderSummaryParts);
+
+// Determine status term (underlined if separated/widowed)
+if ($civilStatusRaw === 'separated') {
+    $statusTerm = "has been <u>separated</u> for {$yearsWord}.";
+} elseif ($civilStatusRaw === 'widowed') {
+    $statusTerm = "has been <u>widowed</u> for {$yearsWord}.";
+} else {
+    $statusTerm = "has been {$civilStatus} for {$yearsWord}.";
+}
 
 function formatWithSuffix($dateStr) {
     $day = date('j', strtotime($dateStr));
@@ -118,13 +125,14 @@ ob_start();
     <p class="no-indent">TO WHOM IT MAY CONCERN:</p>
 
     <p>
-      This is to certify that <strong><u><?= htmlspecialchars(strtoupper($fullName)) ?></u></strong>, <?= htmlspecialchars($age) ?> years old, <?= htmlspecialchars(ucfirst($civilStatus)) ?>, 
+      This is to certify that <strong><u><?= htmlspecialchars(strtoupper($fullName)) ?></u></strong>, 
+      <strong><?= htmlspecialchars($residentAge) ?></strong> years old, <?= strtoupper($civilStatus === 'WIDOWED' ? 'WIDOW' : $civilStatus) ?>,
       is a resident of <?= htmlspecialchars($purok) ?>, Magang, Daet, Camarines Norte.
     </p>
 
     <p>
-      This is to certify that the said person is a <strong>SOLO PARENT</strong> to <?= $pronoun ?> <?= ($childCount > 1 ? 'children' : 'child') ?>, <?= $genderSummary ?>
-      <?= implode(', ', $childDescriptions) ?>, and has been <?= $statusTerm ?> for <?= $yearsWord ?>.
+      This is to certify that the said person is a <strong>SOLO PARENT</strong> to <?= $pronoun ?> <?= ($childCount > 1 ? 'children' : 'child') ?>, <?= $genderSummary ?> 
+      <?= implode(', ', $childDescriptions) ?>, and <?= $statusTerm ?>
     </p>
 
     <p>

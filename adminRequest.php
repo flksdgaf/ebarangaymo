@@ -1063,16 +1063,29 @@ $result = $st->get_result();
 
       <!-- View Request Modal -->
       <div class="modal fade" id="viewRequestModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="viewRequestModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" style="max-width:820px; width:100%">
-          <div class="modal-content" style="display:flex; flex-direction:column;">
-            <div class="modal-header text-white" style="background-color:#13411F;">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 820px; margin: 30px auto;">
+          <div class="modal-content" style="display: flex; flex-direction: column; max-height: calc(100vh - 60px);">
+            
+            <!-- Modal Header -->
+            <div class="modal-header text-white" style="background-color: #13411F;">
               <h5 class="modal-title" id="viewRequestModalLabel">Document Request Preview</h5>
               <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div style="background:#ccc; padding:20px;">
-              <iframe id="requestPreviewFrame" style="border:none; width:100%; height:1123px; background:#ccc;" src="" allowfullscreen></iframe>
+
+            <!-- Scrollable Modal Body -->
+            <div class="modal-body p-0" style="flex: 1; overflow: hidden;">
+              <div class="preview-container" style="height: 100%; overflow-y: auto; background-color: #fff; padding: 20px;">
+                <iframe
+                  id="requestPreviewFrame"
+                  src=""
+                  allowfullscreen
+                  style="width: 100%; height: 500px; border: none; background-color: #fff;"
+                ></iframe>
+              </div>
             </div>
-            <div class="modal-footer justify-content-between px-4 py-2" style="background:#f8f9fa;">
+
+            <!-- Modal Footer -->
+            <div class="modal-footer justify-content-between px-4 py-2" style="background-color: #f8f9fa;">
               <span class="text-muted">Preview only — use the buttons below to save or print</span>
               <div>
                 <button class="btn btn-outline-success me-2" id="printRequestBtn">
@@ -1083,9 +1096,11 @@ $result = $st->get_result();
                 </a>
               </div>
             </div>
+
           </div>
         </div>
       </div>
+
 
       <!-- Edit Request Modal -->
       <div class="modal fade" id="editRequestModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="editRequestModalLabel" aria-hidden="true">

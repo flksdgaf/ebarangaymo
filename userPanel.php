@@ -8,7 +8,7 @@
         $page = $_GET['page'] ?? 'userDashboard';
 
         // List of allowed pages for security
-        $allowed_pages = ['userDashboard', 'userRequest', 'userServices', 'userSettings', 'userTransactions', 'serviceBarangayID', 'serviceCertification'];
+        $allowed_pages = ['userDashboard', 'userRequest', 'userServices', 'userSettings', 'userTransactions', 'serviceBarangayID', 'serviceCertification', 'serviceEquipmentBorrowing', 'serviceBusinessPermit'];
         // Check if the requested page is allowed
         if (in_array($page, $allowed_pages)) {
             $page_file = "{$page}.php";

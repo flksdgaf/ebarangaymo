@@ -89,10 +89,11 @@ if ($type === 'Solo Parent') {
 }
 
 // 6) Always-present columns:
+$requestSource = 'Online';
 $columns = array_merge(
     ['account_id','transaction_id'], 
     $fields,
-    ['payment_method','amount','request_for','authorization_letter']
+    ['payment_method','amount','request_for','authorization_letter','request_source']
 );
 $placeholders = array_fill(0, count($columns), '?');
 
@@ -110,7 +111,7 @@ $transactionId = sprintf("%s%07d", $prefix, $n);
 $params = array_merge(
     [$acct, $transactionId],
     array_values($data),
-    [ $_POST['paymentMethod'], $amount, $requestFor, $authFilename ]
+    [ $_POST['paymentMethod'], $amount, $requestFor, $authFilename, $requestSource ]
 );
 
 // 9) Prepare & bind

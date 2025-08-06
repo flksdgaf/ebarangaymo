@@ -62,7 +62,7 @@ if (!$purokTable) {
                   </a>
               </div>
               <div class="col d-flex">
-                  <a href="#" class="service-card mid-green w-100">
+                  <a href="userPanel.php?page=serviceBusinessPermit" class="service-card mid-green w-100">
                       <i class="fas fa-store icon"></i>
                       <div>
                           <h4>Business Permit</h4>
@@ -71,7 +71,7 @@ if (!$purokTable) {
                   </a>
               </div>
               <div class="col d-flex">
-                  <a href="#" class="service-card light-green w-100">
+                  <a href="userPanel.php?page=serviceEquipmentBorrowing" class="service-card light-green w-100">
                       <i class="fas fa-chair icon"></i>
                       <div>
                           <h4>Equipment Borrowing</h4>

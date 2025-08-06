@@ -45,7 +45,9 @@ $pageTitles = [
     'userSettings' => 'Account Settings',
     'userTransactions' => 'Transaction History',
     'serviceBarangayID' => 'Barangay ID',
-    'serviceCertification' => 'Certification'
+    'serviceCertification' => 'Certification',
+    'serviceBusinessPermit' => 'Business Permit',
+    'serviceEquipmentBorrowing' => 'Equipment Borrowing'
 ];
 
 $topbarText = $pageTitles[$page] ?? 'Dashboard';

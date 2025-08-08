@@ -103,7 +103,7 @@ if ($res0) {
 </div>
 
 <!-- Details Modal (same for both views) -->
-<div class="modal fade" id="requestDetailsModal" tabindex="-1" aria-labelledby="requestDetailsModalLabel" aria-hidden="true">
+<!-- <div class="modal fade" id="requestDetailsModal" tabindex="-1" aria-labelledby="requestDetailsModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
@@ -113,10 +113,34 @@ if ($res0) {
       <div class="modal-body"></div>
     </div>
   </div>
+</div> -->
+<!-- Details Modal -->
+<div class="modal fade" id="requestDetailsModal" tabindex="-1" aria-labelledby="requestDetailsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered" style="max-width: 750px;">
+    <div class="modal-content">
+      <!-- Match your system’s modal header color -->
+      <div class="modal-header" style="background-color: #13411F; color: white;">
+        <h5 class="modal-title fw-bold" id="requestDetailsModalLabel">Request Details</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <!-- Grouped content for better readability -->
+      <div class="modal-body p-4" style="max-height: 70vh; overflow-y: auto;">
+        <div class="row g-3" id="detailsContent">
+          <!-- JS will inject grouped fields here -->
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
 </div>
 
+
 <!-- Confirmation Modal for Approve/Attach (pending) -->
-<div class="modal fade" id="confirmApproveModal" tabindex="-1" aria-hidden="true">
+<!-- <div class="modal fade" id="confirmApproveModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
@@ -130,10 +154,26 @@ if ($res0) {
       </div>
     </div>
   </div>
+</div> -->
+<!-- Confirmation Modal for Approve/Attach (pending) -->
+<div class="modal fade" id="confirmApproveModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 500px;">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title fw-bold">Confirm Verification</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4" id="confirmApproveBody" style="font-size: 0.95rem;"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success px-4" id="confirmApproveBtn">Confirm</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Decline Reason Modal -->
-<div class="modal fade" id="declineReasonModal" tabindex="-1" aria-labelledby="declineReasonModalLabel" aria-hidden="true">
+<!-- <div class="modal fade" id="declineReasonModal" tabindex="-1" aria-labelledby="declineReasonModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
@@ -155,10 +195,39 @@ if ($res0) {
       </form>
     </div>
   </div>
+</div> -->
+<!-- Decline Reason Modal -->
+<div class="modal fade" id="declineReasonModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="declineReasonModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered" style="max-width: 700px;">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title fw-bold" id="declineReasonModalLabel">
+          Decline Account Confirmation
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <form id="declineReasonForm" method="POST" action="functions/decline_account.php">
+        <div class="modal-body">
+          <input type="hidden" name="account_ID" id="declineAccountId" value="">
+
+          <div class="mb-3">
+            <label id="declineReasonLabel" for="declineReasonInput" class="form-label"></label>
+            <textarea class="form-control form-control-sm" id="declineReasonInput" name="reason" rows="4" required placeholder="Enter reason here..."></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger px-4">Confirm Decline</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 
 <!-- Delete Permanently Confirmation Modal -->
-<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+<!-- <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
@@ -175,6 +244,51 @@ if ($res0) {
           <button type="submit" class="btn btn-danger">Delete Permanently</button>
         </div>
       </form>
+    </div>
+  </div>
+</div> -->
+<!-- Delete Permanently Confirmation Modal -->
+<div class="modal fade" id="confirmDeleteModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered" style="max-width: 700px;">
+    <div class="modal-content">
+      <!-- Header -->
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title fw-bold" id="confirmDeleteModalLabel">
+          Permanent Deletion Confirmation
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <!-- Form -->
+      <form id="confirmDeleteForm" method="POST" action="functions/delete_declined_account.php">
+        <div class="modal-body">
+          <input type="hidden" name="account_ID" id="deleteAccountId" value="">
+          
+          <p id="confirmDeleteLabel" class="mb-0"></p>
+          <small class="text-muted">Note: This action cannot be undone and all associated records will be lost permanently.</small>
+        </div>
+
+        <!-- Footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger px-4">Delete Permanently</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Zoom Modal -->
+<div class="modal fade" id="zoomImageModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content bg-dark text-white border-0 shadow-lg">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold" id="zoomImageTitle"></h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img id="zoomedImage" src="" class="img-fluid rounded shadow">
+      </div>
     </div>
   </div>
 </div>
@@ -235,27 +349,57 @@ if ($res0) {
         row.addEventListener('click', e => {
           if (e.target.closest('button') || e.target.closest('form')) return;
           const dataObj = JSON.parse(row.getAttribute('data-full'));
-          let html = '<dl class="row">';
+          // let html = '<dl class="row">';
+          // const exclude = ['username','password'];
+          // for (let key in dataObj) {
+          //   if (exclude.includes(key)) continue;
+          //   let label = key.replace(/_/g,' ').replace(/\b\w/g, c=>c.toUpperCase());
+          //   let val = dataObj[key];
+          //   if (/\.(jpg|jpeg|png|gif)$/i.test(val)) {
+          //     const folder = key.includes('front') ? 'frontID'
+          //                 : key.includes('back') ? 'backID'
+          //                 : 'profilePictures';
+          //     html += `<dt class="col-sm-3">${label}</dt>
+          //             <dd class="col-sm-9 mb-3">
+          //               <img src="${folder}/${val}"
+          //                     class="img-fluid img-thumbnail" style="max-height:200px;">
+          //             </dd>`;
+          //   } else {
+          //     html += `<dt class="col-sm-3">${label}</dt>
+          //             <dd class="col-sm-9 mb-3">${val}</dd>`;
+          //   }
+          // }
+          // html += '</dl>';
+          // detailsBody.innerHTML = html;
+          let html = '';
           const exclude = ['username','password'];
-          for (let key in dataObj) {
-            if (exclude.includes(key)) continue;
-            let label = key.replace(/_/g,' ').replace(/\b\w/g, c=>c.toUpperCase());
-            let val = dataObj[key];
-            if (/\.(jpg|jpeg|png|gif)$/i.test(val)) {
-              const folder = key.includes('front') ? 'frontID'
-                          : key.includes('back') ? 'backID'
-                          : 'profilePictures';
-              html += `<dt class="col-sm-3">${label}</dt>
-                      <dd class="col-sm-9 mb-3">
-                        <img src="${folder}/${val}"
-                              class="img-fluid img-thumbnail" style="max-height:200px;">
-                      </dd>`;
-            } else {
-              html += `<dt class="col-sm-3">${label}</dt>
-                      <dd class="col-sm-9 mb-3">${val}</dd>`;
-            }
+
+          // Group 1: Basic Info
+          html += '<h6 class="fw-bold mb-2">Basic Information</h6><div class="row mb-3">';
+          html += `<div class="col-md-6"><strong>Account ID:</strong> ${dataObj.account_ID}</div>`;
+          html += `<div class="col-md-6"><strong>Full Name:</strong> ${dataObj.full_name}</div>`;
+          html += `<div class="col-md-6"><strong>Purok:</strong> ${dataObj.purok}</div>`;
+          html += `<div class="col-md-6"><strong>Birthdate:</strong> ${dataObj.birthdate}</div>`;
+          html += `<div class="col-md-6"><strong>Sex:</strong> ${dataObj.sex}</div>`;
+          html += `<div class="col-md-6"><strong>Civil Status:</strong> ${dataObj.civil_status}</div>`;
+          html += '</div>';
+
+          // Group 2: Identification
+          html += '<h6 class="fw-bold mb-2">Identification</h6><div class="row mb-3">';
+          if (dataObj.front_ID) {
+            // html += `<div class="col-md-6"><img src="frontID/${dataObj.front_ID}" class="img-fluid img-thumbnail" style="max-height:200px;"></div>`;
+            html += `<div class="col-md-6"><img src="frontID/${dataObj.front_ID}" class="img-fluid img-thumbnail id-preview" style="max-height:200px; cursor:pointer;" data-full-src="frontID/${dataObj.front_ID}" data-title="Front Identification"></div>`;
           }
-          html += '</dl>';
+          if (dataObj.back_ID) {
+            // html += `<div class="col-md-6"><img src="backID/${dataObj.back_ID}" class="img-fluid img-thumbnail" style="max-height:200px;"></div>`;
+            html += `<div class="col-md-6"><img src="backID/${dataObj.back_ID}" class="img-fluid img-thumbnail id-preview" style="max-height:200px; cursor:pointer;" data-full-src="backID/${dataObj.back_ID}" data-title="Back Identification"></div>`;
+          }
+          html += '</div>';
+
+          // Group 3: Account Creation
+          html += '<h6 class="fw-bold mb-2">Account Creation</h6>';
+          html += `<p><strong>Date Created:</strong> ${dataObj.time_creation}</p>`;
+
           detailsBody.innerHTML = html;
           detailsModal.show();
         });
@@ -315,8 +459,8 @@ if ($res0) {
             document.getElementById('declineAccountId').value = acctId;
             // Set label text
             const labelEl = document.getElementById('declineReasonLabel');
-            labelEl.textContent = 
-              `This action cannot be undone. Please state the reason below for declining ${fullName}’s account request (ID ${acctId}).`;
+            // labelEl.textContent = `This action cannot be undone. Please state the reason below for declining ${fullName}’s account request (ID ${acctId}).`;
+            labelEl.innerHTML = `This action cannot be undone. Please state the reason below for declining <strong>${fullName}’s</strong> account request <strong>(ID ${acctId})</strong>.`;
 
             // Clear textarea
             document.getElementById('declineReasonInput').value = '';
@@ -350,7 +494,8 @@ if ($res0) {
             document.getElementById('deleteAccountId').value = acctId;
             // Set confirmation text
             const labelP = document.getElementById('confirmDeleteLabel');
-            labelP.textContent = `Are you sure you want to permanently delete ${fullName}’s declined record (ID ${acctId})? This action cannot be undone.`;
+            // labelP.textContent = `Are you sure you want to permanently delete ${fullName}’s declined record (ID ${acctId})? This action cannot be undone.`;
+            labelP.innerHTML = `Are you sure you want to permanently delete <strong>${fullName}’s</strong> declined record <strong>(ID ${acctId})</strong>? This action cannot be undone.`;
 
             // Show modal
             const deleteModalEl = document.getElementById('confirmDeleteModal');
@@ -483,5 +628,28 @@ if ($res0) {
 
     // Initial bind for pending
     bindRowEvents();
+
+    // Bootstrap alerts that can be dismissed
+    document.querySelectorAll('.alert-dismissible').forEach(alertEl => {
+      // after 3 seconds (3000ms), close the alert
+      setTimeout(() => {
+        const bsAlert = bootstrap.Alert.getOrCreateInstance(alertEl);
+        bsAlert.close();
+      }, 3000);
+    });
+
+    // Move this OUTSIDE bindRowEvents
+    document.getElementById('requestDetailsModal').addEventListener('shown.bs.modal', () => {
+      document.querySelectorAll('.id-preview').forEach(img => {
+        img.addEventListener('click', () => {
+          const src = img.getAttribute('data-full-src');
+          const title = img.getAttribute('data-title') || 'Identification';
+          document.getElementById('zoomedImage').src = src;
+          document.getElementById('zoomImageTitle').textContent = title;
+          const zoomModal = new bootstrap.Modal(document.getElementById('zoomImageModal'));
+          zoomModal.show();
+        });
+      });
+    });
   });
 </script>

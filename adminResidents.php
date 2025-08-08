@@ -31,9 +31,9 @@ if ($search !== '') {
     // build a placeholder for each column
     $likes = [];
     foreach ($searchCols as $col) {
-        $likes[]    = "$col LIKE ?";
-        $types     .= 's';
-        $params[]   = "%{$search}%";
+        $likes[] = "$col LIKE ?";
+        $types .= 's';
+        $params[] = "%{$search}%";
     }
     $where[] = '(' . implode(' OR ', $likes) . ')';
 }
@@ -42,14 +42,56 @@ $whereSQL = $where ? 'WHERE ' . implode(' AND ', $where) : '';
     
 $tableName = "purok{$purokNum}_rbi";
 
-// Fetch all columns plus role from user_accounts
-$sql = "SELECT r.*, ua.role FROM `{$tableName}` AS r LEFT JOIN user_accounts AS ua ON r.account_ID = ua.account_id {$whereSQL}";
-// $sql = "SELECT r.*, ua.role, CASE WHEN EXISTS (SELECT 1 FROM blotter_records b WHERE b.respondent_name = r.full_name AND b.blotter_status = 'Pending') THEN 'On Hold' WHEN EXISTS (SELECT 1 FROM blotter_records b WHERE b.respondent_name = r.full_name AND b.blotter_status = 'Cleared') THEN '' ELSE r.remarks END AS remarks FROM `{$tableName}` AS r LEFT JOIN user_accounts AS ua ON r.account_ID = ua.account_id {$whereSQL}";
+// --- Pagination setup ---
+$limit = 9;
+$page_num = max((int)($_GET['page_num'] ?? 1), 1);
+$offset = ($page_num - 1) * $limit;
 
-$stmt = $conn->prepare($sql);
-if ($whereSQL) {
-    $stmt->bind_param($types, ...$params);
+// 1) get total count
+$countSQL = "SELECT COUNT(*) AS total FROM `{$tableName}` AS r LEFT JOIN user_accounts AS ua ON r.account_ID = ua.account_id {$whereSQL}";
+$countStmt = $conn->prepare($countSQL);
+if ($countStmt === false) {
+  die("Prepare failed (count): " . htmlspecialchars($conn->error));
 }
+if ($whereSQL) {
+    // bind params (need references for call_user_func_array)
+    $refs = [];
+    foreach ($params as $i => $v) {
+        $refs[$i] = & $params[$i];
+    }
+    array_unshift($refs, $types);
+    call_user_func_array([$countStmt, 'bind_param'], $refs);
+}
+$countStmt->execute();
+$totalRows = $countStmt->get_result()->fetch_assoc()['total'] ?? 0;
+$totalPages = (int)ceil($totalRows / $limit);
+$countStmt->close();
+
+// Build base query string for pagination links (preserve search & purok but not page_num)
+$qs = $_GET;
+unset($qs['page_num']);
+$baseQS = http_build_query($qs);
+if ($baseQS) $baseQS .= '&';
+
+// 2) fetch the actual rows with LIMIT/OFFSET
+$sql = "SELECT r.*, ua.role FROM `{$tableName}` AS r LEFT JOIN user_accounts AS ua ON r.account_ID = ua.account_id {$whereSQL} ORDER BY r.full_name ASC LIMIT ? OFFSET ?";
+$stmt = $conn->prepare($sql);
+if ($stmt === false) {
+  die("Prepare failed (select): " . htmlspecialchars($conn->error));
+}
+
+// Build types and params for binding (include limit & offset)
+$typesWithLimit = $types . 'ii';
+$paramsWithLimit = array_merge($params, [$limit, $offset]);
+
+// Build refs array for call_user_func_array
+$refs = [];
+foreach ($paramsWithLimit as $i => $v) {
+  $refs[$i] = & $paramsWithLimit[$i];
+}
+array_unshift($refs, $typesWithLimit);
+call_user_func_array([$stmt, 'bind_param'], $refs);
+
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -60,6 +102,24 @@ while ($row = $result->fetch_assoc()) {
     $allRows[] = $row;
 }
 $stmt->close();
+
+// // Fetch all columns plus role from user_accounts
+// $sql = "SELECT r.*, ua.role FROM `{$tableName}` AS r LEFT JOIN user_accounts AS ua ON r.account_ID = ua.account_id {$whereSQL}";
+
+// $stmt = $conn->prepare($sql);
+// if ($whereSQL) {
+//   $stmt->bind_param($types, ...$params);
+// }
+// $stmt->execute();
+// $result = $stmt->get_result();
+
+// // Build PHP array for JS
+// $allRows = [];
+// while ($row = $result->fetch_assoc()) {
+//   $row['purok'] = $purokNum;
+//   $allRows[] = $row;
+// }
+// $stmt->close();
 ?>
 
 <title>eBarangay Mo | Residents</title>
@@ -99,11 +159,11 @@ $stmt->close();
           <tr>
             <th class="text-nowrap">Account ID</th>
             <th class="text-nowrap">Full Name</th>
-            <th class="text-nowrap">Birthdate</th>
+            <!-- <th class="text-nowrap">Birthdate</th>
             <th class="text-nowrap">House No.</th>
             <th class="text-nowrap">Relationship to Head</th>
             <th class="text-nowrap">Registry No.</th>
-            <th class="text-nowrap">Total Population</th>
+            <th class="text-nowrap">Total Population</th> -->
             <th class="text-nowrap">Account Role</th>
             <th class="text-nowrap">Remarks</th>
           </tr>
@@ -123,14 +183,16 @@ $stmt->close();
               $cellStyle = $bgColor ? "background-color:{$bgColor}!important;" : '';
               $escapedName = htmlspecialchars($row['full_name'], ENT_QUOTES);
             ?>
-              <tr class="resident-row" data-name="<?= $escapedName ?>">
+              <!-- <tr class="resident-row" data-name="<= $escapedName ?>"> -->
+              <!-- <tr class="resident-row" data-name="<= $escapedName ?>" data-role="<= htmlspecialchars($row['role'] ?? '', ENT_QUOTES) ?>"> -->
+              <tr class="resident-row" data-name="<?= $escapedName ?>" data-role="<?= htmlspecialchars($row['role'] ?? '', ENT_QUOTES) ?>">
                 <td style="<?= $cellStyle ?>"><?= htmlspecialchars($row['account_ID']) ?></td>
                 <td style="<?= $cellStyle ?>"><?= $escapedName ?></td>
-                <td style="<?= $cellStyle ?>"><?= htmlspecialchars($row['birthdate']) ?></td>
-                <td style="<?= $cellStyle ?>"><?= htmlspecialchars($row['house_number'] ?? '—') ?></td>
-                <td style="<?= $cellStyle ?>"><?= htmlspecialchars($row['relationship_to_head'] ?? '—') ?></td>
-                <td style="<?= $cellStyle ?>"><?= htmlspecialchars($row['registry_number'] ?? '—') ?></td>
-                <td style="<?= $cellStyle ?>"><?= htmlspecialchars($row['total_population'] ?? '—') ?></td>
+                <!-- <td style="<= $cellStyle ?>"><= htmlspecialchars($row['birthdate']) ?></td>
+                <td style="<= $cellStyle ?>"><= htmlspecialchars($row['house_number'] ?? '—') ?></td>
+                <td style="<= $cellStyle ?>"><= htmlspecialchars($row['relationship_to_head'] ?? '—') ?></td>
+                <td style="<= $cellStyle ?>"><= htmlspecialchars($row['registry_number'] ?? '—') ?></td>
+                <td style="<= $cellStyle ?>"><= htmlspecialchars($row['total_population'] ?? '—') ?></td> -->
                 <td style="<?= $cellStyle ?>">
                   <?php if ($row['role'] !== null): ?>
                     <select class="form-select form-select-sm role-select" style="width:137px; background-image: none; padding-right: 0.5rem;">
@@ -161,11 +223,45 @@ $stmt->close();
         </tbody>
       </table>
     </div>
+
+    <!-- Pagination -->
+    <?php if ($totalPages > 1): ?>
+      <nav class="mt-3">
+        <ul class="pagination justify-content-center pagination-sm">
+          <!-- Prev Button -->
+          <li class="page-item <?= $page_num <= 1 ? 'disabled' : '' ?>">
+            <a class="page-link" href="?<?= $baseQS . http_build_query(array_merge($_GET, ['page_num' => $page_num - 1])) ?>">Previous</a>
+          </li>
+
+          <?php
+          $range = 2;
+          $dots = false;
+          for ($i = 1; $i <= $totalPages; $i++) {
+            if ($i == 1 || $i == $totalPages || ($i >= $page_num - $range && $i <= $page_num + $range)) {
+              $active = $i == $page_num ? 'active' : '';
+              $query = $baseQS . http_build_query(array_merge($_GET, ['page_num' => $i]));
+              echo "<li class='page-item {$active}'><a class='page-link' href='?{$query}'>$i</a></li>";
+              $dots = true;
+            } elseif ($dots) {
+              echo "<li class='page-item disabled'><span class='page-link'>…</span></li>";
+              $dots = false;
+            }
+          }
+          ?>
+
+          <!-- Next Button -->
+          <li class="page-item <?= $page_num >= $totalPages ? 'disabled' : '' ?>">
+            <a class="page-link" href="?<?= $baseQS . http_build_query(array_merge($_GET, ['page_num' => $page_num + 1])) ?>">Next</a>
+          </li>
+        </ul>
+      </nav>
+    <?php endif; ?>
+
   </div>
 </div>
 
 <!-- Details / Edit Modal -->
-<div class="modal fade" id="residentDetailsModal" tabindex="-1" aria-labelledby="residentDetailsLabel" aria-hidden="true">
+<!-- <div class="modal fade" id="residentDetailsModal" tabindex="-1" aria-labelledby="residentDetailsLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
@@ -174,12 +270,32 @@ $stmt->close();
       </div>
       <div class="modal-body">
         <form id="residentDetailsForm">
-          <!-- fields will be injected here by JS -->
         </form>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         <button type="button" class="btn btn-primary" id="detailsEditSaveBtn">Edit</button>
+      </div>
+    </div>
+  </div>
+</div> -->
+
+<!-- Resident Details Modal -->
+<div class="modal fade" id="residentDetailsModal" tabindex="-1" aria-labelledby="residentDetailsLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered"> <!-- changed to modal-xl -->
+    <div class="modal-content">
+      <div class="modal-header text-white" style="background-color:#13411F;">
+        <h5 class="modal-title" id="residentDetailsLabel">Resident Details</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-3" style="max-height:68vh; overflow-y:auto;">
+        <form id="residentDetailsForm" class="row g-2">
+          <!-- buildForm() will inject here -->
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-success" id="detailsEditSaveBtn">Edit</button>
       </div>
     </div>
   </div>
@@ -199,6 +315,35 @@ $stmt->close();
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
         <button type="button" class="btn btn-primary" id="confirmSaveBtn">Yes, Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Redesigned Confirmation Modal -->
+<div class="modal fade" id="roleConfirmModal" tabindex="-1" aria-labelledby="roleConfirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow">
+      <div class="modal-header text-white" style="background-color: #13411F;">
+        <h5 class="modal-title d-flex align-items-center" id="roleConfirmModalLabel">
+          <span class="material-symbols-outlined me-2">warning</span>
+          Confirm Role Change
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center">
+        <p class="mb-1" id="roleConfirmMessage">
+          Are you sure you want to change this role?
+        </p>
+        <small class="text-muted">This change will affect administrative permissions.</small>
+      </div>
+      <div class="modal-footer justify-content-center">
+        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">
+          Cancel
+        </button>
+        <button type="button" class="btn btn-success px-4" id="roleConfirmBtn">
+          Yes, Change Role
+        </button>
       </div>
     </div>
   </div>
@@ -226,7 +371,7 @@ $stmt->close();
 
   // Pass data to JS
   const residents = <?= json_encode($allRows, JSON_HEX_TAG) ?>;
-  const purokNum  = <?= $purokNum ?>;
+  const purokNum = <?= $purokNum ?>;
   window.loggedInUserRole = <?= json_encode($_SESSION['loggedInUserRole'] ?? '') ?>;
 
   // map remarks to colors in JS
@@ -327,18 +472,127 @@ $stmt->close();
     });
 
     // --- Role dropdown handler
-    document.querySelectorAll('.role-select').forEach(sel => {
-      sel.addEventListener('change', async function() {
-        const tr = this.closest('tr');
-        const acct = tr.children[0].textContent.trim();
-        const newRole = this.value;
-        await fetch('functions/update_role.php', {
-          method: 'POST',
-          headers:{'Content-Type':'application/x-www-form-urlencoded'},
-          body: new URLSearchParams({ account_id: acct, role: newRole })
+    // document.querySelectorAll('.role-select').forEach(sel => {
+    //   sel.addEventListener('change', async function() {
+    //     const tr = this.closest('tr');
+    //     const acct = tr.children[0].textContent.trim();
+    //     const newRole = this.value;
+    //     await fetch('functions/update_role.php', {
+    //       method: 'POST',
+    //       headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    //       body: new URLSearchParams({ account_id: acct, role: newRole })
+    //     });
+    //   });
+    // });
+
+    // --- Role dropdown handler (confirm for all admin roles + revert + server JSON handling)
+    (function() {
+      const roleChangers = ['Brgy Captain','Brgy Bookkeeper','Brgy Secretary'];
+      const adminRoles = ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Treasurer','Brgy Kagawad','Lupon Tagapamayapa'];
+
+      const canChangeRole = roleChangers.includes(window.loggedInUserRole);
+
+      if (!canChangeRole) {
+        document.querySelectorAll('.role-select').forEach(s => s.disabled = true);
+        return;
+      }
+
+      // modal elements
+      const roleConfirmModalEl = document.getElementById('roleConfirmModal');
+      const roleConfirmModal = new bootstrap.Modal(roleConfirmModalEl);
+      const roleConfirmMessage = document.getElementById('roleConfirmMessage');
+      const roleConfirmBtn = document.getElementById('roleConfirmBtn');
+
+      // pendingConfirm holds data while modal is open
+      // structure: { sel, oldRole, newRole, acct, doUpdate, confirmed }
+      let pendingConfirm = null;
+
+      document.querySelectorAll('.role-select').forEach(sel => {
+        // remember current baseline so we can revert
+        sel.dataset.original = sel.value;
+
+        sel.addEventListener('change', (e) => {
+          const newRole = sel.value;
+          const tr = sel.closest('tr');
+          const acct = tr.children[0].textContent.trim();
+          const oldRole = tr.dataset.role || sel.dataset.original || '';
+
+          // nothing changed
+          if (newRole === oldRole) return;
+
+          const affectsAdmin = adminRoles.includes(oldRole) || adminRoles.includes(newRole);
+
+          // define the update operation (captures sel/oldRole/newRole/tr/acct)
+          const doUpdate = async () => {
+            try {
+              const body = new URLSearchParams({ account_id: acct, role: newRole, purok: tr.dataset.purok ?? '' });
+              const res = await fetch('functions/update_role.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body
+              });
+              const json = await res.json();
+
+              if (!json.success) {
+                // revert UI
+                sel.value = oldRole;
+                showBootstrapAlert(json.error || 'Failed to update role', 'danger');
+              } else {
+                // success: update dataset baseline
+                tr.dataset.role = newRole;
+                sel.dataset.original = newRole;
+                showBootstrapAlert(json.message || 'Role updated', 'success');
+              }
+            } catch (err) {
+              sel.value = oldRole;
+              showBootstrapAlert('Network error while updating role', 'danger');
+              console.error(err);
+            }
+          };
+
+          if (affectsAdmin) {
+            // prepare pendingConfirm and show modal
+            pendingConfirm = { sel, oldRole, newRole, acct, doUpdate, confirmed: false };
+
+            roleConfirmMessage.innerHTML = `
+              <p>Are you sure you want to change the role for account <strong>${acct}</strong>?</p>
+              <p>From: <em>${oldRole || '—'}</em><br>To: <em>${newRole}</em></p>
+              <p class="text-muted small">This affects administrative positions — please confirm.</p>
+            `;
+            roleConfirmModal.show();
+          } else {
+            // no admin role involved — update immediately
+            doUpdate();
+          }
         });
       });
-    });
+
+      // Confirm button — runs the stored doUpdate and mark confirmed
+      roleConfirmBtn.addEventListener('click', () => {
+        if (!pendingConfirm) return;
+        pendingConfirm.confirmed = true;
+        // hide modal first (so hidden.bs.modal will run after)
+        roleConfirmModal.hide();
+        // call update
+        pendingConfirm.doUpdate();
+        // clear pending after action (safe guard)
+        pendingConfirm = null;
+      });
+
+      // If modal is closed without confirming, revert the select
+      roleConfirmModalEl.addEventListener('hidden.bs.modal', () => {
+        if (!pendingConfirm) return;
+        if (!pendingConfirm.confirmed) {
+          // user cancelled/closed modal — revert select to oldRole
+          try {
+            pendingConfirm.sel.value = pendingConfirm.oldRole;
+          } catch (e) {
+            console.error('Failed to revert role select', e);
+          }
+        }
+        pendingConfirm = null;
+      });
+    })();
 
     // --- Details / Edit Modal setup ---
     const modalEl = document.getElementById('residentDetailsModal');
@@ -360,81 +614,161 @@ $stmt->close();
       editSaveBtn.textContent = 'Edit';
       
       form.innerHTML = '';
+
+      // Profile picture at the top
       if (data.profile_picture) {
         const picDiv = document.createElement('div');
         picDiv.className = 'text-center mb-4';
-        const img = document.createElement('img');
-        img.src = `profilePictures/${data.profile_picture}`;
-        img.className = 'rounded-circle';
-        img.style = 'width:120px;height:120px;object-fit:cover;';
-        picDiv.appendChild(img);
+        picDiv.innerHTML = `
+          <img src="profilePictures/${data.profile_picture}" 
+              class="rounded-circle" 
+              style="width:120px;height:120px;object-fit:cover;">
+        `;
         form.appendChild(picDiv);
       }
 
-      const fields = [
-        { key:'purok',                          label:'Purok',                          type:'select', readonly:true, editable:true, options:['1','2','3','4','5','6'] },
-        { key:'account_ID',                     label:'Account ID',                     type:'text',   readonly:true },
-        { key:'full_name',                      label:'Full Name',                      type:'text',   readonly:true, editable:true },
-        { key:'birthdate',                      label:'Birthdate',                      type:'date',   readonly:true },
-        { key:'sex',                            label:'Sex',                            type:'select', readonly:true, editable:true, options:['Male','Female','Prefer not to say','Unknown'] },
-        { key:'civil_status',                   label:'Civil Status',                   type:'select', readonly:true, editable:true, options:['Single','Married','Widowed','Separated','Divorced','Unknown'] },
-        { key:'blood_type',                     label:'Blood Type',                     type:'select', readonly:true, editable:true, options:['A+','A-','B+','B-','AB+','AB-','O+','O-','Unknown'] },
-        { key:'birth_registration_number',      label:'Birth Reg. No.',                 type:'text',   readonly:true, editable:true },
-        { key:'highest_educational_attainment', label:'Highest Educational Attainment', type:'select', readonly:true, editable:true, options:['Kindergarten','Elementary','High School','Senior High School','Undergraduate','College Graduate','Post-Graduate','Vocational','None','Unknown'] },
-        { key:'occupation',                     label:'Occupation',                     type:'text',   readonly:true, editable:true },
-        { key:'house_number',                   label:'House No.',                      type:'number', readonly:true, editable:true },
-        { key:'relationship_to_head',           label:'Relationship to Head',           type:'text',   readonly:true, editable:true },
-        { key:'registry_number',                label:'Registry No.',                   type:'number', readonly:true, editable:true },
-        { key:'total_population',               label:'Total Population',               type:'number', readonly:true, editable:true },
-        { key:'role',                           label:'Role',                           type:'text',   readonly:true },
-        { key:'remarks',                        label:'Remarks',                        type:'text',   readonly:true }
-      ];
+      // Helper to build a grid field
+      function gridField(label, key, type = 'text', opts = [], colSize = 'col-12 col-md-4') {
+        const val = data[key] ?? '';
+        let fieldHtml = '';
 
-      fields.forEach(f => {
-        const wr = document.createElement('div');
-        wr.className = 'mb-3 row';
-
-        const lbl = document.createElement('label');
-        lbl.className = 'col-sm-5 col-form-label fw-bold';
-        lbl.textContent = f.label;
-
-        const inner = document.createElement('div');
-        inner.className = 'col-sm-7';
-
-        let input;
-        if (f.type === 'select') {
-          input = document.createElement('select');
-          input.className = 'form-select';
-          f.options.forEach(opt => {
-            const o = document.createElement('option');
-            o.value = o.textContent = opt;
-            if (String(data[f.key]) === opt) o.selected = true;
-            input.appendChild(o);
-          });
-          input.disabled = true;
+        if (type === 'select') {
+          fieldHtml = `<select id="field_${key}" name="${key}" class="form-select form-select-sm" disabled>
+            ${opts.map(opt => `<option value="${opt}" ${String(val) === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+          </select>`;
         } else {
-          input = document.createElement('input');
-          input.className = 'form-control';
-          input.type = f.type;
-          input.value = data[f.key] ?? '';
-          input.disabled = true;
-
-          if (f.key === 'remarks') {
-            input.value = data.remarks ? data.remarks : 'None';
-          } else {
-            input.value = data[f.key] ?? '';
-          }
+          fieldHtml = `<input id="field_${key}" name="${key}" type="${type}" 
+                      class="form-control form-control-sm" 
+                      value="${val}" disabled>`;
         }
 
-        input.id = `field_${f.key}`;
-        input.name = f.key;
+        return `
+          <div class="${colSize}">
+            <label class="form-label fw-bold">${label}</label>
+            ${fieldHtml}
+          </div>
+        `;
+      }
 
-        wr.appendChild(lbl);
-        wr.appendChild(inner);
-        inner.appendChild(input);
-        form.appendChild(wr);
-      });
+      // Build sections in a grid layout
+      form.innerHTML += `
+        <!-- Personal Info -->
+        <div class="col-12">
+          <h6 class="fw-bold fs-5" style="color:#13411F;">Personal Information</h6>
+          <hr class="my-2">
+        </div>
+        ${gridField('Full Name', 'full_name')}
+        ${gridField('Birthdate', 'birthdate', 'date')}
+        ${gridField('Sex', 'sex', 'select', ['Male','Female','Prefer not to say','Unknown'])}
+        ${gridField('Civil Status', 'civil_status', 'select', ['Single','Married','Widowed','Separated','Divorced','Unknown'])}
+        ${gridField('Blood Type', 'blood_type', 'select', ['A+','A-','B+','B-','AB+','AB-','O+','O-','Unknown'])}
+
+        <!-- Address / Household -->
+        <div class="col-12 mt-3">
+          <h6 class="fw-bold fs-5" style="color:#13411F;">Address & Household</h6>
+          <hr class="my-2">
+        </div>
+        ${gridField('Purok', 'purok', 'select', ['1','2','3','4','5','6'], 'col-12 col-md-3')}
+        ${gridField('House No.', 'house_number', 'number', [], 'col-12 col-md-3')}
+        ${gridField('Relationship to Head', 'relationship_to_head', 'text', [], 'col-12 col-md-3')}
+        ${gridField('Total Population', 'total_population', 'number', [], 'col-12 col-md-3')}
+
+        <!-- Other Info -->
+        <div class="col-12 mt-3">
+          <h6 class="fw-bold fs-5" style="color:#13411F;">Other Information</h6>
+          <hr class="my-2">
+        </div>
+        ${gridField('Birth Reg. No.', 'birth_registration_number')}
+        ${gridField('Highest Educational Attainment', 'highest_educational_attainment', 'select', ['Kindergarten','Elementary','High School','Senior High School','Undergraduate','College Graduate','Post-Graduate','Vocational','None','Unknown'])}
+        ${gridField('Occupation', 'occupation')}
+        ${gridField('Registry No.', 'registry_number', 'number')}
+        ${gridField('Role', 'role')}
+        ${gridField('Remarks', 'remarks')}
+      `;
     }
+
+
+    // function buildForm(data) {
+    //   currentData = data;
+    //   isEditing = false;
+    //   editSaveBtn.textContent = 'Edit';
+      
+    //   form.innerHTML = '';
+    //   if (data.profile_picture) {
+    //     const picDiv = document.createElement('div');
+    //     picDiv.className = 'text-center mb-4';
+    //     const img = document.createElement('img');
+    //     img.src = `profilePictures/${data.profile_picture}`;
+    //     img.className = 'rounded-circle';
+    //     img.style = 'width:120px;height:120px;object-fit:cover;';
+    //     picDiv.appendChild(img);
+    //     form.appendChild(picDiv);
+    //   }
+
+    //   const fields = [
+    //     { key:'purok', label:'Purok', type:'select', readonly:true, editable:true, options:['1','2','3','4','5','6'] },
+    //     { key:'account_ID', label:'Account ID', type:'text', readonly:true },
+    //     { key:'full_name', label:'Full Name', type:'text', readonly:true, editable:true },
+    //     { key:'birthdate', label:'Birthdate', type:'date', readonly:true },
+    //     { key:'sex', label:'Sex', type:'select', readonly:true, editable:true, options:['Male','Female','Prefer not to say','Unknown'] },
+    //     { key:'civil_status', label:'Civil Status', type:'select', readonly:true, editable:true, options:['Single','Married','Widowed','Separated','Divorced','Unknown'] },
+    //     { key:'blood_type', label:'Blood Type', type:'select', readonly:true, editable:true, options:['A+','A-','B+','B-','AB+','AB-','O+','O-','Unknown'] },
+    //     { key:'birth_registration_number', label:'Birth Reg. No.', type:'text',   readonly:true, editable:true },
+    //     { key:'highest_educational_attainment', label:'Highest Educational Attainment', type:'select', readonly:true, editable:true, options:['Kindergarten','Elementary','High School','Senior High School','Undergraduate','College Graduate','Post-Graduate','Vocational','None','Unknown'] },
+    //     { key:'occupation', label:'Occupation', type:'text', readonly:true, editable:true },
+    //     { key:'house_number', label:'House No.', type:'number', readonly:true, editable:true },
+    //     { key:'relationship_to_head', label:'Relationship to Head', type:'text', readonly:true, editable:true },
+    //     { key:'registry_number', label:'Registry No.', type:'number', readonly:true, editable:true },
+    //     { key:'total_population', label:'Total Population', type:'number', readonly:true, editable:true },
+    //     { key:'role', label:'Role', type:'text', readonly:true },
+    //     { key:'remarks', label:'Remarks', type:'text', readonly:true }
+    //   ];
+
+    //   fields.forEach(f => {
+    //     const wr = document.createElement('div');
+    //     wr.className = 'mb-3 row';
+
+    //     const lbl = document.createElement('label');
+    //     lbl.className = 'col-sm-5 col-form-label fw-bold';
+    //     lbl.textContent = f.label;
+
+    //     const inner = document.createElement('div');
+    //     inner.className = 'col-sm-7';
+
+    //     let input;
+    //     if (f.type === 'select') {
+    //       input = document.createElement('select');
+    //       input.className = 'form-select';
+    //       f.options.forEach(opt => {
+    //         const o = document.createElement('option');
+    //         o.value = o.textContent = opt;
+    //         if (String(data[f.key]) === opt) o.selected = true;
+    //         input.appendChild(o);
+    //       });
+    //       input.disabled = true;
+    //     } else {
+    //       input = document.createElement('input');
+    //       input.className = 'form-control';
+    //       input.type = f.type;
+    //       input.value = data[f.key] ?? '';
+    //       input.disabled = true;
+
+    //       if (f.key === 'remarks') {
+    //         input.value = data.remarks ? data.remarks : 'None';
+    //       } else {
+    //         input.value = data[f.key] ?? '';
+    //       }
+    //     }
+
+    //     input.id = `field_${f.key}`;
+    //     input.name = f.key;
+
+    //     wr.appendChild(lbl);
+    //     wr.appendChild(inner);
+    //     inner.appendChild(input);
+    //     form.appendChild(wr);
+    //   });
+    // }
 
     // Toggle Edit ↔ Save
     editSaveBtn.addEventListener('click', () => {

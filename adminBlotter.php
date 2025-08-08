@@ -75,7 +75,12 @@ if ($baseQS) {
 }
 
 // 2) fetch the actual rows
-$sql = "SELECT transaction_id, client_name, client_address, respondent_name, respondent_address, incident_type, incident_date, incident_time, incident_place, incident_description, DATE_FORMAT(incident_date,'%b %e, %Y') AS formatted_date, DATE_FORMAT(incident_time,'%l:%i %p') AS formatted_time FROM blotter_records {$whereSQL} ORDER BY transaction_id ASC LIMIT ? OFFSET ?";
+$sql = "
+  SELECT transaction_id, client_name, client_address, respondent_name, respondent_address, incident_type, incident_date, 
+    incident_time, incident_place, incident_description, DATE_FORMAT(incident_date,'%b %e, %Y') AS formatted_date, 
+    DATE_FORMAT(incident_time,'%l:%i %p') AS formatted_time 
+  FROM blotter_records {$whereSQL} 
+  ORDER BY transaction_id ASC LIMIT ? OFFSET ?";
 $stmt = $conn->prepare($sql);
 
 // bind the filters + pagination
@@ -94,19 +99,20 @@ $stmt->close();
 ?>
 
 <div>
+  <!-- New Blotter Alert -->
   <?php if (isset($_GET['new_blotter_id'])): ?>
     <div class="alert alert-success alert-dismissible fade show" role="alert">
       New blotter record <strong><?= htmlspecialchars($_GET['new_blotter_id']) ?></strong> added successfully!
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
   <?php endif; ?>
-
+  
+  <!-- Update Blotter Alert -->
   <?php if (isset($_GET['blotter_updated'])): ?>
-  <div class="alert alert-success alert-dismissible fade show" role="alert">
-    Blotter record <strong><?= htmlspecialchars($_GET['blotter_updated']) ?></strong> updated successfully!
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-  </div>
-
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      Blotter record <strong><?= htmlspecialchars($_GET['blotter_updated']) ?></strong> updated successfully!
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
   <?php elseif (isset($_GET['blotter_nochange'])): ?>
     <div class="alert alert-warning alert-dismissible fade show" role="alert">
       No changes detected, nothing to update.
@@ -114,6 +120,7 @@ $stmt->close();
     </div>
   <?php endif; ?>
 
+  <!-- Delete Blotter Alert -->
   <?php if (isset($_GET['blotter_deleted'])): ?>
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
       Blotter record <strong><?= htmlspecialchars($_GET['blotter_deleted']) ?></strong> was permanently deleted.
@@ -411,7 +418,7 @@ $stmt->close();
 
       <!-- View Blotter Modal -->
       <div class="modal fade" id="viewBlotterModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="viewBlotterModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" style="max-width: 820px; margin: 30px auto;">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 820px;">
           <div class="modal-content" style="display: flex; flex-direction: column; max-height: calc(100vh - 60px);">
             <!-- Modal Header -->
             <div class="modal-header text-white" style="background-color: #13411F;">
@@ -422,12 +429,7 @@ $stmt->close();
             <!-- Modal Body with Preview -->
             <div class="modal-body p-0" style="flex: 1; overflow: hidden;">
               <div class="preview-container" style="height: 100%; overflow-y: auto; background-color: #ccc; padding: 20px;">
-                <iframe
-                  id="blotterPreviewFrame"
-                  src=""
-                  allowfullscreen
-                  style="width: 100%; height: 500px; border: none;"
-                ></iframe>
+                <iframe id="blotterPreviewFrame" src="" allowfullscreen style="width: 100%; height: 500px; border: none;"></iframe>
               </div>
             </div>
 
@@ -473,7 +475,6 @@ $stmt->close();
           </div>
         </div>
       </div>
-
     </div>
 
     <!-- TABLE -->
@@ -512,13 +513,8 @@ $stmt->close();
                   <?= htmlspecialchars($row['formatted_time']) ?>
                 </td>
                 <td class="text-nowrap text-center">
-                  <!-- Print -->
-                  <!-- <button class="btn btn-sm btn-primary blotter-print-btn" data-id="<?= $tid ?>">
-                    <span class="material-symbols-outlined" style="font-size: 12px;">
-                      print
-                    </span>
-                  </button> -->
 
+                  <!-- View -->
                   <button class="btn btn-sm btn-warning blotter-view-btn" data-id="<?= $tid ?>">
                     <span class="material-symbols-outlined" style="font-size: 12px;">
                       visibility
@@ -580,7 +576,7 @@ $stmt->close();
           </li>
         </ul>
       </nav>
-      <?php endif; ?>
+    <?php endif; ?>
   </div>
 </div>
 
@@ -631,66 +627,66 @@ document.addEventListener('DOMContentLoaded', () => {
   editRespCheck.addEventListener('change', edit_toggleRespondent);
   edit_toggleRespondent();
 
-  document.querySelectorAll('.blotter-edit-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tr = btn.closest('tr');
-      const tid = tr.getAttribute('data-id');
-      document.getElementById('edit_transaction_id').value = tid;
+  // document.querySelectorAll('.blotter-edit-btn').forEach(btn => {
+  //   btn.addEventListener('click', () => {
+  //     const tr = btn.closest('tr');
+  //     const tid = tr.getAttribute('data-id');
+  //     document.getElementById('edit_transaction_id').value = tid;
 
-      // parse and populate client name
-      const clientFull = tr.children[1].textContent.trim();
-      const respondentFull = tr.children[2].textContent.trim();
+  //     // parse and populate client name
+  //     const clientFull = tr.children[1].textContent.trim();
+  //     const respondentFull = tr.children[2].textContent.trim();
 
-      function parseName(full) {
-        const [left = '', right = ''] = full.split(/\s*,\s*/);
-        const leftWords = left.trim().split(/\s+/);
-        const last   = leftWords[0] || '';
-        const suffix = leftWords.slice(1).join(' ') || '';
-        const rightWords = right.trim().split(/\s+/);
-        let first = '', middle = '';
-        if (rightWords.length === 1) {
-          first = rightWords[0];
-        } else if (rightWords.length > 1) {
-          first  = rightWords.slice(0, -1).join(' ');
-          middle = rightWords.slice(-1)[0];
-        }
-        return { first, middle, last, suffix };
-      }
+  //     function parseName(full) {
+  //       const [left = '', right = ''] = full.split(/\s*,\s*/);
+  //       const leftWords = left.trim().split(/\s+/);
+  //       const last   = leftWords[0] || '';
+  //       const suffix = leftWords.slice(1).join(' ') || '';
+  //       const rightWords = right.trim().split(/\s+/);
+  //       let first = '', middle = '';
+  //       if (rightWords.length === 1) {
+  //         first = rightWords[0];
+  //       } else if (rightWords.length > 1) {
+  //         first  = rightWords.slice(0, -1).join(' ');
+  //         middle = rightWords.slice(-1)[0];
+  //       }
+  //       return { first, middle, last, suffix };
+  //     }
 
-      const c = parseName(clientFull);
-      document.getElementById('edit_client_first_name').value  = c.first;
-      document.getElementById('edit_client_middle_name').value = c.middle;
-      document.getElementById('edit_client_last_name').value   = c.last;
-      document.getElementById('edit_client_suffix').value      = c.suffix;
+  //     const c = parseName(clientFull);
+  //     document.getElementById('edit_client_first_name').value = c.first;
+  //     document.getElementById('edit_client_middle_name').value = c.middle;
+  //     document.getElementById('edit_client_last_name').value = c.last;
+  //     document.getElementById('edit_client_suffix').value = c.suffix;
 
-      if (respondentFull === '—' || respondentFull === '') {
-        editRespCheck.checked = false;
-        edit_toggleRespondent();
-        ['first_name','middle_name','last_name','suffix','address']
-          .forEach(key => document.getElementById(`edit_respondent_${key}`).value = '');
-      } else {
-        editRespCheck.checked = true;
-        edit_toggleRespondent();
-        const r = parseName(respondentFull);
-        document.getElementById('edit_respondent_first_name').value  = r.first;
-        document.getElementById('edit_respondent_middle_name').value = r.middle;
-        document.getElementById('edit_respondent_last_name').value   = r.last;
-        document.getElementById('edit_respondent_suffix').value      = r.suffix;
-      }
+  //     if (respondentFull === '—' || respondentFull === '') {
+  //       editRespCheck.checked = false;
+  //       edit_toggleRespondent();
+  //       ['first_name','middle_name','last_name','suffix','address']
+  //         .forEach(key => document.getElementById(`edit_respondent_${key}`).value = '');
+  //     } else {
+  //       editRespCheck.checked = true;
+  //       edit_toggleRespondent();
+  //       const r = parseName(respondentFull);
+  //       document.getElementById('edit_respondent_first_name').value = r.first;
+  //       document.getElementById('edit_respondent_middle_name').value = r.middle;
+  //       document.getElementById('edit_respondent_last_name').value = r.last;
+  //       document.getElementById('edit_respondent_suffix').value = r.suffix;
+  //     }
 
-      // populate other fields from data-attributes
-      document.getElementById('edit_incident_type').value        = tr.children[3].textContent.trim();
-      document.getElementById('edit_incident_date').value        = tr.dataset.incidentDate;
-      document.getElementById('edit_incident_time').value        = tr.dataset.incidentTime;
-      document.getElementById('edit_incident_place').value       = tr.dataset.incidentPlace;
-      document.getElementById('edit_incident_description').value = tr.dataset.incidentDesc;
-      document.getElementById('edit_client_address').value       = tr.dataset.clientAddress;
-      if (editRespCheck.checked) {
-        document.getElementById('edit_respondent_address').value = tr.dataset.respondentAddress;
-      }
-      editModal.show();
-    });
-  });
+  //     // populate other fields from data-attributes
+  //     document.getElementById('edit_incident_type').value = tr.children[3].textContent.trim();
+  //     document.getElementById('edit_incident_date').value = tr.dataset.incidentDate;
+  //     document.getElementById('edit_incident_time').value = tr.dataset.incidentTime;
+  //     document.getElementById('edit_incident_place').value = tr.dataset.incidentPlace;
+  //     document.getElementById('edit_incident_description').value = tr.dataset.incidentDesc;
+  //     document.getElementById('edit_client_address').value = tr.dataset.clientAddress;
+  //     if (editRespCheck.checked) {
+  //       document.getElementById('edit_respondent_address').value = tr.dataset.respondentAddress;
+  //     }
+  //     editModal.show();
+  //   });
+  // });
 
   // DELETE-BLOTTER modal wiring
   const deleteModal = new bootstrap.Modal(document.getElementById('deleteBlotterModal'));
@@ -722,29 +718,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // VIEW-BLOTTER modal wiring + new iframe src / print / download handlers
   const viewModalEl = document.getElementById('viewBlotterModal');
-  const viewModal   = new bootstrap.Modal(viewModalEl);
+  const viewModal = new bootstrap.Modal(viewModalEl);
   const previewFrame = document.getElementById('blotterPreviewFrame');
-  const printBtn    = document.getElementById('printBlotterBtn');
-  const downloadLink= document.getElementById('downloadPDFLink');
+  const printBtn = document.getElementById('printBlotterBtn');
+  const downloadLink = document.getElementById('downloadPDFLink');
 
   document.querySelectorAll('.blotter-view-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const tid = btn.getAttribute('data-id');
-      // iframe preview (preview mode)
+      const tid = btn.dataset.id;
+      // Preview (always show header here)
       previewFrame.src = `functions/print_blotter.php?transaction_id=${encodeURIComponent(tid)}`;
-      // PDF download link
-      downloadLink.href = previewFrame.src + '&download=1';
-      // Print opens a clean window
-      printBtn.onclick = () => {
-        window.open(previewFrame.src + '&print=1', '_blank');
-      };
+      // Store tid for use later
+      previewFrame.dataset.tid = tid;
       viewModal.show();
     });
+  });
+
+  // Print button
+  printBtn.addEventListener('click', () => {
+    const tid = previewFrame.dataset.tid;
+    const include = document.getElementById('printWithHeader').checked ? '&includeHeader=1' : '';
+    window.open(`functions/print_blotter.php?transaction_id=${encodeURIComponent(tid)}&print=1${include}`, '_blank');
+  });
+
+  // Download link
+  downloadLink.addEventListener('click', e => {
+    e.preventDefault();
+    const tid = previewFrame.dataset.tid;
+    const include = document.getElementById('printWithHeader').checked ? '&includeHeader=1' : '';
+    window.location.href =`functions/print_blotter.php?transaction_id=${encodeURIComponent(tid)}&download=1${include}`;
   });
 
   // Clear iframe on close
   viewModalEl.addEventListener('hidden.bs.modal', () => {
     previewFrame.src = '';
+  });
+
+  // Bootstrap alerts that can be dismissed
+  document.querySelectorAll('.alert-dismissible').forEach(alertEl => {
+    // after 3 seconds (3000ms), close the alert
+    setTimeout(() => {
+      const bsAlert = bootstrap.Alert.getOrCreateInstance(alertEl);
+      bsAlert.close();
+    }, 3000);
   });
 });
 </script>

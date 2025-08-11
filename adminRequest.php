@@ -1702,49 +1702,49 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  const editModalEl = document.getElementById('editRequestModal');
-  const editModal = new bootstrap.Modal(editModalEl);
-  const editFieldsCont = document.getElementById('editDynamicFields');
-  const editTidInput = document.getElementById('editTransactionId');
-  const editTypeInput = document.getElementById('editRequestType');
-  const editTitle = document.getElementById('editRequestModalLabel');
+  // const editModalEl = document.getElementById('editRequestModal');
+  // const editModal = new bootstrap.Modal(editModalEl);
+  // const editFieldsCont = document.getElementById('editDynamicFields');
+  // const editTidInput = document.getElementById('editTransactionId');
+  // const editTypeInput = document.getElementById('editRequestType');
+  // const editTitle = document.getElementById('editRequestModalLabel');
   
-  document.querySelectorAll('.request-btn-edit').forEach(btn => {
-    btn.addEventListener('click', () => {
-      // 1) pull transaction ID + request type from the row
-      const row = btn.closest('tr');
-      const tid = row.dataset.id;
-      const type = row.querySelector('td:nth-child(3)').textContent.trim();
+  // document.querySelectorAll('.request-btn-edit').forEach(btn => {
+  //   btn.addEventListener('click', () => {
+  //     // 1) pull transaction ID + request type from the row
+  //     const row = btn.closest('tr');
+  //     const tid = row.dataset.id;
+  //     const type = row.querySelector('td:nth-child(3)').textContent.trim();
       
-      // 2) set hidden inputs
-      editTidInput.value  = tid;
-      editTypeInput.value = type;
+  //     // 2) set hidden inputs
+  //     editTidInput.value  = tid;
+  //     editTypeInput.value = type;
       
-      // 3) update modal title
-      editTitle.textContent = `Edit ${type}`;
+  //     // 3) update modal title
+  //     editTitle.textContent = `Edit ${type}`;
       
-      // 4) inject the template for this type
-      editFieldsCont.innerHTML = '';
-      const tpl = document.getElementById('tpl-' + type);
-      if (tpl) {
-        editFieldsCont.appendChild(tpl.content.cloneNode(true));
-      } else {
-        editFieldsCont.innerHTML = '<div class="col-12 text-muted">No editable fields for this request type.</div>';
-      }
+  //     // 4) inject the template for this type
+  //     editFieldsCont.innerHTML = '';
+  //     const tpl = document.getElementById('tpl-' + type);
+  //     if (tpl) {
+  //       editFieldsCont.appendChild(tpl.content.cloneNode(true));
+  //     } else {
+  //       editFieldsCont.innerHTML = '<div class="col-12 text-muted">No editable fields for this request type.</div>';
+  //     }
       
-      // 5) (optional) prefill any fields you already have in the table
-      //    e.g. full name, date, etc:
-      const inputs = editFieldsCont.querySelectorAll('input, select, textarea');
-      inputs.forEach(input => {
-        const name = input.name;
-        // a crude example: if your <td>s have data-* attributes you could do:
-        // input.value = row.dataset[name] || '';
-      });
+  //     // 5) (optional) prefill any fields you already have in the table
+  //     //    e.g. full name, date, etc:
+  //     const inputs = editFieldsCont.querySelectorAll('input, select, textarea');
+  //     inputs.forEach(input => {
+  //       const name = input.name;
+  //       // a crude example: if your <td>s have data-* attributes you could do:
+  //       // input.value = row.dataset[name] || '';
+  //     });
       
-      // 6) show the modal
-      editModal.show();
-    });
-  });
+  //     // 6) show the modal
+  //     editModal.show();
+  //   });
+  // });
 
   // --- View Preview for Requests ---
   const viewReqModalEl = document.getElementById('viewRequestModal');

@@ -685,80 +685,80 @@ document.addEventListener('DOMContentLoaded', () => {
   //   });
   // });
 
-  const editModalEl = document.getElementById('editComplaintModal');
-  const editModal = new bootstrap.Modal(editModalEl);
+  // const editModalEl = document.getElementById('editComplaintModal');
+  // const editModal = new bootstrap.Modal(editModalEl);
 
-  document.querySelectorAll('.edit-btn-complaint').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const tr = btn.closest('tr');
-      const tid = tr.dataset.id;
+  // document.querySelectorAll('.edit-btn-complaint').forEach(btn => {
+  //   btn.addEventListener('click', async () => {
+  //     const tr = btn.closest('tr');
+  //     const tid = tr.dataset.id;
 
-       // 1) inject transaction_id
-      document.getElementById('edit_complaint_transaction_id').value = tid;
+  //      // 1) inject transaction_id
+  //     document.getElementById('edit_complaint_transaction_id').value = tid;
 
-      const compFull = tr.children[1].textContent.trim();
-      const respFull = tr.children[2].textContent.trim();
+  //     const compFull = tr.children[1].textContent.trim();
+  //     const respFull = tr.children[2].textContent.trim();
 
-      // Helper to parse "Last[ Suffix], First[ Middle]" into parts
-      function parseName(full) {
-        // split into [ leftOfComma, rightOfComma ]
-        const [left='', right=''] = full.split(/\s*,\s*/);
+  //     // Helper to parse "Last[ Suffix], First[ Middle]" into parts
+  //     function parseName(full) {
+  //       // split into [ leftOfComma, rightOfComma ]
+  //       const [left='', right=''] = full.split(/\s*,\s*/);
 
-        // --- LAST & SUFFIX ---
-        // left could be “Britos” or “Britos Jr.” etc
-        const leftWords = left.trim().split(/\s+/);
-        const last = leftWords[0] || '';
-        const suffix = leftWords.slice(1).join(' ') || '';
+  //       // --- LAST & SUFFIX ---
+  //       // left could be “Britos” or “Britos Jr.” etc
+  //       const leftWords = left.trim().split(/\s+/);
+  //       const last = leftWords[0] || '';
+  //       const suffix = leftWords.slice(1).join(' ') || '';
         
-        // --- FIRST & MIDDLE ---
-        // right could be “Kent Gabriel Villariasa”
-        const rightWords = right.trim().split(/\s+/);
-        let first = '';
-        let middle = '';
+  //       // --- FIRST & MIDDLE ---
+  //       // right could be “Kent Gabriel Villariasa”
+  //       const rightWords = right.trim().split(/\s+/);
+  //       let first = '';
+  //       let middle = '';
 
-        if (rightWords.length === 0) {
-          // nothing
-        } else if (rightWords.length === 1) {
-          first = rightWords[0];
-        } else {
-          // everything except last word → first
-          first  = rightWords.slice(0, -1).join(' ');
-          // last word → middle
-          middle = rightWords.slice(-1)[0];
-        }
+  //       if (rightWords.length === 0) {
+  //         // nothing
+  //       } else if (rightWords.length === 1) {
+  //         first = rightWords[0];
+  //       } else {
+  //         // everything except last word → first
+  //         first  = rightWords.slice(0, -1).join(' ');
+  //         // last word → middle
+  //         middle = rightWords.slice(-1)[0];
+  //       }
 
-        return { first, middle, last, suffix };
-      }
+  //       return { first, middle, last, suffix };
+  //     }
 
-      // 2) Parse & split complainant name
-      const c = parseName(compFull);
-      document.getElementById('edit_complainant_first_name').value = c.first;
-      document.getElementById('edit_complainant_middle_name').value = c.middle;
-      document.getElementById('edit_complainant_last_name').value = c.last;
-      document.getElementById('edit_complainant_suffix').value = c.suffix;
+  //     // 2) Parse & split complainant name
+  //     const c = parseName(compFull);
+  //     document.getElementById('edit_complainant_first_name').value = c.first;
+  //     document.getElementById('edit_complainant_middle_name').value = c.middle;
+  //     document.getElementById('edit_complainant_last_name').value = c.last;
+  //     document.getElementById('edit_complainant_suffix').value = c.suffix;
       
-      // 4) Complainant address
-      document.getElementById('edit_complainant_address').value = tr.dataset.complainantAddress;
+  //     // 4) Complainant address
+  //     document.getElementById('edit_complainant_address').value = tr.dataset.complainantAddress;
       
-      // 5) Parse & split respondent name
-      const r = parseName(respFull);
-      document.getElementById('edit_complaint_respondent_first_name').value = r.first;
-      document.getElementById('edit_complaint_respondent_middle_name').value = r.middle;
-      document.getElementById('edit_complaint_respondent_last_name').value = r.last;
-      document.getElementById('edit_complaint_respondent_suffix').value = r.suffix;
+  //     // 5) Parse & split respondent name
+  //     const r = parseName(respFull);
+  //     document.getElementById('edit_complaint_respondent_first_name').value = r.first;
+  //     document.getElementById('edit_complaint_respondent_middle_name').value = r.middle;
+  //     document.getElementById('edit_complaint_respondent_last_name').value = r.last;
+  //     document.getElementById('edit_complaint_respondent_suffix').value = r.suffix;
 
-      // 6) Respondent address
-      document.getElementById('edit_complaint_respondent_address').value = tr.dataset.respondentAddress;
+  //     // 6) Respondent address
+  //     document.getElementById('edit_complaint_respondent_address').value = tr.dataset.respondentAddress;
 
-      // 7) Other fields
-      document.getElementById('edit_complaint_type').value = tr.dataset.complaintType;
-      document.getElementById('edit_complaint_affidavit').value = tr.dataset.complaintAffidavit;
-      document.getElementById('edit_pleading_statement').value = tr.dataset.pleadingStatement;
+  //     // 7) Other fields
+  //     document.getElementById('edit_complaint_type').value = tr.dataset.complaintType;
+  //     document.getElementById('edit_complaint_affidavit').value = tr.dataset.complaintAffidavit;
+  //     document.getElementById('edit_pleading_statement').value = tr.dataset.pleadingStatement;
 
-      // 8) Show modal
-      editModal.show();
-    });
-  });
+  //     // 8) Show modal
+  //     editModal.show();
+  //   });
+  // });
 
   const deleteSummonModal = new bootstrap.Modal(document.getElementById('deleteSummonModal'));
   const deleteSummonForm = document.getElementById('deleteSummonForm');

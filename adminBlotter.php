@@ -640,14 +640,14 @@ document.addEventListener('DOMContentLoaded', () => {
   //     function parseName(full) {
   //       const [left = '', right = ''] = full.split(/\s*,\s*/);
   //       const leftWords = left.trim().split(/\s+/);
-  //       const last   = leftWords[0] || '';
+  //       const last = leftWords[0] || '';
   //       const suffix = leftWords.slice(1).join(' ') || '';
   //       const rightWords = right.trim().split(/\s+/);
   //       let first = '', middle = '';
   //       if (rightWords.length === 1) {
   //         first = rightWords[0];
   //       } else if (rightWords.length > 1) {
-  //         first  = rightWords.slice(0, -1).join(' ');
+  //         first = rightWords.slice(0, -1).join(' ');
   //         middle = rightWords.slice(-1)[0];
   //       }
   //       return { first, middle, last, suffix };

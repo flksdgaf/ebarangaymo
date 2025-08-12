@@ -67,6 +67,16 @@ $totalRows = $countStmt->get_result()->fetch_assoc()['total'] ?? 0;
 $totalPages = (int)ceil($totalRows / $limit);
 $countStmt->close();
 
+// --- total residents for the selected purok (ignore search) ---
+$totalResidentsPurok = 0;
+$resCountSQL = "SELECT COUNT(*) AS purok_total FROM `{$tableName}`";
+$resCountStmt = $conn->prepare($resCountSQL);
+if ($resCountStmt !== false) {
+  $resCountStmt->execute();
+  $totalResidentsPurok = $resCountStmt->get_result()->fetch_assoc()['purok_total'] ?? 0;
+  $resCountStmt->close();
+}
+
 // Build base query string for pagination links (preserve search & purok but not page_num)
 $qs = $_GET;
 unset($qs['page_num']);
@@ -126,7 +136,8 @@ $stmt->close();
 
 <div class="container-fluid p-3">
   <div id="alertContainer"></div>
-  <div class="card shadow-sm p-3">
+  <!-- <div class="card shadow-sm p-3"> -->
+  <div class="card shadow-sm p-3 position-relative">
     <!-- Filter -->
     <div class="d-flex justify-content-end mb-3">
       <select id="purokFilter" class="form-select form-select-sm w-auto">
@@ -256,6 +267,16 @@ $stmt->close();
         </ul>
       </nav>
     <?php endif; ?>
+
+    <div id="purokTotalText"
+      class="position-absolute end-0 bottom-0 pe-3 pb-2 text-muted user-select-none pointer-events-none">
+      <small class="d-block fs-6">
+        <span class="fw-semibold">Purok <?= $purokNum ?></span>
+        <span class="mx-2">•</span>
+        <span class="fw-bold text-dark"><?= (int)$totalResidentsPurok ?></span>
+        <span class="ms-1">residents</span>
+      </small>
+    </div>
 
   </div>
 </div>

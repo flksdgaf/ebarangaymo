@@ -10,7 +10,7 @@ $currentRole = $_SESSION['loggedInUserRole'] ?? '';
 
 // New Walk-In requests are considered ones that are in "Processing"
 $walkInCount = (int) $conn->query(
-  "SELECT COUNT(*) FROM view_request WHERE ((request_source  = 'Walk-In' AND payment_method = 'Over-the-Counter' OR payment_method IS NULL) OR (request_source  = 'Online' AND payment_method = 'Over-the-Counter' OR payment_method IS NULL)) AND document_status = 'For Verification'"
+  "SELECT COUNT(*) FROM view_request WHERE request_source  = 'Walk-In' AND payment_method = 'Over-the-Counter' OR payment_method IS NULL"
 )->fetch_row()[0];
 
 // New Online requests are considered ones that are in "For Verification"
@@ -21,6 +21,9 @@ $onlineCount = (int) $conn->query(
 $brgyPaymentDevice = (int) $conn->query(
   "SELECT COUNT(*) FROM view_request WHERE request_source = 'Online' AND payment_method = 'Brgy Payment Device' AND (document_status = 'Processing' OR document_status = 'For Verification')"
 )->fetch_row()[0];
+
+// combined online count (GCash + Brgy Payment Device) — used for "Online" tab for non-treasurer roles
+$combinedOnlineCount = (int)$onlineCount + (int)$brgyPaymentDevice;
 
 // what each role is allowed to do on the request page
 $rolePermissions = [
@@ -100,50 +103,32 @@ if ($date_from && $date_to) {
   $bindParams[] = $date_to;
 }
 
-// if ($processing_type !== '') {
-//   // match the same CASE expression you use in SELECT
-//   $whereClauses[] = "request_source = ?";
-//   $bindTypes .= 's';
-//   $bindParams[] = $processing_type;
-// }
-
-// if ($processing_type !== '' && $processing_type !== 'Official Receipt Logs') {
-//   $whereClauses[] = "request_source = ?";
-//   $bindTypes .= 's';
-//   $bindParams[] = $processing_type;
-// }
-
 if ($processing_type !== '' && $processing_type !== 'Official Receipt Logs') {
   switch ($processing_type) {
     case 'Walk-In':
       // Over-the-counter pane: show only Walk-In source & method
-      $whereClauses[] = "((r.request_source = 'Walk-In' AND r.payment_method = 'Over-the-Counter' OR r.payment_method IS NULL) OR (r.request_source = 'Online' AND r.payment_method = 'Over-the-Counter' OR r.payment_method IS NULL))";
+      if (in_array($currentRole, ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad'], true)) {
+      $whereClauses[] = "(r.request_source = 'Walk-In' AND (r.payment_method = 'Over-the-Counter' OR r.payment_method IS NULL))";
+      } else {
+        // Default behavior (treasurer sees GCash in the 'Online' pane)
+        $whereClauses[] = "((r.request_source = 'Walk-In' OR r.request_source = 'Online') AND (r.payment_method = 'Over-the-Counter' OR r.payment_method IS NULL))";
+      }
       break;
     case 'Online':
-      // GCash pane: only Online source & GCash method
-      $whereClauses[] = "r.request_source = 'Online' AND r.payment_method = 'GCash'";
+      // For Captain/Secretary/Bookkeeper/Kagawad: combine both GCash + Brgy Payment Device into one Online pane
+      if (in_array($currentRole, ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad'], true)) {
+        $whereClauses[] = "(r.request_source = 'Online' AND (r.payment_method IN ('Over-the-Counter', 'Brgy Payment Device', 'GCash')))";
+      } else {
+        // Default behavior (treasurer sees GCash in the 'Online' pane)
+        $whereClauses[] = "(r.request_source = 'Online' AND r.payment_method = 'GCash')";
+      }
       break;
     case 'Brgy Payment Device':
       // Brgy device pane: still Online source, but filter payment_method
-      $whereClauses[] = "r.request_source = 'Online' AND r.payment_method = 'Brgy Payment Device'";
+      $whereClauses[] = "(r.request_source = 'Online' AND r.payment_method = 'Brgy Payment Device')";
       break;
   }
 }
-
-// if (
-//   $_SESSION['loggedInUserRole'] === 'Brgy Treasurer' &&
-//   $processing_type === 'Walk-In'
-// ) {
-//   $whereClauses[] = "transaction_id NOT IN (SELECT transaction_id FROM official_receipt_records)";
-// }
-
-// for Treasurer on BOTH Walk-In and Brgy Payment Device panes, hide ones already paid
-
-// if (
-//   $_SESSION['loggedInUserRole'] === 'Brgy Treasurer' && in_array($processing_type, ['Walk-In', 'Brgy Payment Device'], true)
-// ) {
-//   $whereClauses[] = "transaction_id NOT IN (SELECT transaction_id FROM official_receipt_records)";
-// }
 
 if (
   $_SESSION['loggedInUserRole'] === 'Brgy Treasurer' &&
@@ -257,33 +242,58 @@ $result = $st->get_result();
   <div id="pageAlerts"></div>
 
   <ul class="nav nav-tabs mb-3">
-    <li class="nav-item">
-      <a href="?<?= http_build_query(array_merge($_GET, ['request_source'=>'Walk-In','request_page'=>1])) ?>"
-        class="nav-link <?= $processing_type==='Walk-In' ? 'active' : '' ?>">
-        Over-the-Counter <span class="badge bg-secondary"><?= $walkInCount ?></span>
-      </a>
-    </li>
-    <li class="nav-item">
-      <a href="?<?= http_build_query(array_merge($_GET, ['request_source'=>'Online','request_page'=>1])) ?>"
-        class="nav-link <?= $processing_type==='Online' ? 'active' : '' ?>">
-        GCash <span class="badge bg-secondary"><?= $onlineCount ?></span>
-      </a>
-    </li>
-    <li class="nav-item">
-      <a href="?<?= http_build_query(array_merge($_GET, ['request_source'=>'Brgy Payment Device','request_page'=> 1])) ?>"
-        class="nav-link <?= $processing_type ==='Brgy Payment Device' ? 'active' : '' ?>">
-        Brgy Payment Device
-        <span class="badge bg-secondary"><?= $brgyPaymentDevice ?></span>
-      </a>
-    </li>
+    <?php
+      // roles that should see consolidated Walk-In + Online tabs
+      $twoTabRoles = ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad'];
 
-    <?php if ($_SESSION['loggedInUserRole'] === 'Brgy Treasurer'): ?>
+      if (in_array($currentRole, $twoTabRoles, true)) :
+        // show only Walk-In and a single Online (combined)
+    ?>
       <li class="nav-item">
-        <a href="?<?= http_build_query(array_merge($_GET, ['request_source'=>'Official Receipt Logs','request_page'=>1])) ?>"
-          class="nav-link <?= $processing_type==='Official Receipt Logs' ? 'active' : '' ?>">
-          Official Receipt Logs
+        <a href="?<?= http_build_query(array_merge($_GET, ['request_source'=>'Walk-In','request_page'=>1])) ?>"
+          class="nav-link <?= $processing_type==='Walk-In' ? 'active' : '' ?>">
+          Walk-In <span class="badge bg-secondary"><?= $walkInCount ?></span>
         </a>
       </li>
+
+      <li class="nav-item">
+        <a href="?<?= http_build_query(array_merge($_GET, ['request_source'=>'Online','request_page'=>1])) ?>"
+          class="nav-link <?= $processing_type==='Online' ? 'active' : '' ?>">
+          Online <span class="badge bg-secondary"><?= $combinedOnlineCount ?></span>
+        </a>
+      </li>
+
+    <?php else: ?>
+      <!-- Treasurer or others: keep the detailed panes -->
+      <li class="nav-item">
+        <a href="?<?= http_build_query(array_merge($_GET, ['request_source'=>'Walk-In','request_page'=>1])) ?>"
+          class="nav-link <?= $processing_type==='Walk-In' ? 'active' : '' ?>">
+          Over-the-Counter <span class="badge bg-secondary"><?= $walkInCount ?></span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a href="?<?= http_build_query(array_merge($_GET, ['request_source'=>'Online','request_page'=>1])) ?>"
+          class="nav-link <?= $processing_type==='Online' ? 'active' : '' ?>">
+          GCash <span class="badge bg-secondary"><?= $onlineCount ?></span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a href="?<?= http_build_query(array_merge($_GET, ['request_source'=>'Brgy Payment Device','request_page'=> 1])) ?>"
+          class="nav-link <?= $processing_type ==='Brgy Payment Device' ? 'active' : '' ?>">
+          Brgy Payment Device <span class="badge bg-secondary"><?= $brgyPaymentDevice ?></span>
+        </a>
+      </li>
+
+      <?php if ($currentRole === 'Brgy Treasurer'): ?>
+        <li class="nav-item">
+          <a href="?<?= http_build_query(array_merge($_GET, ['request_source'=>'Official Receipt Logs','request_page'=>1])) ?>"
+            class="nav-link <?= $processing_type==='Official Receipt Logs' ? 'active' : '' ?>">
+            Official Receipt Logs
+          </a>
+        </li>
+      <?php endif; ?>
     <?php endif; ?>
   </ul>
 

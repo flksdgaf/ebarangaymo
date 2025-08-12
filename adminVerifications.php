@@ -59,7 +59,7 @@ if ($res0) {
           </ul>
         </div>
       </div>
-      <div class="table-responsive admin-table" style="height:500px;overflow-y:auto;">
+      <div class="table-responsive admin-table"> <!--style="height:500px;overflow-y:auto; -->
         <table class="table mb-0 align-middle text-start" id="requestsTable">
           <thead class="table-light">
             <tr>

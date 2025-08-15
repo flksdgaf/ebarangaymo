@@ -47,8 +47,9 @@ switch($requestType) {
     $contactPerson = $_POST['barangay_id_emergency_contact_person'];
     $contactAddress = $_POST['barangay_id_emergency_contact_address'];
     $paymentMethod = 'Over-the-Counter';
-    $documentStatus = 'Processing';
-    // $claimDate = $_POST['claim_date'];
+    // $documentStatus = 'Processing';
+    $documentStatus = 'For Verification';
+    $claimDate = null;
 
     // 2) Handle file upload
     $formalPicName = null;
@@ -75,10 +76,10 @@ switch($requestType) {
     // 4) Insert into barangay_id_requests
     $sql = "INSERT INTO barangay_id_requests (account_id, transaction_id, transaction_type, full_name, purok, birth_date, birth_place, 
             civil_status, religion, height, weight, emergency_contact_person, emergency_contact_address, formal_picture, claim_date, 
-            payment_method, document_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL,?,?)";
+            payment_method, document_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,NULLIF(?, ''),NULLIF(?, ''),?,?)";
     $ins = $conn->prepare($sql);
-    $ins->bind_param('issssssssddsssss', $userId, $transactionId, $transactionType, $fullName, $purok, $birthDate, $birthPlace, 
-    $civilStatus, $religion, $height, $weight, $contactPerson, $contactAddress, $formalPicName, $paymentMethod, $documentStatus);
+    $ins->bind_param('issssssssddssssss', $userId, $transactionId, $transactionType, $fullName, $purok, $birthDate, $birthPlace, 
+    $civilStatus, $religion, $height, $weight, $contactPerson, $contactAddress, $formalPicName, $claimDate, $paymentMethod, $documentStatus);
     $ins->execute();
     $ins->close();
 
@@ -93,7 +94,7 @@ switch($requestType) {
         $action = 'CREATE';
         $table_name = 'barangay_id_requests';
         $record_id = $transactionId;
-        $description = 'Created Barangay ID Request';
+        $description = 'Created Barangay ID Request: ' . $record_id;
 
         $logStmt->bind_param('isssss', $admin_id, $role, $action, $table_name, $record_id, $description);
         $logStmt->execute();
@@ -127,7 +128,8 @@ switch($requestType) {
     $businessType = trim($_POST['business_permit_type_of_business'] ?? '');
     $fullAddress = trim($_POST['business_permit_full_address'] ?? '');
     $paymentMethod = 'Over-the-Counter';
-    $documentStatus = 'Processing';
+    // $documentStatus = 'Processing';
+    $documentStatus = 'For Verification';
     // $claimDate = $_POST['claim_date'] ?? '';
     // $amount = (float)$_POST['amount'] ?? 0.0;
 
@@ -193,7 +195,8 @@ switch($requestType) {
     // $fullAddress = "{$subdivision}, {$purok}, {$barangay}";
     $purpose = trim($_POST['good_moral_purpose'] ?? '');
     $paymentMethod = 'Over-the-Counter';
-    $documentStatus = 'Processing';
+    // $documentStatus = 'Processing';
+    $documentStatus = 'For Verification';
     // $claimDate = $_POST['claim_date'] ?? '';
 
     // 2) Generate next transaction_id
@@ -267,7 +270,8 @@ switch($requestType) {
 
     $purpose = trim($_POST['guardianship_purpose'] ?? '');
     $paymentMethod = 'Over-the-Counter';
-    $documentStatus = 'Processing';
+    // $documentStatus = 'Processing';
+    $documentStatus = 'For Verification';
 
     // 2) Generate next transaction_id
     $stmt = $conn->prepare("SELECT transaction_id FROM guardianship_requests ORDER BY id DESC LIMIT 1");
@@ -328,7 +332,8 @@ switch($requestType) {
     $purok = $_POST['indigency_purok'] ?? '';
     // $subdivision = trim($_POST['subdivision'] ?? '');
     $purpose = trim($_POST['indigency_purpose'] ?? '');
-    $documentStatus = 'Processing';
+    // $documentStatus = 'Processing';
+    $documentStatus = 'For Verification';
 
     // 3) Generate next transaction_id
     $stmt = $conn->prepare("SELECT transaction_id FROM indigency_requests ORDER BY id DESC LIMIT 1");
@@ -391,7 +396,8 @@ switch($requestType) {
     $yearsResiding = (int) ($_POST['residency_residing_years'] ?? 0);
     $purpose = trim($_POST['residency_purpose'] ?? '');
     $paymentMethod = 'Over-the-Counter';
-    $documentStatus = 'Processing';
+    // $documentStatus = 'Processing';
+    $documentStatus = 'For Verification';
     // $claimDate = $_POST['claim_date'] ?? '';
 
     // 3) Generate next transaction_id
@@ -469,7 +475,8 @@ switch($requestType) {
     $childAge = trim($_POST['solo_parent_child_age'] ?? '');
     $purpose = trim($_POST['solo_parent_purpose'] ?? '');
     $paymentMethod = 'Over-the-Counter';
-    $documentStatus = 'Processing';
+    // $documentStatus = 'Processing';
+    $documentStatus = 'For Verification';
     // $claimDate = $_POST['claim_date'] ?? '';
 
     // 3) Generate next transaction_id

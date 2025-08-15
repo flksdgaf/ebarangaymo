@@ -10,7 +10,7 @@ $currentRole = $_SESSION['loggedInUserRole'] ?? '';
 
 // New Walk-In requests are considered ones that are in "Processing"
 $walkInCount = (int) $conn->query(
-  "SELECT COUNT(*) FROM view_request WHERE request_source  = 'Walk-In' AND payment_method = 'Over-the-Counter' OR payment_method IS NULL"
+  "SELECT COUNT(*) FROM view_request WHERE request_source = 'Walk-In' AND payment_status = 'Unpaid'"
 )->fetch_row()[0];
 
 // New Online requests are considered ones that are in "For Verification"
@@ -108,7 +108,7 @@ if ($processing_type !== '' && $processing_type !== 'Official Receipt Logs') {
     case 'Walk-In':
       // Over-the-counter pane: show only Walk-In source & method
       if (in_array($currentRole, ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad'], true)) {
-      $whereClauses[] = "(r.request_source = 'Walk-In' AND (r.payment_method = 'Over-the-Counter' OR r.payment_method IS NULL))";
+      $whereClauses[] = "(r.request_source = 'Walk-In' AND (r.payment_method = 'Over-the-Counter'))";
       } else {
         // Default behavior (treasurer sees GCash in the 'Online' pane)
         $whereClauses[] = "((r.request_source = 'Walk-In' OR r.request_source = 'Online') AND (r.payment_method = 'Over-the-Counter' OR r.payment_method IS NULL))";
@@ -174,6 +174,11 @@ if ($newTid) {
     $newType = $r['request_type'];
   }
   $q->close();
+}
+
+// If current user is Treasurer, exclude "For Verification" rows
+if ($currentRole === 'Brgy Treasurer') {
+    $whereClauses[] = "document_status <> 'For Verification'";
 }
 
 // LIST + FILTERED QUERY 
@@ -252,14 +257,14 @@ $result = $st->get_result();
       <li class="nav-item">
         <a href="?<?= http_build_query(array_merge($_GET, ['request_source'=>'Walk-In','request_page'=>1])) ?>"
           class="nav-link <?= $processing_type==='Walk-In' ? 'active' : '' ?>">
-          Walk-In <span class="badge bg-secondary"><?= $walkInCount ?></span>
+          Walk-In <span class="badge bg-secondary"></span> <!-- <= $walkInCount ?> -->
         </a>
       </li>
 
       <li class="nav-item">
         <a href="?<?= http_build_query(array_merge($_GET, ['request_source'=>'Online','request_page'=>1])) ?>"
           class="nav-link <?= $processing_type==='Online' ? 'active' : '' ?>">
-          Online <span class="badge bg-secondary"><?= $combinedOnlineCount ?></span>
+          Online <span class="badge bg-secondary"></span> <!-- <= $combinedOnlineCount ?> -->
         </a>
       </li>
 
@@ -268,21 +273,21 @@ $result = $st->get_result();
       <li class="nav-item">
         <a href="?<?= http_build_query(array_merge($_GET, ['request_source'=>'Walk-In','request_page'=>1])) ?>"
           class="nav-link <?= $processing_type==='Walk-In' ? 'active' : '' ?>">
-          Over-the-Counter <span class="badge bg-secondary"><?= $walkInCount ?></span>
+          Over-the-Counter <span class="badge bg-secondary"></span> <!-- <= $walkInCount ?> -->
         </a>
       </li>
 
       <li class="nav-item">
         <a href="?<?= http_build_query(array_merge($_GET, ['request_source'=>'Online','request_page'=>1])) ?>"
           class="nav-link <?= $processing_type==='Online' ? 'active' : '' ?>">
-          GCash <span class="badge bg-secondary"><?= $onlineCount ?></span>
+          GCash <span class="badge bg-secondary"></span> <!-- <= $onlineCount ?> -->
         </a>
       </li>
 
       <li class="nav-item">
         <a href="?<?= http_build_query(array_merge($_GET, ['request_source'=>'Brgy Payment Device','request_page'=> 1])) ?>"
           class="nav-link <?= $processing_type ==='Brgy Payment Device' ? 'active' : '' ?>">
-          Brgy Payment Device <span class="badge bg-secondary"><?= $brgyPaymentDevice ?></span>
+          Brgy Payment Device <span class="badge bg-secondary"></span> <!-- <= $brgyPaymentDevice ?> -->
         </a>
       </li>
 
@@ -1311,12 +1316,12 @@ $result = $st->get_result();
             ?>
             <tr>
               <td><?= htmlspecialchars($r['transaction_id']) ?></td>
-              <td><?= htmlspecialchars($r['request_type'])     ?></td>
-              <td><?= htmlspecialchars($r['full_name'])        ?></td>
-              <td><?= htmlspecialchars($r['payment_method'])   ?></td>
-              <td><?= htmlspecialchars($r['or_number'])        ?></td>
+              <td><?= htmlspecialchars($r['request_type']) ?></td>
+              <td><?= htmlspecialchars($r['full_name']) ?></td>
+              <td><?= htmlspecialchars($r['payment_method']) ?></td>
+              <td><?= htmlspecialchars($r['or_number']) ?></td>
               <td><?= number_format($r['amount_paid'],2) ?></td>
-              <td><?= htmlspecialchars($r['issued_date'])      ?></td>
+              <td><?= htmlspecialchars($r['issued_date']) ?></td>
             </tr>
             <?php
                 endwhile;
@@ -1348,54 +1353,33 @@ $result = $st->get_result();
             <?php if ($result->num_rows): ?>
               <?php while ($row = $result->fetch_assoc()):
                 $tid = htmlspecialchars($row['transaction_id']);
+                $ps = $row['payment_status'] ?? '';
+                switch ($ps) {
+                  case 'Paid': $c = 'bg-success'; break;
+                  case 'Unpaid': $c = 'bg-danger';  break;
+                  default: $c = 'bg-secondary'; 
+                }
+
+                $ds = $row['document_status'] ?? '';
+                switch ($ds) {
+                  case 'For Verification': $d = 'bg-info'; break;
+                  case 'Processing': $d = 'bg-warning'; break;
+                  case 'Ready to Release': $d = 'bg-primary'; break;
+                  case 'Released': $d = 'bg-success'; break;
+                  case 'Rejected': $d = 'bg-danger'; break;
+                  default: $d = 'bg-secondary';
+                }
               ?>
                 <tr data-id="<?= $tid ?>">
                   <td><?= $tid ?></td>
                   <td><?= htmlspecialchars($row['full_name']) ?></td>
                   <td><?= htmlspecialchars($row['request_type']) ?></td>
-                  <td>
-                    <?php 
-                      $ps = $row['payment_status'] ?? '';
-                      switch ($ps) {
-                        case 'Paid': $c = 'bg-success'; break;
-                        case 'Unpaid': $c = 'bg-danger';  break;
-                        default: $c = 'bg-secondary'; 
-                      }
-                    ?>
-                    <span class="badge <?= $c ?>">
-                      <?= htmlspecialchars($ps ?: '—') ?>
-                    </span>
-                  </td>
-                  <td>
-                    <?php 
-                      $ds = $row['document_status'] ?? '';
-                      switch ($ds) {
-                        case 'For Verification': $c = 'bg-info'; break;
-                        case 'Processing': $c = 'bg-warning'; break;
-                        case 'Ready to Release': $c = 'bg-primary'; break;
-                        case 'Released': $c = 'bg-success'; break;
-                        case 'Rejected': $c = 'bg-danger'; break;
-                        default: $c = 'bg-secondary';
-                      }
-                    ?>
-                    <span class="badge <?= $c ?>">
-                      <?= htmlspecialchars($ds) ?>
-                    </span>
-                  </td>
+                  <td><span class="badge <?= $c ?>"><?= htmlspecialchars($ps ?: '—') ?></span></td>
+                  <td><span class="badge <?= $d ?>"><?= htmlspecialchars($ds) ?></span></td>
                   <td><?= htmlspecialchars($row['formatted_date']) ?></td>
                   <?php if (!empty($perms) || $currentRole === 'Brgy Treasurer'): ?>
                     <td class="text-center">
                       <?php
-                        // $isIndigency = ($row['request_type'] === 'Indigency');
-                        // $isPaid = ($row['payment_status'] === 'Paid');
-                        // $isReady = ($row['document_status'] === 'Ready to Release');
-                        // $isRejected = ($row['document_status'] === 'Rejected');
-                        // $canPrint = in_array('print', $perms, true) && $isPaid;
-                        // $canProceed = in_array('proceed', $perms, true) && $isPaid && $isReady;
-                        // $canEdit = in_array('edit', $perms, true);
-                        // $canReject = in_array('reject', $perms, true) && !$isPaid && ! $isReady && !$isRejected; 
-                        // $canView = $isIndigency || $canPrint;
-
                         $isIndigency = ($row['request_type'] === 'Indigency');
                         $hasPaid = ($row['payment_status'] === 'Paid');
                         $isPaidOrFree = $hasPaid || $isIndigency;
@@ -1407,53 +1391,36 @@ $result = $st->get_result();
                         $canPrint = in_array('print', $perms, true) && $isPaidOrFree;
                         $canProceed = in_array('proceed', $perms, true) && $isPaidOrFree && $isReady;
                         $canEdit = in_array('edit', $perms, true);
-                        $canReject = in_array('reject',  $perms, true) && ! $isPaidOrFree && ! $isReady && ! $isRejected;
+                        $canReject = in_array('reject', $perms, true) && ! $isPaidOrFree && ! $isReady && ! $isRejected;
                       ?>
                       <?php if (in_array($currentRole, ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper'], true)): ?>
-                      <!-- Print -->
-                      <!-- <button type="button" class="btn btn-sm btn-warning request-btn-print" title="Print <= $tid ?>"
-                        <= $canPrint ? '' : 'disabled' ?>>
-                        <span class="material-symbols-outlined" style="font-size:13px">print</span>
-                      </button> -->
 
-                      <!-- View -->
-                      <!-- <button type="button" class="btn btn-sm btn-warning request-btn-view" data-id="<= htmlspecialchars($row['transaction_id']) ?>" title="View <= $tid ?>"
-                        <= $canView ? '' : 'disabled' ?>>
-                        <span class="material-symbols-outlined" style="font-size:13px">visibility</span>
-                      </button> -->
+                        <!-- View -->
+                        <button type="button" class="btn btn-sm btn-warning request-btn-view" data-id="<?= $tid ?>" title="View <?= $tid ?>"
+                          <?= $canView ? '' : 'disabled' ?>>
+                          <span class="material-symbols-outlined" style="font-size:13px">visibility</span>
+                        </button>
 
-                      <button type="button" class="btn btn-sm btn-warning request-btn-view" data-id="<?= $tid ?>" title="View <?= $tid ?>"
-                        <?= $canView ? '' : 'disabled' ?>>
-                        <span class="material-symbols-outlined" style="font-size:13px">visibility</span>
-                      </button>
+                        <!-- Edit -->
+                        <button type="button" class="btn btn-sm btn-primary request-btn-edit" title="Edit <?= $tid ?>"
+                          <?= $canEdit ? '' : 'disabled' ?>>
+                          <span class="material-symbols-outlined" style="font-size:13px">stylus</span>
+                        </button>
 
-                      <!-- Edit -->
-                      <button type="button" class="btn btn-sm btn-primary request-btn-edit" title="Edit <?= $tid ?>"
-                        <?= $canEdit ? '' : 'disabled' ?>>
-                        <span class="material-symbols-outlined" style="font-size:13px">stylus</span>
-                      </button>
-
-                      <!-- Proceed -->
-                      <button type="button" class="btn btn-sm btn-success request-btn-release" title="Release <?= $tid ?>"
-                        <?= $canProceed ? '' : 'disabled' ?>>
-                        <span class="material-symbols-outlined" style="font-size:13px">check</span>
-                      </button>
-
-                      <!-- Reject -->
-                      <button type="button" class="btn btn-sm btn-danger request-btn-reject" title="Reject <?= $tid ?>"
-                        <?= $canReject ? '' : 'disabled' ?>>
-                        <span class="material-symbols-outlined" style="font-size:13px">close</span>
-                      </button>
-
-                      <!-- <php if ($canDelete): ?> -->
-                        <!-- <button type="button" class="btn btn-sm btn-danger request-delete-btn" title="Delete <= $tid ?>">
-                          <span class="material-symbols-outlined" style="font-size: 13px;">
-                            delete
-                          </span>
+                        <!-- Proceed -->
+                        <!-- <button type="button" class="btn btn-sm btn-success request-btn-release" title="Release <= $tid ?>"
+                          <= $canProceed ? '' : 'disabled' ?>>
+                          <span class="material-symbols-outlined" style="font-size:13px">check</span>
                         </button> -->
-                      <!-- <php endif; ?> -->
+
+                        <!-- Reject -->
+                        <!-- <button type="button" class="btn btn-sm btn-danger request-btn-reject" title="Reject <= $tid ?>"
+                          <= $canReject ? '' : 'disabled' ?>>
+                          <span class="material-symbols-outlined" style="font-size:13px">close</span>
+                        </button> -->
 
                       <?php elseif ($currentRole === 'Brgy Treasurer'): ?>
+                        <!-- Receipt -->
                         <button type="button" class="btn btn-sm btn-info request-record-btn" data-id="<?= htmlspecialchars($row['transaction_id']) ?>" data-payment-method="<?= htmlspecialchars($row['payment_method']) ?>" data-amount-paid="<?= htmlspecialchars($row['amount'] ?? '') ?>">
                           <span class="material-symbols-outlined" style="font-size: 13px;">
                             receipt

@@ -74,115 +74,134 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
   <!-- Alert Placeholder -->
   <div id="statusAlertPlaceholder"></div>
 
-  <!-- List of Equipment -->
-  <div class="card shadow-sm mb-5">
-    <div class="card-header d-flex justify-content-between align-items-center bg-dark text-white p-3">
-      <h5 class="mb-0"><i class="fas fa-tools me-2"></i>List of Equipments</h5>
-    </div>
-    <div class="card-body p-0">
-      <div class="d-flex justify-content-end m-3">
-        <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addEquipmentModal">
-          <span class="material-symbols-outlined me-1" style="font-size:1rem; vertical-align:middle;">add</span>
-          Add New Equipment
-        </button>
-      </div>
-      <div class="table-responsive admin-table">
-        <table class="table table-hover align-middle text-start">
-          <thead class="table-light">
-            <tr>
-              <th>Equipment SN</th>
-              <th>Name</th>
-              <th>Description</th>
-              <th>Avail Qty</th>
-              <th>Total Qty</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <?php if (empty($equipments)): ?>
-              <tr><td colspan="7" class="text-center">No equipment found.</td></tr>
-            <?php else: foreach($equipments as $eq): ?>
-              <tr>
-                <td><?= htmlspecialchars($eq['equipment_sn']) ?></td>
-                <td><?= htmlspecialchars($eq['name']) ?></td>
-                <td><?= nl2br(htmlspecialchars($eq['description']))?: '—' ?></td>
-                <td class="avail-qty" data-id="<?= $eq['id'] ?>">
-                  <?= (int)$eq['available_qty'] ?>
-                </td>
-                <td><?= (int)$eq['total_qty'] ?></td>
-                <td>
-                  <button class="btn btn-sm btn-primary me-1 edit-equipment-btn" data-id="<?= $eq['id'] ?>" data-name="<?= htmlspecialchars($eq['name'], ENT_QUOTES) ?>" data-desc="<?= htmlspecialchars($eq['description'], ENT_QUOTES) ?>" data-total="<?= (int)$eq['total_qty'] ?>">
-                    Edit
-                  </button>
-                  <button class="btn btn-sm btn-danger delete-equipment-btn" data-id="<?= $eq['id'] ?>" data-name="<?= htmlspecialchars($eq['name'], ENT_QUOTES) ?>">
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            <?php endforeach; endif; ?>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+  <!-- NAV TABS: Equipment / Borrow Requests -->
+  <ul class="nav nav-tabs mb-3" id="equipBorrowTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="tab-equipments-btn" data-bs-toggle="tab" data-bs-target="#tab-equipments" type="button" role="tab" aria-controls="tab-equipments" aria-selected="true">
+        <!-- <i class="fas fa-tools me-1"></i> --> List of Equipments
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="tab-borrows-btn" data-bs-toggle="tab" data-bs-target="#tab-borrows" type="button" role="tab" aria-controls="tab-borrows" aria-selected="false">
+        <!-- <i class="fas fa-book-reader me-1"></i> --> Borrow Requests
+      </button>
+    </li>
+  </ul>
 
-  <!-- Borrow Requests -->
-  <div class="card shadow-sm">
-    <div class="card-header d-flex justify-content-between align-items-center bg-dark text-white p-3">
-      <h5 class="mb-0"><i class="fas fa-book-reader me-2"></i>Borrow Requests</h5>
-    </div>
-    <div class="card-body p-0">
-      <div class="d-flex justify-content-end m-3">
-        <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addBorrowModal">
-          <span class="material-symbols-outlined me-1" style="font-size:1rem; vertical-align:middle;">add</span>
-          Borrow an Equipment
-        </button>
+  <div class="tab-content">
+    <!-- Equipments Tab Pane -->
+    <div class="tab-pane fade show active" id="tab-equipments" role="tabpanel" aria-labelledby="tab-equipments-btn">
+      <div class="card shadow-sm mb-5">
+        <!-- <div class="card-header d-flex justify-content-between align-items-center bg-dark text-white p-3">
+          <h5 class="mb-0"><i class="fas fa-tools me-2"></i>List of Equipments</h5>
+        </div> -->
+        <div class="card-body p-0">
+          <div class="d-flex justify-content-end m-3">
+            <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addEquipmentModal">
+              <span class="material-symbols-outlined me-1" style="font-size:1rem; vertical-align:middle;">add</span>
+              Add New Equipment
+            </button>
+          </div>
+          <div class="table-responsive admin-table">
+            <table class="table table-hover align-middle text-start">
+              <thead class="table-light">
+                <tr>
+                  <th>Equipment SN</th>
+                  <th>Name</th>
+                  <th>Description</th>
+                  <th>Avail Qty</th>
+                  <th>Total Qty</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php if (empty($equipments)): ?>
+                  <tr><td colspan="7" class="text-center">No equipment found.</td></tr>
+                <?php else: foreach($equipments as $eq): ?>
+                  <tr>
+                    <td><?= htmlspecialchars($eq['equipment_sn']) ?></td>
+                    <td><?= htmlspecialchars($eq['name']) ?></td>
+                    <td><?= nl2br(htmlspecialchars($eq['description']))?: '—' ?></td>
+                    <td class="avail-qty" data-id="<?= $eq['id'] ?>">
+                      <?= (int)$eq['available_qty'] ?>
+                    </td>
+                    <td><?= (int)$eq['total_qty'] ?></td>
+                    <td>
+                      <button class="btn btn-sm btn-primary me-1 edit-equipment-btn" data-id="<?= $eq['id'] ?>" data-name="<?= htmlspecialchars($eq['name'], ENT_QUOTES) ?>" data-desc="<?= htmlspecialchars($eq['description'], ENT_QUOTES) ?>" data-total="<?= (int)$eq['total_qty'] ?>">
+                        Edit
+                      </button>
+                      <button class="btn btn-sm btn-danger delete-equipment-btn" data-id="<?= $eq['id'] ?>" data-name="<?= htmlspecialchars($eq['name'], ENT_QUOTES) ?>">
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                <?php endforeach; endif; ?>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
-      <div class="table-responsive admin-table">
-        <table class="table table-hover align-middle text-start">
-          <thead class="table-light">
-            <tr>
-              <th>Resident’s Name</th>
-              <th>Borrowed ESN</th>
-              <th>Qty</th>
-              <th>Location</th>
-              <th>Used For</th>
-              <th>Date</th>
-              <th>PUDO</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <?php if (empty($borrows)): ?>
-              <tr><td colspan="7" class="text-center">No borrow requests.</td></tr>
-            <?php else: foreach($borrows as $br): ?>
-              <tr>
-                <td><?= htmlspecialchars($br['resident_name']) ?></td>
-                <td><?= htmlspecialchars($br['equipment_sn']) ?></td>
-                <td><?= (int)$br['qty'] ?></td>
-                <td><?= htmlspecialchars($br['location']) ?></td>
-                <td><?= htmlspecialchars($br['used_for']) ?></td>
-                <td><?= htmlspecialchars($br['date']) ?></td>
-                <td><?= htmlspecialchars($br['pudo']) ?></td>
-                <td>
-                  <select
-                    class="form-select form-select-sm borrow-status"
-                    data-id="<?= $br['id'] ?>"
-                    data-prev="<?= htmlspecialchars($br['status'], ENT_QUOTES) ?>"
-                  >
-                    <option value="Borrowed" <?= $br['status']==='Borrowed' ? 'selected':'' ?>>
-                      Borrowed
-                    </option>
-                    <option value="Returned" <?= $br['status']==='Returned' ? 'selected':'' ?>>
-                      Returned
-                    </option>
-                  </select>
+    </div>
 
-                </td>
-              </tr>
-            <?php endforeach; endif; ?>
-          </tbody>
-        </table>
+    <!-- Borrow Requests Tab Pane -->
+    <div class="tab-pane fade" id="tab-borrows" role="tabpanel" aria-labelledby="tab-borrows-btn">
+      <div class="card shadow-sm">
+        <!-- <div class="card-header d-flex justify-content-between align-items-center bg-dark text-white p-3">
+          <h5 class="mb-0"><i class="fas fa-book-reader me-2"></i>Borrow Requests</h5>
+        </div> -->
+        <div class="card-body p-0">
+          <div class="d-flex justify-content-end m-3">
+            <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addBorrowModal">
+              <span class="material-symbols-outlined me-1" style="font-size:1rem; vertical-align:middle;">add</span>
+              Borrow an Equipment
+            </button>
+          </div>
+          <div class="table-responsive admin-table">
+            <table class="table table-hover align-middle text-start">
+              <thead class="table-light">
+                <tr>
+                  <th>Resident’s Name</th>
+                  <th>Borrowed ESN</th>
+                  <th>Qty</th>
+                  <th>Location</th>
+                  <th>Used For</th>
+                  <th>Date</th>
+                  <th>PUDO</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php if (empty($borrows)): ?>
+                  <tr><td colspan="8" class="text-center">No borrow requests.</td></tr>
+                <?php else: foreach($borrows as $br): ?>
+                  <tr>
+                    <td><?= htmlspecialchars($br['resident_name']) ?></td>
+                    <td><?= htmlspecialchars($br['equipment_sn']) ?></td>
+                    <td><?= (int)$br['qty'] ?></td>
+                    <td><?= htmlspecialchars($br['location']) ?></td>
+                    <td><?= htmlspecialchars($br['used_for']) ?></td>
+                    <td><?= htmlspecialchars($br['date']) ?></td>
+                    <td><?= htmlspecialchars($br['pudo']) ?></td>
+                    <td>
+                      <select
+                        class="form-select form-select-sm borrow-status"
+                        data-id="<?= $br['id'] ?>"
+                        data-prev="<?= htmlspecialchars($br['status'], ENT_QUOTES) ?>"
+                      >
+                        <option value="Borrowed" <?= $br['status']==='Borrowed' ? 'selected':'' ?>>
+                          Borrowed
+                        </option>
+                        <option value="Returned" <?= $br['status']==='Returned' ? 'selected':'' ?>>
+                          Returned
+                        </option>
+                      </select>
+                    </td>
+                  </tr>
+                <?php endforeach; endif; ?>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -472,3 +491,8 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
     });
   });
 </script>
+<?php
+$eqRes->free();
+$brRes->free();
+$conn->close();
+?>

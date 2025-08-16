@@ -70,7 +70,7 @@
                 </ul>
 
                 <?php if ($page == 'index') { ?>
-                    <a class="btn custom-signin-btn" href="signinup.php">Get Started</a>
+                    <a class="btn custom-signin-btn" href="signin.php">Get Started</a>
                 <?php } ?>
             </div>
         </nav>

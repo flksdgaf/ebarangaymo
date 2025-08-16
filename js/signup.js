@@ -139,7 +139,7 @@ document.addEventListener("DOMContentLoaded", function () {
             // Update sub-header and button text
             updateNavigation();
         } else {
-            window.location.href = "signinup.php"; // Redirect to home
+            window.location.href = "index.php"; // Redirect to home
         }
     });
 

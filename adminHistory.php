@@ -3,7 +3,7 @@ require 'functions/dbconn.php';
 $userId = (int)($_SESSION['loggedInUserID'] ?? 0);
 
 // Which pane/tab is selected
-$tab = $_GET['tab'] ?? 'all';
+$tab = $_GET['tab'] ?? 'documents';
 
 $whereClauses = [];
 $bindTypes    = '';
@@ -68,12 +68,6 @@ function qs_with($overrides = []) {
 <div class="container p-3">
   <!-- TABS -->
   <ul class="nav nav-tabs mb-3" role="tablist">
-    <li class="nav-item" role="presentation">
-      <a class="nav-link <?= $tab === 'all' ? 'active' : '' ?>"
-          href="?<?= qs_with(['tab' => 'all']) ?>">
-        All Transactions
-      </a>
-    </li>
     <li class="nav-item" role="presentation">
       <a class="nav-link <?= $tab === 'documents' ? 'active' : '' ?>"
           href="?<?= qs_with(['tab' => 'documents']) ?>">

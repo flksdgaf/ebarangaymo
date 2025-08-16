@@ -15,7 +15,7 @@ $brRes = $conn->query("SELECT * FROM borrow_requests ORDER BY date DESC, id DESC
 $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
 ?>
 
-<div class="container p-3">
+<div class="container-fluid p-3">
 
   <!-- Alert for add -->
   <?php if ($added): ?>
@@ -91,116 +91,175 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
   <div class="tab-content">
     <!-- Equipments Tab Pane -->
     <div class="tab-pane fade show active" id="tab-equipments" role="tabpanel" aria-labelledby="tab-equipments-btn">
-      <div class="card shadow-sm mb-5">
-        <!-- <div class="card-header d-flex justify-content-between align-items-center bg-dark text-white p-3">
-          <h5 class="mb-0"><i class="fas fa-tools me-2"></i>List of Equipments</h5>
-        </div> -->
-        <div class="card-body p-0">
-          <div class="d-flex justify-content-end m-3">
-            <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addEquipmentModal">
-              <span class="material-symbols-outlined me-1" style="font-size:1rem; vertical-align:middle;">add</span>
-              Add New Equipment
+      <div class="card shadow-sm p-3">
+        <div class="d-flex align-items-center mb-3">
+          <div class="dropdown">
+            <button class="btn btn-sm btn-outline-success dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+              <span class="material-symbols-outlined me-1" style="font-size:1rem; vertical-align:middle;">filter_list</span>
+              Filter
             </button>
+            <div class="dropdown-menu p-3" aria-labelledby="filterDropdown" style="min-width:260px; --bs-body-font-size:.75rem; font-size:.75rem;">
+              <form method="get" class="mb-0" id="filterForm">
+                <!-- PRESERVE THE PAGE -->
+
+                <!-- FILTERS -->
+
+                <div class="d-flex">
+                  <a href="?page=adminEquipmentBorrowing" class="btn btn-sm btn-outline-secondary me-2">Reset</a>
+                  <button type="submit" class="btn btn-sm btn-success flex-grow-1">Apply</button>
+                </div>
+              </form>
+            </div>
           </div>
-          <div class="table-responsive admin-table">
-            <table class="table table-hover align-middle text-start">
-              <thead class="table-light">
+
+          <button class="btn btn-sm btn-success ms-3" data-bs-toggle="modal" data-bs-target="#addEquipmentModal">
+            <span class="material-symbols-outlined me-1" style="font-size:1rem; vertical-align:middle;">add</span>
+            Add New Equipment
+          </button>
+
+          <form method="get" id="searchForm" class="d-flex ms-auto me-2">
+            <!-- preserve pagination & filters -->
+
+            <!-- preserve tab + reset to page 1 -->
+
+            <div class="input-group input-group-sm">
+                <input name="search" id="searchInput" type="text" class="form-control" placeholder="Search…">
+                <button type="button" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" id="searchBtn">
+                <span class="material-symbols-outlined" id="searchIcon">
+                    <?= !empty($search) ? 'close' : 'search' ?>
+                </span>
+                </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="table-responsive admin-table">
+          <table class="table table-hover align-middle text-start">
+            <thead class="table-light">
+              <tr>
+                <th>Equipment SN</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Avail Qty</th>
+                <th>Total Qty</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php if (empty($equipments)): ?>
+                <tr><td colspan="7" class="text-center">No equipment found.</td></tr>
+              <?php else: foreach($equipments as $eq): ?>
                 <tr>
-                  <th>Equipment SN</th>
-                  <th>Name</th>
-                  <th>Description</th>
-                  <th>Avail Qty</th>
-                  <th>Total Qty</th>
-                  <th>Actions</th>
+                  <td><?= htmlspecialchars($eq['equipment_sn']) ?></td>
+                  <td><?= htmlspecialchars($eq['name']) ?></td>
+                  <td><?= nl2br(htmlspecialchars($eq['description']))?: '—' ?></td>
+                  <td class="avail-qty" data-id="<?= $eq['id'] ?>">
+                    <?= (int)$eq['available_qty'] ?>
+                  </td>
+                  <td><?= (int)$eq['total_qty'] ?></td>
+                  <td>
+                    <button class="btn btn-sm btn-primary me-1 edit-equipment-btn" data-id="<?= $eq['id'] ?>" data-name="<?= htmlspecialchars($eq['name'], ENT_QUOTES) ?>" data-desc="<?= htmlspecialchars($eq['description'], ENT_QUOTES) ?>" data-total="<?= (int)$eq['total_qty'] ?>">
+                      <span class="material-symbols-outlined" style="font-size:13px">stylus</span>
+                    </button>
+                    <button class="btn btn-sm btn-danger delete-equipment-btn" data-id="<?= $eq['id'] ?>" data-name="<?= htmlspecialchars($eq['name'], ENT_QUOTES) ?>">
+                      <span class="material-symbols-outlined" style="font-size:13px">delete</span>
+                    </button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                <?php if (empty($equipments)): ?>
-                  <tr><td colspan="7" class="text-center">No equipment found.</td></tr>
-                <?php else: foreach($equipments as $eq): ?>
-                  <tr>
-                    <td><?= htmlspecialchars($eq['equipment_sn']) ?></td>
-                    <td><?= htmlspecialchars($eq['name']) ?></td>
-                    <td><?= nl2br(htmlspecialchars($eq['description']))?: '—' ?></td>
-                    <td class="avail-qty" data-id="<?= $eq['id'] ?>">
-                      <?= (int)$eq['available_qty'] ?>
-                    </td>
-                    <td><?= (int)$eq['total_qty'] ?></td>
-                    <td>
-                      <button class="btn btn-sm btn-primary me-1 edit-equipment-btn" data-id="<?= $eq['id'] ?>" data-name="<?= htmlspecialchars($eq['name'], ENT_QUOTES) ?>" data-desc="<?= htmlspecialchars($eq['description'], ENT_QUOTES) ?>" data-total="<?= (int)$eq['total_qty'] ?>">
-                        Edit
-                      </button>
-                      <button class="btn btn-sm btn-danger delete-equipment-btn" data-id="<?= $eq['id'] ?>" data-name="<?= htmlspecialchars($eq['name'], ENT_QUOTES) ?>">
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                <?php endforeach; endif; ?>
-              </tbody>
-            </table>
-          </div>
+              <?php endforeach; endif; ?>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
 
     <!-- Borrow Requests Tab Pane -->
     <div class="tab-pane fade" id="tab-borrows" role="tabpanel" aria-labelledby="tab-borrows-btn">
-      <div class="card shadow-sm">
-        <!-- <div class="card-header d-flex justify-content-between align-items-center bg-dark text-white p-3">
-          <h5 class="mb-0"><i class="fas fa-book-reader me-2"></i>Borrow Requests</h5>
-        </div> -->
-        <div class="card-body p-0">
-          <div class="d-flex justify-content-end m-3">
-            <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addBorrowModal">
-              <span class="material-symbols-outlined me-1" style="font-size:1rem; vertical-align:middle;">add</span>
-              Borrow an Equipment
+      <div class="card shadow-sm p-3">
+        <div class="d-flex align-items-center mb-3">
+          <div class="dropdown">
+            <button class="btn btn-sm btn-outline-success dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+              <span class="material-symbols-outlined me-1" style="font-size:1rem; vertical-align:middle;">filter_list</span>
+              Filter
             </button>
+            <div class="dropdown-menu p-3" aria-labelledby="filterDropdown" style="min-width:260px; --bs-body-font-size:.75rem; font-size:.75rem;">
+              <form method="get" class="mb-0" id="filterForm">
+                <!-- PRESERVE THE PAGE -->
+
+                <!-- FILTERS -->
+
+                <div class="d-flex">
+                  <a href="?page=adminEquipmentBorrowing" class="btn btn-sm btn-outline-secondary me-2">Reset</a>
+                  <button type="submit" class="btn btn-sm btn-success flex-grow-1">Apply</button>
+                </div>
+              </form>
+            </div>
           </div>
-          <div class="table-responsive admin-table">
-            <table class="table table-hover align-middle text-start">
-              <thead class="table-light">
+
+          <button class="btn btn-sm btn-success ms-3" data-bs-toggle="modal" data-bs-target="#addBorrowModal">
+            <span class="material-symbols-outlined me-1" style="font-size:1rem; vertical-align:middle;">add</span>
+            Borrow an Equipment
+          </button>
+
+          <form method="get" id="searchForm" class="d-flex ms-auto me-2">
+            <!-- preserve pagination & filters -->
+
+            <!-- preserve tab + reset to page 1 -->
+
+            <div class="input-group input-group-sm">
+                <input name="search" id="searchInput" type="text" class="form-control" placeholder="Search…">
+                <button type="button" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" id="searchBtn">
+                <span class="material-symbols-outlined" id="searchIcon">
+                    <?= !empty($search) ? 'close' : 'search' ?>
+                </span>
+                </button>
+            </div>
+          </form>
+        </div>
+        <div class="table-responsive admin-table">
+          <table class="table table-hover align-middle text-start">
+            <thead class="table-light">
+              <tr>
+                <th>Resident’s Name</th>
+                <th>Borrowed ESN</th>
+                <th>Qty</th>
+                <th>Location</th>
+                <th>Used For</th>
+                <th>Date</th>
+                <th>PUDO</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php if (empty($borrows)): ?>
+                <tr><td colspan="8" class="text-center">No borrow requests.</td></tr>
+              <?php else: foreach($borrows as $br): ?>
                 <tr>
-                  <th>Resident’s Name</th>
-                  <th>Borrowed ESN</th>
-                  <th>Qty</th>
-                  <th>Location</th>
-                  <th>Used For</th>
-                  <th>Date</th>
-                  <th>PUDO</th>
-                  <th>Status</th>
+                  <td><?= htmlspecialchars($br['resident_name']) ?></td>
+                  <td><?= htmlspecialchars($br['equipment_sn']) ?></td>
+                  <td><?= (int)$br['qty'] ?></td>
+                  <td><?= htmlspecialchars($br['location']) ?></td>
+                  <td><?= htmlspecialchars($br['used_for']) ?></td>
+                  <td><?= htmlspecialchars($br['date']) ?></td>
+                  <td><?= htmlspecialchars($br['pudo']) ?></td>
+                  <td>
+                    <select
+                      class="form-select form-select-sm borrow-status"
+                      data-id="<?= $br['id'] ?>"
+                      data-prev="<?= htmlspecialchars($br['status'], ENT_QUOTES) ?>"
+                    >
+                      <option value="Borrowed" <?= $br['status']==='Borrowed' ? 'selected':'' ?>>
+                        Borrowed
+                      </option>
+                      <option value="Returned" <?= $br['status']==='Returned' ? 'selected':'' ?>>
+                        Returned
+                      </option>
+                    </select>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                <?php if (empty($borrows)): ?>
-                  <tr><td colspan="8" class="text-center">No borrow requests.</td></tr>
-                <?php else: foreach($borrows as $br): ?>
-                  <tr>
-                    <td><?= htmlspecialchars($br['resident_name']) ?></td>
-                    <td><?= htmlspecialchars($br['equipment_sn']) ?></td>
-                    <td><?= (int)$br['qty'] ?></td>
-                    <td><?= htmlspecialchars($br['location']) ?></td>
-                    <td><?= htmlspecialchars($br['used_for']) ?></td>
-                    <td><?= htmlspecialchars($br['date']) ?></td>
-                    <td><?= htmlspecialchars($br['pudo']) ?></td>
-                    <td>
-                      <select
-                        class="form-select form-select-sm borrow-status"
-                        data-id="<?= $br['id'] ?>"
-                        data-prev="<?= htmlspecialchars($br['status'], ENT_QUOTES) ?>"
-                      >
-                        <option value="Borrowed" <?= $br['status']==='Borrowed' ? 'selected':'' ?>>
-                          Borrowed
-                        </option>
-                        <option value="Returned" <?= $br['status']==='Returned' ? 'selected':'' ?>>
-                          Returned
-                        </option>
-                      </select>
-                    </td>
-                  </tr>
-                <?php endforeach; endif; ?>
-              </tbody>
-            </table>
-          </div>
+              <?php endforeach; endif; ?>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -211,7 +270,7 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
     <div class="modal-dialog modal-dialog-centered">
       <form class="modal-content" method="POST" action="functions/equipment_add.php">
         <div class="modal-header text-white" style="background-color: #13411F;">
-          <h5 class="modal-title" id="addEquipmentLabel"><i class="fas fa-plus-circle me-2"></i>Add New Equipment</h5>
+          <h5 class="modal-title" id="addEquipmentLabel">Add New Equipment</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
@@ -230,7 +289,7 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-success"><i class="fas fa-save me-1"></i>Save Equipment</button>
+          <button type="submit" class="btn btn-success">Save Equipment</button>
         </div>
       </form>
     </div>
@@ -242,7 +301,7 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
       <form class="modal-content" method="POST" action="functions/equipment_edit.php">
         <div class="modal-header text-white" style="background-color: #13411F;">
           <h5 class="modal-title" id="editEquipmentLabel">
-            <i class="fas fa-edit me-2"></i>Edit Equipment
+            Edit Equipment
           </h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
@@ -266,7 +325,7 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>Update Equipment
+          <button type="submit" class="btn btn-primary">Update Equipment
           </button>
         </div>
       </form>
@@ -279,7 +338,7 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
       <div class="modal-content shadow">
         <div class="modal-header bg-danger text-white">
           <h5 class="modal-title" id="deleteConfirmLabel">
-            <i class="fas fa-exclamation-triangle me-2"></i>Confirm Deletion
+            Confirm Deletion
           </h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
@@ -290,7 +349,7 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
           </div>
           <div class="modal-footer d-flex justify-content-between px-4 pb-3">
             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-danger"><i class="fas fa-trash-alt me-1"></i>Delete</button>
+            <button type="submit" class="btn btn-danger">Delete</button>
           </div>
         </form>
       </div>
@@ -302,7 +361,7 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
     <div class="modal-dialog modal-lg modal-dialog-centered">
       <form class="modal-content" method="POST" action="functions/borrow_add.php">
         <div class="modal-header text-white" style="background-color: #13411F;">
-          <h5 class="modal-title" id="addBorrowLabel"><i class="fas fa-book-reader me-2"></i>New Borrow Request</h5>
+          <h5 class="modal-title" id="addBorrowLabel">New Borrow Request</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
@@ -345,7 +404,7 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
 
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-success"><i class="fas fa-check-circle me-1"></i>Submit Request</button>
+          <button type="submit" class="btn btn-success">Submit Request</button>
         </div>
       </form>
     </div>

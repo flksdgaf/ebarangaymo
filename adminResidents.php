@@ -64,8 +64,19 @@ if ($whereSQL) {
 }
 $countStmt->execute();
 $totalRows = $countStmt->get_result()->fetch_assoc()['total'] ?? 0;
-$totalPages = (int)ceil($totalRows / $limit);
 $countStmt->close();
+
+$totalPages = (int)ceil($totalRows / $limit);
+
+// if no rows, treat as single page (keeps UI consistent)
+if ($totalPages < 1) $totalPages = 1;
+
+// if requested page is past total pages, clamp it
+if ($page_num > $totalPages) {
+    $page_num = $totalPages;
+}
+
+$offset = ($page_num - 1) * $limit;
 
 // --- total residents for the selected purok (ignore search) ---
 $totalResidentsPurok = 0;
@@ -425,6 +436,7 @@ $stmt->close();
     document.getElementById('purokFilter').addEventListener('change', function() {
       const url = new URL(window.location.href);
       url.searchParams.set('purok', this.value);
+      url.searchParams.set('page_num', '1');
       window.location.href = url;
     });
 

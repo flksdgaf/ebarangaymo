@@ -2,17 +2,230 @@
 // equipment.php
 require 'functions/dbconn.php';
 
-// check for our single "added" param
+// GET params
+$search = trim($_GET['search'] ?? '');
+$filter_name = $_GET['filter_name'] ?? '';
 $added = $_GET['added'] ?? null;
 
-// 1) Load all equipment
-$eqRes = $conn->query("SELECT * FROM equipment_list ORDER BY id");
-$equipments = $eqRes->fetch_all(MYSQLI_ASSOC);
-$jsMap = array_column($equipments, 'available_qty', 'equipment_sn');
+// GET params for borrows tab
+$bsearch = trim($_GET['bsearch'] ?? '');
+$filter_esn = $_GET['filter_esn'] ?? '';
+$filter_date_from = $_GET['filter_date_from'] ?? '';
+$filter_date_to = $_GET['filter_date_to'] ?? '';
 
-// 2) Load all borrow requests
-$brRes = $conn->query("SELECT * FROM borrow_requests ORDER BY date DESC, id DESC");
-$borrows = $brRes->fetch_all(MYSQLI_ASSOC);
+// small utility to build reference arrays for call_user_func_array
+function refValues($arr){
+  $refs = [];
+  foreach ($arr as $k => $v) $refs[$k] = &$arr[$k];
+  return $refs;
+}
+
+/**
+ * Fetch all rows from mysqli_stmt as associative array.
+ * Supports both mysqlnd (get_result) and non-mysqlnd (bind_result fallback).
+ */
+function stmt_fetch_all_assoc(mysqli_stmt $stmt) : array {
+  // prefer get_result if available
+  if (method_exists($stmt, 'get_result')) {
+    $res = $stmt->get_result();
+    if (!$res) return [];
+    $rows = $res->fetch_all(MYSQLI_ASSOC);
+    $res->free();
+    return $rows ?: [];
+  }
+
+  // fallback for environments without mysqlnd
+  $meta = $stmt->result_metadata();
+  if (!$meta) return [];
+
+  $fields = [];
+  $row = [];
+  while ($f = $meta->fetch_field()) {
+    $row[$f->name] = null;
+    $fields[] = &$row[$f->name];
+  }
+  $meta->free();
+
+  // Bind result variables
+  if (!call_user_func_array([$stmt, 'bind_result'], $fields)) {
+    return [];
+  }
+
+  $out = [];
+  while ($stmt->fetch()) {
+    $r = [];
+    foreach ($row as $k => $v) $r[$k] = $v;
+    $out[] = $r;
+  }
+  return $out;
+}
+
+/** Strict YYYY-MM-DD validator (also rejects impossible dates) */
+function valid_date(string $d): bool {
+  $dt = DateTime::createFromFormat('Y-m-d', $d);
+  return $dt && $dt->format('Y-m-d') === $d;
+}
+
+/**
+ * Safe bind + execute + fetch wrapper for mysqli_stmt.
+ * - $types: string of types for bind_param (may be empty if no params)
+ * - $params: array of values to bind (in order)
+ * Returns array of associative rows or [] on error.
+ */
+function stmt_bind_execute_fetch(mysqli_stmt $stmt, string $types = '', array $params = []): array {
+  if (!$stmt) {
+    error_log("stmt_bind_execute_fetch: null stmt");
+    return [];
+  }
+
+  // Bind parameters if provided
+  if ($types !== '') {
+    $bind = array_merge([$types], $params);
+    $refs = refValues($bind);
+    $ok = @call_user_func_array([$stmt, 'bind_param'], $refs);
+    if ($ok === false) {
+      error_log("bind_param failed: " . $stmt->error);
+      return [];
+    }
+  }
+
+  // Execute
+  if (!$stmt->execute()) {
+    error_log("Statement execute failed: " . $stmt->error);
+    return [];
+  }
+
+  // Fetch rows (handles mysqlnd/no-mysqlnd)
+  $rows = stmt_fetch_all_assoc($stmt);
+  return $rows;
+}
+
+// --- Fetch distinct equipment names for the filter dropdown (always from full table) ---
+$nameStmt = $conn->prepare("SELECT DISTINCT name FROM equipment_list ORDER BY name");
+if (!$nameStmt) {
+  error_log("Prepare failed (nameStmt): " . $conn->error);
+  $names = [];
+} else {
+  $rows = stmt_bind_execute_fetch($nameStmt, '', []);
+  $nameStmt->close();
+  $names = $rows ? array_column($rows, 'name') : [];
+}
+
+// --- Fetch full equipment list for JS autocomplete and borrow filter ---
+$allEquipments = [];
+$allEqStmt = $conn->prepare("SELECT * FROM equipment_list ORDER BY name, equipment_sn");
+if (!$allEqStmt) {
+  error_log("Prepare failed (allEqStmt): " . $conn->error);
+  $allEquipments = [];
+} else {
+  $allEquipments = stmt_bind_execute_fetch($allEqStmt, '', []);
+  $allEqStmt->close();
+}
+
+$jsMap = array_column($allEquipments, 'available_qty', 'equipment_sn');
+
+// --- Build filtered equipment query (applies search + name filter) ---
+$equipSql = "SELECT * FROM equipment_list";
+$whereParts = [];
+$params = [];
+$types = '';
+
+if ($filter_name !== '') {
+  $whereParts[] = "name = ?";
+  $params[] = $filter_name;
+  $types .= 's';
+}
+
+if ($search !== '') {
+  $whereParts[] = "(equipment_sn LIKE ? OR name LIKE ? OR description LIKE ?)";
+  $like = '%' . $search . '%';
+  $params[] = $like;
+  $params[] = $like;
+  $params[] = $like;
+  $types .= 'sss';
+}
+
+if ($whereParts) {
+  $equipSql .= ' WHERE ' . implode(' AND ', $whereParts);
+}
+$equipSql .= ' ORDER BY id';
+
+$equipments = [];
+$eqStmt = $conn->prepare($equipSql);
+if (!$eqStmt) {
+  error_log("Prepare failed (equipSql): " . $conn->error . " -- SQL: " . $equipSql);
+  $equipments = [];
+} else {
+  $equipments = stmt_bind_execute_fetch($eqStmt, $types, $params);
+  $eqStmt->close();
+}
+
+// --- Build filtered borrow requests query ---
+// We'll LEFT JOIN equipment_list to allow searching/filtering by equipment name
+$borrowSql = "SELECT br.*, IFNULL(el.name, '') AS equipment_name
+              FROM borrow_requests br
+              LEFT JOIN equipment_list el ON br.equipment_sn = el.equipment_sn";
+
+$borrowWhere = [];
+$bParams = [];
+$bTypes = '';
+
+if ($filter_esn !== '') {
+  $borrowWhere[] = "br.equipment_sn = ?";
+  $bParams[] = $filter_esn;
+  $bTypes .= 's';
+}
+
+if ($filter_date_from !== '' ) {
+  if (valid_date($filter_date_from)) {
+    $borrowWhere[] = "br.date >= ?";
+    $bParams[] = $filter_date_from . ' 00:00:00';
+    $bTypes .= 's';
+  } else {
+    error_log("Invalid filter_date_from: " . $filter_date_from);
+  }
+}
+
+if ($filter_date_to !== '') {
+  if (valid_date($filter_date_to)) {
+    $borrowWhere[] = "br.date <= ?";
+    $bParams[] = $filter_date_to . ' 23:59:59';
+    $bTypes .= 's';
+  } else {
+    error_log("Invalid filter_date_to: " . $filter_date_to);
+  }
+}
+
+if ($bsearch !== '') {
+  $borrowWhere[] = "(br.resident_name LIKE ? 
+                     OR br.equipment_sn LIKE ? 
+                     OR IFNULL(el.name,'') LIKE ? 
+                     OR CAST(br.qty AS CHAR) LIKE ? 
+                     OR br.location LIKE ? 
+                     OR br.used_for LIKE ? 
+                     OR br.date LIKE ? 
+                     OR br.pudo LIKE ?)";
+  $blike = '%' . $bsearch . '%';
+  for ($i = 0; $i < 8; $i++) {
+    $bParams[] = $blike;
+    $bTypes .= 's';
+  }
+}
+
+if ($borrowWhere) {
+  $borrowSql .= ' WHERE ' . implode(' AND ', $borrowWhere);
+}
+$borrowSql .= ' ORDER BY br.date DESC, br.id DESC';
+
+$borrows = [];
+$brStmt = $conn->prepare($borrowSql);
+if (!$brStmt) {
+  error_log("Prepare failed (borrowSql): " . $conn->error . " -- SQL: " . $borrowSql);
+  $borrows = [];
+} else {
+  $borrows = stmt_bind_execute_fetch($brStmt, $bTypes, $bParams);
+  $brStmt->close();
+}
 ?>
 
 <div class="container-fluid p-3">
@@ -77,35 +290,47 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
   <!-- NAV TABS: Equipment / Borrow Requests -->
   <ul class="nav nav-tabs mb-3" id="equipBorrowTabs" role="tablist">
     <li class="nav-item" role="presentation">
-      <button class="nav-link active" id="tab-equipments-btn" data-bs-toggle="tab" data-bs-target="#tab-equipments" type="button" role="tab" aria-controls="tab-equipments" aria-selected="true">
-        <!-- <i class="fas fa-tools me-1"></i> --> List of Equipments
+      <button class="nav-link <?= (($_GET['tab'] ?? '') === 'borrows') ? '' : 'active' ?>" id="tab-equipments-btn" data-bs-toggle="tab" data-bs-target="#tab-equipments" type="button" role="tab" aria-controls="tab-equipments" aria-selected="true">
+        List of Equipments
       </button>
     </li>
     <li class="nav-item" role="presentation">
-      <button class="nav-link" id="tab-borrows-btn" data-bs-toggle="tab" data-bs-target="#tab-borrows" type="button" role="tab" aria-controls="tab-borrows" aria-selected="false">
-        <!-- <i class="fas fa-book-reader me-1"></i> --> Borrow Requests
+      <button class="nav-link <?= (($_GET['tab'] ?? '') === 'borrows') ? 'active' : '' ?>" id="tab-borrows-btn" data-bs-toggle="tab" data-bs-target="#tab-borrows" type="button" role="tab" aria-controls="tab-borrows" aria-selected="false">
+        Borrow Requests
       </button>
     </li>
   </ul>
 
   <div class="tab-content">
     <!-- Equipments Tab Pane -->
-    <div class="tab-pane fade show active" id="tab-equipments" role="tabpanel" aria-labelledby="tab-equipments-btn">
+    <div class="tab-pane fade <?= (($_GET['tab'] ?? '') === 'borrows') ? '' : 'show active' ?>" id="tab-equipments" role="tabpanel" aria-labelledby="tab-equipments-btn">
       <div class="card shadow-sm p-3">
         <div class="d-flex align-items-center mb-3">
           <div class="dropdown">
-            <button class="btn btn-sm btn-outline-success dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <button class="btn btn-sm btn-outline-success dropdown-toggle" type="button" id="filterDropdownEquip" data-bs-toggle="dropdown" aria-expanded="false">
               <span class="material-symbols-outlined me-1" style="font-size:1rem; vertical-align:middle;">filter_list</span>
               Filter
             </button>
-            <div class="dropdown-menu p-3" aria-labelledby="filterDropdown" style="min-width:260px; --bs-body-font-size:.75rem; font-size:.75rem;">
-              <form method="get" class="mb-0" id="filterForm">
-                <!-- PRESERVE THE PAGE -->
+            <div class="dropdown-menu p-3" aria-labelledby="filterDropdownEquip" style="min-width:260px; --bs-body-font-size:.75rem; font-size:.75rem;">
+              <form method="get" class="mb-0" id="filterFormEquip">
+                <input type="hidden" name="page" value="adminEquipmentBorrowing">
+                <input type="hidden" name="tab" value="equipments">
 
-                <!-- FILTERS -->
+                <!-- FILTER: Equipment Name (dynamic) -->
+                <div class="mb-2">
+                  <label for="filter_name" class="form-label form-label-sm">Equipment Name</label>
+                  <select name="filter_name" id="filter_name" class="form-select form-select-sm">
+                    <option value="">All names</option>
+                    <?php foreach ($names as $n): ?>
+                      <option value="<?= htmlspecialchars($n, ENT_QUOTES) ?>" <?= $filter_name === $n ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($n) ?>
+                      </option>
+                    <?php endforeach; ?>
+                  </select>
+                </div>
 
                 <div class="d-flex">
-                  <a href="?page=adminEquipmentBorrowing" class="btn btn-sm btn-outline-secondary me-2">Reset</a>
+                  <a href="?page=adminEquipmentBorrowing&tab=equipments" class="btn btn-sm btn-outline-secondary me-2">Reset</a>
                   <button type="submit" class="btn btn-sm btn-success flex-grow-1">Apply</button>
                 </div>
               </form>
@@ -117,19 +342,22 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
             Add New Equipment
           </button>
 
-          <form method="get" id="searchForm" class="d-flex ms-auto me-2">
-            <!-- preserve pagination & filters -->
-
-            <!-- preserve tab + reset to page 1 -->
+          <form method="get" id="searchFormEquip" class="d-flex ms-auto me-2">
+            <input type="hidden" name="page" value="adminEquipmentBorrowing">
+            <input type="hidden" name="tab" value="equipments">
+            <input type="hidden" name="filter_name" value="<?= htmlspecialchars($filter_name, ENT_QUOTES) ?>">
 
             <div class="input-group input-group-sm">
-                <input name="search" id="searchInput" type="text" class="form-control" placeholder="Search…">
-                <button type="button" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" id="searchBtn">
-                <span class="material-symbols-outlined" id="searchIcon">
-                    <?= !empty($search) ? 'close' : 'search' ?>
+              <input name="search" id="searchInputEquip" type="text" class="form-control" placeholder="Search…" value="<?= htmlspecialchars($search, ENT_QUOTES) ?>">
+              <button type="button" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" id="searchBtnEquip" title="Search / Clear">
+                <span class="material-symbols-outlined" id="searchIconEquip">
+                  <?= $search !== '' ? 'close' : 'search' ?>
                 </span>
-                </button>
+              </button>
             </div>
+            <noscript>
+              <button type="submit" class="btn btn-outline-secondary">Search</button>
+            </noscript>
           </form>
         </div>
 
@@ -147,7 +375,7 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
             </thead>
             <tbody>
               <?php if (empty($equipments)): ?>
-                <tr><td colspan="7" class="text-center">No equipment found.</td></tr>
+                <tr><td colspan="6" class="text-center">No equipment found.</td></tr>
               <?php else: foreach($equipments as $eq): ?>
                 <tr>
                   <td><?= htmlspecialchars($eq['equipment_sn']) ?></td>
@@ -174,22 +402,43 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
     </div>
 
     <!-- Borrow Requests Tab Pane -->
-    <div class="tab-pane fade" id="tab-borrows" role="tabpanel" aria-labelledby="tab-borrows-btn">
+    <div class="tab-pane fade <?= (($_GET['tab'] ?? '') === 'borrows') ? 'show active' : '' ?>" id="tab-borrows" role="tabpanel" aria-labelledby="tab-borrows-btn">
       <div class="card shadow-sm p-3">
         <div class="d-flex align-items-center mb-3">
           <div class="dropdown">
-            <button class="btn btn-sm btn-outline-success dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <button class="btn btn-sm btn-outline-success dropdown-toggle" type="button" id="filterDropdownBorrow" data-bs-toggle="dropdown" aria-expanded="false">
               <span class="material-symbols-outlined me-1" style="font-size:1rem; vertical-align:middle;">filter_list</span>
               Filter
             </button>
-            <div class="dropdown-menu p-3" aria-labelledby="filterDropdown" style="min-width:260px; --bs-body-font-size:.75rem; font-size:.75rem;">
-              <form method="get" class="mb-0" id="filterForm">
-                <!-- PRESERVE THE PAGE -->
+            <div class="dropdown-menu p-3" aria-labelledby="filterDropdownBorrow" style="min-width:320px; --bs-body-font-size:.75rem; font-size:.75rem;">
+              <form method="get" class="mb-0" id="filterFormBorrow">
+                <input type="hidden" name="page" value="adminEquipmentBorrowing">
+                <input type="hidden" name="tab" value="borrows">
 
-                <!-- FILTERS -->
+                <!-- FILTER: Equipment (show name + esn) -->
+                <div class="mb-2">
+                  <label for="filter_esn" class="form-label form-label-sm">Equipment</label>
+                  <select name="filter_esn" id="filter_esn" class="form-select form-select-sm">
+                    <option value="">All equipments</option>
+                    <?php foreach ($allEquipments as $ae): ?>
+                      <option value="<?= htmlspecialchars($ae['equipment_sn'], ENT_QUOTES) ?>" <?= $filter_esn === $ae['equipment_sn'] ? 'selected' : ''?>>
+                        <?= htmlspecialchars($ae['name']) ?> (<?= htmlspecialchars($ae['equipment_sn']) ?>)
+                      </option>
+                    <?php endforeach; ?>
+                  </select>
+                </div>
+
+                <!-- FILTER: Date range -->
+                <div class="mb-2">
+                  <label class="form-label form-label-sm">Date range</label>
+                  <div class="d-flex gap-2">
+                    <input type="date" name="filter_date_from" class="form-control form-control-sm" value="<?= htmlspecialchars($filter_date_from, ENT_QUOTES) ?>" placeholder="From">
+                    <input type="date" name="filter_date_to" class="form-control form-control-sm" value="<?= htmlspecialchars($filter_date_to, ENT_QUOTES) ?>" placeholder="To">
+                  </div>
+                </div>
 
                 <div class="d-flex">
-                  <a href="?page=adminEquipmentBorrowing" class="btn btn-sm btn-outline-secondary me-2">Reset</a>
+                  <a href="?page=adminEquipmentBorrowing&tab=borrows" class="btn btn-sm btn-outline-secondary me-2">Reset</a>
                   <button type="submit" class="btn btn-sm btn-success flex-grow-1">Apply</button>
                 </div>
               </form>
@@ -201,27 +450,34 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
             Borrow an Equipment
           </button>
 
-          <form method="get" id="searchForm" class="d-flex ms-auto me-2">
-            <!-- preserve pagination & filters -->
-
-            <!-- preserve tab + reset to page 1 -->
+          <!-- Borrow search: uses bsearch param to avoid colliding with equipments search -->
+          <form method="get" id="searchFormBorrow" class="d-flex ms-auto me-2">
+            <input type="hidden" name="page" value="adminEquipmentBorrowing">
+            <input type="hidden" name="tab" value="borrows">
+            <!-- preserve current borrow filters when searching -->
+            <input type="hidden" name="filter_esn" value="<?= htmlspecialchars($filter_esn, ENT_QUOTES) ?>">
+            <input type="hidden" name="filter_date_from" value="<?= htmlspecialchars($filter_date_from, ENT_QUOTES) ?>">
+            <input type="hidden" name="filter_date_to" value="<?= htmlspecialchars($filter_date_to, ENT_QUOTES) ?>">
 
             <div class="input-group input-group-sm">
-                <input name="search" id="searchInput" type="text" class="form-control" placeholder="Search…">
-                <button type="button" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" id="searchBtn">
-                <span class="material-symbols-outlined" id="searchIcon">
-                    <?= !empty($search) ? 'close' : 'search' ?>
-                </span>
-                </button>
+              <input name="bsearch" id="searchInputBorrow" type="text" class="form-control" placeholder="Search…" value="<?= htmlspecialchars($bsearch, ENT_QUOTES) ?>">
+              <button type="button" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" id="searchBtnBorrow" title="Search">
+                <span class="material-symbols-outlined" id="searchIconBorrow"><?= $bsearch !== '' ? 'close' : 'search' ?></span>
+              </button>
             </div>
+            <noscript>
+              <button type="submit" class="btn btn-outline-secondary">Search</button>
+            </noscript>
           </form>
         </div>
+        
         <div class="table-responsive admin-table">
           <table class="table table-hover align-middle text-start">
             <thead class="table-light">
               <tr>
                 <th>Resident’s Name</th>
                 <th>Borrowed ESN</th>
+                <th>Equipment Name</th>
                 <th>Qty</th>
                 <th>Location</th>
                 <th>Used For</th>
@@ -232,11 +488,12 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
             </thead>
             <tbody>
               <?php if (empty($borrows)): ?>
-                <tr><td colspan="8" class="text-center">No borrow requests.</td></tr>
+                <tr><td colspan="9" class="text-center">No borrow requests.</td></tr>
               <?php else: foreach($borrows as $br): ?>
                 <tr>
                   <td><?= htmlspecialchars($br['resident_name']) ?></td>
                   <td><?= htmlspecialchars($br['equipment_sn']) ?></td>
+                  <td><?= htmlspecialchars($br['equipment_name'] ?: '—') ?></td>
                   <td><?= (int)$br['qty'] ?></td>
                   <td><?= htmlspecialchars($br['location']) ?></td>
                   <td><?= htmlspecialchars($br['used_for']) ?></td>
@@ -437,38 +694,71 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
       list.style.display = items.length ? 'block' : 'none';
     }
 
-    // show full list on focus/click
-    input.addEventListener('focus', () => rebuildList(esnOptions));
-    input.addEventListener('click', () => rebuildList(esnOptions));
+    /// show full list on focus/click
+    if (input) {
+      input.addEventListener('focus', () => rebuildList(esnOptions));
+      input.addEventListener('click', () => rebuildList(esnOptions));
 
-    // filter as user types
-    input.addEventListener('input', () => {
-      const v = input.value.trim().toLowerCase();
-      const filtered = v
-        ? esnOptions.filter(e => e.toLowerCase().includes(v))
-        : esnOptions;
-      rebuildList(filtered);
-    });
+      // filter as user types
+      input.addEventListener('input', () => {
+        const v = input.value.trim().toLowerCase();
+        const filtered = v
+          ? esnOptions.filter(e => e.toLowerCase().includes(v))
+          : esnOptions;
+        rebuildList(filtered);
+      });
 
-    // hide after blur (small delay to catch clicks)
-    input.addEventListener('blur', () => setTimeout(() => {
-      list.style.display = 'none';
-    }, 150));
-
-    // globally click outside hides
-    document.addEventListener('click', e => {
-      if (!input.contains(e.target) && !list.contains(e.target)) {
+      // hide after blur (small delay to catch clicks)
+      input.addEventListener('blur', () => setTimeout(() => {
         list.style.display = 'none';
-      }
-    });
+      }, 150));
 
-    // cap qty on ESN change
-    input.addEventListener('change', () => {
-      const avail = esnMap[input.value] || 0;
-      qtyIn.max = avail;
-      qtyIn.value = avail ? Math.min(qtyIn.value||1, avail) : '';
-      qtyIn.placeholder = avail ? `(max ${avail})` : `(unknown ESN)`;
-    });
+      // cap qty on ESN change
+      input.addEventListener('change', () => {
+        const avail = esnMap[input.value] || 0;
+        if (qtyIn) {
+          qtyIn.max = avail;
+          qtyIn.value = avail ? Math.min(qtyIn.value||1, avail) : '';
+          qtyIn.placeholder = avail ? `(max ${avail})` : `(unknown ESN)`;
+        }
+      });
+    }
+
+    // Equipments search handlers
+    const searchInputEquip = document.getElementById('searchInputEquip');
+    const searchBtnEquip = document.getElementById('searchBtnEquip');
+    const searchFormEquip = document.getElementById('searchFormEquip');
+    const searchIconEquip = document.getElementById('searchIconEquip');
+
+    if (searchBtnEquip && searchInputEquip && searchFormEquip && searchIconEquip) {
+      searchBtnEquip.addEventListener('click', () => {
+        if (searchInputEquip.value.trim() !== '') {
+          searchInputEquip.value = '';
+        }
+        searchFormEquip.submit();
+      });
+      searchInputEquip.addEventListener('input', () => {
+        searchIconEquip.textContent = searchInputEquip.value.trim() ? 'close' : 'search';
+      });
+    }
+
+    // Borrow search handlers (bsearch)
+    const searchInputBorrow = document.getElementById('searchInputBorrow');
+    const searchBtnBorrow = document.getElementById('searchBtnBorrow');
+    const searchIconBorrow = document.getElementById('searchIconBorrow');
+    const searchFormBorrow = document.getElementById('searchFormBorrow');
+
+    if (searchBtnBorrow && searchInputBorrow && searchIconBorrow && searchFormBorrow) {
+      searchBtnBorrow.addEventListener('click', () => {
+        if (searchInputBorrow.value.trim() !== '') {
+          searchInputBorrow.value = '';
+        }
+        searchFormBorrow.submit();
+      });
+      searchInputBorrow.addEventListener('input', () => {
+        searchIconBorrow.textContent = searchInputBorrow.value.trim() ? 'close' : 'search';
+      });
+    }
   });
 
   // ── Delete Equipment ───────────────────────────
@@ -551,7 +841,5 @@ $borrows = $brRes->fetch_all(MYSQLI_ASSOC);
   });
 </script>
 <?php
-$eqRes->free();
-$brRes->free();
 $conn->close();
 ?>

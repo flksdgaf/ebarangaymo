@@ -234,25 +234,27 @@ if ($download || $print) {
 </head>
 <body>
   <div class="paper">
-    <table class="header-table">
-      <tr>
-        <td style="width:20%; text-align:left;">
-          <img src="<?= $brgyLogoSrc ?>" alt="Barangay Logo">
-        </td>
-        <td style="width:60%;" class="header-title">
-          Republic of the Philippines<br>
-          Province of Camarines Norte<br>
-          Municipality of Daet<br>
-          <strong>BARANGAY MAGANG</strong><br><br>
-          <strong>OFFICE OF THE PUNONG BARANGAY</strong>
-        </td>
-        <td style="width:20%; text-align:right;">
-          <img src="<?= $govLogoSrc ?>" alt="Governance Logo">
-        </td>
-      </tr>
-    </table>
-    <div class="line"></div>
-    <div class="line2"></div>
+    <?php if ($includeHeader): ?>
+      <table class="header-table">
+        <tr>
+          <td style="width:20%; text-align:left;">
+            <img src="<?= $brgyLogoSrc ?>" alt="Barangay Logo">
+          </td>
+          <td style="width:60%;" class="header-title">
+            Republic of the Philippines<br>
+            Province of Camarines Norte<br>
+            Municipality of Daet<br>
+            <strong>BARANGAY MAGANG</strong><br><br>
+            <strong>OFFICE OF THE PUNONG BARANGAY</strong>
+          </td>
+          <td style="width:20%; text-align:right;">
+            <img src="<?= $govLogoSrc ?>" alt="Governance Logo">
+          </td>
+        </tr>
+      </table>
+      <div class="line"></div>
+      <div class="line2"></div>
+    <?php endif; ?>
 
     <p class="certification-title">KATUNAYAN</p>
     <p class="no-indent"><strong>SA KINAUUKULAN:</strong></p>

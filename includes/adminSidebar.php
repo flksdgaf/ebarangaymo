@@ -124,7 +124,7 @@ $currentRole = $_SESSION['loggedInUserRole'] ?? '';
 ?>
 
 <nav id="sidebar" class="sidebar">
-    <div class="text-center mb-4 mt-3">
+    <div class="text-center mb-4 mt-2">
         <div class="d-flex justify-content-center align-items-center gap-2 mb-3">
             <img src="images/good_governance_logo.png" alt="Good Governance Logo" style="width: 50px;">
             <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Barangay Magang Logo" style="width: 50px;">

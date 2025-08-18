@@ -83,43 +83,176 @@ function formatWithSuffix($dateStr) {
     return $day . '<sup>' . $suffix . '</sup>';
 }
 
-ob_start();
+// Preview / DOMPDF toggles
+$download = isset($_GET['download']) && $_GET['download'] === '1';
+$print    = isset($_GET['print']) && $_GET['print'] === '1';
+$includeHeader = isset($_GET['includeHeader']) && $_GET['includeHeader'] === '1';
+
+// === DOMPDF MODE (download or print) ===
+if ($download || $print) {
+    ob_start();
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <style>
+        body {
+          font-family: 'Times New Roman', Times, serif;
+          margin: 0;
+          padding: 50px 60px;
+          font-size: 13pt;
+        }
+        .content {
+          text-align: justify;
+          width: 100%;
+        }
+        .certification-title {
+          font-size: 18pt;
+          text-align: center;
+          font-weight: bold;
+          text-decoration: underline;
+          margin-bottom: 20px;
+        }
+        p {
+          text-indent: 50px;
+          margin-bottom: 20px;
+        }
+        .no-indent {
+          text-indent: 0;
+          font-size: 13pt;
+          margin-bottom: 20px;
+        }
+        .header-table { width:100%; border-collapse:collapse; margin-bottom:20px; }
+        .header-table td { text-align:center; vertical-align:middle; }
+        .header-table img { height:120px; width:auto; }
+        .header-title { font-size:13pt; line-height:1.2; }
+        .line{border-bottom:5px solid #000; margin-bottom:3px;}
+        .line2{border-bottom:2px solid #000; margin-bottom:30px;}
+      </style>
+    </head>
+    <body>
+      <?php if ($includeHeader): ?>
+        <table class="header-table">
+          <tr>
+            <td style="width:20%; text-align:left;">
+              <img src="<?= $srcBrgy ?>" alt="Barangay Logo">
+            </td>
+            <td style="width:60%;" class="header-title">
+              Republic of the Philippines<br>
+              Province of Camarines Norte<br>
+              Municipality of Daet<br>
+              <strong>BARANGAY MAGANG</strong><br><br>
+              <strong>OFFICE OF THE PUNONG BARANGAY</strong>
+            </td>
+            <td style="width:20%; text-align:right;">
+              <img src="<?= $srcGov ?>" alt="Governance Logo">
+            </td>
+          </tr>
+        </table>
+        <div class="line"></div>
+        <div class="line2"></div>
+      <?php endif; ?>
+
+      <div class="content">
+        <p class="certification-title">CERTIFICATE OF SOLO PARENT</p>
+
+        <p class="no-indent">TO WHOM IT MAY CONCERN:</p>
+
+        <p>
+          This is to certify that <strong><u><?= htmlspecialchars(strtoupper($fullName)) ?></u></strong>, 
+          <strong><?= htmlspecialchars($residentAge) ?></strong> years old, <?= strtoupper($civilStatus === 'WIDOWED' ? 'WIDOW' : $civilStatus) ?>,
+          is a resident of <?= htmlspecialchars($purok) ?>, Magang, Daet, Camarines Norte.
+        </p>
+
+        <p>
+          This is to certify that the said person is a <strong>SOLO PARENT</strong> to <?= $pronoun ?> <?= ($childCount > 1 ? 'children' : 'child') ?>, <?= $genderSummary ?> 
+          <?= implode(', ', $childDescriptions) ?>, and <?= $statusTerm ?>
+        </p>
+
+        <p>
+          Issued this <strong><?= formatWithSuffix($issuedDate) ?></strong> day of <?= date('F, Y', strtotime($issuedDate)) ?> at Barangay Magang, Daet, Camarines Norte for 
+          <strong><?= htmlspecialchars(strtoupper($purpose)) ?></strong> purposes.
+        </p>
+      </div>
+    </body>
+    </html>
+    <?php
+    $html = ob_get_clean();
+
+    $options = new Options();
+    $options->set('isRemoteEnabled', true);
+    $dompdf = new Dompdf($options);
+    $dompdf->loadHtml($html);
+    $dompdf->setPaper('A4', 'portrait');
+    $dompdf->render();
+    $filename = 'solo_parent_certificate_' . $transactionId . '.pdf';
+    // If ?download=1 -> Attachment true (download). If print=1 (and download not set) -> inline (Attachment false).
+    $dompdf->stream($filename, ['Attachment' => $download]);
+    exit;
+}
+
+// === HTML PREVIEW MODE ===
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <title>Solo Parent Certificate Preview</title>
   <style>
     body {
-      font-family: 'Times New Roman', Times, serif;
-      margin: 0;
-      padding: 50px 60px;
-      font-size: 13pt;
+      margin:0; padding:0; background:#ccc;
+      font-family:'Times New Roman', serif;
+      display:flex; justify-content:center; align-items:start;
+      min-height:100vh;
     }
-    .content {
-      text-align: justify;
-      width: 100%;
+    .paper {
+      width:794px; min-height:1123px; background:#fff;
+      padding:30px 40px; box-shadow:0 0 10px rgba(0,0,0,0.2);
+      box-sizing:border-box; margin:20px 0;
     }
-    .certification-title {
-      font-size: 18pt;
-      text-align: center;
-      font-weight: bold;
-      text-decoration: underline;
-      margin-bottom: 20px;
+    .header-table { width:100%; border-collapse:collapse; margin-bottom:20px; }
+    .header-table td { text-align:center; vertical-align:middle; }
+    .header-table img { height:120px; width:auto; }
+    .header-title { font-size:13pt; line-height:1.2; }
+    .line{border-bottom:5px solid #000; margin-bottom:3px;}
+    .line2{border-bottom:2px solid #000; margin-bottom:30px;}
+    .certification-title{
+      font-size:18pt; text-align:center;
+      font-weight:bold; text-decoration:underline;
+      margin-bottom:20px;
     }
     p {
-      text-indent: 50px;
-      margin-bottom: 20px;
+      text-indent:50px; margin-bottom:20px;
+      line-height:1.6; font-size:14pt; color:#000;
     }
-    .no-indent {
-      text-indent: 0;
-      font-size: 13pt;
-      margin-bottom: 20px;
-    }
+    .no-indent{ text-indent:0; font-size:14pt; margin-bottom:20px; }
   </style>
 </head>
 <body>
-  <div class="content">
+  <div class="paper">
+    <?php if (!empty($includeHeader) && $includeHeader === true): ?>
+      <table class="header-table">
+        <tr>
+          <td style="width:20%; text-align:left;">
+            <img src="<?= $srcBrgy ?>" alt="Barangay Logo">
+          </td>
+          <td style="width:60%;" class="header-title">
+            Republic of the Philippines<br>
+            Province of Camarines Norte<br>
+            Municipality of Daet<br>
+            <strong>BARANGAY MAGANG</strong><br><br>
+            <strong>OFFICE OF THE PUNONG BARANGAY</strong>
+          </td>
+          <td style="width:20%; text-align:right;">
+            <img src="<?= $srcGov ?>" alt="Governance Logo">
+          </td>
+        </tr>
+      </table>
+      <div class="line"></div>
+      <div class="line2"></div>
+    <?php endif; ?>
+
     <p class="certification-title">CERTIFICATE OF SOLO PARENT</p>
 
     <p class="no-indent">TO WHOM IT MAY CONCERN:</p>
@@ -142,16 +275,3 @@ ob_start();
   </div>
 </body>
 </html>
-<?php
-$html = ob_get_clean();
-
-$options = new Options();
-$options->set('isRemoteEnabled', true);
-$dompdf = new Dompdf($options);
-$dompdf->loadHtml($html);
-$dompdf->setPaper('A4', 'portrait');
-$dompdf->render();
-$filename = 'solo_parent_certificate_' . $transactionId . '.pdf';
-$dompdf->stream($filename, ['Attachment' => false]);
-exit;
-?>

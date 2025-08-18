@@ -8,7 +8,7 @@ $search = trim($_GET['blotter_search'] ?? '');
 $date_from = $_GET['blotter_date_from'] ?? '';
 $date_to = $_GET['blotter_date_to'] ?? '';
 
-// build a Blotter‑only query array
+// build a Blotter-only query array
 $bp = [
   'page' => 'adminComplaints',
   'blotter_search' => $search,
@@ -627,67 +627,6 @@ document.addEventListener('DOMContentLoaded', () => {
   editRespCheck.addEventListener('change', edit_toggleRespondent);
   edit_toggleRespondent();
 
-  // document.querySelectorAll('.blotter-edit-btn').forEach(btn => {
-  //   btn.addEventListener('click', () => {
-  //     const tr = btn.closest('tr');
-  //     const tid = tr.getAttribute('data-id');
-  //     document.getElementById('edit_transaction_id').value = tid;
-
-  //     // parse and populate client name
-  //     const clientFull = tr.children[1].textContent.trim();
-  //     const respondentFull = tr.children[2].textContent.trim();
-
-  //     function parseName(full) {
-  //       const [left = '', right = ''] = full.split(/\s*,\s*/);
-  //       const leftWords = left.trim().split(/\s+/);
-  //       const last = leftWords[0] || '';
-  //       const suffix = leftWords.slice(1).join(' ') || '';
-  //       const rightWords = right.trim().split(/\s+/);
-  //       let first = '', middle = '';
-  //       if (rightWords.length === 1) {
-  //         first = rightWords[0];
-  //       } else if (rightWords.length > 1) {
-  //         first = rightWords.slice(0, -1).join(' ');
-  //         middle = rightWords.slice(-1)[0];
-  //       }
-  //       return { first, middle, last, suffix };
-  //     }
-
-  //     const c = parseName(clientFull);
-  //     document.getElementById('edit_client_first_name').value = c.first;
-  //     document.getElementById('edit_client_middle_name').value = c.middle;
-  //     document.getElementById('edit_client_last_name').value = c.last;
-  //     document.getElementById('edit_client_suffix').value = c.suffix;
-
-  //     if (respondentFull === '—' || respondentFull === '') {
-  //       editRespCheck.checked = false;
-  //       edit_toggleRespondent();
-  //       ['first_name','middle_name','last_name','suffix','address']
-  //         .forEach(key => document.getElementById(`edit_respondent_${key}`).value = '');
-  //     } else {
-  //       editRespCheck.checked = true;
-  //       edit_toggleRespondent();
-  //       const r = parseName(respondentFull);
-  //       document.getElementById('edit_respondent_first_name').value = r.first;
-  //       document.getElementById('edit_respondent_middle_name').value = r.middle;
-  //       document.getElementById('edit_respondent_last_name').value = r.last;
-  //       document.getElementById('edit_respondent_suffix').value = r.suffix;
-  //     }
-
-  //     // populate other fields from data-attributes
-  //     document.getElementById('edit_incident_type').value = tr.children[3].textContent.trim();
-  //     document.getElementById('edit_incident_date').value = tr.dataset.incidentDate;
-  //     document.getElementById('edit_incident_time').value = tr.dataset.incidentTime;
-  //     document.getElementById('edit_incident_place').value = tr.dataset.incidentPlace;
-  //     document.getElementById('edit_incident_description').value = tr.dataset.incidentDesc;
-  //     document.getElementById('edit_client_address').value = tr.dataset.clientAddress;
-  //     if (editRespCheck.checked) {
-  //       document.getElementById('edit_respondent_address').value = tr.dataset.respondentAddress;
-  //     }
-  //     editModal.show();
-  //   });
-  // });
-
   // DELETE-BLOTTER modal wiring
   const deleteModal = new bootstrap.Modal(document.getElementById('deleteBlotterModal'));
   const deleteForm = document.getElementById('deleteBlotterForm');
@@ -716,42 +655,147 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // VIEW-BLOTTER modal wiring + new iframe src / print / download handlers
+  // VIEW-BLOTTER modal wiring + new iframe src / print / download handlers (supports includeHeader)
   const viewModalEl = document.getElementById('viewBlotterModal');
   const viewModal = new bootstrap.Modal(viewModalEl);
   const previewFrame = document.getElementById('blotterPreviewFrame');
   const printBtn = document.getElementById('printBlotterBtn');
   const downloadLink = document.getElementById('downloadPDFLink');
+  const includeHeaderCheckbox = document.getElementById('printWithHeader');
 
+  // Helper: append includeHeader param (1 or 0)
+  function withIncludeHeader(url, includeHeader) {
+    try {
+      const u = new URL(url, window.location.origin);
+      u.searchParams.set('includeHeader', includeHeader ? '1' : '0');
+      return u.toString();
+    } catch (e) {
+      const sep = url.includes('?') ? '&' : '?';
+      return url + sep + 'includeHeader=' + (includeHeader ? '1' : '0');
+    }
+  }
+
+  // Update iframe + print/download links
+  function updatePreviewAndLinks(basePreviewUrl) {
+    const include = includeHeaderCheckbox.checked;
+    const previewUrl = withIncludeHeader(basePreviewUrl, include);
+
+    // set iframe preview
+    previewFrame.src = previewUrl;
+
+    // prepare print URL (print=1)
+    try {
+      const u = new URL(previewUrl, window.location.origin);
+      u.searchParams.set('print', '1');
+      printBtn.dataset.printUrl = u.toString();
+    } catch (e) {
+      printBtn.dataset.printUrl = previewUrl + (previewUrl.includes('?') ? '&' : '?') + 'print=1';
+    }
+
+    // prepare download URL (download=1)
+    try {
+      const d = new URL(previewUrl, window.location.origin);
+      d.searchParams.set('download', '1');
+      downloadLink.dataset.href = d.toString();
+      downloadLink.href = '#';
+    } catch (e) {
+      const dl = previewUrl + (previewUrl.includes('?') ? '&' : '?') + 'download=1';
+      downloadLink.dataset.href = dl;
+      downloadLink.href = '#';
+    }
+  }
+
+  // Click handlers for your "view" buttons
   document.querySelectorAll('.blotter-view-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tid = btn.dataset.id;
-      // Preview (always show header here)
-      previewFrame.src = `functions/print_blotter.php?transaction_id=${encodeURIComponent(tid)}`;
-      // Store tid for use later
-      previewFrame.dataset.tid = tid;
+    btn.addEventListener('click', (ev) => {
+      const tid = btn.getAttribute('data-id');
+      // prefer explicit data-preview-url on the button; otherwise build default
+      let baseUrl = btn.dataset.previewUrl || `functions/print_blotter.php?transaction_id=${encodeURIComponent(tid)}`;
+
+      // sanitize baseUrl: remove includeHeader/print/download if present
+      try {
+        const u = new URL(baseUrl, window.location.origin);
+        u.searchParams.delete('includeHeader');
+        u.searchParams.delete('print');
+        u.searchParams.delete('download');
+        baseUrl = u.toString();
+      } catch (e) {
+        // if malformed or relative, try removing via string replace (lenient)
+        baseUrl = baseUrl.replace(/([?&])(includeHeader|print|download)=[^&]*/g, '').replace(/\?&/, '?').replace(/[?&]$/, '');
+      }
+
+      // default: header NOT included
+      includeHeaderCheckbox.checked = false;
+
+      // store clean base URL on modal element for later use
+      viewModalEl.dataset.basePreviewUrl = baseUrl;
+
+      // update iframe + links with includeHeader=0
+      updatePreviewAndLinks(baseUrl);
+
+      // show modal
       viewModal.show();
     });
   });
 
+  // When Include Header toggles, re-render using base URL
+  includeHeaderCheckbox.addEventListener('change', () => {
+    const base = viewModalEl.dataset.basePreviewUrl || previewFrame.src;
+    if (!base) return;
+    // clean base from any params (just in case)
+    try {
+      const u = new URL(base, window.location.origin);
+      u.searchParams.delete('includeHeader');
+      u.searchParams.delete('print');
+      u.searchParams.delete('download');
+      updatePreviewAndLinks(u.toString());
+    } catch (e) {
+      updatePreviewAndLinks(base);
+    }
+  });
+
   // Print button
   printBtn.addEventListener('click', () => {
-    const tid = previewFrame.dataset.tid;
-    const include = document.getElementById('printWithHeader').checked ? '&includeHeader=1' : '';
-    window.open(`functions/print_blotter.php?transaction_id=${encodeURIComponent(tid)}&print=1${include}`, '_blank');
+    const url = printBtn.dataset.printUrl;
+    if (url) {
+      window.open(url, '_blank');
+    } else {
+      try {
+        const u = new URL(previewFrame.src, window.location.origin);
+        u.searchParams.set('print', '1');
+        window.open(u.toString(), '_blank');
+      } catch (e) {
+        window.open(previewFrame.src, '_blank');
+      }
+    }
+
+    // Optional: show alert + reload as your previous code did
+    setTimeout(() => {
+      // If you want the page to reload after printing, uncomment the next line:
+      // location.reload();
+    }, 300);
   });
 
   // Download link
-  downloadLink.addEventListener('click', e => {
+  downloadLink.addEventListener('click', (e) => {
     e.preventDefault();
-    const tid = previewFrame.dataset.tid;
-    const include = document.getElementById('printWithHeader').checked ? '&includeHeader=1' : '';
-    window.location.href =`functions/print_blotter.php?transaction_id=${encodeURIComponent(tid)}&download=1${include}`;
+    const href = downloadLink.dataset.href || '';
+    if (!href) return alert('Download URL not set.');
+    window.open(href, '_blank');
+    // Optional: actions after download
+    setTimeout(() => {
+      // location.reload();
+    }, 300);
   });
 
-  // Clear iframe on close
+  // Clear iframe and reset state when modal hides
   viewModalEl.addEventListener('hidden.bs.modal', () => {
     previewFrame.src = '';
+    includeHeaderCheckbox.checked = false;
+    delete viewModalEl.dataset.basePreviewUrl;
+    delete printBtn.dataset.printUrl;
+    delete downloadLink.dataset.href;
+    downloadLink.href = '#';
   });
 
   // Bootstrap alerts that can be dismissed
@@ -764,4 +808,3 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 </script>
-

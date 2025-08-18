@@ -142,7 +142,7 @@ $reportTypes = ['All','Barangay ID', 'Business Permit', 'Good Moral', 'Guardians
     </div>
 
     <!-- Complaint Reports -->
-    <div class="accordion-item">
+    <!-- <div class="accordion-item">
       <h2 class="accordion-header" id="headingComplaint">
         <button class="accordion-button collapsed text-success fw-bold"
                 type="button"
@@ -179,10 +179,10 @@ $reportTypes = ['All','Barangay ID', 'Business Permit', 'Good Moral', 'Guardians
           </div>
         </div>
       </div>
-    </div>
+    </div> -->
 
     <!-- Katarungang Pambarangay Reports -->
-    <div class="accordion-item">
+    <!-- <div class="accordion-item">
       <h2 class="accordion-header" id="headingKatarungang">
         <button class="accordion-button collapsed text-success fw-bold"
                 type="button"
@@ -219,7 +219,7 @@ $reportTypes = ['All','Barangay ID', 'Business Permit', 'Good Moral', 'Guardians
           </div>
         </div>
       </div>
-    </div>
+    </div> -->
 
   </div>
 </div>

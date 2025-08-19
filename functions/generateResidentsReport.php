@@ -6,7 +6,7 @@ use Dompdf\Dompdf;
 use Dompdf\Options;
 
 $purok     = $_POST['purok']     ?? 'all';
-$exactAge  = $_POST['exact_age'] ?? '';
+$exactAge  = trim($_POST['exact_age'] ?? '');
 $format    = $_POST['format']    ?? 'preview';
 
 // 1. Generate SQL
@@ -29,108 +29,177 @@ $stmt->close();
 
 // 2. Helper to calculate age
 function calc_age($bdate) {
-    $dob = new DateTime($bdate);
-    return $dob->diff(new DateTime())->y;
+    if (empty($bdate) || $bdate === '0000-00-00') {
+        return 0;
+    }
+    try {
+        $dob = new DateTime($bdate);
+        return $dob->diff(new DateTime())->y;
+    } catch (Exception $e) {
+        return 0;
+    }
 }
 
-// 3. Filter by age
-if (is_numeric($exactAge) && $exactAge >= 1 && $exactAge <= 150) {
+// 3. Filter by age: support single age (e.g. "18") or range (e.g. "18-20")
+$ageLabel = '';
+$filteredRows = $rows; // default
+
+$validSingle = preg_match('/^\d{1,3}$/', $exactAge);
+$validRange  = preg_match('/^\s*(\d{1,3})\s*-\s*(\d{1,3})\s*$/', $exactAge, $matches);
+
+if ($validSingle) {
     $ageFilter = (int)$exactAge;
-    $rows = array_filter($rows, function($r) use ($ageFilter) {
-        return calc_age($r['birthdate']) === $ageFilter;
-    });
-    $ageLabel = "{$ageFilter}";
+    if ($ageFilter >= 1 && $ageFilter <= 150) {
+        $filteredRows = array_filter($rows, function($r) use ($ageFilter) {
+            return calc_age($r['birthdate']) === $ageFilter;
+        });
+        $ageLabel = "{$ageFilter}";
+    } else {
+        // invalid single age -> treat as no filter
+        $filteredRows = $rows;
+    }
+} elseif ($validRange) {
+    $low  = (int)$matches[1];
+    $high = (int)$matches[2];
+    // swap if user wrote "20-18"
+    if ($low > $high) {
+        [$low, $high] = [$high, $low];
+    }
+    // validate reasonable bounds
+    if ($low < 0) $low = 0;
+    if ($high > 150) $high = 150;
+    if ($low <= $high) {
+        $filteredRows = array_filter($rows, function($r) use ($low, $high) {
+            $age = calc_age($r['birthdate']);
+            return $age >= $low && $age <= $high;
+        });
+        $ageLabel = "{$low} - {$high}";
+    } else {
+        // invalid range -> no filtering
+        $filteredRows = $rows;
+    }
 } else {
-    // Get min/max age for display
-    $ages = array_map(fn($r) => calc_age($r['birthdate']), $rows);
-    $minAge = min($ages);
-    $maxAge = max($ages);
-    $ageLabel = "{$minAge} - {$maxAge}";
+    // No age filter specified or invalid input: compute min/max for label (handle empty rows)
+    if (count($rows) > 0) {
+        $ages = array_map(fn($r) => calc_age($r['birthdate']), $rows);
+        $minAge = min($ages);
+        $maxAge = max($ages);
+        $ageLabel = "{$minAge} - {$maxAge}";
+    } else {
+        $ageLabel = "N/A";
+    }
 }
+
+// Re-index filtered rows to have sequential numeric keys (useful for foreach)
+$rows = array_values($filteredRows);
 
 $totalRecords = count($rows);
 $purokLabel = $purok === 'all' ? '1 - 6' : $purok;
 
-ob_start();
-?>
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Resident Report</title>
-  <style>
-    @page { size: A4; margin: 48px; }
-    body { font-family: Arial, sans-serif; font-size: 10pt; background: #fff; margin: 0; padding: 0; }
-    .page { width: 100%; max-width: 700px; margin: 0 auto; padding: 10px; }
-    .center-text { text-align: center; }
-    .title { font-size: 14pt; font-weight: bold; margin-bottom: 10px; }
-    .subtitle { font-size: 11pt;}
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td {
-      border: 1px solid #000;
-      padding: 6px 8px;
-      text-align: center;
+// Build CSS (same pattern as your blotter report to keep layout consistent)
+$pdfCss = <<<CSS
+@page { size: A4; margin: 48px; }
+body { font-family: Arial, sans-serif; font-size: 10pt; background: #fff; margin: 0; padding: 0; color: #000; }
+.page { width: 80%; max-width: 700px; margin: 0 auto; padding: 10px; box-sizing: border-box; }
+.center-text { text-align: center; }
+.title { font-size: 14pt; font-weight: bold; margin-bottom: 10px; }
+.subtitle { font-size: 11pt; }
+table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+th, td {
+  border: 1px solid #000;
+  padding: 6px 8px;
+  text-align: center;
+  vertical-align: middle;
+}
+th { background: #eee; }
+.left { text-align: left; }
+.right { text-align: right; }
+.table-wrap { overflow: auto; }
+CSS;
+
+$previewCss = preg_replace('/@page\s*\{[^}]*\}\s*/', '', $pdfCss);
+$previewCss .= "\n/* Preview-specific adjustments */\n.page{ box-shadow: none; background: transparent; max-width: 100%; padding: 0; }\n";
+
+// Build table rows HTML (apply alignment rules)
+$rowsHtml = '';
+if ($totalRecords > 0) {
+    $counter = 1;
+    foreach ($rows as $row) {
+        $fullName = $row['full_name'] ?? '';
+        $sex = $row['sex'] ?? '';
+        $birthRaw = $row['birthdate'] ?? '';
+        $ageVal = calc_age($birthRaw);
+        $formattedBirth = ($birthRaw && strtotime($birthRaw)) ? date('F j, Y', strtotime($birthRaw)) : 'N/A';
+
+        $rowsHtml .= '<tr>'
+            . '<td>' . $counter++ . '</td>' // No. (center)
+            . '<td class="left">' . htmlspecialchars($fullName) . '</td>' // Full Name (left)
+            . '<td>' . htmlspecialchars($sex) . '</td>' // Sex (center)
+            . '<td>' . htmlspecialchars((string)$ageVal) . '</td>' // Age (center)
+            . '<td class="left">' . htmlspecialchars($formattedBirth) . '</td>' // Birthdate (left)
+            . '</tr>';
     }
-    th { background: #eee; }
-    .left { text-align: left; }
-    .right { text-align: right; }
-  </style>
-</head>
-<body>
+} else {
+    $rowsHtml = '<tr><td colspan="5">No residents found for the selected filters.</td></tr>';
+}
+
+// Build core page HTML fragment
+$corePageHtml = '
   <div class="page">
     <div class="center-text">
       <p class="title">BARANGAY MAGANG </br> DAET, CAMARINES NORTE</p>
-      <!-- <p class="title"></p> -->
-      <p class="subtitle">LIST OF <?= htmlspecialchars($ageLabel) ?> YEARS OLD </br> PUROK <?= htmlspecialchars($purokLabel) ?></p>
-      <!-- <p class="subtitle"></p> -->
+      <p class="subtitle">LIST OF <strong>' . htmlspecialchars($ageLabel) . '</strong> YEARS OLD </br> PUROK <strong>' . htmlspecialchars($purokLabel) . '</strong></p>
     </div>
-    <table>
-      <thead>
-        <tr>
-          <th>No.</th>
-          <th>Full Name</th>
-          <th>Sex</th>
-          <th>Age</th>
-          <th>Birthdate</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php if ($totalRecords > 0): ?>
-          <?php $counter = 1; ?>
-          <?php foreach ($rows as $r): ?>
-            <tr>
-              <td><?= $counter++ ?></td>
-              <td><?= htmlspecialchars($r['full_name']) ?></td>
-              <td><?= htmlspecialchars($r['sex']) ?></td>
-              <td><?= calc_age($r['birthdate']) ?></td>
-              <td><?= date('F j, Y', strtotime($r['birthdate'])) ?></td>
-            </tr>
-          <?php endforeach; ?>
-        <?php else: ?>
-          <tr><td colspan="5">No residents found for the selected filters.</td></tr>
-        <?php endif; ?>
-      </tbody>
-      <tfoot>
-        <tr>
-          <td colspan="5" class="left">Total Records: <?= $totalRecords ?></td>
-        </tr>
-      </tfoot>
-    </table>
-  </div>
-</body>
-</html>
-<?php
-$html = ob_get_clean();
 
-if ($format === 'pdf') {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>No.</th>
+            <th>Full Name</th>
+            <th>Sex</th>
+            <th>Age</th>
+            <th>Birthdate</th>
+          </tr>
+        </thead>
+        <tbody>' . $rowsHtml . '</tbody>
+        <tfoot>
+          <tr>
+            <td colspan="5" class="left">Total Residents: ' . $totalRecords . '</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+';
+
+// Output handling: PDF vs preview
+if (strtolower($format) === 'pdf') {
+    // Full document with @page rules for Dompdf
+    $fullHtml = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Resident Report</title>'
+              . '<style>' . $pdfCss . '</style>'
+              . '</head><body>'
+              . $corePageHtml
+              . '</body></html>';
+
+    // Render PDF with Dompdf
     $options = new Options();
     $options->set('isRemoteEnabled', false);
     $dompdf = new Dompdf($options);
-    $dompdf->loadHtml($html);
-    $dompdf->setPaper('letter', 'portrait');
+    $dompdf->loadHtml($fullHtml);
+    $dompdf->setPaper('letter', 'portrait'); // keep same as other reports
     $dompdf->render();
-    $dompdf->stream("Resident_Report.pdf", ['Attachment' => false]);
+
+    // Safe filename
+    $safePurok = preg_replace('/[^0-9A-Za-z_-]/', '_', $purokLabel);
+    $safeAge  = preg_replace('/[^0-9A-Za-z_-]/', '_', $ageLabel);
+    $filename = "Resident_Report_Purok_{$safePurok}_Age_{$safeAge}.pdf";
+
+    $dompdf->stream($filename, ['Attachment' => false]);
     exit;
 } else {
-    echo $html;
+    // Preview mode — return style + page fragment (so admin JS can paste it)
+    $pageHtmlPreview = '<style>' . $previewCss . '</style>' . $corePageHtml;
+    echo $pageHtmlPreview;
+    exit;
 }

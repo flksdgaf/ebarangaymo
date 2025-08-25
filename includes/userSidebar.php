@@ -33,7 +33,7 @@ $logoUrl = 'images/' . $info['logo'];
         <li>
         <a href="userPanel.php?page=userDashboard"
             class="nav-link <?= $currentPage === 'userDashboard' ? 'active' : '' ?>">
-            <span class="material-symbols-outlined me-2">dashboard</span> Dashboard
+            <span class="material-symbols-outlined me-2">home</span> Home
         </a>
         </li>
         <li>
@@ -48,12 +48,12 @@ $logoUrl = 'images/' . $info['logo'];
             <span class="material-symbols-outlined me-2">home_storage</span> My Requests
         </a>
         </li>
-        <li>
+        <!-- <li>
         <a href="userPanel.php?page=userTransactions"
             class="nav-link <?= $currentPage === 'userTransactions' ? 'active' : '' ?>">
             <span class="material-symbols-outlined me-2">receipt_long</span> Transaction History
         </a>
-        </li>
+        </li> -->
     </ul>
 </nav>
 

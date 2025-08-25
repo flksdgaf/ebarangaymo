@@ -39,7 +39,7 @@ $pageTitles = [
     'superAdminPanelSettings' => 'Admin Settings',
 
     // User 
-    'userDashboard' => 'Dashboard',
+    'userDashboard' => 'Home',
     'userRequest' => 'My Requests',
     'userServices' => 'Barangay Services',
     'userSettings' => 'Account Settings',
@@ -50,7 +50,7 @@ $pageTitles = [
     'serviceEquipmentBorrowing' => 'Equipment Borrowing'
 ];
 
-$topbarText = $pageTitles[$page] ?? 'Dashboard';
+$topbarText = $pageTitles[$page] ?? 'Home';
 
 // Ensure the user is authenticated.
 if (!isset($_SESSION['auth']) || $_SESSION['auth'] !== true) {
@@ -126,6 +126,7 @@ if (in_array($role, $admin_roles)) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- CUSTOM CSS -->
     <link rel="stylesheet" href="panels.css">
+    <link rel="stylesheet" href="panels_user.css">
     <link rel="stylesheet" href="includes/sidebar.css">
     <!-- GOOGLE FONTS -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
@@ -146,7 +147,7 @@ if (in_array($role, $admin_roles)) {
 
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg border-bottom px-3 py-2 top-bar">
+    <nav class="navbar navbar-expand-lg border-bottom px-3 py-2 top-bar" style="background-color: #C4C4C4;">
         <div class="container-fluid d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-2 topbar-title">
                 <span class="fw-bold topbar-text">
@@ -158,7 +159,7 @@ if (in_array($role, $admin_roles)) {
                 <img src="../<?php echo htmlspecialchars($profilePic); ?>?v=<?php echo time() ?>" class="rounded-circle" width="40" height="40" style="object-fit: cover; margin-right: 8px; border: 2px solid #000000;">
                 <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="adminDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     <!-- Text for large screens -->
-                    <span class="d-none d-md-inline"><?php echo htmlspecialchars($fullName); ?> - <?php echo htmlspecialchars($_SESSION['loggedInUserRole']); ?></span>
+                    <span class="d-none d-md-inline" style="color: #212529; "><?php echo htmlspecialchars($fullName); ?> - <?php echo htmlspecialchars($_SESSION['loggedInUserRole']); ?></span>
                     <!-- Icon for smaller screens -->
                     <span class="d-md-none icon"><i class="fas fa-user"></i></span>
                 </button>

@@ -58,6 +58,27 @@ $stmt->close();
 
 <!-- Inline CSS for Equipment Cards -->
 <style>
+/* === PAGE BACKGROUND FIX (ADDED) ===
+   Ensure full-page background is #efefef and avoid inner containers creating a white split.
+   Only these rules were added/adjusted to fix the visual split you described.
+*/
+html, body {
+  height: 100%;
+  background-color: #efefef !important;
+}
+
+/* make sure your top-level wrapper and the two main containers are transparent *
+   so the body background shows through (avoids white bands caused by nested blocks) */
+.container.py-4,
+.services-container,
+#servicesMainContainer,
+#equipmentContainer {
+  background: transparent !important;
+}
+
+/* Slight spacing safety for equipment container so the green cards don't butt up against the edges */
+#equipmentContainer { padding-top: 3rem; padding-bottom: 3rem; }
+
 /* Entrance animation */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(20px); }

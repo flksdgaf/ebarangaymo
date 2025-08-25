@@ -2,7 +2,7 @@
 <?php include 'includes/account_header.php'; ?>
 <?php include 'includes/userSidebar.php'; ?>
 
-<div class="main-content">
+<div class="main-content" style="background-color: #EFEFEF;">
     <?php
         // Default to 'dashboard' if no page is set
         $page = $_GET['page'] ?? 'userDashboard';

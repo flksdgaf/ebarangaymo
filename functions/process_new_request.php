@@ -19,12 +19,9 @@ if ($role === 'SuperAdmin') {
 $userId = $_SESSION['loggedInUserID'];
 $requestType = $_POST['request_type'] ?? '';
 
-// HARD CODE PAYMENT STATUS FOR TESTING
-// $paymentStatus = 'Paid';
-
 switch($requestType) {
   case 'Barangay ID':
-    $transactionType = $_POST['barangay_id_transaction_type'];
+    $transactionType = trim($_POST['barangay_id_transaction_type'] ?? '');
 
     // 1) Collect posted fields
     $fn = trim($_POST['barangay_id_first_name'] ?? '');
@@ -34,77 +31,165 @@ switch($requestType) {
     $suffixPart = $sn ? " {$sn}" : '';
     $middlePart = $mn ? " {$mn}" : '';
     $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
-    // $fullName = trim($_POST['full_name'] ?? '');
 
-    $purok = $_POST['barangay_id_purok'];
-    $birthDate = $_POST['barangay_id_dob'];
-    // $birthPlace = "{$_POST['birth_municipality']}, {$_POST['birth_province']}";
+    $purok = trim($_POST['barangay_id_purok'] ?? '');
+    $birthDate = trim($_POST['barangay_id_dob'] ?? '');
     $birthPlace = trim($_POST['barangay_id_birth_place'] ?? '');
-    $civilStatus = $_POST['barangay_id_civil_status'];
-    $religion = $_POST['barangay_id_religion'] === 'Other' ? $_POST['barangay_id_religion_other'] : $_POST['barangay_id_religion'];
-    $height = (float)$_POST['barangay_id_height'];
-    $weight = (float)$_POST['barangay_id_weight'];
-    $contactPerson = $_POST['barangay_id_emergency_contact_person'];
-    $contactAddress = $_POST['barangay_id_emergency_contact_address'];
+    $civilStatus = trim($_POST['barangay_id_civil_status'] ?? '');
+    $religion = ($_POST['barangay_id_religion'] ?? '') === 'Other' ? trim($_POST['barangay_id_religion_other'] ?? '') : trim($_POST['barangay_id_religion'] ?? '');
+    $height = isset($_POST['barangay_id_height']) && $_POST['barangay_id_height'] !== '' ? (float) $_POST['barangay_id_height'] : null;
+    $weight = isset($_POST['barangay_id_weight']) && $_POST['barangay_id_weight'] !== '' ? (float) $_POST['barangay_id_weight'] : null;
+    $contactPerson = trim($_POST['barangay_id_emergency_contact_person'] ?? '');
+    $contactAddress = trim($_POST['barangay_id_emergency_contact_address'] ?? '');
     $paymentMethod = 'Over-the-Counter';
-    // $documentStatus = 'Processing';
     $documentStatus = 'For Verification';
     $claimDate = null;
+
+    // Basic validation
+    $errors = [];
+    if ($fullName === '') $errors[] = 'Full name required.';
+    if ($purok === '') $errors[] = 'Purok required.';
+    if ($birthDate === '') $errors[] = 'Birth date required.';
+    else {
+        $dt = DateTime::createFromFormat('Y-m-d', $birthDate);
+        if (!($dt && $dt->format('Y-m-d') === $birthDate)) {
+            $errors[] = 'Birth date must be in YYYY-MM-DD format.';
+        }
+    }
+    if ($birthPlace === '') $errors[] = 'Birth place required.';
+    if ($civilStatus === '') $errors[] = 'Civil status required.';
+    if ($religion === '') $errors[] = 'Religion required.';
+    if ($height === null) $errors[] = 'Height required.';
+    if ($weight === null) $errors[] = 'Weight required.';
+
+    if ($errors) {
+        // store error (optionally more structured) and redirect back
+        $_SESSION['process_new_request_errors'] = $errors;
+        header("Location: ../{$redirectBase}?page={$redirectPage}&error=validation");
+        exit();
+    }
 
     // 2) Handle file upload
     $formalPicName = null;
     if (!empty($_FILES['barangay_id_photo']['name']) && $_FILES['barangay_id_photo']['error'] === UPLOAD_ERR_OK) {
-      $uploadDir    = __DIR__ . '/../barangayIDpictures/';
-      if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
-      $formalPicName = uniqid() . '_' . basename($_FILES['barangay_id_photo']['name']);
-      move_uploaded_file($_FILES['barangay_id_photo']['tmp_name'], $uploadDir . $formalPicName);
+        $uploadDir = __DIR__ . '/../barangayIDpictures/';
+        if (!is_dir($uploadDir)) {
+            if (!mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
+                // cannot create upload directory
+                error_log("Cannot create upload dir: {$uploadDir}");
+            }
+        }
+
+        // sanitize original name and prefix uniqid
+        $orig = basename($_FILES['barangay_id_photo']['name']);
+        $ext = pathinfo($orig, PATHINFO_EXTENSION);
+        $allowedExt = ['jpg','jpeg','png','gif'];
+        $extLower = strtolower($ext);
+        if (!in_array($extLower, $allowedExt, true)) {
+            // skip saving and log warning
+            error_log("Rejected upload (bad extension): {$orig}");
+        } else {
+            $formalPicName = uniqid('bid_', true) . '.' . $extLower;
+            $target = $uploadDir . $formalPicName;
+            if (!move_uploaded_file($_FILES['barangay_id_photo']['tmp_name'], $target)) {
+                error_log("Failed to move uploaded file to {$target}");
+                $formalPicName = null;
+            }
+        }
     }
 
     // 3) Generate next transaction_id
+    $prefix = 'BRGYID-';
+    $num = 1;
     $stmt = $conn->prepare("SELECT transaction_id FROM barangay_id_requests ORDER BY id DESC LIMIT 1");
-    $stmt->execute();
-    $res = $stmt->get_result();
-    if ($res && $res->num_rows === 1) {
-      $lastTid = $res->fetch_assoc()['transaction_id'];
-      $num = intval(substr($lastTid, 7)) + 1;
-    } else {
-      $num = 1;
+    if ($stmt) {
+        if ($stmt->execute()) {
+            $res = $stmt->get_result();
+            if ($res && $res->num_rows === 1) {
+                $lastTid = $res->fetch_assoc()['transaction_id'];
+                // try to extract tailing digits
+                if (is_string($lastTid) && preg_match('/(\d+)$/', $lastTid, $m)) {
+                    $num = intval($m[1]) + 1;
+                } else {
+                    $num = 1;
+                }
+            }
+        } else {
+            error_log("Failed to execute select last transaction_id: " . $stmt->error);
+        }
+        $stmt->close();
     }
-    $transactionId = sprintf('BRGYID-%07d', $num);
-    $stmt->close();
+    $transactionId = sprintf($prefix . '%07d', $num);
 
     // 4) Insert into barangay_id_requests
-    $sql = "INSERT INTO barangay_id_requests (account_id, transaction_id, transaction_type, full_name, purok, birth_date, birth_place, 
-            civil_status, religion, height, weight, emergency_contact_person, emergency_contact_address, formal_picture, claim_date, 
-            payment_method, document_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,NULLIF(?, ''),NULLIF(?, ''),?,?)";
-    $ins = $conn->prepare($sql);
-    $ins->bind_param('issssssssddssssss', $userId, $transactionId, $transactionType, $fullName, $purok, $birthDate, $birthPlace, 
-    $civilStatus, $religion, $height, $weight, $contactPerson, $contactAddress, $formalPicName, $claimDate, $paymentMethod, $documentStatus);
-    $ins->execute();
-    $ins->close();
+    $conn->begin_transaction();
+    try {
+        $sql = "INSERT INTO barangay_id_requests 
+          (account_id, transaction_id, transaction_type, full_name, purok, birth_date, birth_place, civil_status, religion, 
+          height, weight, emergency_contact_person, emergency_contact_address, formal_picture, claim_date, payment_method, 
+          document_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,NULLIF(?, ''),NULLIF(?, ''),?,?)";
 
-    // ACTIVITY LOGGING 
-    $admin_roles = ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper', 'Brgy Kagawad', 'Brgy Treasurer', 'Lupon Tagapamayapa'];
-    if (in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
-        $logStmt = $conn->prepare("INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description) 
-        VALUES (?,?,?,?,?,?)");    
-        
-        $admin_id = $_SESSION['loggedInUserID'];
-        $role = $_SESSION['loggedInUserRole'];     
-        $action = 'CREATE';
-        $table_name = 'barangay_id_requests';
-        $record_id = $transactionId;
-        $description = 'Created Barangay ID Request: ' . $record_id;
+        $ins = $conn->prepare($sql);
+        if (!$ins) {
+            throw new Exception('Prepare failed: ' . $conn->error);
+        }
 
-        $logStmt->bind_param('isssss', $admin_id, $role, $action, $table_name, $record_id, $description);
-        $logStmt->execute();
-        $logStmt->close();
+        $heightVal = $height !== null ? $height : null;
+        $weightVal = $weight !== null ? $weight : null;
+
+        $ins->bind_param('issssssssddssssss',$userId,$transactionId,$transactionType,$fullName,$purok,$birthDate,$birthPlace,
+          $civilStatus,$religion,$heightVal,$weightVal,$contactPerson,$contactAddress,$formalPicName,$claimDate,$paymentMethod,
+          $documentStatus
+        );
+
+        if (!$ins->execute()) {
+            throw new Exception('Insert failed: ' . $ins->error);
+        }
+
+        $newId = $ins->insert_id;
+        $ins->close();
+
+        // Activity logging only if admin/staff
+        $admin_roles = ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper'];
+        if (in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
+            $logStmt = $conn->prepare("INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description) VALUES (?,?,?,?,?,?)");
+            if (!$logStmt) {
+                throw new Exception('Prepare activity log failed: ' . $conn->error);
+            }
+            $admin_id = (int) $_SESSION['loggedInUserID'];
+            $roleName = $_SESSION['loggedInUserRole'];
+            $action = 'CREATE';
+            $table_name = 'barangay_id_requests';
+            $record_id = $transactionId;
+            $description = 'Created Barangay ID Request: ' . $record_id;
+
+            if (!$logStmt->bind_param('isssss', $admin_id, $roleName, $action, $table_name, $record_id, $description)) {
+                throw new Exception('Bind activity log failed: ' . $logStmt->error);
+            }
+            if (!$logStmt->execute()) {
+                throw new Exception('Execute activity log failed: ' . $logStmt->error);
+            }
+            $logStmt->close();
+        }
+
+        $conn->commit();
+
+        // 5) Redirect to panel with transaction id
+        header("Location: ../{$redirectBase}?page={$redirectPage}&transaction_id=" . urlencode($transactionId));
+        exit();
+
+    } catch (Exception $e) {
+        $conn->rollback();
+        error_log("process_new_request error: " . $e->getMessage());
+        // optionally remove uploaded file if it was stored
+        if (!empty($formalPicName)) {
+            $fileToDelete = __DIR__ . '/../barangayIDpictures/' . $formalPicName;
+            if (file_exists($fileToDelete)) @unlink($fileToDelete);
+        }
+        $_SESSION['process_new_request_errors'] = ['server_error' => $e->getMessage()];
+        header("Location: ../{$redirectBase}?page={$redirectPage}&error=db");
+        exit();
     }
-    
-    // 5) Redirect back to the appropriate panel
-    header("Location: ../{$redirectBase}?page={$redirectPage}&transaction_id={$transactionId}");
-    exit();
-    break;
 
   case 'Business Permit':
     $transactionType = $_POST['business_permit_transaction_type'] ?? '';

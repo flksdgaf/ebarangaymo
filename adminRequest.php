@@ -27,9 +27,9 @@ $combinedOnlineCount = (int)$onlineCount + (int)$brgyPaymentDevice;
 
 // what each role is allowed to do on the request page
 $rolePermissions = [
-  'Brgy Captain' => ['add','proceed','print','edit','delete','reject'],
-  'Brgy Secretary' => ['add','proceed','print','edit','delete','reject'],
-  'Brgy Bookkeeper' => ['add','proceed','print','edit','delete','reject'],
+  'Brgy Captain' => ['add'],
+  'Brgy Secretary' => ['add'],
+  'Brgy Bookkeeper' => ['add'],
   'Brgy Treasurer' => [], // no default actions
   'Brgy Kagawad' => [], // view‑only
 ];
@@ -44,7 +44,7 @@ $payment_status = $_GET['payment_status'] ?? '';
 $document_status = $_GET['document_status'] ?? '';
 
 // Sources
-$validSources = ['Walk‑In','Online','Brgy Payment Device','Official Receipt Logs'];
+$validSources = ['Walk-In','Online','Brgy Payment Device','Official Receipt Logs'];
 $processing_type = $_GET['request_source'] ?? 'Walk-In';
 if (! in_array($processing_type, $validSources, true)) {
   $processing_type = 'Walk-In';
@@ -103,31 +103,65 @@ if ($date_from && $date_to) {
   $bindParams[] = $date_to;
 }
 
+// ---------- processing_type / pane filters ----------
 if ($processing_type !== '' && $processing_type !== 'Official Receipt Logs') {
-  switch ($processing_type) {
-    case 'Walk-In':
-      // Over-the-counter pane: show only Walk-In source & method
-      if (in_array($currentRole, ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad'], true)) {
-      $whereClauses[] = "(r.request_source = 'Walk-In' AND (r.payment_method = 'Over-the-Counter'))";
-      } else {
-        // Default behavior (treasurer sees GCash in the 'Online' pane)
-        $whereClauses[] = "((r.request_source = 'Walk-In' OR r.request_source = 'Online') AND (r.payment_method = 'Over-the-Counter' OR r.payment_method IS NULL))";
-      }
-      break;
-    case 'Online':
-      // For Captain/Secretary/Bookkeeper/Kagawad: combine both GCash + Brgy Payment Device into one Online pane
-      if (in_array($currentRole, ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad'], true)) {
-        $whereClauses[] = "(r.request_source = 'Online' AND (r.payment_method IN ('Over-the-Counter', 'Brgy Payment Device', 'GCash')))";
-      } else {
-        // Default behavior (treasurer sees GCash in the 'Online' pane)
-        $whereClauses[] = "(r.request_source = 'Online' AND r.payment_method = 'GCash')";
-      }
-      break;
-    case 'Brgy Payment Device':
-      // Brgy device pane: still Online source, but filter payment_method
-      $whereClauses[] = "(r.request_source = 'Online' AND r.payment_method = 'Brgy Payment Device')";
-      break;
-  }
+    $adminRoles = ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad'];
+    $isAdminView = in_array($currentRole, $adminRoles, true);
+    $isTreasurer = ($currentRole === 'Brgy Treasurer');
+
+    // Treasurer: only show rows whose document_status is Processing
+    if ($isTreasurer) {
+        $whereClauses[] = "r.document_status = 'Processing'";
+    }
+
+    switch ($processing_type) {
+        case 'Walk-In':
+            // Walk-In pane: show Walk-In + Over-the-Counter.
+            // Include Indigency ONLY if its source is Walk-In.
+            if ($isAdminView) {
+                $whereClauses[] = "(
+                    (r.request_source = 'Walk-In' AND r.payment_method = 'Over-the-Counter')
+                    OR (r.request_type = 'Indigency' AND r.request_source = 'Walk-In')
+                )";
+            } else {
+                // Treasurer / default: show Walk-In or Online but only Over-the-Counter (or NULL).
+                // Still include Indigency only when its source is Walk-In.
+                $whereClauses[] = "(
+                    ((r.request_source = 'Walk-In' OR r.request_source = 'Online')
+                      AND (r.payment_method = 'Over-the-Counter' OR r.payment_method IS NULL))
+                    OR (r.request_type = 'Indigency' AND r.request_source = 'Walk-In')
+                )";
+            }
+            break;
+
+        case 'Online':
+            // Online pane: show Online source. Admin roles see multiple payment methods;
+            // include Indigency only when its source is Online.
+            if ($isAdminView) {
+                $whereClauses[] = "(
+                    (r.request_source = 'Online' AND r.payment_method IN ('Over-the-Counter','Brgy Payment Device','GCash'))
+                    OR (r.request_type = 'Indigency' AND r.request_source = 'Online')
+                )";
+            } else {
+                // Treasurer / default: show Online + GCash ONLY (do NOT include Indigency here)
+                $whereClauses[] = "(r.request_source = 'Online' AND r.payment_method = 'GCash')";
+            }
+            break;
+
+        case 'Brgy Payment Device':
+            // Brgy Payment Device pane: Online source with specific payment method.
+            // Do NOT include Indigency here.
+            $whereClauses[] = "(r.request_source = 'Online' AND r.payment_method = 'Brgy Payment Device')";
+            break;
+
+        case 'GCash':
+            $whereClauses[] = "(r.request_source = 'Online' AND r.payment_method = 'GCash')";
+            break;
+
+        default:
+            // fallback - no additional clause
+            break;
+    }
 }
 
 if (
@@ -538,11 +572,11 @@ $result = $st->get_result();
                 <!-- Emergency Contact Person Name & Number -->
                 <div class="col-12 col-md-4">
                   <label class="form-label fw-bold">Emergency Contact Person</label>
-                  <input name="barangay_id_emergency_contact_person" type="text" class="form-control form-control-sm" required>
+                  <input name="barangay_id_emergency_contact_person" type="text" class="form-control form-control-sm">
                 </div>     
                 <div class="col-12 col-md-4">
                   <label class="form-label fw-bold">Emergency Contact Address</label>
-                  <input name="barangay_id_emergency_contact_address" type="text" class="form-control form-control-sm" required>
+                  <input name="barangay_id_emergency_contact_address" type="text" class="form-control form-control-sm">
                 </div>    
 
                 <!-- Formal Picture -->
@@ -1076,51 +1110,138 @@ $result = $st->get_result();
         </div>
       </div>
 
-     <!-- View Request Modal -->
-    <div class="modal fade" id="viewRequestModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="viewRequestModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered" style="max-width: 820px;">
-        <div class="modal-content" style="display: flex; flex-direction: column; max-height: calc(100vh - 60px);">
-          
-          <!-- Modal Header -->
-          <div class="modal-header text-white" style="background-color: #13411F;">
-            <h5 class="modal-title" id="viewRequestModalLabel">Document Request Preview</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-          </div>
+      <!-- View Request Modal -->
+      <div class="modal fade" id="viewRequestModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="viewRequestModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 820px; margin: 30px auto;">
+          <div class="modal-content" style="display: flex; flex-direction: column; max-height: calc(100vh - 60px);">
 
-          <!-- Scrollable Modal Body -->
-          <div class="modal-body p-0" style="flex: 1; overflow: hidden;">
-            <div class="preview-container" style="height: 100%; overflow-y: auto; background-color: #ccc; padding: 20px;">
-              <iframe
-                id="requestPreviewFrame"
-                src=""
-                allowfullscreen
-                style="width: 100%; height: 500px; border: none; background-color: #fff;"
-              ></iframe>
+            <div class="modal-header text-white" style="background-color:#13411F;">
+              <h5 class="modal-title" id="viewRequestModalLabel">Request Details</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-          </div>
 
-          <!-- Modal Footer -->
-          <div class="modal-footer justify-content-between px-4 py-2" style="background-color: #f8f9fa;">
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" value="1" id="includeHeader">
-              <label class="form-check-label" for="includeHeader">
-                Include Header
-              </label>
-            </div>
-            <div>
-              <button class="btn btn-outline-success me-2" id="printRequestBtn">
-                <i class="bi bi-printer"></i> Print
-              </button>
-              <a id="downloadRequestPDF" class="btn btn-success" href="#" target="_blank">
-                <i class="bi bi-download"></i> Save as PDF
-              </a>
-            </div>
-          </div>
+            <div class="modal-body p-3" style="flex:1; overflow:auto;">
+              <div class="container-fluid">
+                <div id="viewRequestSummary" class="mb-2 text-muted small"></div>
 
+                <!-- fields injected here -->
+                <form id="viewRequestForm" autocomplete="off" onsubmit="return false;">
+                  <div id="viewRequestFields" class="row g-3">
+                    <!-- JS will insert grouped sections here as .col-12 blocks -->
+                  </div>
+                </form>
+
+                <!-- image/thumbs -->
+                <div id="viewRequestImage" class="mt-3"></div>
+              </div>
+            </div>
+
+            <div class="modal-footer justify-content-end px-4 py-2" style="background-color:#f8f9fa;">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+
+          </div>
         </div>
       </div>
-    </div>
 
+      <!-- Accept Request Modal -->
+      <div class="modal fade" id="acceptRequestModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-md">
+          <div class="modal-content border-success">
+            <form id="acceptRequestForm">
+              <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Accept Request</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <p>Are you sure you want to <strong>accept</strong> this request?</p>
+
+                <!-- IMPORTANT: these names must match what update_request_status.php expects -->
+                <input type="hidden" name="transaction_id" id="acceptTransactionId" value="">
+                <input type="hidden" name="status" value="Processing">
+
+              </div>
+              <div class="modal-footer">
+                <button type="submit" class="btn btn-success">Confirm Accept</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reject Request Modal -->
+      <div class="modal fade" id="rejectRequestModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <form id="rejectRequestForm">
+              <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Reject Request</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <p>Please provide a reason for rejection:</p>
+                <input type="hidden" name="transaction_id" id="rejectTransactionId" value="">
+                <input type="hidden" name="status" value="Rejected">
+                <textarea name="remarks" id="rejectRemarks" class="form-control" required></textarea>
+
+              </div>
+              <div class="modal-footer">
+                <button type="submit" class="btn btn-danger">Reject</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- View Request Modal -->
+      <div class="modal fade" id="previewRequestModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="previewRequestModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 820px;">
+          <div class="modal-content" style="display: flex; flex-direction: column; max-height: calc(100vh - 60px);">
+            
+            <!-- Modal Header -->
+            <div class="modal-header text-white" style="background-color: #13411F;">
+              <h5 class="modal-title" id="previewRequestModalLabel">Document Request Preview</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <!-- Scrollable Modal Body -->
+            <div class="modal-body p-0" style="flex: 1; overflow: hidden;">
+              <div class="preview-container" style="height: 100%; overflow-y: auto; background-color: #ccc; padding: 20px;">
+                <iframe
+                  id="requestPreviewFrame"
+                  src=""
+                  allowfullscreen
+                  style="width: 100%; height: 500px; border: none; background-color: #fff;"
+                ></iframe>
+              </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="modal-footer justify-content-between px-4 py-2" style="background-color: #f8f9fa;">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="1" id="includeHeader">
+                <label class="form-check-label" for="includeHeader">
+                  Include Header
+                </label>
+              </div>
+              <div>
+                <button class="btn btn-outline-success me-2" id="printRequestBtn">
+                  <span class="material-symbols-outlined" style="font-size:16px; vertical-align:middle;">print</span>
+                  Print
+                </button>
+
+                <button class="btn btn-success" id="downloadRequestPDF" href="#" target="_blank">
+                  <span class="material-symbols-outlined" style="font-size:16px; vertical-align:middle;">download</span>
+                  Save as PDF
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
 
       <!-- Edit Request Modal -->
       <div class="modal fade" id="editRequestModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="editRequestModalLabel" aria-hidden="true">
@@ -1230,49 +1351,6 @@ $result = $st->get_result();
         </div>
       </div>
 
-      <!-- Reject Reason Modal -->
-      <div class="modal fade" id="rejectReasonModal" tabindex="-1" aria-labelledby="rejectReasonModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
-            <form id="rejectReasonForm" method="POST" action="functions/process_reject_request.php">
-
-              <!-- Header -->
-              <div class="modal-header bg-danger text-white">
-                <span class="material-symbols-outlined me-2">warning</span>
-                <h5 class="modal-title flex-grow-1" id="rejectReasonModalLabel">
-                  Reject Request
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-
-              <!-- Body -->
-              <div class="modal-body">
-                <input type="hidden" name="transaction_id" id="rejectTransactionId">
-
-                <!-- Personalized Description -->
-                <p id="rejectDescription" class="mb-3 text-muted fst-italic">
-                  <!-- JS will set: e.g. “Please state the reason below for declining Juano Dela Cruz’s request (ID 100000107).” -->
-                </p>
-
-                <!-- Reason Field -->
-                <div class="mb-3">
-                  <label for="rejectionReason" class="form-label fw-bold">
-                    Reason for Rejection
-                  </label>
-                  <textarea class="form-control" name="rejection_reason" id="rejectionReason" rows="4" required placeholder="Enter reason here…"></textarea>
-                </div>
-              </div>
-
-              <!-- Footer -->
-              <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn btn-danger">Reject Request</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-
       <form method="get" id="searchForm" class="d-flex ms-auto me-2">
         <!-- preserve pagination & filters -->
         <input type="hidden" name="page" value="adminRequest">
@@ -1361,7 +1439,10 @@ $result = $st->get_result();
                 $ps = $row['payment_status'] ?? '';
                 switch ($ps) {
                   case 'Paid': $c = 'bg-success'; break;
+                  case 'Free of Charge': $c = 'bg-success'; break;
                   case 'Unpaid': $c = 'bg-danger';  break;
+                  case 'Pending': $c = 'bg-warning'; break;
+                  case 'Failed': $c = 'bg-danger'; break;
                   default: $c = 'bg-secondary'; 
                 }
 
@@ -1374,6 +1455,16 @@ $result = $st->get_result();
                   case 'Rejected': $d = 'bg-danger'; break;
                   default: $d = 'bg-secondary';
                 }
+
+                // Hide records from Brgy Treasurer unless document_status is 'Processing'
+                if (isset($currentRole) && $currentRole === 'Brgy Treasurer') {
+                  $docStatus = trim((string)($row['document_status'] ?? ''));
+                  if (strcasecmp($docStatus, 'Processing') !== 0) {
+                    // skip rendering this row for Brgy Treasurer
+                    continue;
+                  }
+                }
+
               ?>
                 <tr data-id="<?= $tid ?>">
                   <td><?= $tid ?></td>
@@ -1382,58 +1473,96 @@ $result = $st->get_result();
                   <td><span class="badge <?= $c ?>"><?= htmlspecialchars($ps ?: '—') ?></span></td>
                   <td><span class="badge <?= $d ?>"><?= htmlspecialchars($ds) ?></span></td>
                   <td><?= htmlspecialchars($row['formatted_date']) ?></td>
-                  <?php if (!empty($perms) || $currentRole === 'Brgy Treasurer'): ?>
-                    <td class="text-center">
-                      <?php
-                        $isIndigency = ($row['request_type'] === 'Indigency');
-                        $hasPaid = ($row['payment_status'] === 'Paid');
-                        $isPaidOrFree = $hasPaid || $isIndigency;
-                        $isReady = ($row['document_status'] === 'Ready to Release');
-                        $isRejected = ($row['document_status'] === 'Rejected');
+                  <?php if ($currentRole !== 'Brgy Treasurer'): ?>
+                    <td class="text-nowrap text-center">
+                      <?php if (in_array($currentRole, ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper'], true) && (($row['document_status'] ?? '') === 'For Verification')): ?>
+                        <!-- VIEW (unchanged) -->
+                        <button class="btn btn-sm btn-primary btn-view-request" data-id="<?= $tid ?>" title="View">
+                          <span class="material-symbols-outlined" style="font-size:12px;">visibility</span>
+                        </button>
 
-                        // permissions
-                        $canView = in_array('print', $perms, true) && $isPaidOrFree || $isIndigency; // always allow view on Indigency
-                        $canPrint = in_array('print', $perms, true) && $isPaidOrFree;
-                        $canProceed = in_array('proceed', $perms, true) && $isPaidOrFree && $isReady;
-                        $canEdit = in_array('edit', $perms, true);
-                        $canReject = in_array('reject', $perms, true) && ! $isPaidOrFree && ! $isReady && ! $isRejected;
-                      ?>
-                      <?php if (in_array($currentRole, ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper'], true)): ?>
+                        <!-- ACCEPT (unchanged) -->
+                        <button class="btn btn-sm btn-success btn-accept-request" data-id="<?= $tid ?>" data-action="Processing" title="Accept">
+                          <span class="material-symbols-outlined" style="font-size:12px;">check</span>
+                        </button>
 
-                        <!-- View -->
-                        <button type="button" class="btn btn-sm btn-warning request-btn-view" data-id="<?= $tid ?>" title="View <?= $tid ?>"
-                          <?= $canView ? '' : 'disabled' ?>>
+                        <!-- REJECT (unchanged) -->
+                        <button class="btn btn-sm btn-danger btn-reject-request" data-id="<?= $tid ?>" data-action="Rejected" title="Reject">
+                          <span class="material-symbols-outlined" style="font-size:12px;">close</span>
+                        </button>
+
+                      <?php elseif (in_array($currentRole, ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper'], true) && (($row['document_status'] ?? '') === 'Processing' || ($row['document_status'] ?? '') === 'Ready to Release')): ?>
+                        <!-- AFTER ACCEPTED: show View, Edit, Proceed -->
+                        <!-- VIEW (reuse same view handler) -->
+                        <button type="button" class="btn btn-sm btn-warning request-btn-view" data-id="<?= $tid ?>" title="View <?= $tid ?>" data-payment-status="<?= htmlspecialchars($row['payment_status'] ?? '') ?>" data-request-type="<?= htmlspecialchars($row['request_type'] ?? '') ?>">
                           <span class="material-symbols-outlined" style="font-size:13px">visibility</span>
                         </button>
 
-                        <!-- Edit -->
-                        <button type="button" class="btn btn-sm btn-primary request-btn-edit" title="Edit <?= $tid ?>"
-                          <?= $canEdit ? '' : 'disabled' ?>>
+                        <!-- EDIT (new) -->
+                        <button type="button" class="btn btn-sm btn-primary request-btn-edit" title="Edit <?= $tid ?>">
                           <span class="material-symbols-outlined" style="font-size:13px">stylus</span>
                         </button>
 
-                        <!-- Proceed -->
-                        <button type="button" class="btn btn-sm btn-success request-btn-release" title="Release <?= $tid ?>"
-                          <?= $canProceed ? '' : 'disabled' ?>>
+                        <!-- PROCEED / RELEASE (new) -->
+                        <?php $releaseDisabled = (($row['document_status'] ?? '') !== 'Ready to Release') ? 'disabled' : ''; ?>
+                        <button type="button" class="btn btn-sm btn-success request-btn-release" title="Release <?= $tid ?>" data-transaction-id="<?= htmlspecialchars($row['transaction_id']) ?>" data-request-type="<?= htmlspecialchars($row['request_type']) ?>" <?= $releaseDisabled ?>>
                           <span class="material-symbols-outlined" style="font-size:13px">check</span>
                         </button>
 
-                        <!-- Reject -->
-                        <!-- <button type="button" class="btn btn-sm btn-danger request-btn-reject" title="Reject <= $tid ?>"
-                          <= $canReject ? '' : 'disabled' ?>>
-                          <span class="material-symbols-outlined" style="font-size:13px">close</span>
+                      <!-- <php else: ?> -->
+                        <!-- other states: keep VIEW available (no disabling) -->
+                        <!-- <button class="btn btn-sm btn-primary btn-view-request" data-id="<= $tid ?>" title="View">
+                          <span class="material-symbols-outlined" style="font-size:12px;">visibility</span>
                         </button> -->
+                      <?php endif; ?>
+                    </td>
+                  <?php else: ?>
+                    <!-- For Brgy Treasurer: show Receipt only after accepted -->
+                    <td class="text-nowrap text-center">
+                      <?php
+                        $docStatus = $row['document_status'] ?? '';
+                        $payMethod = $row['payment_method'] ?? '';
+                        $payStatus = $row['payment_status'] ?? '';
+                        $accepted = in_array($docStatus, ['Processing','Ready to Release'], true);
+                      ?>
 
-                      <?php elseif ($currentRole === 'Brgy Treasurer'): ?>
-                        <!-- Receipt -->
-                        <button type="button" class="btn btn-sm btn-info request-record-btn" data-id="<?= htmlspecialchars($row['transaction_id']) ?>" data-payment-method="<?= htmlspecialchars($row['payment_method']) ?>" data-amount-paid="<?= htmlspecialchars($row['amount'] ?? '') ?>">
-                          <span class="material-symbols-outlined" style="font-size: 13px;">
-                            receipt
-                          </span>
-                        </button>
+                      <?php if (! $accepted): ?>
+                        <!-- Not accepted yet: treasurer sees nothing here -->
+                        <span class="text-muted small">—</span>
+
+                      <?php else: ?>
+                        <!-- Record is accepted. Show action button per payment method rules. -->
+                        <?php if ($payMethod === 'Over-the-Counter' || $payMethod === null || $payMethod === ''): ?>
+                          <!-- OTC: show button so treasurer can record the OR -->
+                          <button type="button" class="btn btn-sm btn-info request-record-btn"
+                                  data-id="<?= htmlspecialchars($row['transaction_id']) ?>"
+                                  data-payment-method="Over-the-Counter"
+                                  data-amount-paid="<?= htmlspecialchars($row['amount'] ?? '') ?>"
+                                  title="Record Receipt <?= htmlspecialchars($row['transaction_id']) ?>">
+                            <span class="material-symbols-outlined" style="font-size: 13px;">receipt</span>
+                          </button>
+
+                        <?php elseif (in_array($payMethod, ['GCash','Brgy Payment Device'], true)): ?>
+                          <!-- GCash / Brgy Payment Device: only show button when payment_status is Paid -->
+                          <?php if ($payStatus === 'Paid'): ?>
+                            <button type="button" class="btn btn-sm btn-info request-record-btn"
+                                    data-id="<?= htmlspecialchars($row['transaction_id']) ?>"
+                                    data-payment-method="<?= htmlspecialchars($payMethod) ?>"
+                                    data-amount-paid="<?= htmlspecialchars($row['amount'] ?? '') ?>"
+                                    title="Record Receipt <?= htmlspecialchars($row['transaction_id']) ?>">
+                              <span class="material-symbols-outlined" style="font-size: 13px;">receipt</span>
+                            </button>
+                          <?php else: ?>
+                            <span class="text-muted small">—</span>
+                          <?php endif; ?>
+
+                        <?php else: ?>
+                          <span class="text-muted small">—</span>
+                        <?php endif; ?>
                       <?php endif; ?>
                     </td>
                   <?php endif; ?>
+
                 </tr>
               <?php endwhile; ?>
             <?php else: ?>
@@ -1537,155 +1666,293 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // document.addEventListener('click', (e) => {
-  //   const btn = e.target.closest('.request-btn-print');
-  //   if (!btn) return;
+  const REQUEST_GROUP_MAP = {
+    barangay_id_requests: [
+      { title: 'Personal Information', fields: ['full_name','purok','birth_date','birth_place','civil_status','religion','height','weight'] },
+      { title: 'Emergency Contact', fields: ['emergency_contact_person','emergency_contact_address'] },
+      { title: 'Photo', fields: ['formal_picture'] },
+      { title: 'Request Details', fields: ['transaction_id','request_type','transaction_type','payment_method','created_at'] }, //'amount',
+    ],
 
-  //   // grab the transaction ID from the row
-  //   const row = btn.closest('tr');
-  //   const tid = row.dataset.id;  // you already set data-id="<=? $tid ?>"
+    business_permit_requests: [
+      { title: 'Owner Information', fields: ['full_name','age','civil_status','purok','barangay'] },
+      { title: 'Business Information', fields: ['name_of_business','type_of_business','full_address'] },
+      { title: 'Request Details', fields: ['transaction_id','request_type','transaction_type','payment_method','created_at'] }, //'amount',
+    ],
 
-  //   // open the certificate page in a new tab (auto-prints)
-  //   window.open(`functions/print_certificate.php?transaction_id=${encodeURIComponent(tid)}`, '_blank');
-  // });
+    good_moral_requests: [
+      { title: 'Personal Information', fields: ['full_name','sex','age','civil_status','purok','subdivision'] },
+      { title: 'Request Details', fields: ['purpose','transaction_id','request_type','payment_method','created_at'] }, //'amount',
+    ],
 
-  const recordModal = new bootstrap.Modal('#recordModal');
-  const tidInput = document.getElementById('recordTransactionId');
-  const pmInput = document.getElementById('paymentMethodRecord');
-  const pmHidden = document.getElementById('recordPaymentMethodHidden');
-  const refRow = document.getElementById('refRow');
-  const refInput = document.getElementById('referenceNumberRecord');
-  const orInput = document.getElementById('orNumberRecord');
-  const issuedInput = document.getElementById('issuedDateRecord');
-  const amtInput = document.getElementById('amountPaidRecord');
-  const amtHidden = document.getElementById('recordAmountPaidHidden');
+    guardianship_requests: [
+      { title: 'Applicant Information', fields: ['full_name','age','civil_status','purok'] },
+      { title: 'Child Details', fields: ['child_name','purpose'] },
+      { title: 'Request Details', fields: ['transaction_id','request_type','payment_method','created_at'] }, //'amount',
+    ],
 
-  document.querySelectorAll('.request-record-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tid = btn.dataset.id;
-      const pm = btn.dataset.paymentMethod || '';
-      const ref = btn.dataset.referenceNumber || '';
-      const or = btn.dataset.orNumber || '';
-      const amt = btn.dataset.amountPaid || '';
+    indigency_requests: [
+      { title: 'Personal Information', fields: ['full_name','age','civil_status','purok'] },
+      { title: 'Request Details', fields: ['purpose','transaction_id','request_type','created_at'] },
+    ],
 
-      // always start fresh
-      tidInput.value = tid;
-      pmInput.value = pm;
-      pmHidden.value = pm; // ensure it submits
+    residency_requests: [
+      { title: 'Personal Information', fields: ['full_name','age','civil_status','purok'] },
+      { title: 'Residency Information', fields: ['residing_years','purpose'] },
+      { title: 'Request Details', fields: ['transaction_id','request_type','payment_method','created_at'] }, //'amount',
+    ],
 
-      amtInput.value = amt; // clear old amount
-      amtHidden.value = amt;
+    solo_parent_requests: [
+      { title: 'Personal Information', fields: ['full_name','age','civil_status','purok','years_solo_parent'] },
+      { title: 'Child Information', fields: ['child_name','child_age','child_sex'] },
+      { title: 'Request Details', fields: ['purpose','transaction_id','request_type','payment_method','created_at'] }, //'amount',
+    ]
+  };
 
-      orInput.value = or;
-      issuedInput.value = '';
+  // small helpers
+  function prettyLabel(key) {
+    return key.replace(/_/g,' ').replace(/\b\w/g, ch => ch.toUpperCase());
+  }
+  function formatDate(value) {
+    if (!value) return '—';
+    const d = new Date(value);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleDateString('en-PH', { year:'numeric', month:'short', day:'numeric' });
+    }
+    return value || '—';
+  }
+  function formatCurrency(value) {
+    if (value == null || value === '') return '—';
+    const n = Number(value);
+    if (isNaN(n)) return value;
+    return new Intl.NumberFormat('en-PH', { style:'currency', currency:'PHP' }).format(n);
+  }
 
-      // toggle GCash reference field
-      if (pm === 'GCash') {
-        refRow.style.display = 'block';
-        refInput.required = true;
-        refInput.value = ref;
+  // returns canonical map key from returned data
+  function detectMapKey(data) {
+    let typeRaw = (data.request_type || data.request || data.type || '').toString().trim();
+    const lower = typeRaw.toLowerCase();
+    const candidates = [
+      lower,
+      lower.replace(/\s+/g,'_'),
+      lower.replace(/\s+/g,'_') + '_requests',
+      lower + '_requests',
+      (data.source_table || '').toString().toLowerCase(),
+      (data.table_name || '').toString().toLowerCase()
+    ];
+    for (const c of candidates) {
+      if (!c) continue;
+      if (REQUEST_GROUP_MAP.hasOwnProperty(c)) return c;
+    }
+    // heuristics
+    if (typeof data.birth_date !== 'undefined' || typeof data.formal_picture !== 'undefined') return 'barangay_id_requests';
+    if (typeof data.name_of_business !== 'undefined') return 'business_permit_requests';
+    return null;
+  }
 
-      } else {
-        refRow.style.display = 'none';
-        refInput.required = false;
-        refInput.value = '';
-      }
+  // create a readonly input element (label + input)
+  function makeReadonlyField(key, value) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'col-12 col-md-6';
 
-      recordModal.show();
+    const label = document.createElement('label');
+    label.className = 'form-label fw-semibold mb-1';
+    label.textContent = prettyLabel(key);
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'form-control form-control-sm';
+    input.readOnly = true; // not editable but not heavily greyed like disabled
+    // formatting rules
+    if (/date|created_at|birth_date/i.test(key)) input.value = formatDate(value);
+    else if (/amount|price|fee/i.test(key)) input.value = formatCurrency(value);
+    else input.value = (value === null || value === undefined || value === '') ? '—' : String(value);
+
+    wrapper.appendChild(label);
+    wrapper.appendChild(input);
+    return wrapper;
+  }
+
+  /**
+   * Render grouped sections; data is merged row from get_request.php
+   */
+  function populateViewModal(data) {
+    const container = document.getElementById('viewRequestFields');
+    const imageContainer = document.getElementById('viewRequestImage');
+    const summary = document.getElementById('viewRequestSummary');
+    container.innerHTML = '';
+    imageContainer.innerHTML = '';
+    summary.textContent = '';
+
+    // summary line
+    const tid = data.transaction_id || data.transaction || data.id || '';
+    const created = data.created_at || data.created || data.formatted_date || '';
+    if (tid) summary.textContent = `Transaction: ${tid}` + (created ? ` • Requested: ${formatDate(created)}` : '');
+
+    // detect groups
+    const mapKey = detectMapKey(data);
+    let groups = [];
+    if (mapKey && REQUEST_GROUP_MAP[mapKey]) {
+      groups = REQUEST_GROUP_MAP[mapKey].slice(); // copy
+    } else {
+      // fallback: lump all keys into one Details section
+      const allKeys = Object.keys(data).sort();
+      groups = [{ title: 'Details', fields: allKeys }];
+    }
+
+    // render each group
+    groups.forEach(group => {
+      // group header row (full width)
+      const headerRow = document.createElement('div');
+      headerRow.className = 'col-12';
+      const h = document.createElement('h6');
+      h.className = 'fw-bold fs-6';
+      h.style.color = '#13411F';
+      h.textContent = group.title;
+      headerRow.appendChild(h);
+      container.appendChild(headerRow);
+
+      // fields container for this group
+      group.fields.forEach(key => {
+        // if the key is formal_picture, skip here — handle below
+        if (key === 'formal_picture') return;
+        const el = makeReadonlyField(key, data[key]);
+        container.appendChild(el);
+      });
+
+      // small spacer between groups
+      const spacer = document.createElement('div');
+      spacer.className = 'col-12';
+      spacer.innerHTML = '<hr class="my-2">';
+      container.appendChild(spacer);
     });
+
+    // show image(s) if any (formal_picture)
+    if (data.formal_picture) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'col-12';
+      const cap = document.createElement('div');
+      cap.className = 'mb-1 fw-bold';
+      cap.textContent = 'Formal Picture';
+      const img = document.createElement('img');
+      img.src = data.formal_picture;
+      img.alt = 'Formal Picture';
+      img.style.maxWidth = '220px';
+      img.style.maxHeight = '220px';
+      img.className = 'img-thumbnail';
+      // open in new tab when clicked
+      img.style.cursor = 'pointer';
+      img.onclick = () => window.open(data.formal_picture, '_blank');
+      wrapper.appendChild(cap);
+      wrapper.appendChild(img);
+      imageContainer.appendChild(wrapper);
+    }
+
+    // finally show modal
+    const vm = new bootstrap.Modal(document.getElementById('viewRequestModal'));
+    vm.show();
+  }
+
+  document.addEventListener('click', async (evt) => {
+    // VIEW button
+    const viewBtn = evt.target.closest('.btn-view-request');
+    if (viewBtn) {
+      const tid = viewBtn.dataset.id;
+      try {
+        const res = await fetch(`functions/get_request.php?transaction_id=${encodeURIComponent(tid)}`, { credentials: 'same-origin' });
+        if (!res.ok) throw new Error(`Server returned ${res.status}`);
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message || 'No data');
+        populateViewModal(json.data || {});
+      } catch (err) {
+        const msg = 'Failed to load request details: ' + (err.message || err);
+        if (document.getElementById('resultModal')) {
+          document.getElementById('resultMessage').textContent = msg;
+          new bootstrap.Modal(document.getElementById('resultModal')).show();
+        } else {
+          alert(msg);
+        }
+      }
+      return;
+    }
+
+    // Accept button → open modal
+    const acceptBtn = evt.target.closest('.btn-accept-request');
+    if (acceptBtn) {
+      document.getElementById('acceptTransactionId').value = acceptBtn.dataset.id;
+      new bootstrap.Modal(document.getElementById('acceptRequestModal')).show();
+      return;
+    }
+
+    // Reject button → open modal
+    const rejectBtn = evt.target.closest('.btn-reject-request');
+    if (rejectBtn) {
+      document.getElementById('rejectTransactionId').value = rejectBtn.dataset.id;
+      new bootstrap.Modal(document.getElementById('rejectRequestModal')).show();
+      return;
+    }
   });
 
-  const confirmModalEl = document.getElementById('confirmReleaseModal');
-  const confirmModal = new bootstrap.Modal(confirmModalEl);
-  const confirmBtn = document.getElementById('confirmReleaseBtn');
-  let pendingTid, pendingType, pendingRow;
+  // --- Accept form submit ---
+  const acceptForm = document.getElementById('acceptRequestForm');
+  if (acceptForm) {
+    acceptForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
 
-  document.querySelectorAll('.request-btn-release').forEach(btn => {
-    btn.addEventListener('click', () => {
-      // stash context
-      pendingRow = btn.closest('tr');
-      pendingTid = pendingRow.dataset.id;
-      pendingType = pendingRow.querySelector('td:nth-child(3)').textContent.trim();
+      // debug: show what's being sent
+      const fd = new FormData(acceptForm);
+      // uncomment next lines while debugging to see the payload in console:
+      // for (const pair of fd.entries()) console.log('accept form', pair[0], pair[1]);
 
-      if (!pendingTid || !pendingType) {
-        // fallback, though this should never happen
-        return alert('Missing data');
+      try {
+        const res = await fetch('functions/update_request_status.php', {
+          method: 'POST',
+          body: fd,
+          credentials: 'same-origin'
+        });
+
+        // if server returns non-JSON or non-2xx, handle it
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`Server error ${res.status}: ${text}`);
+        }
+
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message || 'Update failed');
+
+        // success — close modal and reload (or update row in-place)
+        const vmEl = document.getElementById('acceptRequestModal');
+        const vm = bootstrap.Modal.getInstance(vmEl) || new bootstrap.Modal(vmEl);
+        vm.hide();
+
+        // optional: show result modal or toast; we'll reload to reflect change
+        location.reload();
+      } catch (err) {
+        alert('Failed to update: ' + (err.message || err));
       }
-
-      // update modal text if you want to personalize:
-      document.getElementById('confirmReleaseMessage').textContent = `Are you sure you want to mark ${pendingTid} as Released?`;
-      confirmModal.show();
     });
-  });
+  }
 
-  // Grab our new alerts container
-  const alertsDiv = document.getElementById('pageAlerts');
-
-  // When the user clicks “Yes, Release” in the modal:
-  confirmBtn.addEventListener('click', () => {
-    confirmBtn.disabled = true;
-
-    fetch('functions/update_document_status.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `transaction_id=${encodeURIComponent(pendingTid)}&request_type=${encodeURIComponent(pendingType)}`
-    })
-    .then(res => res.text())
-    .then(response => {
-      confirmBtn.disabled = false;
-      confirmModal.hide();
-
-      if (response === 'success') {
-        // update the badge inline
-        const badge = pendingRow.querySelector('td:nth-child(5) .badge');
-        badge?.classList.replace(badge.classList.item(1), 'bg-success');
-        badge.textContent = 'Released';
-
-        // disable the button
-        pendingRow.querySelector('.request-btn-release').disabled = true;
-
-        // show the alert
-        const html = `
-          <div class="alert alert-success alert-dismissible fade show" role="alert">
-            Record <strong>${pendingTid}</strong> has been marked as <strong>Released</strong>.
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-          </div>
-        `;
-        alertsDiv.insertAdjacentHTML('beforeend', html);
-
-        // **remove this row from the table**
-        pendingRow.remove();
-
-      } else {
-        alert('Failed to update status: ' + response);
-      }
-    })
-    .catch(err => {
-      confirmBtn.disabled = false;
-      confirmModal.hide();
-      console.error(err);
-      alert('An error occurred while updating status.');
-    });
-  });
-
-  const rejectModalEl = document.getElementById('rejectReasonModal');
-  const rejectModal = new bootstrap.Modal(rejectModalEl);
-
-  document.querySelectorAll('.request-btn-reject').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const row = btn.closest('tr');
-      const tid = row.dataset.id;
-      const name = row.querySelector('td:nth-child(2)').textContent.trim();
-
-      document.getElementById('rejectTransactionId').value = tid;
-      document.getElementById('rejectDescription').textContent = `Action cannot be undone. Please state the reason below for declining ${name}’s request (${tid}).`;
-
-      rejectModal.show();
-    });
+  // --- Reject form submit ---
+  document.getElementById('rejectRequestForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = new FormData(e.target);
+    try {
+      const res = await fetch('functions/update_request_status.php', {
+        method: 'POST',
+        body: form,
+        credentials: 'same-origin'
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.message || 'Update failed');
+      location.reload();
+    } catch (err) {
+      alert('Failed to update: ' + err.message);
+    }
   });
 
   // --- View Preview for Requests (updated to support includeHeader) ---
-  const viewReqModalEl = document.getElementById('viewRequestModal');
+  const viewReqModalEl = document.getElementById('previewRequestModal');
   const viewReqModal = new bootstrap.Modal(viewReqModalEl);
   const previewReqFrame = document.getElementById('requestPreviewFrame');
   const printReqBtn = document.getElementById('printRequestBtn');
@@ -1734,6 +2001,40 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // normalize and set print/download enabled state
+  function normalizeStatus(s) {
+    if (!s && s !== '') return '';
+    // Replace NBSP with space, collapse spaces, trim
+    return String(s).replace(/\u00A0/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  function statusIsAllowed(status, serviceType) {
+    const norm = normalizeStatus(status).toLowerCase();
+
+    // Treat these values as allowed to print/download (you can add more)
+    const allowed = ['paid','free of charge'];
+
+    if (allowed.includes(norm)) return true;
+
+    // Also allow by service type, e.g. Indigency
+    if (serviceType && normalizeStatus(serviceType).toLowerCase() === 'indigency') return true;
+    if (serviceType && normalizeStatus(serviceType).toLowerCase() === 'indigent') return true;
+
+    return false;
+  }
+
+  function setPrintDownloadStateByStatus(status, serviceType) {
+    const allow = statusIsAllowed(status, serviceType);
+
+    if (allow) {
+      printReqBtn.removeAttribute('disabled');
+      downloadReqPDF.removeAttribute('disabled');
+    } else {
+      printReqBtn.setAttribute('disabled', 'disabled');
+      downloadReqPDF.setAttribute('disabled', 'disabled');
+    }
+  }
+
   // Click handlers for your "view" buttons
   document.querySelectorAll('.request-btn-view').forEach(btn => {
     btn.addEventListener('click', (ev) => {
@@ -1761,6 +2062,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // update iframe + links with includeHeader=0
       updatePreviewAndLinks(baseUrl);
+
+      // NEW: set print/download enablement based on data attribute
+      const paymentStatus = btn.dataset.paymentStatus || '';
+      const serviceType = btn.dataset.serviceType || '';
+      setPrintDownloadStateByStatus(paymentStatus, serviceType);
 
       // show modal
       viewReqModal.show();
@@ -1822,6 +2128,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Clear iframe and reset state when modal hides
   viewReqModalEl.addEventListener('hidden.bs.modal', () => {
+    printReqBtn.removeAttribute('disabled');
+    downloadReqPDF.removeAttribute('disabled');
     previewReqFrame.src = '';
     includeHeaderCheckbox.checked = false;
     delete viewReqModalEl.dataset.basePreviewUrl;
@@ -1830,7 +2138,112 @@ document.addEventListener('DOMContentLoaded', () => {
     downloadReqPDF.href = '#';
   });
 
-  // Existing commented edit/reject code remains unchanged below (no modifications needed)
-  // ... (rest of your code if any)
+  // --- Record Payment modal handler ---
+  (function(){
+    const recordModal = new bootstrap.Modal(document.getElementById('recordModal'));
+    const tidInput = document.getElementById('recordTransactionId');
+    const pmInput = document.getElementById('paymentMethodRecord');
+    const pmHidden = document.getElementById('recordPaymentMethodHidden');
+    const refRow = document.getElementById('refRow');
+    const refInput = document.getElementById('referenceNumberRecord');
+    const orInput = document.getElementById('orNumberRecord');
+    const issuedInput = document.getElementById('issuedDateRecord');
+    const amtInput = document.getElementById('amountPaidRecord');
+    const amtHidden = document.getElementById('recordAmountPaidHidden');
+
+    document.querySelectorAll('.request-record-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tid = btn.dataset.id;
+        const pm = btn.dataset.paymentMethod || '';
+        const or = btn.dataset.orNumber || '';
+        const issued = btn.dataset.issuedDate || '';
+        const amt = btn.dataset.amountPaid || '';
+
+        tidInput.value = tid;
+        pmInput.value = pm;
+        pmHidden.value = pm;
+
+        amtInput.value = amt;
+        amtHidden.value = amt;
+
+        orInput.value = or;
+        issuedInput.value = issued;
+
+        // show / hide GCASH ref field
+        if (pm === 'GCash') {
+          refRow.style.display = 'block';
+          refInput.required = true;
+        } else {
+          refRow.style.display = 'none';
+          refInput.required = false;
+          refInput.value = '';
+        }
+
+        recordModal.show();
+      });
+    });
+
+    // Confirm release modal handler (if not already present)
+    const confirmModalEl = document.getElementById('confirmReleaseModal');
+    if (confirmModalEl) {
+      const confirmModal = new bootstrap.Modal(confirmModalEl);
+      const confirmBtn = document.getElementById('confirmReleaseBtn');
+      let pendingTid, pendingRow;
+
+      document.querySelectorAll('.request-btn-release').forEach(btn => {
+        btn.addEventListener('click', () => {
+          pendingRow = btn.closest('tr');
+          pendingTid = btn.dataset.transactionId;    // use the new data attribute
+          pendingType = btn.dataset.requestType;     // capture request_type too
+
+          if (!pendingTid || !pendingType) {
+            return alert('Missing transaction id or request type');
+          }
+
+          document.getElementById('confirmReleaseMessage').textContent = 
+            `Are you sure you want to mark ${pendingTid} (${pendingType}) as Released?`;
+          confirmModal.show();
+        });
+      });
+
+      if (confirmBtn) {
+        confirmBtn.addEventListener('click', () => {
+          confirmBtn.disabled = true;
+          fetch('functions/update_document_status.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `transaction_id=${encodeURIComponent(pendingTid)}&request_type=${encodeURIComponent(pendingType)}`
+          })
+          .then(res => res.text())
+          .then(response => {
+            confirmBtn.disabled = false;
+            confirmModal.hide();
+            if (response === 'success') {
+              if (pendingRow) pendingRow.remove();
+              const alertsDiv = document.getElementById('pageAlerts');
+              if (alertsDiv) {
+                const html = `
+                  <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    Record <strong>${pendingTid}</strong> has been marked as <strong>Released</strong>.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                  </div>
+                `;
+                alertsDiv.insertAdjacentHTML('beforeend', html);
+              }
+            } else {
+              alert('Failed to update status: ' + response);
+            }
+          })
+          .catch(err => {
+            confirmBtn.disabled = false;
+            confirmModal.hide();
+            console.error(err);
+            alert('An error occurred while updating status.');
+          });
+        });
+      }
+    }
+  })();
+
 });
 </script>

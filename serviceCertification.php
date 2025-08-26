@@ -39,6 +39,7 @@ $stmt->execute();
 $userRec = $stmt->get_result()->fetch_assoc() ?: [];
 $stmt->close();
 
+// A simple map of types -> tables (used later to lookup chosenPayment if tid exists)
 $map = [
   'Residency'    => ['table'=>'residency_requests',    'prefix'=>'RES-'],
   'Indigency'    => ['table'=>'indigency_requests',    'prefix'=>'IND-'],
@@ -46,18 +47,23 @@ $map = [
   'Solo Parent'  => ['table'=>'solo_parent_requests',  'prefix'=>'SP-' ],
   'Guardianship' => ['table'=>'guardianship_requests', 'prefix'=>'GUA-'],
 ];
+
 $chosenPayment = '';
+$serverCertType = null; // if tid is present we'll attempt to discover the cert type for UI decisions
 if ($transactionId) {
-    // first, find the cert type for this tid
-    // you may have stored it in the table, so:
     foreach ($map as $typeName => $m) {
         $tbl = $m['table'];
-        $q = $conn->prepare("SELECT payment_method FROM `$tbl` WHERE transaction_id = ? LIMIT 1");
+        // Try to fetch payment_method and optionally certification_type (if your tables store it)
+        $q = $conn->prepare("SELECT payment_method, certification_type FROM `$tbl` WHERE transaction_id = ? LIMIT 1");
+        if (!$q) continue;
         $q->bind_param('s', $transactionId);
         $q->execute();
         $r = $q->get_result();
-        if ($r->num_rows) {
-            $chosenPayment = $r->fetch_assoc()['payment_method'];
+        if ($r && $r->num_rows) {
+            $row = $r->fetch_assoc();
+            $chosenPayment = $row['payment_method'] ?? $chosenPayment;
+            // if your table has certification_type column (optional), capture it
+            if (!empty($row['certification_type'])) $serverCertType = $row['certification_type'];
             $q->close();
             break;
         }
@@ -75,34 +81,39 @@ if ($transactionId) {
     <div class="progress-container">
         <div class="stepss">
 
+            <!-- STEP MARKERS
+                 Each .steps wrapper has data-step (original step number) and an inner .circle with a numeric
+                 span (.circle-num). The JS will re-number visible markers when step 2 (Payment) is hidden (Indigency).
+            -->
+
             <!-- STEP 1 -->
-            <div class="steps">
-                <div class="circle <?php echo $t ? 'completed' : 'active'; ?>" data-step="1">1</div>
-                <div class="step-label <?php echo $t ? 'completed' : 'active'; ?>">
+            <div id="stepMarker1" class="steps" data-step="1">
+                <div class="circle" data-step="1"><span class="circle-num">1</span></div>
+                <div class="step-label">
                 APPLICATION FORM
                 </div>
             </div>
 
             <!-- STEP 2 -->
-            <div class="steps">
-                <div class="circle <?php echo $t ? 'completed' : ''; ?>" data-step="2">2</div>
-                <div class="step-label <?php echo $t ? 'completed' : ''; ?>">
+            <div id="stepMarker2" class="steps" data-step="2">
+                <div class="circle" data-step="2"><span class="circle-num">2</span></div>
+                <div class="step-label">
                 PAYMENT
                 </div>
             </div>
 
             <!-- STEP 3 -->
-            <div class="steps">
-                <div class="circle <?php echo $t ? 'completed' : ''; ?>" data-step="3">3</div>
-                <div class="step-label <?php echo $t ? 'completed' : ''; ?>">
+            <div id="stepMarker3" class="steps" data-step="3">
+                <div class="circle" data-step="3"><span class="circle-num">3</span></div>
+                <div class="step-label">
                 REVIEW &amp; CONFIRMATION
                 </div>
             </div>
 
             <!-- STEP 4 -->
-            <div class="steps">
-                <div class="circle <?php echo $t ? 'active' : ''; ?>" data-step="4">4</div>
-                <div class="step-label <?php echo $t ? 'active' : ''; ?>">
+            <div id="stepMarker4" class="steps" data-step="4">
+                <div class="circle" data-step="4"><span class="circle-num">4</span></div>
+                <div class="step-label">
                 SUBMISSION
                 </div>
             </div>
@@ -118,7 +129,8 @@ if ($transactionId) {
         <hr id="mainHr" class="mb-4">
 
         <form id="certForm" action="functions/serviceCertification_submit.php" method="POST" enctype="multipart/form-data">
-            <div class="step <?php echo $transactionId ? 'completed' : 'active-step'; ?>">
+            <!-- Step 1: Application Form -->
+            <div id="stepContent1" data-step="1" class="step <?php echo $transactionId ? 'completed' : 'active-step'; ?>">
                 <!-- TYPE OF CERTIFICATION -->
                 <div class="row mb-3 mt-3">
                     <div class="col-md-6">
@@ -156,7 +168,7 @@ if ($transactionId) {
             </div>
             
             <!-- Step 2: Payment -->
-            <div class="step <?php echo $transactionId ? 'completed' : ''; ?>">
+            <div id="stepContent2" data-step="2" class="step <?php echo $transactionId ? 'completed' : ''; ?>">
             <div class="payment-container p-4 border rounded shadow-sm bg-green">
                 <div class="row g-4">
 
@@ -188,7 +200,7 @@ if ($transactionId) {
                             <span class="label fw-bold">Brgy. Payment Device</span>
                         </button>
 
-                        <!-- Over‑the‑Counter -->
+                        <!-- Over-the-Counter -->
                         <button type="button" class="btn btn-outline-success payment-btn" data-method="Over-the-Counter">
                             <span class="material-symbols-outlined mb-2 payment-icon">paid</span>
                             <span class="label fw-bold">Over-the-Counter</span>
@@ -239,7 +251,7 @@ if ($transactionId) {
             </div>
 
             <!-- Step 3: Summary / Review -->
-            <div class="step <?php echo $transactionId ? 'completed' : ''; ?>">
+            <div id="stepContent3" data-step="3" class="step <?php echo $transactionId ? 'completed' : ''; ?>">
                 <div class="summary-container p-3" id="summaryContainer">
                     <!-- JS will inject:
                         Type of Certification
@@ -248,7 +260,7 @@ if ($transactionId) {
             </div>
 
             <!-- Step 4: Submission -->
-            <div class="step <?php echo $transactionId ? 'active-step' : ''; ?>">
+            <div id="stepContent4" data-step="4" class="step <?php echo $transactionId ? 'active-step' : ''; ?>">
             <?php if ($transactionId): ?>
                 <div class="submission-screen text-center">
 
@@ -382,9 +394,12 @@ if ($transactionId) {
 <?php $initial = $transactionId ? 4 : 1; ?>
 <script>
     // make the PHP value available to our external JS
-    window.initialStep = <?php echo $initial; ?>;
+    window.initialStep = <?php echo (int)$initial; ?>;
     window.currentUser = <?= json_encode($userRec, JSON_HEX_TAG) ?>;
+    // If server-side we discovered the cert type for this tid (optional), expose it
+    window.serverCertType = <?= json_encode($serverCertType) ?>;
+    // Expose chosenPayment (used for submission screen to show QR vs hourglass)
+    window.serverChosenPayment = <?= json_encode($chosenPayment) ?>;
 </script>
 
 <script src="js/serviceCertification.js"></script>
-

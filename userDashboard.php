@@ -22,10 +22,14 @@ if ($res) {
 $latestReq = null;
 if (is_numeric($userId) && intval($userId) > 0) {
     $sql = "
-      SELECT transaction_id,
+      SELECT id,
+             transaction_id,
              request_type,
-             claim_date,
+             payment_method,
+             payment_status,
              document_status,
+             amount,
+             claim_date,
              DATE_FORMAT(created_at, '%M %d, %Y %h:%i %p') AS created_at_formatted
         FROM view_request
        WHERE account_id = ?

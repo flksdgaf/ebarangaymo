@@ -471,47 +471,82 @@ if (!$brStmt) {
           </form>
         </div>
         
+        <!-- simplified Borrow Requests table -->
         <div class="table-responsive admin-table">
           <table class="table table-hover align-middle text-start">
             <thead class="table-light">
               <tr>
                 <th>Resident’s Name</th>
-                <th>Borrowed ESN</th>
-                <th>Equipment Name</th>
+                <th>Equipment</th>
                 <th>Qty</th>
-                <th>Location</th>
-                <th>Used For</th>
-                <th>Date</th>
-                <th>PUDO</th>
+                <th>Date Requested</th>
                 <th>Status</th>
+                <th class="text-center">Action</th>
               </tr>
             </thead>
             <tbody>
               <?php if (empty($borrows)): ?>
-                <tr><td colspan="9" class="text-center">No borrow requests.</td></tr>
-              <?php else: foreach($borrows as $br): ?>
-                <tr>
+                <tr><td colspan="5" class="text-center">No borrow requests.</td></tr>
+              <?php else: foreach($borrows as $br):
+                $status = $br['status'] ?? 'Pending';
+              ?>
+                <tr
+                  data-id="<?= (int)$br['id'] ?>"
+                  data-resident="<?= htmlspecialchars($br['resident_name'], ENT_QUOTES) ?>"
+                  data-esn="<?= htmlspecialchars($br['equipment_sn'], ENT_QUOTES) ?>"
+                  data-equipment="<?= htmlspecialchars($br['equipment_name'], ENT_QUOTES) ?>"
+                  data-qty="<?= (int)$br['qty'] ?>"
+                  data-location="<?= htmlspecialchars($br['location'], ENT_QUOTES) ?>"
+                  data-usedfor="<?= htmlspecialchars($br['used_for'], ENT_QUOTES) ?>"
+                  data-date="<?= htmlspecialchars($br['date'], ENT_QUOTES) ?>"
+                  data-pudo="<?= htmlspecialchars($br['pudo'], ENT_QUOTES) ?>"
+                  data-status="<?= htmlspecialchars($status, ENT_QUOTES) ?>"
+                >
                   <td><?= htmlspecialchars($br['resident_name']) ?></td>
-                  <td><?= htmlspecialchars($br['equipment_sn']) ?></td>
-                  <td><?= htmlspecialchars($br['equipment_name'] ?: '—') ?></td>
+                  <td><?= htmlspecialchars($br['equipment_name'] ?: $br['equipment_sn']) ?></td>
                   <td><?= (int)$br['qty'] ?></td>
-                  <td><?= htmlspecialchars($br['location']) ?></td>
-                  <td><?= htmlspecialchars($br['used_for']) ?></td>
                   <td><?= htmlspecialchars($br['date']) ?></td>
-                  <td><?= htmlspecialchars($br['pudo']) ?></td>
                   <td>
-                    <select
-                      class="form-select form-select-sm borrow-status"
-                      data-id="<?= $br['id'] ?>"
-                      data-prev="<?= htmlspecialchars($br['status'], ENT_QUOTES) ?>"
-                    >
-                      <option value="Borrowed" <?= $br['status']==='Borrowed' ? 'selected':'' ?>>
-                        Borrowed
-                      </option>
-                      <option value="Returned" <?= $br['status']==='Returned' ? 'selected':'' ?>>
-                        Returned
-                      </option>
-                    </select>
+                    <?php
+                      // compute badge class
+                      $badgeClass = 'bg-secondary';
+                      if ($status === 'Pending') $badgeClass = 'bg-info';
+                      if ($status === 'Borrowed') $badgeClass = 'bg-success';
+                      if ($status === 'Returned') $badgeClass = 'bg-primary';
+                      if ($status === 'Rejected') $badgeClass = 'bg-danger';
+                    ?>
+                    <span class="badge <?= $badgeClass ?>"><?= htmlspecialchars($status) ?></span>
+                  </td>
+
+                  <td class="text-center">
+                    <?php
+                      $isStaff = in_array($currentRole, ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper'], true);
+                    ?>
+
+                    <!-- Always allow View for staff and treasurer (adjust as needed) -->
+                    <?php if ($isStaff || $currentRole === 'Brgy Treasurer'): ?>
+                      <button class="btn btn-sm btn-warning borrow-view-btn me-1" title="View" data-id="<?= (int)$br['id'] ?>">
+                        <span class="material-symbols-outlined" style="font-size:12px;">visibility</span>
+                      </button>
+                    <?php endif; ?>
+
+                    <!-- Pending: staff can Accept / Reject -->
+                    <?php if ($status === 'Pending' && $isStaff): ?>
+                      <button class="btn btn-sm btn-success borrow-accept-btn me-1" title="Accept" data-id="<?= (int)$br['id'] ?>">
+                        <span class="material-symbols-outlined" style="font-size:12px;">check</span>
+                      </button>
+                      <button class="btn btn-sm btn-danger borrow-reject-btn" title="Reject" data-id="<?= (int)$br['id'] ?>">
+                        <span class="material-symbols-outlined" style="font-size:12px;">close</span>
+                      </button>
+
+                    <!-- Borrowed: staff can Edit (change status to Returned etc.) -->
+                    <?php elseif ($status === 'Borrowed' && $isStaff): ?>
+                      <button class="btn btn-sm btn-primary borrow-edit-btn me-1" title="Edit" data-id="<?= (int)$br['id'] ?>" data-status="<?= htmlspecialchars($status, ENT_QUOTES) ?>">
+                        <span class="material-symbols-outlined" style="font-size:12px;">edit</span>
+                      </button>
+
+                    <!-- For other statuses (Returned / Rejected) we just show the badge (View already shown if allowed) -->
+                    <?php endif; ?>
                   </td>
                 </tr>
               <?php endforeach; endif; ?>
@@ -635,11 +670,11 @@ if (!$brStmt) {
               </ul>
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-6">
               <label for="borrow-qty" class="form-label">Quantity</label>
               <input type="number" id="borrow-qty" name="qty" class="form-control" min="1" placeholder="1" required>
             </div>
-            <div class="col-md-8">
+            <div class="col-md-6">
               <label for="borrow-location" class="form-label">Location</label>
               <input type="text" id="borrow-location" name="location" class="form-control" placeholder="Office / Home / Event Venue" required>
             </div>
@@ -666,6 +701,131 @@ if (!$brStmt) {
       </form>
     </div>
   </div>
+
+  <!-- View Borrow Modal -->
+  <div class="modal fade" id="viewBorrowModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header text-white" style="background-color:#13411F;">
+          <h5 class="modal-title">Borrow Request Details</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-2" id="viewBorrowFields">
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold">Resident</label>
+              <input type="text" readonly id="vb_resident" class="form-control form-control-sm">
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold">Equipment</label>
+              <input type="text" readonly id="vb_equipment" class="form-control form-control-sm">
+            </div>
+            <div class="col-12 col-md-3">
+              <label class="form-label fw-semibold">Quantity</label>
+              <input type="text" readonly id="vb_qty" class="form-control form-control-sm">
+            </div>
+            <div class="col-12 col-md-3">
+              <label class="form-label fw-semibold">Date</label>
+              <input type="text" readonly id="vb_date" class="form-control form-control-sm">
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold">Pick Up / Drop Off</label>
+              <input type="text" readonly id="vb_pudo" class="form-control form-control-sm">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Location</label>
+              <textarea readonly id="vb_location" class="form-control form-control-sm" rows="2"></textarea>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Used For</label>
+              <textarea readonly id="vb_usedfor" class="form-control form-control-sm" rows="2"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Accept Borrow Modal -->
+  <div class="modal fade" id="acceptBorrowModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-md">
+      <div class="modal-content border-success">
+        <form id="acceptBorrowForm">
+          <div class="modal-header bg-success text-white">
+            <h5 class="modal-title"><span class="material-symbols-outlined me-1">check_circle</span>Accept Borrow Request</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <p id="acceptBorrowMessage">Are you sure you want to accept this borrow request?</p>
+            <input type="hidden" name="id" id="acceptBorrowId" value="">
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-success">Confirm Accept</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reject Borrow Modal -->
+  <div class="modal fade" id="rejectBorrowModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-md">
+      <div class="modal-content border-danger">
+        <form id="rejectBorrowForm">
+          <div class="modal-header bg-danger text-white">
+            <h5 class="modal-title"><span class="material-symbols-outlined me-1">warning</span>Reject Borrow Request</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <p id="rejectBorrowMessage">Please provide a reason for rejection:</p>
+            <input type="hidden" name="id" id="rejectBorrowId">
+            <div class="mb-3">
+              <textarea name="remarks" id="rejectBorrowRemarks" class="form-control" rows="3" placeholder="Enter reason" required></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-danger">Confirm Reject</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Borrow Modal -->
+  <div class="modal fade" id="editBorrowModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-md">
+      <div class="modal-content">
+        <form id="editBorrowForm">
+          <div class="modal-header text-white" style="background-color:#13411F;">
+            <h5 class="modal-title"><span class="material-symbols-outlined me-1">settings</span>Edit Borrow Request</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" name="id" id="editBorrowId">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Status</label>
+              <select name="status" id="editBorrowStatus" class="form-select form-select-sm" required>
+                <option value="Borrowed">Borrowed</option>
+                <option value="Returned">Returned</option>
+              </select>
+            </div>
+            <div class="mb-2 text-muted small">Changing status to <strong>Returned</strong> will increment equipment available quantity.</div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+
 </div>
 
 <script>
@@ -759,6 +919,157 @@ if (!$brStmt) {
         searchIconBorrow.textContent = searchInputBorrow.value.trim() ? 'close' : 'search';
       });
     }
+
+    // ---------- Borrow requests UI wiring ----------
+    document.body.addEventListener('click', (evt) => {
+      // VIEW
+      const viewBtn = evt.target.closest('.borrow-view-btn');
+      if (viewBtn) {
+        const row = viewBtn.closest('tr');
+        document.getElementById('vb_resident').value = row.dataset.resident || '';
+        document.getElementById('vb_equipment').value = row.dataset.equipment || row.dataset.esn || '';
+        document.getElementById('vb_qty').value = row.dataset.qty || '';
+        document.getElementById('vb_date').value = row.dataset.date || '';
+        document.getElementById('vb_pudo').value = row.dataset.pudo || '';
+        document.getElementById('vb_location').value = row.dataset.location || '';
+        document.getElementById('vb_usedfor').value = row.dataset.usedfor || '';
+        new bootstrap.Modal(document.getElementById('viewBorrowModal')).show();
+        return;
+      }
+
+      // ACCEPT (open modal)
+      const acceptBtn = evt.target.closest('.borrow-accept-btn');
+      if (acceptBtn) {
+        const id = acceptBtn.dataset.id;
+        document.getElementById('acceptBorrowId').value = id;
+        const row = acceptBtn.closest('tr');
+        const resName = row.dataset.resident || '';
+        const eq = row.dataset.equipment || row.dataset.esn || '';
+        document.getElementById('acceptBorrowMessage').textContent = `Accept borrow request by ${resName} for ${eq}? This will reduce available stock.`;
+        new bootstrap.Modal(document.getElementById('acceptBorrowModal')).show();
+        return;
+      }
+
+      // REJECT (open modal)
+      const rejectBtn = evt.target.closest('.borrow-reject-btn');
+      if (rejectBtn) {
+        const id = rejectBtn.dataset.id;
+        document.getElementById('rejectBorrowId').value = id;
+        const row = rejectBtn.closest('tr');
+        const resName = row.dataset.resident || '';
+        const eq = row.dataset.equipment || row.dataset.esn || '';
+        document.getElementById('rejectBorrowMessage').textContent = `Reject borrow request by ${resName} for ${eq}? Provide reason below.`;
+        document.getElementById('rejectBorrowRemarks').value = '';
+        new bootstrap.Modal(document.getElementById('rejectBorrowModal')).show();
+        return;
+      }
+    });
+
+    // Accept form submit => POST to functions/borrow_accept.php
+    document.getElementById('acceptBorrowForm')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('acceptBorrowId').value;
+      if (!id) return alert('Missing id');
+      const btn = e.submitter || null;
+      try {
+        const fd = new FormData();
+        fd.append('id', id);
+        const res = await fetch('functions/borrow_accept.php', { method: 'POST', body: fd, credentials: 'same-origin' });
+        const j = await res.json();
+        if (!j.success) throw new Error(j.message || 'Failed to accept');
+        location.reload();
+      } catch (err) {
+        alert('Error: ' + (err.message || err));
+      }
+    });
+
+    // Reject form submit => POST to functions/borrow_reject.php
+    document.getElementById('rejectBorrowForm')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('rejectBorrowId').value;
+      const remarks = document.getElementById('rejectBorrowRemarks').value.trim();
+      if (!id) return alert('Missing id');
+      if (!remarks) return alert('Please enter a reason');
+      try {
+        const fd = new FormData();
+        fd.append('id', id);
+        fd.append('remarks', remarks);
+        const res = await fetch('functions/borrow_reject.php', { method: 'POST', body: fd, credentials: 'same-origin' });
+        const j = await res.json();
+        if (!j.success) throw new Error(j.message || 'Failed to reject');
+        location.reload();
+      } catch (err) {
+        alert('Error: ' + (err.message || err));
+      }
+    });
+
+        // ------- EDIT button open -------
+    document.body.addEventListener('click', (evt) => {
+      const editBtn = evt.target.closest('.borrow-edit-btn');
+      if (editBtn) {
+        const id = editBtn.dataset.id;
+        const status = editBtn.dataset.status || 'Borrowed';
+        document.getElementById('editBorrowId').value = id;
+        document.getElementById('editBorrowStatus').value = status;
+        new bootstrap.Modal(document.getElementById('editBorrowModal')).show();
+        return;
+      }
+    });
+
+    // ------- Edit form submit (changes status via borrow_toggle_status.php) -------
+    document.getElementById('editBorrowForm')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('editBorrowId').value;
+      const status = document.getElementById('editBorrowStatus').value;
+      if (!id || !status) return alert('Missing data');
+
+      try {
+        const body = new URLSearchParams();
+        body.append('id', id);
+        body.append('status', status);
+        const res = await fetch('functions/borrow_toggle_status.php', {
+          method: 'POST',
+          headers: {'Content-Type':'application/x-www-form-urlencoded'},
+          body: body.toString()
+        });
+        const j = await res.json();
+        if (j.error) throw new Error(j.error || 'Update failed');
+
+        // update the row badge and available qty cell if available
+        const row = document.querySelector(`tr[data-id="${id}"]`);
+        if (row) {
+          const badge = row.querySelector('td:nth-child(4) .badge'); // status col is now 4th column
+          if (badge) {
+            badge.className = 'badge ' + (j.newStatus === 'Borrowed' ? 'bg-success' : (j.newStatus === 'Returned' ? 'bg-primary' : 'bg-secondary'));
+            badge.textContent = j.newStatus;
+          }
+        }
+        // If server returned updated equipment availability, reflect on equipments list
+        if (j.equipmentId && typeof j.availableQty !== 'undefined') {
+          const eqCell = document.querySelector(`.avail-qty[data-id="${j.equipmentId}"]`);
+          if (eqCell) eqCell.textContent = j.availableQty;
+        }
+
+        // hide modal and show a small alert
+        bootstrap.Modal.getInstance(document.getElementById('editBorrowModal')).hide();
+        const placeholder = document.getElementById('statusAlertPlaceholder');
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = `
+          <div class="alert alert-success alert-dismissible fade show" role="alert">
+            Status updated to <strong>${j.newStatus}</strong>.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>`;
+        placeholder.append(wrapper);
+        setTimeout(() => {
+          const alertNode = bootstrap.Alert.getOrCreateInstance(wrapper.querySelector('.alert'));
+          alertNode.close();
+        }, 3000);
+
+      } catch (err) {
+        alert('Error updating status: ' + (err.message || err));
+      }
+    });
+
   });
 
   // ── Delete Equipment ───────────────────────────

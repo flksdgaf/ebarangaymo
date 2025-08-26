@@ -5,7 +5,7 @@ require '../functions/dbconn.php';
 // 1) Collect & sanitize inputs
 $resident = trim($_POST['resident_name'] ?? '');
 $esn = trim($_POST['equipment_sn'] ?? '');
-$qty = (int) $_POST['qty'] ?? 0;
+$qty = (int) ($_POST['qty'] ?? 0);
 $location = trim($_POST['location'] ?? '');
 $used_for = trim($_POST['used_for'] ?? '');
 $pudo = trim($_POST['pudo'] ?? '');
@@ -22,7 +22,7 @@ if (!$resident || !$esn || $qty < 1 || !$location || !$used_for || !$pudo) {
     redirect(['borrow_error' => 'missing']);
 }
 
-// 3) Check that equipment exists and enough available
+// 3) Check that equipment exists and get available (but do NOT decrement here)
 $stmt = $conn->prepare("SELECT id, available_qty FROM equipment_list WHERE equipment_sn = ?");
 $stmt->bind_param('s', $esn);
 $stmt->execute();
@@ -33,38 +33,21 @@ if (!$stmt->fetch()) {
 }
 $stmt->close();
 
+// 4) If requested qty is more than currently available, still block at request creation
 if ($qty > $availQty) {
     redirect(['borrow_error' => 'toomany']);
 }
 
-// 4) Begin transaction
-$conn->begin_transaction();
+// 5) Insert as Pending (do not decrement available_qty here)
+$stmt = $conn->prepare(
+    "INSERT INTO borrow_requests (resident_name, equipment_sn, qty, location, used_for, date, pudo, status)
+     VALUES (?, ?, ?, ?, ?, NOW(), ?, 'Pending')"
+);
+$stmt->bind_param('ssisss', $resident, $esn, $qty, $location, $used_for, $pudo);
+$ok = $stmt->execute();
+$stmt->close();
 
-try {
-    // 5) Insert into borrow_requests
-    $stmt = $conn->prepare("INSERT INTO borrow_requests (resident_name, equipment_sn, qty, location, used_for, date, pudo, status) VALUES (?, ?, ?, ?, ?, NOW(), ?, 'Borrowed')");
-    $stmt->bind_param('ssisss', $resident, $esn, $qty, $location, $used_for, $pudo);
-    if (!$stmt->execute()) {
-        throw new Exception($stmt->error);
-    }
-    $stmt->close();
+if ($ok) redirect(['borrowed' => '1']); 
+else redirect(['borrow_error' => 'db']);
 
-    // 6) Update available_qty
-    $stmt = $conn->prepare("UPDATE equipment_list SET available_qty = available_qty - ? WHERE id = ?");
-    $stmt->bind_param('ii', $qty, $equipId);
-    if (!$stmt->execute()) {
-        throw new Exception($stmt->error);
-    }
-    $stmt->close();
-
-    // 7) Commit and redirect success
-    $conn->commit();
-    redirect(['borrowed' => '1']);
-
-} catch (Exception $e) {
-    // Roll back on error
-    $conn->rollback();
-    error_log("Borrow insert failed: " . $e->getMessage());
-    redirect(['borrow_error' => 'db']);
-}
 ?>

@@ -61,7 +61,7 @@ $logoUrl = 'images/' . $info['logo'];
         <div class="text-center">
           <button type="submit" class="btn btn-gradient w-50 py-2 mb-3">Login</button>
           <p>Don't have an account yet?   
-            <a href="signup.php" class="signup-now">Sign Up Now</a>
+            <a href="signup_try.php" class="signup-now">Sign Up Now</a>
           </p>
         </div>
       </form>

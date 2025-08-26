@@ -164,7 +164,7 @@ if (in_array($role, $admin_roles)) {
                     <span class="d-md-none icon"><i class="fas fa-user"></i></span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
-                    <li><a class="dropdown-item" href="" data-bs-toggle="modal" data-bs-target="#myProfileModal"><i class="fas fa-cog me-2"></i>My Profile</a></li>
+                    <!-- <li><a class="dropdown-item" href="" data-bs-toggle="modal" data-bs-target="#myProfileModal"><i class="fas fa-cog me-2"></i>My Profile</a></li> -->
                     <li><a class="dropdown-item" href="<?php echo htmlspecialchars($settingsHref); ?>"><i class="fas fa-user-cog me-2"></i>Account Settings</a></li>                    
                     <li><a class="dropdown-item" href="functions/logout.php"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
                 </ul>

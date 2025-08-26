@@ -13,6 +13,11 @@ $filter_esn = $_GET['filter_esn'] ?? '';
 $filter_date_from = $_GET['filter_date_from'] ?? '';
 $filter_date_to = $_GET['filter_date_to'] ?? '';
 
+// pagination for equipments list
+$limit = 10;
+$equip_page = max((int)($_GET['equip_page'] ?? 1), 1);
+$offset = ($equip_page - 1) * $limit;
+
 // small utility to build reference arrays for call_user_func_array
 function refValues($arr){
   $refs = [];
@@ -124,8 +129,44 @@ if (!$allEqStmt) {
 
 $jsMap = array_column($allEquipments, 'available_qty', 'equipment_sn');
 
+// // --- Build filtered equipment query (applies search + name filter) ---
+// $equipSql = "SELECT * FROM equipment_list";
+// $whereParts = [];
+// $params = [];
+// $types = '';
+
+// if ($filter_name !== '') {
+//   $whereParts[] = "name = ?";
+//   $params[] = $filter_name;
+//   $types .= 's';
+// }
+
+// if ($search !== '') {
+//   $whereParts[] = "(equipment_sn LIKE ? OR name LIKE ? OR description LIKE ?)";
+//   $like = '%' . $search . '%';
+//   $params[] = $like;
+//   $params[] = $like;
+//   $params[] = $like;
+//   $types .= 'sss';
+// }
+
+// if ($whereParts) {
+//   $equipSql .= ' WHERE ' . implode(' AND ', $whereParts);
+// }
+// $equipSql .= ' ORDER BY id';
+
+// $equipments = [];
+// $eqStmt = $conn->prepare($equipSql);
+// if (!$eqStmt) {
+//   error_log("Prepare failed (equipSql): " . $conn->error . " -- SQL: " . $equipSql);
+//   $equipments = [];
+// } else {
+//   $equipments = stmt_bind_execute_fetch($eqStmt, $types, $params);
+//   $eqStmt->close();
+// }
+
 // --- Build filtered equipment query (applies search + name filter) ---
-$equipSql = "SELECT * FROM equipment_list";
+$equipBase = "FROM equipment_list";
 $whereParts = [];
 $params = [];
 $types = '';
@@ -145,18 +186,32 @@ if ($search !== '') {
   $types .= 'sss';
 }
 
-if ($whereParts) {
-  $equipSql .= ' WHERE ' . implode(' AND ', $whereParts);
-}
-$equipSql .= ' ORDER BY id';
+$whereSQL = $whereParts ? ' WHERE ' . implode(' AND ', $whereParts) : '';
 
-$equipments = [];
+// 1) Get total count to compute total pages
+$countSql = "SELECT COUNT(*) AS total " . $equipBase . $whereSQL;
+$countStmt = $conn->prepare($countSql);
+if ($countStmt) {
+  $countRows = stmt_bind_execute_fetch($countStmt, $types, $params);
+  $countStmt->close();
+  $totalRows = $countRows ? (int)$countRows[0]['total'] : 0;
+  $totalPages = $totalRows ? (int)ceil($totalRows / $limit) : 0;
+} else {
+  error_log("Prepare failed (countStmt): " . $conn->error . " -- SQL: " . $countSql);
+  $totalRows = 0;
+  $totalPages = 0;
+}
+
+// 2) Fetch paginated rows
+$equipSql = "SELECT * " . $equipBase . $whereSQL . " ORDER BY id LIMIT ? OFFSET ?";
 $eqStmt = $conn->prepare($equipSql);
 if (!$eqStmt) {
   error_log("Prepare failed (equipSql): " . $conn->error . " -- SQL: " . $equipSql);
   $equipments = [];
 } else {
-  $equipments = stmt_bind_execute_fetch($eqStmt, $types, $params);
+  $typesWithLimit = $types . 'ii';
+  $paramsWithLimit = array_merge($params, [$limit, $offset]);
+  $equipments = stmt_bind_execute_fetch($eqStmt, $typesWithLimit, $paramsWithLimit);
   $eqStmt->close();
 }
 
@@ -178,7 +233,7 @@ if ($filter_esn !== '') {
 
 if ($filter_date_from !== '' ) {
   if (valid_date($filter_date_from)) {
-    $borrowWhere[] = "br.date >= ?";
+    $borrowWhere[] = "br.borrow_date >= ?";
     $bParams[] = $filter_date_from . ' 00:00:00';
     $bTypes .= 's';
   } else {
@@ -188,7 +243,7 @@ if ($filter_date_from !== '' ) {
 
 if ($filter_date_to !== '') {
   if (valid_date($filter_date_to)) {
-    $borrowWhere[] = "br.date <= ?";
+    $borrowWhere[] = "br.borrow_date <= ?";
     $bParams[] = $filter_date_to . ' 23:59:59';
     $bTypes .= 's';
   } else {
@@ -203,7 +258,7 @@ if ($bsearch !== '') {
                      OR CAST(br.qty AS CHAR) LIKE ? 
                      OR br.location LIKE ? 
                      OR br.used_for LIKE ? 
-                     OR br.date LIKE ? 
+                     OR br.borrow_date LIKE ? 
                      OR br.pudo LIKE ?)";
   $blike = '%' . $bsearch . '%';
   for ($i = 0; $i < 8; $i++) {
@@ -215,7 +270,7 @@ if ($bsearch !== '') {
 if ($borrowWhere) {
   $borrowSql .= ' WHERE ' . implode(' AND ', $borrowWhere);
 }
-$borrowSql .= ' ORDER BY br.date DESC, br.id DESC';
+$borrowSql .= ' ORDER BY br.borrow_date DESC, br.id DESC';
 
 $borrows = [];
 $brStmt = $conn->prepare($borrowSql);
@@ -232,11 +287,9 @@ if (!$brStmt) {
 
   <!-- Alert for add -->
   <?php if ($added): ?>
-    <div class="container mt-3">
-      <div class="alert alert-success alert-dismissible fade show" role="alert">
-        Equipment <strong><?= htmlspecialchars($added) ?></strong> added successfully!
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      </div>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      Equipment <strong><?= htmlspecialchars($added) ?></strong> added successfully!
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
   <?php endif; ?>
 
@@ -291,7 +344,7 @@ if (!$brStmt) {
   <ul class="nav nav-tabs mb-3" id="equipBorrowTabs" role="tablist">
     <li class="nav-item" role="presentation">
       <button class="nav-link <?= (($_GET['tab'] ?? '') === 'borrows') ? '' : 'active' ?>" id="tab-equipments-btn" data-bs-toggle="tab" data-bs-target="#tab-equipments" type="button" role="tab" aria-controls="tab-equipments" aria-selected="true">
-        List of Equipments
+        Equipment List
       </button>
     </li>
     <li class="nav-item" role="presentation">
@@ -315,6 +368,7 @@ if (!$brStmt) {
               <form method="get" class="mb-0" id="filterFormEquip">
                 <input type="hidden" name="page" value="adminEquipmentBorrowing">
                 <input type="hidden" name="tab" value="equipments">
+                <input type="hidden" name="equip_page" value="1">
 
                 <!-- FILTER: Equipment Name (dynamic) -->
                 <div class="mb-2">
@@ -346,6 +400,7 @@ if (!$brStmt) {
             <input type="hidden" name="page" value="adminEquipmentBorrowing">
             <input type="hidden" name="tab" value="equipments">
             <input type="hidden" name="filter_name" value="<?= htmlspecialchars($filter_name, ENT_QUOTES) ?>">
+            <input type="hidden" name="equip_page" value="1">
 
             <div class="input-group input-group-sm">
               <input name="search" id="searchInputEquip" type="text" class="form-control" placeholder="Search…" value="<?= htmlspecialchars($search, ENT_QUOTES) ?>">
@@ -398,6 +453,44 @@ if (!$brStmt) {
             </tbody>
           </table>
         </div>
+
+        <?php if (!empty($totalPages) && $totalPages > 1): ?>
+          <?php
+            $bp = [
+              'page' => 'adminEquipmentBorrowing',
+              'tab' => 'equipments',
+              'search' => $search,
+              'filter_name' => $filter_name
+            ];
+          ?>
+          <nav class="mt-3">
+            <ul class="pagination justify-content-center pagination-sm">
+              <li class="page-item <?= $equip_page <= 1 ? 'disabled' : '' ?>">
+                <a class="page-link" href="?<?= http_build_query(array_merge($bp, ['equip_page'=>$equip_page-1])) ?>">Previous</a>
+              </li>
+
+              <?php
+              $range = 2;
+              $dots = false;
+              for ($i = 1; $i <= $totalPages; $i++) {
+                if ($i == 1 || $i == $totalPages || ($i >= $equip_page - $range && $i <= $equip_page + $range)) {
+                  $active = $i == $equip_page ? 'active' : '';
+                  echo "<li class='page-item {$active}'><a class='page-link' href='?" . http_build_query(array_merge($bp, ['equip_page' => $i])) . "'>$i</a></li>";
+                  $dots = true;
+                } elseif ($dots) {
+                  echo "<li class='page-item disabled'><span class='page-link'>…</span></li>";
+                  $dots = false;
+                }
+              }
+              ?>
+
+              <li class="page-item <?= $equip_page >= $totalPages ? 'disabled' : '' ?>">
+                <a class="page-link" href="?<?= http_build_query(array_merge($bp, ['equip_page' => $equip_page + 1])) ?>">Next</a>
+              </li>
+            </ul>
+          </nav>
+        <?php endif; ?>
+
       </div>
     </div>
 
@@ -438,7 +531,7 @@ if (!$brStmt) {
                 </div>
 
                 <div class="d-flex">
-                  <a href="?page=adminEquipmentBorrowing&tab=borrows" class="btn btn-sm btn-outline-secondary me-2">Reset</a>
+                  <a href="?page=adminEquipmentBorrowing&tab=equipments&equip_page=1" class="btn btn-sm btn-outline-secondary me-2">Reset</a>
                   <button type="submit" class="btn btn-sm btn-success flex-grow-1">Apply</button>
                 </div>
               </form>
@@ -498,14 +591,14 @@ if (!$brStmt) {
                   data-qty="<?= (int)$br['qty'] ?>"
                   data-location="<?= htmlspecialchars($br['location'], ENT_QUOTES) ?>"
                   data-usedfor="<?= htmlspecialchars($br['used_for'], ENT_QUOTES) ?>"
-                  data-date="<?= htmlspecialchars($br['date'], ENT_QUOTES) ?>"
+                  data-date="<?= htmlspecialchars($br['borrow_date'], ENT_QUOTES) ?>"
                   data-pudo="<?= htmlspecialchars($br['pudo'], ENT_QUOTES) ?>"
                   data-status="<?= htmlspecialchars($status, ENT_QUOTES) ?>"
                 >
                   <td><?= htmlspecialchars($br['resident_name']) ?></td>
                   <td><?= htmlspecialchars($br['equipment_name'] ?: $br['equipment_sn']) ?></td>
                   <td><?= (int)$br['qty'] ?></td>
-                  <td><?= htmlspecialchars($br['date']) ?></td>
+                  <td><?= htmlspecialchars($br['borrow_date']) ?></td>
                   <td>
                     <?php
                       // compute badge class
@@ -617,7 +710,7 @@ if (!$brStmt) {
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary">Update Equipment
+          <button type="submit" class="btn btn-success">Update Equipment
           </button>
         </div>
       </form>
@@ -627,21 +720,23 @@ if (!$brStmt) {
   <!-- Delete Confirmation Modal -->
   <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="deleteConfirmLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content shadow">
-        <div class="modal-header bg-danger text-white">
-          <h5 class="modal-title" id="deleteConfirmLabel">
-            Confirm Deletion
-          </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <form id="confirmDeleteForm" method="POST">
-          <div class="modal-body">
-            <p id="confirmDeleteText" class="mb-0 fs-6 text-center fw-medium"></p>
-            <input type="hidden" name="id" id="delete-id">
+      <div class="modal-content">
+        <form id="confirmDeleteForm" method="POST" action="">
+          <div class="modal-header bg-danger text-white">
+            <h5 class="modal-title" id="deleteConfirmLabel">Delete Equipment</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-          <div class="modal-footer d-flex justify-content-between px-4 pb-3">
-            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-danger">Delete</button>
+
+          <div class="modal-body">
+            <p id="confirmDeleteText" class="mb-0 fs-6">
+              Are you sure you want to delete this equipment? This action cannot be undone.
+            </p>
+            <input type="hidden" name="id" id="delete-id" value="">
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-danger">Delete Permanently</button>
           </div>
         </form>
       </div>
@@ -892,15 +987,22 @@ if (!$brStmt) {
 
     if (searchBtnEquip && searchInputEquip && searchFormEquip && searchIconEquip) {
       searchBtnEquip.addEventListener('click', () => {
-        if (searchInputEquip.value.trim() !== '') {
+        // trim icon text to avoid whitespace mismatches
+        const iconText = (searchIconEquip.textContent || '').trim();
+
+        // Only clear when the icon explicitly shows "close" (i.e. an existing search).
+        // Otherwise, perform a normal search submit (even if the user typed text).
+        if (iconText === 'close') {
           searchInputEquip.value = '';
         }
+
+        // Submit the form
         searchFormEquip.submit();
       });
-      searchInputEquip.addEventListener('input', () => {
-        searchIconEquip.textContent = searchInputEquip.value.trim() ? 'close' : 'search';
-      });
+
+      // intentionally no input listener here — icon won't flip while typing
     }
+
 
     // Borrow search handlers (bsearch)
     const searchInputBorrow = document.getElementById('searchInputBorrow');
@@ -910,14 +1012,17 @@ if (!$brStmt) {
 
     if (searchBtnBorrow && searchInputBorrow && searchIconBorrow && searchFormBorrow) {
       searchBtnBorrow.addEventListener('click', () => {
-        if (searchInputBorrow.value.trim() !== '') {
+        const iconText = (searchIconBorrow.textContent || '').trim();
+
+        // Clear only when icon is 'close' (meaning active search). Otherwise submit.
+        if (iconText === 'close') {
           searchInputBorrow.value = '';
         }
+
         searchFormBorrow.submit();
       });
-      searchInputBorrow.addEventListener('input', () => {
-        searchIconBorrow.textContent = searchInputBorrow.value.trim() ? 'close' : 'search';
-      });
+
+      // intentionally no input listener here either
     }
 
     // ---------- Borrow requests UI wiring ----------
@@ -1070,85 +1175,111 @@ if (!$brStmt) {
       }
     });
 
-  });
+    // ── Delete Equipment ───────────────────────────
+    document.querySelectorAll('.delete-equipment-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        const name = btn.dataset.name;
 
-  // ── Delete Equipment ───────────────────────────
-  document.querySelectorAll('.delete-equipment-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.id;
-      const name = btn.dataset.name;
+        // Update confirmation text
+        document.getElementById('confirmDeleteText').textContent = `Are you sure you want to delete “${name}”? This action cannot be undone.`;
 
-      // Update confirmation text
-      document.getElementById('confirmDeleteText').textContent = `Are you sure you want to delete “${name}”? This action cannot be undone.`;
+        // Set hidden input value & form action
+        document.getElementById('delete-id').value = id;
+        document.getElementById('confirmDeleteForm').action = 'functions/equipment_delete.php';
 
-      // Set hidden input value & form action
-      document.getElementById('delete-id').value = id;
-      document.getElementById('confirmDeleteForm').action = 'functions/equipment_delete.php';
-
-      // Show modal
-      const modal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
-      modal.show();
-    });
-  });
-
-  document.querySelectorAll('.edit-equipment-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.id;
-      const name = btn.dataset.name;
-      const desc = btn.dataset.desc;
-      const total = btn.dataset.total;
-
-      document.getElementById('edit-id').value = id;
-      document.getElementById('edit-name').value = name;
-      document.getElementById('edit-desc').value = desc;
-      document.getElementById('edit-total').value = total;
-
-      // Open modal manually
-      const modal = new bootstrap.Modal(document.getElementById('editEquipmentModal'));
-      modal.show();
-    });
-  });
-
-  // ── Status dropdown change (optional AJAX hook) ─
-  document.querySelectorAll('.borrow-status').forEach(sel => {
-    sel.addEventListener('change', () => {
-      const id = sel.dataset.id;
-      const status = sel.value;
-      fetch('/functions/borrow_toggle_status.php', {
-        method: 'POST',
-        headers: {'Content-Type':'application/x-www-form-urlencoded'},
-        body: `id=${id}&status=${encodeURIComponent(status)}`
-      })
-      .then(r => r.json())
-      .then(j => {
-        if (j.error) {
-          alert('Error: ' + j.error);
-          sel.value = sel.dataset.prev;
-        } else {
-          sel.dataset.prev = j.newStatus;
-          const eqCell = document.querySelector(`.avail-qty[data-id="${j.equipmentId}"]`);
-          if (eqCell) eqCell.textContent = j.availableQty;
-
-          const placeholder = document.getElementById('statusAlertPlaceholder');
-          const wrapper = document.createElement('div');
-          wrapper.innerHTML = `
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-              Status updated to <strong>${j.newStatus}</strong>.
-              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>`;
-          placeholder.append(wrapper);
-
-           setTimeout(() => {
-            const alertNode = bootstrap.Alert.getOrCreateInstance(wrapper.querySelector('.alert'));
-            alertNode.close();
-          }, 3000);
-        }
-      })
-      .catch(err => {
-        console.error(err);
-        sel.value = sel.dataset.prev;
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
+        modal.show();
       });
     });
+
+    document.querySelectorAll('.edit-equipment-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        const name = btn.dataset.name;
+        const desc = btn.dataset.desc;
+        const total = btn.dataset.total;
+
+        document.getElementById('edit-id').value = id;
+        document.getElementById('edit-name').value = name;
+        document.getElementById('edit-desc').value = desc;
+        document.getElementById('edit-total').value = total;
+
+        // Open modal manually
+        const modal = new bootstrap.Modal(document.getElementById('editEquipmentModal'));
+        modal.show();
+      });
+    });
+
+    // ── Status dropdown change (optional AJAX hook) ─
+    document.querySelectorAll('.borrow-status').forEach(sel => {
+      sel.addEventListener('change', () => {
+        const id = sel.dataset.id;
+        const status = sel.value;
+        fetch('/functions/borrow_toggle_status.php', {
+          method: 'POST',
+          headers: {'Content-Type':'application/x-www-form-urlencoded'},
+          body: `id=${id}&status=${encodeURIComponent(status)}`
+        })
+        .then(r => r.json())
+        .then(j => {
+          if (j.error) {
+            alert('Error: ' + j.error);
+            sel.value = sel.dataset.prev;
+          } else {
+            sel.dataset.prev = j.newStatus;
+            const eqCell = document.querySelector(`.avail-qty[data-id="${j.equipmentId}"]`);
+            if (eqCell) eqCell.textContent = j.availableQty;
+
+            const placeholder = document.getElementById('statusAlertPlaceholder');
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = `
+              <div class="alert alert-success alert-dismissible fade show" role="alert">
+                Status updated to <strong>${j.newStatus}</strong>.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>`;
+            placeholder.append(wrapper);
+
+            setTimeout(() => {
+              const alertNode = bootstrap.Alert.getOrCreateInstance(wrapper.querySelector('.alert'));
+              alertNode.close();
+            }, 3000);
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          sel.value = sel.dataset.prev;
+        });
+      });
+    });
+
+    // keep selected tab in the URL so refresh restores it
+    (function () {
+      const tabButtons = document.querySelectorAll('#equipBorrowTabs button[data-bs-toggle="tab"]');
+      if (!tabButtons.length) return;
+
+      tabButtons.forEach(btn => {
+        btn.addEventListener('shown.bs.tab', (e) => {
+          // e.target is the shown tab button
+          const target = e.target.getAttribute('data-bs-target') || e.target.dataset.bsTarget;
+          // map target -> tab value used by server
+          const tabValue = (target === '#tab-borrows') ? 'borrows' : 'equipments';
+
+          const url = new URL(window.location.href);
+          url.searchParams.set('tab', tabValue);
+
+          // reset equipment page to 1 when switching to equipments (optional)
+          if (tabValue === 'equipments') {
+            url.searchParams.set('equip_page', url.searchParams.get('equip_page') || '1');
+          }
+
+          // replace state (no navigation)
+          history.replaceState(null, '', url.toString());
+        });
+      });
+    })();
+
   });
 </script>
 <?php

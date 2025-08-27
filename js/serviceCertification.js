@@ -1,77 +1,159 @@
-// js/serviceCertification.js (updated: renumber markers, server-side prefill)
 document.addEventListener("DOMContentLoaded", function () {
-    // --- preserved pieces from your original file ---
+    // dynamic collections (we will refresh these if DOM changes)
+    let steps = document.querySelectorAll(".step");
+    let circleSteps = document.querySelectorAll('.circle');
+    let stepLabels = document.querySelectorAll('.step-label');
+
     const mainHeader = document.getElementById("mainHeader");
     const subHeader = document.getElementById("subHeader");
     const progressFill = document.getElementById('progressFill');
     const nextBtn = document.getElementById('nextBtn');
     const backBtn = document.getElementById('backBtn');
 
-    // payment controls
-    const paymentButtons    = document.querySelectorAll('.payment-btn');
+    // Payment UI
+    const paymentButtons = document.querySelectorAll('.payment-btn');
     const instructionPanels = document.querySelectorAll('.payment-instruction');
     const hiddenPaymentInput = document.getElementById('paymentMethod');
+    const hiddenPaymentAmount = document.getElementById('paymentAmount');
+    const hiddenPaymentStatus = document.getElementById('paymentStatus');
 
+    // Modals
     const confirmationModalEl = document.getElementById("confirmationModal");
-    const confirmationModal = confirmationModalEl ? new bootstrap.Modal(confirmationModalEl) : null;
+    const confirmationModal = new bootstrap.Modal(confirmationModalEl);
     const confirmSubmitBtn = document.getElementById("confirmSubmitBtn");
 
-    const certInput        = document.getElementById('certType');
-    const certFieldsHolder = document.getElementById('certFields');
-    const forSelect        = document.getElementById('forSelect');
+    // initial step (may be overwritten by inline PHP script)
+    let currentStep = window.initialStep || 1;
 
+    // user / selectors
     const currentUser = window.currentUser || {};
-    const serverCertType = (window.serverCertType ?? '') || '';
-    const serverChosenPayment = (window.serverChosenPayment ?? '') || '';
+    const forSelect = document.getElementById('forSelect');
+    const certInput = document.getElementById('certType');
+    const certFieldsHolder = document.getElementById('certFields');
 
-    // kept your certConfigs, helper functions and field rendering logic (unchanged)
-    const certConfigs = {
-        residency: [
-        { id: 'full_name',       label: 'Full Name',       type: 'text',     disabled: true },
-        { id: 'age',             label: 'Age',             type: 'number',   disabled: true },
-        { id: 'civil_status',    label: 'Civil Status',    type: 'select',   options: ['Single','Married','Widowed','Separated','Divorced','Unknown']   },
-        { id: 'purok',           label: 'Purok',           type: 'select',   options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6']     },
-        { id: 'residing_years',  label: 'Years Residing',  type: 'number' },
-        { id: 'purpose',         label: 'Purpose',         type: 'text'   },
-        { id: 'claim_date',      label: 'Claim Date',      type: 'date'   }
-        ],
-        indigency: [
-        { id: 'full_name',       label: 'Full Name',       type: 'text',     disabled: true },
-        { id: 'age',             label: 'Age',             type: 'number',   disabled: true },
-        { id: 'civil_status',    label: 'Civil Status',    type: 'select',   options: ['Single','Married','Widowed','Separated','Divorced','Unknown']   },
-        { id: 'purok',           label: 'Purok',           type: 'select',   options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6']     },
-        { id: 'purpose',         label: 'Purpose',         type: 'text' },
-        { id: 'claim_date',      label: 'Claim Date',      type: 'date' }
-        ],
-        'good moral': [
-        { id: 'full_name',       label: 'Full Name',       type: 'text',     disabled: true },
-        { id: 'age',             label: 'Age',             type: 'number',   disabled: true },
-        { id: 'civil_status',    label: 'Civil Status',    type: 'select',   options: ['Single','Married','Widowed','Separated','Divorced','Unknown']   },
-        { id: 'purok',           label: 'Purok',           type: 'select',   options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6']     },
-        { id: 'purpose',         label: 'Purpose',         type: 'text' },
-        { id: 'claim_date',      label: 'Claim Date',      type: 'date' }
-        ],
-        'solo parent': [
-        { id: 'full_name',       label: 'Full Name',       type: 'text',     disabled: true },
-        { id: 'age',             label: 'Age',             type: 'number',   disabled: true },
-        { id: 'civil_status',    label: 'Civil Status',    type: 'select',   options: ['Single','Married','Widowed','Separated','Divorced','Unknown']   },
-        { id: 'purok',           label: 'Purok',           type: 'select',   options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6']     },
-        ],
-        guardianship: [
-        { id: 'full_name',       label: 'Full Name',       type: 'text',     disabled: true },
-        { id: 'age',             label: 'Age',             type: 'number',   disabled: true },
-        { id: 'civil_status',    label: 'Civil Status',    type: 'select',   options: ['Single','Married','Widowed','Separated','Divorced','Unknown']   },
-        { id: 'purok',           label: 'Purok',           type: 'select',   options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6']     },
-        ]
+    // convenience defaults
+    const DEFAULT_AMOUNT = 130;
+
+    // update dynamic collections helper
+    function refreshStepCollections() {
+        steps = document.querySelectorAll(".step");
+        circleSteps = document.querySelectorAll('.circle');
+        stepLabels = document.querySelectorAll('.step-label');
+    }
+
+    // get numeric indices (1-based) for special steps if present
+    function getStepIndexByElementId(id) {
+        refreshStepCollections();
+        for (let i = 0; i < steps.length; i++) {
+            if (steps[i].id === id) return i + 1;
+        }
+        return -1;
+    }
+    function isPaymentStepPresent() {
+        return document.getElementById('paymentStep') !== null;
+    }
+    function getPaymentStepIndex() {
+        return getStepIndexByElementId('paymentStep');
+    }
+    function getSummaryStepIndex() {
+        return getStepIndexByElementId('summaryStep');
+    }
+    function getSubmissionStepIndex() {
+        return getStepIndexByElementId('submissionStep');
+    }
+
+    function totalSteps() {
+        refreshStepCollections();
+        return circleSteps.length;
+    }
+
+    // — ADDED: Payment method controls
+    const setupPaymentControls = function () {
+        if (!paymentButtons || paymentButtons.length === 0) return;
+
+        // If we have an existing payment method from server, mark the corresponding button active
+        const serverMethod = (window.existingPaymentMethod || '').trim();
+        const clientMethod = (hiddenPaymentInput?.value || '').trim();
+        const initialMethod = clientMethod || serverMethod || 'Brgy Payment Device';
+
+        paymentButtons.forEach(b => {
+            if (b.dataset.method === initialMethod) b.classList.add('active');
+            b.addEventListener('click', () => {
+                // toggle active class
+                paymentButtons.forEach(x => x.classList.remove('active'));
+                b.classList.add('active');
+
+                const method = b.dataset.method;
+                // set hidden payment fields
+                if (hiddenPaymentInput) hiddenPaymentInput.value = method || '';
+                if (hiddenPaymentAmount) hiddenPaymentAmount.value = String(DEFAULT_AMOUNT);
+                if (hiddenPaymentStatus) hiddenPaymentStatus.value = 'Pending';
+
+                // show matching panel
+                instructionPanels.forEach(panel => {
+                    panel.classList.toggle('d-none', panel.dataset.method !== method);
+                });
+            });
+        });
+
+        // If page loaded with server-side method, ensure hidden fields reflect server values
+        if (serverMethod) {
+            if (hiddenPaymentInput) hiddenPaymentInput.value = serverMethod;
+        }
+        if (window.existingPaymentAmount !== undefined && window.existingPaymentAmount !== null) {
+            if (hiddenPaymentAmount) hiddenPaymentAmount.value = String(window.existingPaymentAmount);
+        }
+        if (window.existingPaymentStatus !== undefined && window.existingPaymentStatus !== null) {
+            if (hiddenPaymentStatus) hiddenPaymentStatus.value = String(window.existingPaymentStatus);
+        }
     };
 
+    // Auto-complete for certType (kept as in your original)
+    (function(){
+        const options = [
+            "Residency",
+            "Indigency",
+            "Good Moral",
+            "Solo Parent",
+            "Guardianship"
+        ];
+        const input = certInput;
+        const list  = document.getElementById('certTypeList');
+        function rebuildList(filtered) {
+            list.innerHTML = '';
+            filtered.forEach(opt => {
+                const li = document.createElement('li');
+                li.textContent = opt;
+                li.className   = 'list-group-item list-group-item-action py-1';
+                li.style.cursor = 'pointer';
+                li.addEventListener('mousedown', () => {
+                    input.value = opt;
+                    list.style.display = 'none';
+                    // trigger change handler
+                    input.dispatchEvent(new Event('change'));
+                });
+                list.appendChild(li);
+            });
+            list.style.display = filtered.length ? 'block' : 'none';
+        }
+        input.addEventListener('focus',  () => rebuildList(options));
+        input.addEventListener('input', () => {
+            const v = input.value.trim().toLowerCase();
+            rebuildList(v ? options.filter(o => o.toLowerCase().includes(v)) : options);
+        });
+        input.addEventListener('blur', () => setTimeout(()=> list.style.display='none',150));
+        document.addEventListener('click', e => {
+            if (!input.contains(e.target) && !list.contains(e.target)) list.style.display='none';
+        });
+    })();
+
+    // --- helper utils used by field rendering ---
     function invertName(name) {
         if (!name) return '';
         if (!name.includes(',')) return name.trim();
         const [last, first] = name.split(',',2).map(s=>s.trim());
         return `${first} ${last}`;
     }
-
     function computeAge(birthdate) {
         if (!birthdate) return '';
         const bd = new Date(birthdate);
@@ -79,7 +161,48 @@ document.addEventListener("DOMContentLoaded", function () {
         return Math.floor(diff / (1000*60*60*24*365.25));
     }
 
-    // Child / solo parent render (kept exactly as before)
+    // config for fields (kept same as your original)
+    const certConfigs = {
+        residency: [
+            { id: 'full_name',       label: 'Full Name',       type: 'text',     disabled: true },
+            { id: 'age',             label: 'Age',             type: 'number',   disabled: true },
+            { id: 'civil_status',    label: 'Civil Status',    type: 'select',   options: ['Single','Married','Widowed','Separated','Divorced','Unknown']   },
+            { id: 'purok',           label: 'Purok',           type: 'select',   options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6']     },
+            { id: 'residing_years',  label: 'Years Residing',  type: 'number' },
+            { id: 'purpose',         label: 'Purpose',         type: 'text'   },
+            { id: 'claim_date',      label: 'Claim Date',      type: 'date'   }
+        ],
+        indigency: [
+            { id: 'full_name',       label: 'Full Name',       type: 'text',     disabled: true },
+            { id: 'age',             label: 'Age',             type: 'number',   disabled: true },
+            { id: 'civil_status',    label: 'Civil Status',    type: 'select',   options: ['Single','Married','Widowed','Separated','Divorced','Unknown']   },
+            { id: 'purok',           label: 'Purok',           type: 'select',   options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6']     },
+            { id: 'purpose',         label: 'Purpose',         type: 'text' },
+            { id: 'claim_date',      label: 'Claim Date',      type: 'date' }
+        ],
+        'good moral': [
+            { id: 'full_name',       label: 'Full Name',       type: 'text',     disabled: true },
+            { id: 'age',             label: 'Age',             type: 'number',   disabled: true },
+            { id: 'civil_status',    label: 'Civil Status',    type: 'select',   options: ['Single','Married','Widowed','Separated','Divorced','Unknown']   },
+            { id: 'purok',           label: 'Purok',           type: 'select',   options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6']     },
+            { id: 'purpose',         label: 'Purpose',         type: 'text' },
+            { id: 'claim_date',      label: 'Claim Date',      type: 'date' }
+        ],
+        'solo parent': [
+            { id: 'full_name',       label: 'Full Name',       type: 'text',     disabled: true },
+            { id: 'age',             label: 'Age',             type: 'number',   disabled: true },
+            { id: 'civil_status',    label: 'Civil Status',    type: 'select',   options: ['Single','Married','Widowed','Separated','Divorced','Unknown']   },
+            { id: 'purok',           label: 'Purok',           type: 'select',   options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6']     }
+        ],
+        guardianship: [
+            { id: 'full_name',       label: 'Full Name',       type: 'text',     disabled: true },
+            { id: 'age',             label: 'Age',             type: 'number',   disabled: true },
+            { id: 'civil_status',    label: 'Civil Status',    type: 'select',   options: ['Single','Married','Widowed','Separated','Divorced','Unknown']   },
+            { id: 'purok',           label: 'Purok',           type: 'select',   options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6']     }
+        ]
+    };
+
+    // child sections renderer (kept as original)
     function renderChildSections(type) {
         const wrapper = document.createElement('div');
         wrapper.id = 'childSection';
@@ -190,6 +313,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
+    // Main renderer for certificate-specific fields
     function renderCertFields(value, mode = forSelect.value) {
         const key = (value || '').trim().toLowerCase();
         const cfg = certConfigs[key] || [];
@@ -199,59 +323,37 @@ document.addEventListener("DOMContentLoaded", function () {
             // Determine initial value
             let val = '';
             if (mode === 'myself') {
-                if (f.id === 'full_name')              val = invertName(currentUser.full_name || '');
-                else if (f.id === 'age')               val = computeAge(currentUser.birthdate || '');
-                else if (f.id === 'civil_status')     val = currentUser.civil_status || '';
-                else if (f.id === 'purok')            val = currentUser.purok || '';
+                if (f.id === 'full_name')      val = invertName(currentUser.full_name);
+                else if (f.id === 'age')       val = computeAge(currentUser.birthdate);
+                else if (f.id === 'civil_status') val = currentUser.civil_status;
+                else if (f.id === 'purok')     val = currentUser.purok;
             }
 
-            // Determine readonly only for those four in 'myself'
             const isReadOnly = mode === 'myself' && ['full_name','age','civil_status','purok'].includes(f.id);
 
-            // Build the row
             const row = document.createElement('div');
             row.className = 'row mb-3';
 
-            // Shared label
             let inner = `
             <label class="col-sm-2 col-form-label fw-bold">${f.label}:</label>
             <div class="col-sm-10">
             `;
 
             if (f.type === 'select') {
-                let attrs = '';
-                if (isReadOnly) {
-                    attrs = 'class="form-select select-readonly"';
-                } else {
-                    attrs = 'class="form-select"';
-                }
-                inner += `<select
-                    id="${f.id}"
-                    name="${f.id}"
-                    ${attrs}
-                    required>
-                    ${f.options.map(o => `
-                        <option value="${o}" ${val===o?'selected':''}>${o}</option>`
-                    ).join('')}
+                let attrs = isReadOnly ? 'class="form-select select-readonly" readonly' : 'class="form-select"';
+                inner += `<select id="${f.id}" name="${f.id}" ${attrs} required>
+                    ${f.options.map(o => `<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join('')}
                     </select>`;
             } else {
-                inner += `<input
-                    type="${f.type}"
-                    id="${f.id}"
-                    name="${f.id}"
-                    class="form-control${isReadOnly ? ' bg-e9ecef' : ''}"
-                    value="${val}"
-                    ${isReadOnly ? 'readonly' : ''}
-                    required
-                    >`;
+                inner += `<input type="${f.type}" id="${f.id}" name="${f.id}" class="form-control${isReadOnly ? ' bg-e9ecef' : ''}" value="${val}" ${isReadOnly ? 'readonly' : ''} required>`;
             }
-            inner += `</div>`;
 
+            inner += `</div>`;
             row.innerHTML = inner;
             certFieldsHolder.appendChild(row);
         });
 
-        // attach special child sections if needed
+        // children or extra sections
         if (key === 'guardianship' || key === 'solo parent') {
             renderChildSections(key);
         }
@@ -272,319 +374,282 @@ document.addEventListener("DOMContentLoaded", function () {
                 </div>`;
             certFieldsHolder.appendChild(authRow);
         }
+
+        // After rendering:
+        // If Indigency, remove/hide payment method & amount but KEEP payment status (show Free of Charge if none)
+        if (key === 'indigency') {
+            // clear method & amount
+            if (hiddenPaymentInput) hiddenPaymentInput.value = '';
+            if (hiddenPaymentAmount) hiddenPaymentAmount.value = '';
+
+            // ensure paymentStatus has a meaningful value for display (prefer existing server value)
+            if (hiddenPaymentStatus) {
+                if (!hiddenPaymentStatus.value || !hiddenPaymentStatus.value.trim()) {
+                    // Use server-provided status if present, otherwise default to Free of Charge
+                    hiddenPaymentStatus.value = (window.existingPaymentStatus && String(window.existingPaymentStatus).trim()) || 'Free of Charge';
+                }
+            }
+
+            // hide payment UI elements (content + progress step)
+            const paymentContent = document.getElementById('paymentStep');
+            if (paymentContent && paymentContent.style) paymentContent.style.display = 'none';
+            const progressPayment = document.querySelector('.payment-progress-step');
+            if (progressPayment && progressPayment.style) progressPayment.style.display = 'none';
+            // hide fee boxes etc.
+            const feeBoxes = document.querySelectorAll('.payment-container, .fee-box, #payment-instructions, .payment-instruction, .payment-btn');
+            feeBoxes.forEach(el => { if (el && el.style) el.style.display = 'none'; });
+
+        } else {
+            // non-indigency: ensure payment UI visible and default hidden fields if blank
+            const paymentContent = document.getElementById('paymentStep');
+            if (paymentContent && paymentContent.style && paymentContent.style.display === 'none') {
+                paymentContent.style.display = '';
+            }
+            const progressPayment = document.querySelector('.payment-progress-step');
+            if (progressPayment && progressPayment.style && progressPayment.style.display === 'none') {
+                progressPayment.style.display = '';
+            }
+
+            // If there's a server-provided payment method/amount/status, preserve them
+            if (window.existingPaymentMethod && (!hiddenPaymentInput.value || !hiddenPaymentInput.value.trim())) {
+                hiddenPaymentInput.value = window.existingPaymentMethod;
+            }
+            if (window.existingPaymentAmount && (!hiddenPaymentAmount.value || !hiddenPaymentAmount.value.trim())) {
+                hiddenPaymentAmount.value = String(window.existingPaymentAmount);
+            }
+            if (window.existingPaymentStatus && (!hiddenPaymentStatus.value || !hiddenPaymentStatus.value.trim())) {
+                hiddenPaymentStatus.value = String(window.existingPaymentStatus);
+            }
+
+            // if still blank, set sensible defaults
+            if (hiddenPaymentInput && !hiddenPaymentInput.value) hiddenPaymentInput.value = 'Brgy Payment Device';
+            if (hiddenPaymentAmount && !hiddenPaymentAmount.value) hiddenPaymentAmount.value = String(DEFAULT_AMOUNT);
+            if (hiddenPaymentStatus && !hiddenPaymentStatus.value) hiddenPaymentStatus.value = 'Pending';
+        }
+
+        // refresh step collections after possible DOM changes
+        refreshStepCollections();
+        // update navigation UI to reflect any step changes
+        updateNavigation();
+
+        // ensure payment controls reflect any hidden values (activate button)
+        setupPaymentControls();
     }
 
     function refreshFields() {
         renderCertFields(certInput.value, forSelect.value);
     }
 
-    // --- dropdown suggestion UI (kept from your original) ---
-    (function(){
-        const options = [
-            "Residency",
-            "Indigency",
-            "Good Moral",
-            "Solo Parent",
-            "Guardianship"
-        ];
-        const input = certInput;
-        const list  = document.getElementById('certTypeList');
-        function rebuildList(filtered) {
-            if (!list) return;
-            list.innerHTML = '';
-            filtered.forEach(opt => {
-                const li = document.createElement('li');
-                li.textContent = opt;
-                li.className   = 'list-group-item list-group-item-action py-1';
-                li.style.cursor = 'pointer';
-                li.addEventListener('mousedown', () => {
-                    input.value = opt;
-                    list.style.display = 'none';
-                    // trigger update immediately
-                    onCertTypeChanged();
-                });
-                list.appendChild(li);
-            });
-            list.style.display = filtered.length ? 'block' : 'none';
-        }
-        if (input) {
-            input.addEventListener('focus',  () => rebuildList(options));
-            input.addEventListener('input', () => {
-                const v = input.value.trim().toLowerCase();
-                rebuildList(v ? options.filter(o => o.toLowerCase().includes(v)) : options);
-            });
-            input.addEventListener('blur', () => setTimeout(()=> list && (list.style.display='none'),150));
-            document.addEventListener('click', e => {
-                if (!input.contains(e.target) && list && !list.contains(e.target)) list.style.display='none';
-            });
-        }
-    })();
+    // initial render
+    refreshFields();
 
-    // --- Step/Progress management (NEW) ---
-    // All step content blocks: they have data-step attributes
-    const allStepContents = Array.from(document.querySelectorAll('.step[data-step]'))
-        .sort((a,b) => Number(a.dataset.step) - Number(b.dataset.step));
+    // wire events to re-render fields
+    certInput.addEventListener('input', refreshFields);
+    certInput.addEventListener('change', refreshFields);
+    certInput.addEventListener('blur', refreshFields);
+    forSelect.addEventListener('change', refreshFields);
 
-    // Markers: wrappers .steps[data-step]
-    const stepMarkers = Array.from(document.querySelectorAll('.stepss .steps'));
+    // Setup payment controls (if present)
+    setupPaymentControls();
 
-    // helper to get a content element by original step number
-    function contentByStep(n) {
-        return allStepContents.find(s => Number(s.dataset.step) === Number(n));
-    }
+    // Next button behavior (now dynamic-aware)
+    nextBtn.addEventListener('click', () => {
+        refreshStepCollections();
+        const tSteps = totalSteps();
 
-    function rebuildVisibleSteps() {
-        // visible = not d-none
-        const visible = allStepContents.filter(el => !el.classList.contains('d-none'));
-        // sort by original order
-        visible.sort((a,b) => Number(a.dataset.step) - Number(b.dataset.step));
-        return visible;
-    }
+        // validation for required inputs on current 'active-step'
+        let isValid = true;
 
-    // Renumber the visible markers' displayed numbers (the <span class="circle-num">)
-    function renumberVisibleMarkers(visible) {
-        // visible: array of content elements in order
-        if (!visible) visible = rebuildVisibleSteps();
-        // For each visible content get its original step and find the corresponding marker wrapper
-        visible.forEach((contentEl, idx) => {
-            const original = Number(contentEl.dataset.step);
-            const marker = stepMarkers.find(m => Number(m.dataset.step) === original);
-            if (!marker) return;
-            // update displayed number inside marker
-            const span = marker.querySelector('.circle .circle-num') || marker.querySelector('.circle span') || marker.querySelector('.circle');
-            if (span) {
-                span.textContent = String(idx + 1);
-            }
-        });
-    }
+        // find active step element index (1-based)
+        let activeIndex = currentStep;
 
-    let visibleSteps = rebuildVisibleSteps();
-    // index inside visibleSteps
-    let visibleIndex = 0;
-
-    // initialStep provided by PHP: 4 or 1
-    const initialStepOriginal = Number(window.initialStep || 1);
-
-    function showVisibleStep(index) {
-        if (!visibleSteps.length) return;
-        visibleIndex = Math.max(0, Math.min(index, visibleSteps.length - 1));
-
-        // update content containers
-        visibleSteps.forEach((el, i) => {
-            el.classList.remove('active-step');
-            el.classList.remove('completed');
-            if (i < visibleIndex) el.classList.add('completed');
-            if (i === visibleIndex) el.classList.add('active-step');
-        });
-
-        // update top markers: hide markers that are not present, and set classes for present ones
-        stepMarkers.forEach(wrapper => {
-            const stepNum = Number(wrapper.dataset.step);
-            const existsIndex = visibleSteps.findIndex(s => Number(s.dataset.step) === stepNum);
-            const circle = wrapper.querySelector('.circle');
-            const label = wrapper.querySelector('.step-label');
-
-            if (existsIndex === -1) {
-                wrapper.classList.add('d-none');
-            } else {
-                wrapper.classList.remove('d-none');
-                circle.classList.remove('active','completed');
-                label.classList.remove('active','completed');
-
-                if (existsIndex < visibleIndex) {
-                    circle.classList.add('completed');
-                    label.classList.add('completed');
-                } else if (existsIndex === visibleIndex) {
-                    circle.classList.add('active');
-                    label.classList.add('active');
+        // Validate required inputs on active step
+        const activeStepEl = steps[activeIndex - 1];
+        if (activeStepEl) {
+            activeStepEl.querySelectorAll("input[required], select[required]").forEach(field => {
+                if (!field.value || !String(field.value).trim()) {
+                    isValid = false;
+                    field.classList.add("is-invalid");
+                } else {
+                    field.classList.remove("is-invalid");
                 }
+            });
+        }
+
+        // If payment step exists and we're on it, ensure a payment method is chosen
+        const paymentIndex = getPaymentStepIndex();
+        if (paymentIndex > 0 && currentStep === paymentIndex) {
+            if (!hiddenPaymentInput.value) isValid = false;
+        }
+
+        if (!isValid) {
+            let validationModal = new bootstrap.Modal(document.getElementById("validationModal"));
+            validationModal.show();
+            return;
+        }
+
+        // Determine summary step index dynamically
+        const summaryIndex = getSummaryStepIndex();
+        const submissionIndex = getSubmissionStepIndex();
+
+        // If pressing Next when currently on the Summary step => show confirmation modal
+        if (summaryIndex > 0 && currentStep === summaryIndex) {
+            // before showing confirm, make sure hidden payment inputs are correct for Indigency
+            if ((certInput.value || '').trim().toLowerCase() === 'indigency') {
+                if (hiddenPaymentInput) hiddenPaymentInput.value = '';
+                if (hiddenPaymentAmount) hiddenPaymentAmount.value = '';
+                // keep hiddenPaymentStatus (we want to show payment_status for indigency)
+                if (hiddenPaymentStatus && !hiddenPaymentStatus.value) {
+                    hiddenPaymentStatus.value = (window.existingPaymentStatus && String(window.existingPaymentStatus).trim()) || 'Free of Charge';
+                }
+            } else {
+                // non-indigency ensure amount/status defaults
+                if (hiddenPaymentAmount && !hiddenPaymentAmount.value) hiddenPaymentAmount.value = String(DEFAULT_AMOUNT);
+                if (hiddenPaymentStatus && !hiddenPaymentStatus.value) hiddenPaymentStatus.value = 'Pending';
             }
-        });
+            confirmationModal.show();
+            return;
+        }
 
-        // RENumber the visible markers to be sequential (1..n) so Indigency shows 1-2-3
-        renumberVisibleMarkers(visibleSteps);
+        // If currently on the final step (submission screen), use Next to navigate away
+        if (submissionIndex > 0 && currentStep === submissionIndex) {
+            // replace Next behavior with redirect
+            window.location.href = 'userPanel.php?page=userDashboard';
+            return;
+        }
 
-        // progress fill
-        const total = visibleSteps.length - 1;
-        const percent = total <= 0 ? 100 : Math.round((visibleIndex / total) * 100);
-        if (progressFill) progressFill.style.width = percent + '%';
+        // Move forward one step (normal)
+        // Guard against going beyond bounds
+        if (currentStep < tSteps) {
+            // mark current completed and move
+            const prevIdx = currentStep - 1;
+            if (circleSteps[prevIdx]) circleSteps[prevIdx].classList.add('completed');
+            if (stepLabels[prevIdx]) stepLabels[prevIdx].classList.add('completed');
+            if (steps[prevIdx]) steps[prevIdx].classList.remove('active-step');
 
-        // navigation text & visibility
-        backBtn.style.visibility = visibleIndex === 0 ? 'hidden' : 'visible';
+            currentStep++;
+            const newIdx = currentStep - 1;
+            if (steps[newIdx]) steps[newIdx].classList.add('active-step');
+            if (circleSteps[newIdx]) {
+                circleSteps[newIdx].classList.add('active');
+            }
+            if (stepLabels[newIdx]) stepLabels[newIdx].classList.add('active');
 
-        // determine current original step (1..4)
-        const currentOriginal = Number(visibleSteps[visibleIndex].dataset.step);
+            // Update progress bar
+            const progressPercent = ((currentStep - 1) / Math.max(1, (tSteps - 1))) * 100;
+            if (progressFill) progressFill.style.width = `${progressPercent}%`;
 
-        if (currentOriginal === 1) {
-            if (mainHeader) mainHeader.textContent = "APPLICATION FORM";
-            if (subHeader) subHeader.textContent = "Select a type of certification and provide the necessary details to apply.";
-            if (nextBtn) nextBtn.textContent = "NEXT >";
-        } else if (currentOriginal === 2) {
-            if (mainHeader) mainHeader.textContent = "PAYMENT";
-            if (subHeader) subHeader.textContent = "Settle your payment for your certification.";
-            if (nextBtn) nextBtn.textContent = "NEXT >";
-        } else if (currentOriginal === 3) {
-            if (mainHeader) mainHeader.textContent = "REVIEW and CONFIRMATION";
-            if (subHeader) subHeader.textContent = "Please review all your information before submitting.";
-            if (nextBtn) nextBtn.textContent = "SUBMIT";
-            // populate summary when we land on review
-            populateSummary();
-        } else if (currentOriginal === 4) {
-            // submission screen
-            if (mainHeader) mainHeader.remove();
-            if (subHeader) subHeader.remove();
+            // If stepping into summary, populate it
+            if (getSummaryStepIndex() > 0 && currentStep === getSummaryStepIndex()) {
+                populateSummary();
+            }
+
+            updateNavigation();
+        }
+    });
+
+    // Back button
+    backBtn.addEventListener('click', () => {
+        refreshStepCollections();
+        if (currentStep > 1) {
+            const prevIdx = currentStep - 1;
+            if (steps[prevIdx]) steps[prevIdx].classList.remove("active-step");
+            if (circleSteps[prevIdx]) circleSteps[prevIdx].classList.remove('active');
+            if (stepLabels[prevIdx]) stepLabels[prevIdx].classList.remove('active');
+
+            // Un-complete the prior step
+            const priorIdx = currentStep - 2;
+            if (circleSteps[priorIdx]) circleSteps[priorIdx].classList.remove('completed');
+            if (stepLabels[priorIdx]) stepLabels[priorIdx].classList.remove('completed');
+
+            currentStep--;
+            const newIdx = currentStep - 1;
+            if (steps[newIdx]) steps[newIdx].classList.add("active-step");
+            if (circleSteps[newIdx]) circleSteps[newIdx].classList.add('active');
+            if (stepLabels[newIdx]) stepLabels[newIdx].classList.add('active');
+
+            // Update progress bar
+            const newPercent = ((currentStep - 1) / Math.max(1, (totalSteps() - 1))) * 100;
+            if (progressFill) progressFill.style.width = `${newPercent}%`;
+
+            updateNavigation();
+        }
+    });
+
+    // Confirmation modal submit
+    confirmSubmitBtn.addEventListener('click', () => {
+        // ensure payment fields are correct for Indigency before submit
+        if ((certInput.value || '').trim().toLowerCase() === 'indigency') {
+            if (hiddenPaymentInput) hiddenPaymentInput.value = '';
+            if (hiddenPaymentAmount) hiddenPaymentAmount.value = '';
+            // keep hiddenPaymentStatus (user should see Free of Charge or server status)
+            if (hiddenPaymentStatus && !hiddenPaymentStatus.value) {
+                hiddenPaymentStatus.value = (window.existingPaymentStatus && String(window.existingPaymentStatus).trim()) || 'Free of Charge';
+            }
+        } else {
+            if (hiddenPaymentAmount && !hiddenPaymentAmount.value) hiddenPaymentAmount.value = String(DEFAULT_AMOUNT);
+            if (hiddenPaymentStatus && !hiddenPaymentStatus.value) hiddenPaymentStatus.value = 'Pending';
+        }
+        document.getElementById("certForm").submit();
+    });
+
+    // updateNavigation uses the actual step-label text for header/subheader
+    function updateNavigation() {
+        refreshStepCollections();
+
+        // protect against out-of-range currentStep
+        if (currentStep < 1) currentStep = 1;
+        if (currentStep > totalSteps()) currentStep = totalSteps();
+
+        // hide/show back button
+        backBtn.style.visibility = currentStep === 1 ? 'hidden' : 'visible';
+
+        // derive label text if available
+        const labelText = (stepLabels[currentStep - 1] && stepLabels[currentStep - 1].textContent.trim()) || '';
+
+        // set headers based on labelText (friendly mapping)
+        if (/application/i.test(labelText)) {
+            mainHeader.textContent = "APPLICATION FORM";
+            subHeader.textContent = "Select a type of certification and provide the necessary details to apply.";
+            nextBtn.textContent = "NEXT >";
+        } else if (/payment/i.test(labelText)) {
+            mainHeader.textContent = "PAYMENT";
+            subHeader.textContent = "Settle your payment for your certification.";
+            nextBtn.textContent = "NEXT >";
+        } else if (/review/i.test(labelText)) {
+            mainHeader.textContent = "REVIEW and CONFIRMATION";
+            subHeader.textContent = "Please review all your information before submitting.";
+            nextBtn.textContent = "SUBMIT";
+        } else if (/submission/i.test(labelText) || getSubmissionStepIndex() === currentStep) {
+            // final submission screen
+            // remove headers and hr only once (protect with existence checks)
+            if (mainHeader && mainHeader.parentNode) mainHeader.remove();
+            if (subHeader && subHeader.parentNode) subHeader.remove();
             const hr = document.getElementById('mainHr');
-            if (hr) hr.remove();
-            backBtn.style.visibility = 'hidden';
-            if (nextBtn) nextBtn.textContent = "Back to Home";
+            if (hr && hr.parentNode) hr.remove();
 
-            // make the Next button redirect to dashboard (replace handler once)
+            backBtn.style.visibility = 'hidden';
+            // replace next button behavior to go to dashboard
+            nextBtn.textContent = "Back to Home";
+            // replace with a fresh listener to avoid duplicate handlers
             const newNext = nextBtn.cloneNode(true);
             nextBtn.parentNode.replaceChild(newNext, nextBtn);
             newNext.addEventListener('click', () => {
                 window.location.href = 'userPanel.php?page=userDashboard';
             });
-        }
-    }
-
-    // call this when cert type changes
-    function updateFlowBasedOnCertificate() {
-        const cert = (certInput.value || '').trim().toLowerCase();
-        const isIndigency = cert === 'indigency';
-
-        const paymentContent = contentByStep(2);
-        const paymentMarkerWrapper = document.querySelector('.stepss .steps[data-step="2"]');
-
-        if (isIndigency) {
-            if (paymentContent) paymentContent.classList.add('d-none');
-            if (paymentMarkerWrapper) paymentMarkerWrapper.classList.add('d-none');
-            if (hiddenPaymentInput) hiddenPaymentInput.value = 'FREE';
         } else {
-            if (paymentContent) paymentContent.classList.remove('d-none');
-            if (paymentMarkerWrapper) paymentMarkerWrapper.classList.remove('d-none');
-            if (hiddenPaymentInput && (!hiddenPaymentInput.value || hiddenPaymentInput.value === 'FREE')) {
-                hiddenPaymentInput.value = 'Brgy Payment Device';
-            }
+            // fallback
+            mainHeader.textContent = labelText || "APPLICATION";
+            subHeader.textContent = "";
+            nextBtn.textContent = "NEXT >";
         }
-
-        visibleSteps = rebuildVisibleSteps();
-
-        // If server wants to show submission (initialStepOriginal), prefer that visible step index
-        let startIdx = 0;
-        const serverIdx = visibleSteps.findIndex(s => Number(s.dataset.step) === initialStepOriginal);
-        startIdx = serverIdx !== -1 ? serverIdx : 0;
-
-        // ensure visibleIndex not out of bounds
-        if (visibleIndex >= visibleSteps.length) visibleIndex = visibleSteps.length - 1;
-
-        // show the correct visible step (prefer server override)
-        showVisibleStep(startIdx);
     }
 
-    // --- navigation handlers ---
-    // Next button
-    nextBtn.addEventListener('click', () => {
-        // current visible content element
-        const currentEl = visibleSteps[visibleIndex];
-        const currentOriginal = Number(currentEl.dataset.step);
-
-        // validation for required fields within the current visible step
-        let isValid = true;
-        const requiredFields = currentEl.querySelectorAll('[required]');
-        requiredFields.forEach(field => {
-            if ((field.type === 'checkbox' || field.type === 'radio')) {
-                if (!field.checked) {
-                    isValid = false;
-                    field.classList.add('is-invalid');
-                } else {
-                    field.classList.remove('is-invalid');
-                }
-            } else {
-                if (!field.value || (typeof field.value === 'string' && field.value.trim() === '')) {
-                    isValid = false;
-                    field.classList.add('is-invalid');
-                } else {
-                    field.classList.remove('is-invalid');
-                }
-            }
-        });
-
-        // Additional: if currentOriginal === 2 (payment) ensure a method chosen (unless it's hidden)
-        if (currentOriginal === 2 && (!hiddenPaymentInput.value || hiddenPaymentInput.value === '')) {
-            isValid = false;
-        }
-
-        if (!isValid) {
-            const validationModal = new bootstrap.Modal(document.getElementById("validationModal"));
-            validationModal.show();
-            return;
-        }
-
-        // If this is the last visible step
-        if (visibleIndex === visibleSteps.length - 1) {
-            // If currentOriginal is 3 (review) -> show confirmation modal (submit on confirm)
-            if (currentOriginal === 3) {
-                if (confirmationModal) confirmationModal.show();
-                return;
-            }
-            // If currentOriginal is 4 (submission screen), redirection already wired in showVisibleStep
-            return;
-        }
-
-        // Move forward to the next visible step
-        // mark current as completed and advance
-        currentEl.classList.remove('active-step');
-        currentEl.classList.add('completed');
-
-        visibleIndex++;
-        showVisibleStep(visibleIndex);
-    });
-
-    // Back button
-    backBtn.addEventListener('click', () => {
-        if (visibleIndex === 0) return;
-        // Un-complete the previous marker and go back
-        const currentEl = visibleSteps[visibleIndex];
-        currentEl.classList.remove('active-step');
-
-        // reduce visibleIndex then set classes
-        visibleIndex--;
-        showVisibleStep(visibleIndex);
-    });
-
-    // confirm submit
-    if (confirmSubmitBtn) {
-        confirmSubmitBtn.addEventListener('click', () => {
-            // When submitting, if cert is indigency ensure hiddenPaymentInput is 'FREE'
-            const cert = (certInput.value || '').trim().toLowerCase();
-            if (cert === 'indigency' && hiddenPaymentInput) hiddenPaymentInput.value = 'FREE';
-            document.getElementById("certForm").submit();
-        });
-    }
-
-    // --- Setup payment control UI (kept your original logic) ---
-    function setupPaymentControls() {
-        paymentButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                if (btn.classList.contains('disabled')) return;
-                paymentButtons.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-
-                const method = btn.dataset.method;
-                hiddenPaymentInput.value = method;
-
-                instructionPanels.forEach(panel => {
-                    panel.classList.toggle('d-none', panel.dataset.method !== method);
-                });
-            });
-        });
-    }
-    setupPaymentControls();
-
-    // --- Summary population (adapted: omit payment for Indigency) ---
+    // populateSummary - updated: Indigency -> payment_status only; others -> amount + payment_status
     function populateSummary() {
         const type = (certInput.value || '').trim().toLowerCase();
         const container = document.getElementById('summaryContainer');
+
         const rows = [
             ['Type of Certification:', certInput.value || '—'],
             ['Requesting For:', forSelect.value === 'myself' ? 'Myself' : 'Others'],
@@ -613,7 +678,6 @@ document.addEventListener("DOMContentLoaded", function () {
         // Guardianship: Child names only
         if (type === 'guardianship') {
             const childNames = Array.from(document.querySelectorAll('[name="child_name[]"]')).map(el => el.value.trim()).filter(Boolean);
-
             childNames.forEach((name, i) => {
                 rows.push([`Child ${i + 1} Name:`, name || '—']);
             });
@@ -627,17 +691,39 @@ document.addEventListener("DOMContentLoaded", function () {
             ]);
         }
 
-        // Common fields for all types (Claim Date & Purpose)
+        // Common fields for all types
         rows.push(
             ['Claim Date:', document.querySelector('[name="claim_date"]')?.value || '—'],
             ['Purpose:', document.querySelector('[name="purpose"]')?.value || '—']
         );
 
-        // Payment Method: include only if not indigency AND payment step is visible
-        const isIndigency = type === 'indigency';
-        const paymentContentVisible = !contentByStep(2)?.classList.contains('d-none');
-        if (!isIndigency && paymentContentVisible) {
-            rows.push(['Payment Method:', hiddenPaymentInput.value || '—']);
+        // Payment details — different rules for Indigency vs others
+        const clientAmount = (hiddenPaymentAmount?.value || '').toString().trim();
+        const clientStatus = (hiddenPaymentStatus?.value || '').toString().trim();
+        const serverAmount = (window.existingPaymentAmount || '').toString().trim();
+        const serverStatus = (window.existingPaymentStatus || '').toString().trim();
+
+        const amountVal = clientAmount || serverAmount || '';
+        const statusVal = clientStatus || serverStatus || '';
+
+        if (type === 'indigency') {
+            // show payment_status for indigency (use server/client value or friendly default)
+            rows.push(['Payment Status:', statusVal || 'Free of Charge']);
+        } else {
+            // show amount and payment status for non-indigency
+            let amtDisplay = '—';
+            if (amountVal !== null && String(amountVal).trim() !== '') {
+                const numeric = Number(String(amountVal).replace(/[^0-9.-]+/g, ''));
+                if (!isNaN(numeric)) {
+                    amtDisplay = '₱' + numeric.toFixed(2);
+                } else {
+                    amtDisplay = String(amountVal);
+                }
+            } else {
+                amtDisplay = '₱' + Number(DEFAULT_AMOUNT).toFixed(2);
+            }
+            rows.push(['Amount:', amtDisplay]);
+            rows.push(['Payment Status:', statusVal || 'Pending']);
         }
 
         // Build HTML
@@ -667,46 +753,91 @@ document.addEventListener("DOMContentLoaded", function () {
         container.innerHTML = html;
     }
 
-    // --- initial rendering & hooks ---
-    // initial form fields
-    refreshFields();
+    // react when user changes cert type (extra safety so JS also enforces Indigency mode)
+    function onCertTypeChange() {
+        const val = (certInput.value || '').trim().toLowerCase();
+        if (val === 'indigency') {
+            // clear payment hidden fields except status (we want to display a status)
+            if (hiddenPaymentInput) hiddenPaymentInput.value = '';
+            if (hiddenPaymentAmount) hiddenPaymentAmount.value = '';
+            // set status to existing or 'Free of Charge'
+            if (hiddenPaymentStatus) {
+                if (!hiddenPaymentStatus.value || !hiddenPaymentStatus.value.trim()) {
+                    hiddenPaymentStatus.value = (window.existingPaymentStatus && String(window.existingPaymentStatus).trim()) || 'Free of Charge';
+                }
+            }
 
-    // Update flow whenever certType changes, and when forSelect changes (myself/other)
-    function onCertTypeChanged() {
-        refreshFields();
-        updateFlowBasedOnCertificate();
+            // try to remove or hide payment step if present
+            const pStep = document.getElementById('paymentStep');
+            if (pStep && pStep.parentNode) {
+                pStep.parentNode.removeChild(pStep);
+            }
+            const pProgress = document.querySelector('.payment-progress-step');
+            if (pProgress && pProgress.parentNode) {
+                pProgress.parentNode.removeChild(pProgress);
+            }
+
+            // hide fee boxes etc.
+            const feeBoxes = document.querySelectorAll('.payment-container, .fee-box, #payment-instructions, .payment-instruction, .payment-btn');
+            feeBoxes.forEach(el => { if (el && el.style) el.style.display = 'none'; });
+
+            // refresh collections and update navigation
+            refreshStepCollections();
+            if (currentStep > totalSteps()) currentStep = totalSteps();
+            updateNavigation();
+
+            // update summary
+            populateSummary();
+        } else {
+            // non-indigency: ensure payment UI exists; reload if it was removed by previous action (simple and reliable)
+            if (!document.getElementById('paymentStep')) {
+                location.reload();
+            } else {
+                // ensure sensible defaults
+                if (hiddenPaymentInput && !hiddenPaymentInput.value) hiddenPaymentInput.value = (window.existingPaymentMethod || 'Brgy Payment Device');
+                if (hiddenPaymentAmount && !hiddenPaymentAmount.value) hiddenPaymentAmount.value = (window.existingPaymentAmount || String(DEFAULT_AMOUNT));
+                if (hiddenPaymentStatus && !hiddenPaymentStatus.value) hiddenPaymentStatus.value = (window.existingPaymentStatus || 'Pending');
+            }
+
+            refreshStepCollections();
+            updateNavigation();
+        }
     }
-    certInput.addEventListener('input', onCertTypeChanged);
-    certInput.addEventListener('change', onCertTypeChanged);
-    certInput.addEventListener('blur', onCertTypeChanged);
-    forSelect.addEventListener('change', refreshFields);
 
-    // run initial flow update (and set starting visible step considering server initial)
-    visibleSteps = rebuildVisibleSteps();
+    certInput.addEventListener('change', onCertTypeChange);
+    certInput.addEventListener('input', onCertTypeChange);
 
-    // If server provided cert type (page reloaded after submit), prefill it so flow updates correctly
-    if (serverCertType) {
-        certInput.value = serverCertType;
-    }
-    if (serverChosenPayment && hiddenPaymentInput) {
-        hiddenPaymentInput.value = serverChosenPayment;
-        // also set corresponding payment button active and instruction
-        paymentButtons.forEach(b => b.classList.toggle('active', b.dataset.method === serverChosenPayment));
-        instructionPanels.forEach(panel => panel.classList.toggle('d-none', panel.dataset.method !== serverChosenPayment));
-    }
+    // Final initial navigation update
+    refreshStepCollections();
+    updateNavigation();
 
-    // find index of original initialStep (php-provided)
-    let startIdx = visibleSteps.findIndex(s => Number(s.dataset.step) === initialStepOriginal);
-    if (startIdx === -1) startIdx = 0;
+    // If the page was loaded with an existing transaction, ensure hidden inputs reflect server values and populate summary if necessary
+    (function initFromServer() {
+        // server variables exposed: window.existingPaymentMethod, existingPaymentAmount, existingPaymentStatus, existingCertType
+        if (window.existingPaymentMethod && hiddenPaymentInput && !hiddenPaymentInput.value) {
+            hiddenPaymentInput.value = window.existingPaymentMethod;
+        }
+        if (window.existingPaymentAmount !== undefined && window.existingPaymentAmount !== null && hiddenPaymentAmount && !hiddenPaymentAmount.value) {
+            hiddenPaymentAmount.value = String(window.existingPaymentAmount);
+        }
+        if (window.existingPaymentStatus !== undefined && window.existingPaymentStatus !== null && hiddenPaymentStatus && !hiddenPaymentStatus.value) {
+            hiddenPaymentStatus.value = String(window.existingPaymentStatus);
+        }
+        // pre-select payment button if applicable
+        setupPaymentControls();
 
-    // make sure flow respects certificate type (this will also renumber markers)
-    updateFlowBasedOnCertificate();
+        // if existing cert is indigency, trigger the indigency UI adjustments
+        if ((window.existingCertType || '').toString().toLowerCase() === 'indigency') {
+            certInput.value = 'Indigency';
+            // render fields once so client-side parts are consistent
+            renderCertFields('Indigency', forSelect.value);
+        }
 
-    // Show correct visible step (server override handled in updateFlowBasedOnCertificate())
-    visibleSteps = rebuildVisibleSteps();
-    // if server wanted submission screen, we already applied it; show appropriate index
-    startIdx = visibleSteps.findIndex(s => Number(s.dataset.step) === initialStepOriginal);
-    if (startIdx === -1) startIdx = 0;
-    showVisibleStep(startIdx);
-
-}); // DOMContentLoaded end
+        // If initialStep indicates summary should show, populate it after a tiny delay
+        if (Number(window.initialStep || 1) >= 3) {
+            setTimeout(() => {
+                populateSummary();
+            }, 120);
+        }
+    })();
+});

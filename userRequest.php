@@ -324,7 +324,12 @@ function find_datetime_column($conn,$tableName) {
     $r = $st->get_result()->fetch_assoc(); $st->close(); return $r ? $r['COLUMN_NAME'] : null;
 }
 
-$vr_ts_col = find_datetime_column($conn,'view_request');
+// IMPORTANT: prefer the explicit `created_at` column on view_request so grouping/sorting is always by creation time
+if (table_has_column($conn, 'view_request', 'created_at')) {
+    $vr_ts_col = 'created_at';
+} else {
+    $vr_ts_col = find_datetime_column($conn,'view_request');
+}
 $br_ts_col = find_datetime_column($conn,'borrow_requests');
 $vr_ts_sql = $vr_ts_col ? "`{$vr_ts_col}`" : "NOW()";
 $br_ts_sql = $br_ts_col ? "`{$br_ts_col}`" : "NOW()";

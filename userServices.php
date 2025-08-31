@@ -179,14 +179,14 @@ html, body {
                   </a>
               </div>
               <div class="col d-flex">
-                  <a href="#" class="service-card light-green w-100">
-                      <i class="fas fa-file-alt icon"></i>
-                      <div>
-                          <h4>Barangay Clearance</h4>
-                          <p>Opisyal na dokumento na nagpapatunay na ang residente ay walang hindi pa natapos o hindi naayos na isyu sa barangay.</p>
-                      </div>
-                  </a>
-              </div>
+                <a href="userPanel.php?page=serviceBarangayClearance" class="service-card light-green w-100">
+                    <i class="fas fa-file-alt icon"></i>
+                    <div>
+                        <h4>Barangay Clearance</h4>
+                        <p>Opisyal na dokumento na nagpapatunay na ang residente ay walang hindi pa natapos o hindi naayos na isyu sa barangay.</p>
+                    </div>
+                </a>
+            </div>
               <div class="col d-flex">
                   <a href="userPanel.php?page=serviceCertification" class="service-card dark-green w-100">
                       <i class="fas fa-certificate icon"></i>

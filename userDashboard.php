@@ -73,7 +73,7 @@ if (is_numeric($userId) && intval($userId) > 0) {
 .section-title {
   font-size: var(--title-size);
   font-weight: 700;
-  margin: 0 0 10px 0;
+  margin-bottom: 0;
   /* gradient text */
   background: linear-gradient(90deg, var(--green-a) 0%, var(--green-b) 100%);
   -webkit-background-clip: text;
@@ -128,7 +128,7 @@ if (is_numeric($userId) && intval($userId) > 0) {
   align-items:center;
   justify-content:center;
   width:58%;
-  margin: 0 auto;
+  margin-top: 0;
   border: none;
   /* added drop shadow */
   box-shadow: 0 14px 30px rgba(20,82,20,0.08), 0 4px 8px rgba(11,38,16,0.04);
@@ -342,7 +342,7 @@ if (is_numeric($userId) && intval($userId) > 0) {
 }
 .most-requested-left .section-title {
   font-size: var(--title-size);
-  margin-bottom:8px;
+  margin-bottom:5px;
 }
 .most-requested-left p {
   margin:0 0 12px;

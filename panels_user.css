@@ -28,7 +28,6 @@ html,body{
   align-items:center;
   justify-content:space-between;
   gap:1rem;
-  margin-bottom:1rem;
 }
 .requests-title{display:flex;align-items:center;gap:.6rem}
 .gradient-title{
@@ -93,6 +92,58 @@ html,body{
 /* modal shell & band */
 .modal-minimal .modal-content{border-radius:12px;overflow:hidden;position:relative}
 .modal-minimal .modal-body{padding:0;position:relative;background:#fff}
+
+
+  #requestDetailModal .modal-content,
+    #requestDetailModal .modal-content.modal-minimal {
+      border-radius: 20px !important;
+      overflow: hidden; /* ensures children don't overflow rounded corners */
+      box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+      border: 0; /* remove default border if any */
+    }
+
+    /* Space inside the modal body */
+    #requestDetailModal .modal-body {
+      padding: 1.25rem;
+      position: relative; /* so positioned children (close button) are relative to this */
+      background: #fff; /* optional: ensure background is white */
+    }
+
+    /* Close icon */
+    #requestDetailModal .modal-close-icon {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 36px;
+      height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 0;
+      cursor: pointer;
+      border-radius: 50%;
+      z-index: 5;
+    }
+
+    /* Optional: slightly tighten band section to fit rounded corners */
+    #requestDetailModal .modal-band {
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    /* Ensures any full-width element (like a band with background color) doesn't square the corners */
+    #requestDetailModal .modal-band,
+    #requestDetailModal .modal-inner,
+    #requestDetailModal .modal-actions {
+      /* let them naturally follow the modal-content rounding because overflow is hidden */
+    }
+
+    /* Small responsive tweak for the dialog itself (optional) */
+    #requestDetailModal .modal-dialog {
+      max-width: 900px; /* keeps modal-lg from being too wide if you want */
+    }
 
 /* ---- band: only icon + title/subtitle (payment/doc hidden) ---- */
 .modal-band{
@@ -297,6 +348,28 @@ html,body{
 .pagination.pagination-circle .page-link.page-circle:hover,.pagination.pagination-circle .page-link.page-circle:focus{transform:translateY(-2px)}
 .pagination.pagination-circle .page-item.active .page-link.page-circle{background:var(--green-a);color:#fff!important;border-color:transparent;box-shadow:0 6px 16px rgba(40,167,69,0.12)}
 .pagination.pagination-circle .page-item.disabled .page-link.page-circle,.pagination.pagination-circle .page-link.page-ellipsis{background:transparent;color:#6B7280;border-color:transparent;cursor:default;transform:none;opacity:.75}
+
+  #requestsSection { /* optional: used for anchoring */
+    scroll-margin-top: 24px; /* ensure anchor isn't hidden behind fixed headers */
+  }
+
+  .pagination-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 28px;    /* space between card and pagination - tweak as needed */
+    margin-bottom: 40px; /* space below pagination */
+    pointer-events: auto;
+  }
+
+  /* keep card layout smooth when content changes */
+  #requestsSection .card {
+    transition: height 160ms ease;
+  }
+
+  /* small responsive tweak */
+  @media (max-width: 576px) {
+    .pagination-container { margin-top: 18px; margin-bottom: 28px; }
+  }
 
 /* accessibility helper */
 .sr-only{position:absolute!important;height:1px;width:1px;overflow:hidden;clip:rect(1px,1px,1px,1px);white-space:nowrap}

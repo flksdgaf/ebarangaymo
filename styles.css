@@ -14,6 +14,20 @@
     color: #2A9245;
 }
 
+/* default color */
+.user-label {
+  color: #212529;
+  transition: color 160ms ease;
+  opacity: 100%;
+}
+
+/* white when hovering/focusing the button, or when dropdown is open (.show) */
+#adminDropdown:hover .user-label,
+#adminDropdown:focus .user-label,
+.dropdown.show #adminDropdown .user-label {
+  color: #ffffff;
+}
+
 .custom-signin-btn {
     background-color: #2A9245;
     color: white;

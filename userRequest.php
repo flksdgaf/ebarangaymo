@@ -22,10 +22,19 @@ function table_has_column($conn, $tableName, $colName) {
 
 /* maps for payment / document progress */
 function map_payment_progress($pay, $requestType) {
-    $p = strtolower(trim($pay));
-    if ($p === '' && strtolower($requestType) === 'equipment borrowing') {
+    $p = strtolower(trim((string)$pay));
+    $rt = strtolower(trim((string)$requestType));
+
+    // Special-case Indigency: always show full / Free of Charge
+    if ($rt === 'indigency') {
+        return ['pct' => 100, 'label' => 'Free of Charge', 'color' => '#059669'];
+    }
+
+    // Equipment borrowing: no payment needed when empty
+    if ($p === '' && $rt === 'equipment borrowing') {
         return ['pct' => 100, 'label' => 'No Payment Needed', 'color' => '#9CA3AF'];
     }
+
     if ($p === 'paid') return ['pct' => 100, 'label' => 'Paid', 'color' => '#059669'];
     if ($p === 'unpaid' || $p === 'pending') return ['pct' => 35, 'label' => ucfirst($p ?: 'Unpaid'), 'color' => '#F59E0B'];
     if ($p !== '') return ['pct' => 60, 'label' => ucfirst($pay), 'color' => '#2563EB'];
@@ -390,9 +399,12 @@ $st->execute();
 $result = $st->get_result();
 
 /* helper functions for display */
-function displayPaymentText($pay,$requestType) {
+function displayPaymentText($pay, $requestType) {
+    $rt = strtolower(trim((string)$requestType));
+    // If Indigency and no explicit pay text, show Free of Charge
+    if (($pay === '' || $pay === null) && $rt === 'indigency') return 'Free of Charge';
     if ($pay !== '') return htmlspecialchars($pay);
-    if (strtolower($requestType) === 'equipment borrowing') return 'No Payment';
+    if ($rt === 'equipment borrowing') return 'No Payment';
     return '-';
 }
 function statusClass($s) {
@@ -462,7 +474,7 @@ $pageTitle = $filterMap[$filter] ?? 'My Requests';
             </div>
         </div>
 
-        <div class="list-wrapper">
+        <div class="list-wrapper" style="height: 800px;">
             <?php
             if ($result->num_rows):
                 $rows = [];
@@ -501,7 +513,7 @@ $pageTitle = $filterMap[$filter] ?? 'My Requests';
         </div>
 
         <?php if ($totalPages > 1): ?>
-            <nav aria-label="Page navigation">
+            <nav aria-label="Page navigation" style="margin-top: 15px;">
                 <ul class="pagination pagination-circle" role="navigation" aria-label="Pagination">
                     <?php
                     $range = 2; $ell = false;
@@ -747,21 +759,49 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 // bottom progress bars (kept unchanged)
                 modalBottomInfo.innerHTML = '';
+
+                // ---- PAYMENT SEGMENT ----
                 const pWrap = document.createElement('div'); pWrap.className = 'seg-wrap';
                 const pTitle = document.createElement('div'); pTitle.className = 'seg-title'; pTitle.textContent = 'Payment';
                 const pBar = document.createElement('div'); pBar.className = 'seg-bar';
                 const pFill = document.createElement('div'); pFill.className = 'seg-fill';
-                let pPct = 0, pLabel = 'Not set', pColor = '#6B7280';
-                const payAttr = (usedMeta && usedMeta.getAttribute('data-pay')) ? usedMeta.getAttribute('data-pay') : '';
-                const payL = (payAttr || '').toString().trim().toLowerCase();
-                if (payL === '' && rtype && rtype.toLowerCase().includes('equipment')) { pPct = 100; pLabel = 'No Payment Needed'; pColor = '#9CA3AF'; }
-                else if (payL === 'paid') { pPct = 100; pLabel = 'Paid'; pColor = '#059669'; }
-                else if (payL === 'unpaid' || payL === 'pending') { pPct = 35; pLabel = payAttr ? (payAttr.charAt(0).toUpperCase() + payAttr.slice(1)) : 'Unpaid'; pColor = '#F59E0B'; }
-                else if (payL !== '') { pPct = 60; pLabel = (payAttr.charAt(0).toUpperCase() + payAttr.slice(1)); pColor = '#2563EB'; }
-                pFill.style.width = pPct + '%'; pFill.style.background = pColor; pBar.appendChild(pFill);
+
+                // Prefer server-provided payMeta (data-pay-pct / data-pay-label / data-pay-color) if available
+                let pPct = (payMeta && typeof payMeta.pct === 'number' && !isNaN(payMeta.pct)) ? Number(payMeta.pct) : null;
+                let pLabel = (payMeta && payMeta.label) ? String(payMeta.label) : null;
+                let pColor = (payMeta && payMeta.color) ? String(payMeta.color) : null;
+
+                // If server did not provide a numeric pct, fall back to existing heuristics
+                if (pPct === null) {
+                    pPct = 0;
+                    pLabel = pLabel || 'Not set';
+                    pColor = pColor || '#6B7280';
+                    const payAttr = (usedMeta && usedMeta.getAttribute('data-pay')) ? usedMeta.getAttribute('data-pay') : '';
+                    const payL = (payAttr || '').toString().trim().toLowerCase();
+                    if (payL === '' && rtype && rtype.toLowerCase().includes('equipment')) {
+                        pPct = 100; pLabel = 'No Payment Needed'; pColor = '#9CA3AF';
+                    } else if (payL === 'paid') {
+                        pPct = 100; pLabel = 'Paid'; pColor = '#059669';
+                    } else if (payL === 'unpaid' || payL === 'pending') {
+                        pPct = 35; pLabel = payAttr ? (payAttr.charAt(0).toUpperCase() + payAttr.slice(1)) : 'Unpaid'; pColor = '#F59E0B';
+                    } else if (payL !== '') {
+                        pPct = 60; pLabel = (payAttr.charAt(0).toUpperCase() + payAttr.slice(1)); pColor = '#2563EB';
+                    }
+                }
+
+                // Ensure numeric and in 0..100
+                pPct = Math.max(0, Math.min(100, Number(pPct) || 0));
+                pLabel = pLabel || 'Not set';
+                pColor = pColor || '#6B7280';
+
+                // Start with 0 width then animate to target for smooth transition
+                pFill.style.width = '0%';
+                pFill.style.background = pColor;
+                pBar.appendChild(pFill);
                 const pCaption = document.createElement('div'); pCaption.className = 'seg-caption'; pCaption.textContent = pLabel;
                 pWrap.appendChild(pTitle); pWrap.appendChild(pBar); pWrap.appendChild(pCaption);
 
+                // ---- DOCUMENT SEGMENT (keeps original logic) ----
                 const dWrap = document.createElement('div'); dWrap.className = 'seg-wrap';
                 const dTitle = document.createElement('div'); dTitle.className = 'seg-title'; dTitle.textContent = 'Document';
                 const dBar = document.createElement('div'); dBar.className = 'seg-bar';
@@ -772,13 +812,25 @@ document.addEventListener('DOMContentLoaded', function () {
                 else if (sLow === 'processing' || sLow === 'pending' || sLow === '') { dPct = 35; dLabel = 'Processing'; dColor = '#F59E0B'; }
                 else if (sLow === 'ready to release') { dPct = 85; dLabel = 'Ready to Release'; dColor = '#10B981'; }
                 else if (sLow === 'cancelled' || sLow === 'rejected') { dPct = 100; dLabel = status; dColor = '#EF4444'; }
-                dFill.style.width = dPct + '%'; dFill.style.background = dColor; dBar.appendChild(dFill);
+                dFill.style.width = '0%';
+                dFill.style.background = dColor;
+                dBar.appendChild(dFill);
                 const dCaption = document.createElement('div'); dCaption.className = 'seg-caption'; dCaption.textContent = dLabel;
                 dWrap.appendChild(dTitle); dWrap.appendChild(dBar); dWrap.appendChild(dCaption);
 
+                // append to modal and animate both fills
                 modalBottomInfo.appendChild(pWrap); modalBottomInfo.appendChild(dWrap);
                 modalBottomInfo.setAttribute('aria-hidden','false');
-                setTimeout(()=> { pFill.style.width = pPct + '%'; dFill.style.width = dPct + '%'; }, 40);
+
+                // animate to final widths after a tick (so CSS transitions run)
+                setTimeout(()=> {
+                    pFill.style.width = pPct + '%';
+                    dFill.style.width = dPct + '%';
+                }, 40);
+
+                // update accessible value attributes (optional but helpful)
+                pFill.setAttribute('aria-valuenow', String(Math.round(pPct)));
+                dFill.setAttribute('aria-valuenow', String(Math.round(dPct)));
 
                 /* grouping details — same logic as before */
                 (function groupDetails() {
@@ -811,7 +863,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         return 'application';
                     }
 
-                    const appRows = [], payRows = [], otherRows = [];
+                    const appRows = [], otherRows = []; 
+                    let payRows = []; // changed from const -> let so we can filter for Indigency
+
                     rows.forEach(row => {
                         const lab = (row.querySelector('.label') && row.querySelector('.label').textContent) ? row.querySelector('.label').textContent : '';
                         const labNorm = lab.trim().toLowerCase();
@@ -822,6 +876,15 @@ document.addEventListener('DOMContentLoaded', function () {
                         else if (g === 'payment') payRows.push(row.cloneNode(true));
                         else otherRows.push(row.cloneNode(true));
                     });
+
+                    // --- NEW: when request is Indigency, remove specific payment rows (Payment Method & Amount)
+                    if ((rtype || '').toString().toLowerCase().includes('indigency')) {
+                        const forbidden = ['payment method', 'amount'];
+                        payRows = payRows.filter(row => {
+                            const lbl = (row.querySelector('.label') && row.querySelector('.label').textContent) ? row.querySelector('.label').textContent.trim().toLowerCase() : '';
+                            return !forbidden.includes(lbl);
+                        });
+                    }
 
                     modalInner.querySelectorAll('.detail-grid').forEach(n => n.remove());
 
@@ -848,6 +911,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                         const cols = document.createElement('div'); cols.className = 'details-columns';
                         cols.style.gridTemplateColumns = '1fr 1fr';
+
                         function makeCol(title, rowsArr) {
                             const c = document.createElement('div');
                             const h = document.createElement('h5'); h.textContent = title; h.style.color = 'var(--green-a)'; h.style.margin = '0 0 10px 0'; h.style.fontWeight = '700';
@@ -856,9 +920,12 @@ document.addEventListener('DOMContentLoaded', function () {
                             c.appendChild(h); c.appendChild(body);
                             return c;
                         }
-                        cols.appendChild(makeCol('Payment Details', payRows));
+
+                        // Only add Payment Details column if there are payment rows to display
+                        if (payRows.length > 0) cols.appendChild(makeCol('Payment Details', payRows));
                         cols.appendChild(makeCol('Other Details', otherRows));
                         modalInner.appendChild(cols);
+
                     } else {
                         const cols = document.createElement('div'); cols.className = 'details-columns';
                         function makeCol(title, rowsArr) {
@@ -869,8 +936,10 @@ document.addEventListener('DOMContentLoaded', function () {
                             c.appendChild(h); c.appendChild(body);
                             return c;
                         }
+
                         cols.appendChild(makeCol('Application Details', appRows));
-                        cols.appendChild(makeCol('Payment Details', payRows));
+                        // Only add Payment Details column if payRows is not empty
+                        if (payRows.length > 0) cols.appendChild(makeCol('Payment Details', payRows));
                         cols.appendChild(makeCol('Other Details', otherRows));
                         modalInner.appendChild(cols);
                     }

@@ -55,8 +55,13 @@
 .main-content {
     margin-left: 300px;
     background-color: #ffffff;
-    
   }
+
+.user-main-content {
+      margin-left: 300px;
+      height: 92%;
+      background-color: #efefef;
+}
 
 @media (max-width: 768px) {
   .main-content {

@@ -67,6 +67,14 @@ document.addEventListener("DOMContentLoaded", function () {
         return circleSteps.length;
     }
 
+    function computeProgressPercent(step, stepsCount) {
+        stepsCount = Number(stepsCount) || 1;
+        step = Number(step) || 1;
+        // when there's only 1 step treat as 0% (or you could return 100 if preferred)
+        const denom = Math.max(1, stepsCount - 1);
+        return Math.round(((step - 1) / denom) * 100);
+    }
+
     // — ADDED: Payment method controls
     const setupPaymentControls = function () {
         if (!paymentButtons || paymentButtons.length === 0) return;
@@ -399,6 +407,15 @@ document.addEventListener("DOMContentLoaded", function () {
             const feeBoxes = document.querySelectorAll('.payment-container, .fee-box, #payment-instructions, .payment-instruction, .payment-btn');
             feeBoxes.forEach(el => { if (el && el.style) el.style.display = 'none'; });
 
+            // --- NEW: ensure progress bar visually shows full completion for Indigency ---
+            try {
+                if (progressFill) {
+                    const pct = computeProgressPercent(currentStep, totalSteps());
+                    progressFill.style.width = pct + '%';
+                    progressFill.setAttribute('aria-valuenow', String(pct));
+                }
+            } catch (e) { /* ignore if not present */ }
+
         } else {
             // non-indigency: ensure payment UI visible and default hidden fields if blank
             const paymentContent = document.getElementById('paymentStep');
@@ -537,7 +554,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
             // Update progress bar
             const progressPercent = ((currentStep - 1) / Math.max(1, (tSteps - 1))) * 100;
-            if (progressFill) progressFill.style.width = `${progressPercent}%`;
+            // --- NEW: if indigency, force full width so "Free of Charge" looks complete ---
+            const pct = computeProgressPercent(currentStep, tSteps);
+            if (progressFill) {
+                progressFill.style.width = pct + '%';
+                progressFill.setAttribute('aria-valuenow', String(pct));
+            }
 
             // If stepping into summary, populate it
             if (getSummaryStepIndex() > 0 && currentStep === getSummaryStepIndex()) {
@@ -569,8 +591,11 @@ document.addEventListener("DOMContentLoaded", function () {
             if (stepLabels[newIdx]) stepLabels[newIdx].classList.add('active');
 
             // Update progress bar
-            const newPercent = ((currentStep - 1) / Math.max(1, (totalSteps() - 1))) * 100;
-            if (progressFill) progressFill.style.width = `${newPercent}%`;
+            const pct = computeProgressPercent(currentStep, totalSteps());
+            if (progressFill) {
+                progressFill.style.width = pct + '%';
+                progressFill.setAttribute('aria-valuenow', String(pct));
+            }
 
             updateNavigation();
         }
@@ -600,6 +625,13 @@ document.addEventListener("DOMContentLoaded", function () {
         // protect against out-of-range currentStep
         if (currentStep < 1) currentStep = 1;
         if (currentStep > totalSteps()) currentStep = totalSteps();
+
+        // Ensure progress bar shows full if Indigency (cover init / UI updates)
+        if (progressFill) {
+            const pct = computeProgressPercent(currentStep, totalSteps());
+            progressFill.style.width = pct + '%';
+            progressFill.setAttribute('aria-valuenow', String(pct));
+        }
 
         // hide/show back button
         backBtn.style.visibility = currentStep === 1 ? 'hidden' : 'visible';
@@ -788,6 +820,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
             // update summary
             populateSummary();
+
+            // ensure progress bar full for Indigency
+            if (progressFill) {
+                progressFill.style.width = '100%';
+                progressFill.setAttribute('aria-valuenow', '100');
+            }
         } else {
             // non-indigency: ensure payment UI exists; reload if it was removed by previous action (simple and reliable)
             if (!document.getElementById('paymentStep')) {
@@ -806,6 +844,46 @@ document.addEventListener("DOMContentLoaded", function () {
 
     certInput.addEventListener('change', onCertTypeChange);
     certInput.addEventListener('input', onCertTypeChange);
+
+    // Final initial navigation update
+    refreshStepCollections();
+    updateNavigation();
+
+    // If the page was loaded with an existing transaction, ensure hidden inputs reflect server values and populate summary if necessary
+    (function initFromServer() {
+        // server variables exposed: window.existingPaymentMethod, existingPaymentAmount, existingPaymentStatus, existingCertType
+        if (window.existingPaymentMethod && hiddenPaymentInput && !hiddenPaymentInput.value) {
+            hiddenPaymentInput.value = window.existingPaymentMethod;
+        }
+        if (window.existingPaymentAmount !== undefined && window.existingPaymentAmount !== null && hiddenPaymentAmount && !hiddenPaymentAmount.value) {
+            hiddenPaymentAmount.value = String(window.existingPaymentAmount);
+        }
+        if (window.existingPaymentStatus !== undefined && window.existingPaymentStatus !== null && hiddenPaymentStatus && !hiddenPaymentStatus.value) {
+            hiddenPaymentStatus.value = String(window.existingPaymentStatus);
+        }
+        // pre-select payment button if applicable
+        setupPaymentControls();
+
+        // if existing cert is indigency, trigger the indigency UI adjustments
+        if ((window.existingCertType || '').toString().toLowerCase() === 'indigency') {
+            certInput.value = 'Indigency';
+            // render fields once so client-side parts are consistent
+            renderCertFields('Indigency', forSelect.value);
+
+            // ensure progress bar full when loaded from server as Indigency
+            if (progressFill) {
+                progressFill.style.width = '100%';
+                progressFill.setAttribute('aria-valuenow', '100');
+            }
+        }
+
+        // If initialStep indicates summary should show, populate it after a tiny delay
+        if (Number(window.initialStep || 1) >= 3) {
+            setTimeout(() => {
+                populateSummary();
+            }, 120);
+        }
+    })();
 
     // Final initial navigation update
     refreshStepCollections();

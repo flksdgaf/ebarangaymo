@@ -156,11 +156,8 @@ if (in_array($role, $admin_roles)) {
             </div>
             <div class="d-none d-md-block flex-grow-1"></div>
             <div class="dropdown">
-                <img src="../<?php echo htmlspecialchars($profilePic); ?>?v=<?php echo time() ?>" class="rounded-circle" width="40" height="40" style="object-fit: cover; margin-right: 8px; border: 2px solid #000000;">
-                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="adminDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    <!-- Text for large screens -->
-                    <span class="d-none d-md-inline" style="color: #212529; "><?php echo htmlspecialchars($fullName); ?> - <?php echo htmlspecialchars($_SESSION['loggedInUserRole']); ?></span>
-                    <!-- Icon for smaller screens -->
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="adminDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="margin-right: 5px;">
+                    <span class="user-label d-none d-md-inline"><?= htmlspecialchars($fullName) ?> - <?= htmlspecialchars($_SESSION['loggedInUserRole']) ?></span>
                     <span class="d-md-none icon"><i class="fas fa-user"></i></span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
@@ -168,6 +165,7 @@ if (in_array($role, $admin_roles)) {
                     <li><a class="dropdown-item" href="<?php echo htmlspecialchars($settingsHref); ?>"><i class="fas fa-user-cog me-2"></i>Account Settings</a></li>                    
                     <li><a class="dropdown-item" href="functions/logout.php"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
                 </ul>
+                <img src="../<?php echo htmlspecialchars($profilePic); ?>?v=<?php echo time() ?>" class="rounded-circle" width="40" height="40" style="object-fit: cover; margin-right: 5px; border: 2px solid #000000;">
             </div>
         </div>
     </nav>

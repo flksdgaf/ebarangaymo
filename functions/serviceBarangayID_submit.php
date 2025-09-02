@@ -7,185 +7,82 @@ if (!isset($_SESSION['auth']) || $_SESSION['auth'] !== true) {
     exit();
 }
 
-$userId = (int)$_SESSION['loggedInUserID'];
+$userId = $_SESSION['loggedInUserID'];
 
-// 1) Collect posted fields (map names used in serviceBarangayClearance.php)
-$transactionType = isset($_POST['transactiontype']) ? trim($_POST['transactiontype']) : 'New Application';
-$lastName        = isset($_POST['lastname']) ? trim($_POST['lastname']) : '';
-$firstName       = isset($_POST['firstname']) ? trim($_POST['firstname']) : '';
-$middleName      = isset($_POST['middlename']) ? trim($_POST['middlename']) : '';
-$street          = isset($_POST['street']) ? trim($_POST['street']) : '';
-$purok           = isset($_POST['purok']) ? trim($_POST['purok']) : '';
-$barangay        = isset($_POST['barangay']) ? trim($_POST['barangay']) : '';
-$municipality    = isset($_POST['municipality']) ? trim($_POST['municipality']) : '';
-$province        = isset($_POST['province']) ? trim($_POST['province']) : '';
-$birthDate       = isset($_POST['birthdate']) ? trim($_POST['birthdate']) : null;
-$age             = isset($_POST['age']) ? (int) $_POST['age'] : null;
-$birthPlace      = isset($_POST['birth_place']) ? trim($_POST['birth_place']) : '';
-$maritalStatus   = isset($_POST['marital_status']) ? trim($_POST['marital_status']) : '';
-$remarks         = isset($_POST['remarks']) ? trim($_POST['remarks']) : '';
-$ctcNumber       = isset($_POST['ctc_number']) ? trim($_POST['ctc_number']) : '';
-$claimDate       = isset($_POST['claim_date']) ? trim($_POST['claim_date']) : null;
-$paymentMethod   = isset($_POST['payment_method']) ? trim($_POST['payment_method']) : '';
-$requestSource   = 'Online';
+// 1) Collect posted fields
+$transactionType = $_POST['transactiontype'];
+$fullName        = $_POST['fullname'];
+$purok           = $_POST['purok'];
+// $address         = $_POST['address'];
+$height          = $_POST['height'];
+$weight          = $_POST['weight'];
+$birthdate       = $_POST['birthday'];
+$birthplace      = $_POST['birthplace'];
+$civilstatus     = $_POST['civilstatus'];
+$religion        = $_POST['religion'];
+$contactperson   = $_POST['contactperson'];
+$contactaddress  = $_POST['emergency_contact_address'];
+$claimDate       = $_POST['claimdate'];
+$paymentMethod   = $_POST['paymentMethod'];
+$requestSource = 'Online';
 
-// Build full_name in "LAST, FIRST MIDDLE" format (middle optional)
-$fullName = trim($lastName);
-if ($firstName !== '') {
-    $fullName .= ', ' . $firstName;
-    if ($middleName !== '') $fullName .= ' ' . $middleName;
+// 2) Handle file upload
+$formalPicName = null;
+if (!empty($_FILES['brgyIDpicture']['name']) && $_FILES['brgyIDpicture']['error'] === UPLOAD_ERR_OK) {
+    $uploadDir = __DIR__ . '/../barangayIDpictures/';
+    if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+    $formalPicName = uniqid() . '_' . basename($_FILES['brgyIDpicture']['name']);
+    move_uploaded_file($_FILES['brgyIDpicture']['tmp_name'], $uploadDir . $formalPicName);
 }
 
-// 2) Handle file upload (picture) — optional
-$pictureFileName = null;
-if (!empty($_FILES['picture']['name']) && isset($_FILES['picture']) && $_FILES['picture']['error'] === UPLOAD_ERR_OK) {
-    $uploadDir = __DIR__ . '/../barangayClearancePictures/';
-    if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0755, true);
-    }
-
-    // sanitize filename and make unique
-    $orig = basename($_FILES['picture']['name']);
-    $ext = pathinfo($orig, PATHINFO_EXTENSION);
-    $pictureFileName = uniqid('clr_') . ($ext ? '.' . $ext : '');
-    $target = $uploadDir . $pictureFileName;
-
-    if (!move_uploaded_file($_FILES['picture']['tmp_name'], $target)) {
-        // If upload fails, null the filename and continue (you may want to handle differently)
-        $pictureFileName = null;
-    }
-}
-
-// 3) Generate next transaction_id (robustly parse trailing digits)
+// 3) Generate next transaction_id
 $stmt = $conn->prepare("
-    SELECT transaction_id
-      FROM barangay_clearance_requests
-     ORDER BY id DESC
+    SELECT transaction_id 
+      FROM barangay_id_requests
+     ORDER BY id DESC 
      LIMIT 1
 ");
-$lastNumber = 0;
-if ($stmt) {
-    $stmt->execute();
-    $res = $stmt->get_result();
-    if ($res && $res->num_rows === 1) {
-        $lastTid = $res->fetch_assoc()['transaction_id'];
-        if (preg_match('/(\d+)$/', $lastTid, $m)) {
-            $lastNumber = intval($m[1]);
-        }
-    }
-    $stmt->close();
+$stmt->execute();
+$res = $stmt->get_result();
+if ($res && $res->num_rows === 1) {
+    $lastTid = $res->fetch_assoc()['transaction_id'];
+    $num     = intval(substr($lastTid, 7)) + 1;
+} else {
+    $num = 1;
 }
-$num = $lastNumber + 1;
-$transactionId = sprintf('BRGYCLEAR-%07d', $num);
-
-// 4) Insert into barangay_clearance_requests
-$createdAt = date('Y-m-d H:i:s');
-$updatedAt = $createdAt;
-$dateIssued = null;    // default null
-$placeIssued = null;   // default null
-$amountPaid = 0.00;    // not paid yet
-$orNumber = null;
-$paymentStatus = 'Unpaid';
-$documentStatus = 'Pending';
-$requestType = 'Barangay Clearance'; // you may want to set from $transactionType instead
-
-$sql = "
-  INSERT INTO barangay_clearance_requests
-    (account_id, transaction_id, request_type, full_name, street, purok, barangay, municipality, province,
-     birth_date, age, birth_place, marital_status, remarks, ctc_number,
-     date_issued, place_issued, amount_paid, or_number, picture,
-     claim_date, payment_method, payment_status, document_status, created_at, updated_at, request_source)
-  VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-";
-
-$stmt = $conn->prepare($sql);
-if (!$stmt) {
-    // Debug/troubleshooting - in production you may want to log instead
-    error_log("Prepare failed: " . $conn->error);
-    header("Location: ../userPanel.php?page=serviceBarangayClearance");
-    exit();
-}
-
-// bind types:
-// i account_id
-// s transaction_id
-// s request_type
-// s full_name
-// s street
-// s purok
-// s barangay
-// s municipality
-// s province
-// s birth_date
-// i age
-// s birth_place
-// s marital_status
-// s remarks
-// s ctc_number
-// s date_issued (nullable)
-// s place_issued (nullable)
-// d amount_paid
-// s or_number (nullable)
-// s picture (nullable)
-// s claim_date
-// s payment_method
-// s payment_status
-// s document_status
-// s created_at
-// s updated_at
-// s request_source
-
-$stmt->bind_param(
-    "isssssssssisssssdsssssssss",
-    $userId,
-    $transactionId,
-    $requestType,
-    $fullName,
-    $street,
-    $purok,
-    $barangay,
-    $municipality,
-    $province,
-    $birthDate,
-    $age,
-    $birthPlace,
-    $maritalStatus,
-    $remarks,
-    $ctcNumber,
-    $dateIssued,
-    $placeIssued,
-    $amountPaid,
-    $orNumber,
-    $pictureFileName,
-    $claimDate,
-    $paymentMethod,
-    $paymentStatus,
-    $documentStatus,
-    $createdAt,
-    $updatedAt,
-    $requestSource
-);
-
-if (!$stmt->execute()) {
-    // insert failed - log and redirect back (adjust behavior as you prefer)
-    error_log("Insert failed: " . $stmt->error);
-    $stmt->close();
-    header("Location: ../userPanel.php?page=serviceBarangayClearance");
-    exit();
-}
+$transactionId = sprintf('BRGYID-%07d', $num);
 $stmt->close();
 
-// 5) Redirect back to appropriate panel (preserve reference tid)
+// 4) Insert into barangay_id_requests
+$stmt = $conn->prepare("
+  INSERT INTO barangay_id_requests
+    (account_id, transaction_id, transaction_type, full_name, purok,
+     height, weight, birth_date, birth_place, civil_status, religion,
+     emergency_contact_person, emergency_contact_address, formal_picture, claim_date, payment_method, request_source)
+  VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+");
+$stmt->bind_param(
+    "issssddssssssssss",
+    $userId, $transactionId, $transactionType, $fullName, $purok,
+    $height, $weight, $birthdate, $birthplace, $civilstatus,
+    $religion, $contactperson, $contactaddress, $formalPicName, $claimDate, $paymentMethod, $requestSource
+);
+$stmt->execute();
+$stmt->close();
+
+// 5) Redirect back to the appropriate panel
 if (!empty($_POST['superAdminRedirect'])) {
+    // Came from the super‐admin panel → send back there
     header("Location: ../superAdminPanel.php?page=superAdminRequest&transaction_id={$transactionId}");
     exit();
 }
 
 if (!empty($_POST['adminRedirect'])) {
+    // Came from the admin panel → send back there
     header("Location: ../adminPanel.php?page=adminRequest&transaction_id={$transactionId}");
     exit();
 }
 
-// Default: user panel — show submission screen with tid
-header("Location: ../userPanel.php?page=serviceBarangayClearance&tid={$transactionId}");
+// Default: user panel
+header("Location: ../userPanel.php?page=serviceBarangayID&tid={$transactionId}");
 exit();

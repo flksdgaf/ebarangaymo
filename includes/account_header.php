@@ -47,7 +47,9 @@ $pageTitles = [
     'serviceBarangayID' => 'Barangay ID',
     'serviceCertification' => 'Certification',
     'serviceBusinessPermit' => 'Business Permit',
-    'serviceEquipmentBorrowing' => 'Equipment Borrowing'
+    'serviceEquipmentBorrowing' => 'Equipment Borrowing',
+    'serviceBarangayClearance' => 'Barangay Clearance',
+    'serviceBusinessClearance' => 'Business Clearance'
 ];
 
 $topbarText = $pageTitles[$page] ?? 'Home';

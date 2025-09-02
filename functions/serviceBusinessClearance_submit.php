@@ -2,9 +2,8 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-require 'dbconn.php'; // adjust path relative to this file
+require 'dbconn.php';
 
-// Basic auth check (align with your other handlers)
 if (!isset($_SESSION['auth']) || $_SESSION['auth'] !== true) {
     header("Location: ../index.php");
     exit();
@@ -12,7 +11,7 @@ if (!isset($_SESSION['auth']) || $_SESSION['auth'] !== true) {
 
 $userId = (int)($_SESSION['loggedInUserID'] ?? 0);
 
-// -------------------- 1) Collect posted fields --------------------
+// Collect posted fields
 $lastName       = isset($_POST['lastname']) ? trim($_POST['lastname']) : '';
 $firstName      = isset($_POST['firstname']) ? trim($_POST['firstname']) : '';
 $middleName     = isset($_POST['middlename']) ? trim($_POST['middlename']) : '';
@@ -28,24 +27,24 @@ $address        = isset($_POST['address']) ? trim($_POST['address']) : '';
 $ctcNumber      = isset($_POST['ctc_number']) ? trim($_POST['ctc_number']) : '';
 $claimDate      = (isset($_POST['claim_date']) && $_POST['claim_date'] !== '') ? trim($_POST['claim_date']) : null;
 $paymentMethod  = isset($_POST['payment_method']) ? trim($_POST['payment_method']) : '';
-$requestSource  = 'Online'; // fixed
+$requestSource  = 'Online';
 
-// 1.a) Apply defaults for barangay/municipality/province if omitted
+// Defaults for location fields
 if (empty($barangay)) $barangay = 'Magang';
 if (empty($municipality)) $municipality = 'Daet';
 if (empty($province)) $province = 'Camarines Norte';
 
-// Build full_name in "LAST, FIRST MIDDLE" format
+// Build full_name "LAST, FIRST MIDDLE"
 $fullName = trim($lastName);
 if ($firstName !== '') {
     $fullName .= ', ' . $firstName;
     if ($middleName !== '') $fullName .= ' ' . $middleName;
 }
 
-// -------------------- 2) Handle picture upload (optional) --------------------
+// Handle optional picture upload
 $pictureFilePath = null;
 if (!empty($_FILES['picture']['name']) && isset($_FILES['picture']) && $_FILES['picture']['error'] === UPLOAD_ERR_OK) {
-    $uploadDir = __DIR__ . '/../uploads/business_clearance/';
+    $uploadDir = __DIR__ . '/../businessClearancePictures/';
     if (!is_dir($uploadDir)) {
         mkdir($uploadDir, 0755, true);
     }
@@ -55,25 +54,19 @@ if (!empty($_FILES['picture']['name']) && isset($_FILES['picture']) && $_FILES['
     $ext = $ext ? strtolower($ext) : '';
     $allowed = ['jpg','jpeg','png','gif','webp'];
     if (in_array($ext, $allowed, true)) {
-        // create safe unique name
         $safeName = 'bc_' . time() . '_' . bin2hex(random_bytes(4)) . ($ext ? '.' . $ext : '');
         $target = $uploadDir . $safeName;
         if (move_uploaded_file($_FILES['picture']['tmp_name'], $target)) {
-            // store web-accessible relative path
-            $pictureFilePath = 'uploads/business_clearance/' . $safeName;
+            $pictureFilePath = $safeName;
         } else {
-            // upload failed: continue but do not stop the whole flow
             $pictureFilePath = null;
         }
     } else {
-        // unsupported extension -> ignore file
         $pictureFilePath = null;
     }
 }
 
-// -------------------- 3) Generate next transaction_id --------------------
-// We'll attempt to parse the last transaction_id and increment its trailing number.
-// Format used: BUSCLR-0000001 (7 digits padded)
+// Generate next transaction_id (BUSCLR-0000001)
 $lastNumber = 0;
 $stmt = $conn->prepare("SELECT transaction_id FROM business_clearance_requests ORDER BY id DESC LIMIT 1");
 if ($stmt) {
@@ -90,18 +83,22 @@ if ($stmt) {
 $num = $lastNumber + 1;
 $transactionId = sprintf('BUSCLR-%07d', $num);
 
-// -------------------- 4) Prepare insert into business_clearance_requests --------------------
+// Prepare insert
 $createdAt = date('Y-m-d H:i:s');
 $updatedAt = $createdAt;
 $dateIssued = null;
 $placeIssued = null;
-$amountPaid = 0.00;      // not paid yet
 $orNumber = null;
-$paymentStatus = 'Unpaid';
-$documentStatus = 'Pending';
+$paymentStatus = 'Pending';
+
+// DOCUMENT STATUS: default changed to "For Verification" (but will accept posted value if present)
+$documentStatus = isset($_POST['document_status']) && $_POST['document_status'] !== '' ? trim($_POST['document_status']) : 'For Verification';
+
+// AMOUNT: default to 130 (will accept posted amount if provided)
+$amount = (isset($_POST['amount']) && $_POST['amount'] !== '') ? floatval($_POST['amount']) : 130.00;
+
 $requestType = 'Business Clearance';
 
-// Build SQL and prepared statement
 $sql = "
 INSERT INTO business_clearance_requests
     (account_id, transaction_id, request_type, full_name, purok, barangay, municipality, province,
@@ -113,105 +110,59 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
 
 $stmt = $conn->prepare($sql);
 if (!$stmt) {
-    // log and redirect back
     error_log("Prepare failed (business_clearance insert): " . $conn->error);
     $_SESSION['svc_error'] = 'Server error. Please try again later.';
     header("Location: ../serviceBusinessClearance.php");
     exit();
 }
 
-// Build type string and bind variables
-// Types per column:
-// 1 account_id (i)
-// 2 transaction_id (s)
-// 3 request_type (s)
-// 4 full_name (s)
-// 5 purok (s)
-// 6 barangay (s)
-// 7 municipality (s)
-// 8 province (s)
-// 9 age (i)
-// 10 marital_status (s)
-// 11 business_name (s)
-// 12 business_type (s)
-// 13 address (s)
-// 14 ctc_number (s)
-// 15 date_issued (s)
-// 16 place_issued (s)
-// 17 amount (d)
-// 18 or_number (s)
-// 19 picture (s)
-// 20 claim_date (s)
-// 21 payment_method (s)
-// 22 payment_status (s)
-// 23 document_status (s)
-// 24 created_at (s)
-// 25 updated_at (s)
-// 26 request_source (s)
-$typeString = 'i' . str_repeat('s', 7) . 'i' . str_repeat('s', 6) . 's' . 'd' . str_repeat('s', 8);
-// Explanation: i + 7*s (positions 2-8) + i (age) + 6*s (pos 10-15) + s (pos16) + d (pos17) + 8*s (pos18-25)
-// To avoid confusion, we'll construct the array to match the SQL column order exactly:
-
 $bindVars = [
-    $userId,            // i
-    $transactionId,     // s
-    $requestType,       // s
-    $fullName,          // s
-    $purok,             // s
-    $barangay,          // s
-    $municipality,      // s
-    $province,          // s
-    $age,               // i
-    $maritalStatus,     // s
-    $businessName,      // s
-    $businessType,      // s
-    $address,           // s
-    $ctcNumber,         // s
-    $dateIssued,        // s (nullable)
-    $placeIssued,       // s (nullable)
-    $amountPaid,        // d
-    $orNumber,          // s
-    $pictureFilePath,   // s (nullable)
-    $claimDate,         // s (nullable)
-    $paymentMethod,     // s
-    $paymentStatus,     // s
-    $documentStatus,    // s
-    $createdAt,         // s
-    $updatedAt,         // s
-    $requestSource      // s
+    $userId,
+    $transactionId,
+    $requestType,
+    $fullName,
+    $purok,
+    $barangay,
+    $municipality,
+    $province,
+    $age,
+    $maritalStatus,
+    $businessName,
+    $businessType,
+    $address,
+    $ctcNumber,
+    $dateIssued,
+    $placeIssued,
+    $amount,
+    $orNumber,
+    $pictureFilePath,
+    $claimDate,
+    $paymentMethod,
+    $paymentStatus,
+    $documentStatus,
+    $createdAt,
+    $updatedAt,
+    $requestSource
 ];
 
-// Create an explicit type string matching the bindVars
-// account_id (i) + transaction..province (7 s) + age (i) + marital..ctc (5 s) + date_issued (s) + place_issued (s) + amount (d) + remaining 9 strings
-$typeString = 'i' . str_repeat('s', 7) . 'i' . str_repeat('s', 5) . 's' . 's' . 'd' . str_repeat('s', 9);
-// Validate length: should match 26
-if (strlen($typeString) !== count($bindVars)) {
-    // fallback simpler construction to exactly match 26 positions:
-    $typeString = '';
-    $typeString .= 'i';                   // account_id
-    $typeString .= str_repeat('s', 7);    // transaction_id .. province (7)
-    $typeString .= 'i';                   // age
-    $typeString .= str_repeat('s', 5);    // marital_status .. ctc_number (5)
-    $typeString .= 's';                   // date_issued
-    $typeString .= 's';                   // place_issued
-    $typeString .= 'd';                   // amount
-    $typeString .= str_repeat('s', 9);    // or_number .. request_source (9)
-}
+// Build a matching type string for bind_param
+$typeString = '';
+$typeString .= 'i';                   // account_id
+$typeString .= str_repeat('s', 7);    // transaction_id .. province (7 strings)
+$typeString .= 'i';                   // age
+$typeString .= str_repeat('s', 5);    // marital_status .. ctc_number (5 strings)
+$typeString .= 's';                   // date_issued
+$typeString .= 's';                   // place_issued
+$typeString .= 'd';                   // amount (double)
+$typeString .= str_repeat('s', 9);    // or_number .. request_source (9 strings)
 
-// bind_param needs references
+// bind parameters by reference
 $refs = [];
-foreach ($bindVars as $key => $value) {
-    $refs[$key] = &$bindVars[$key];
-}
-// prepend type string
+foreach ($bindVars as $k => $v) $refs[$k] = &$bindVars[$k];
 array_unshift($refs, $typeString);
-
-// Use call_user_func_array to bind dynamic params
 call_user_func_array([$stmt, 'bind_param'], $refs);
 
-// Execute
-$exec = $stmt->execute();
-if (!$exec) {
+if (!$stmt->execute()) {
     error_log("Insert failed (business_clearance): " . $stmt->error);
     $_SESSION['svc_error'] = 'Failed to save request. Please try again.';
     $stmt->close();
@@ -221,6 +172,5 @@ if (!$exec) {
 
 $stmt->close();
 
-// -------------------- 5) Success — redirect to serviceBusinessClearance.php with tid --------------------
 header("Location: ../userPanel.php?page=serviceBusinessClearance&tid=" . urlencode($transactionId));
 exit();

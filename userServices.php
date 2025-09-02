@@ -200,7 +200,7 @@ html, body {
                   <a href="userPanel.php?page=serviceBusinessClearance" class="service-card mid-green w-100">
                       <i class="fas fa-store icon"></i>
                       <div>
-                          <h4>Business Permit</h4>
+                          <h4>Business Clearance</h4>
                           <p>Opisyal na pahintulot na ibinibigay ng barangay para makapagsagawa ng negosyo nang legal sa komunidad.</p>
                       </div>
                   </a>

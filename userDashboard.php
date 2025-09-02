@@ -552,9 +552,9 @@ if (is_numeric($userId) && intval($userId) > 0) {
           </a>
 
           <!-- top-center -->
-          <a href="?page=serviceBusinessClearance" class="most-requested-tile service-primary-tile" tabindex="0" role="button" aria-label="Business Clearance">
+          <a href="?page=serviceBarangayClearance" class="most-requested-tile service-primary-tile" tabindex="0" role="button" aria-label="Business Clearance">
             <span class="material-icons tile-icon" aria-hidden="true">inventory_2</span>
-            <div class="tile-label">Business Clearance</div>
+            <div class="tile-label">Barangay Clearance</div>
           </a>
 
           <!-- top-right -->
@@ -566,7 +566,7 @@ if (is_numeric($userId) && intval($userId) > 0) {
           <!-- bottom-left -->
           <a href="?page=serviceBusinessClearance" class="most-requested-tile service-secondary-tile" tabindex="0" role="button" aria-label="Business Permit">
             <span class="material-icons tile-icon" aria-hidden="true">business_center</span>
-            <div class="tile-label">Business Permit</div>
+            <div class="tile-label">Business Clearance</div>
           </a>
 
           <!-- bottom-center -->

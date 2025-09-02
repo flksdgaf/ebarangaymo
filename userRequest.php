@@ -4,7 +4,6 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 require 'functions/dbconn.php';
 $userId = isset($_SESSION['loggedInUserID']) ? (int) $_SESSION['loggedInUserID'] : 0;
 
-/* check if a table contains a column */
 function table_has_column($conn, $tableName, $colName) {
     $dbName = '';
     $q = $conn->query("SELECT DATABASE() AS db");
@@ -20,21 +19,11 @@ function table_has_column($conn, $tableName, $colName) {
     return (bool)$res;
 }
 
-/* maps for payment / document progress */
 function map_payment_progress($pay, $requestType) {
     $p = strtolower(trim((string)$pay));
     $rt = strtolower(trim((string)$requestType));
-
-    // Special-case Indigency: always show full / Free of Charge
-    if ($rt === 'indigency') {
-        return ['pct' => 100, 'label' => 'Free of Charge', 'color' => '#059669'];
-    }
-
-    // Equipment borrowing: no payment needed when empty
-    if ($p === '' && $rt === 'equipment borrowing') {
-        return ['pct' => 100, 'label' => 'No Payment Needed', 'color' => '#9CA3AF'];
-    }
-
+    if ($rt === 'indigency') return ['pct' => 100, 'label' => 'Free of Charge', 'color' => '#059669'];
+    if ($p === '' && $rt === 'equipment borrowing') return ['pct' => 100, 'label' => 'No Payment Needed', 'color' => '#9CA3AF'];
     if ($p === 'paid') return ['pct' => 100, 'label' => 'Paid', 'color' => '#059669'];
     if ($p === 'unpaid' || $p === 'pending') return ['pct' => 35, 'label' => ucfirst($p ?: 'Unpaid'), 'color' => '#F59E0B'];
     if ($p !== '') return ['pct' => 60, 'label' => ucfirst($pay), 'color' => '#2563EB'];
@@ -50,7 +39,7 @@ function map_document_progress($doc) {
     return ['pct' => 50, 'label' => ucfirst($doc), 'color' => '#6B7280'];
 }
 
-/* ---------- cancellation handler ---------- */
+/* cancellation handler */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'cancel') {
     header('Content-Type: application/json; charset=utf-8');
     $tx = isset($_POST['transaction_id']) ? trim($_POST['transaction_id']) : '';
@@ -76,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             } else { $message = 'Failed preparing cancel statement for borrow_requests.'; }
         } else {
             $requestTables = [
-                'request_records','barangay_id_requests','business_permit_requests','certification_requests',
+                'request_records','barangay_id_requests','business_clearance_requests','barangay_clearance_requests','certification_requests',
                 'indigency_requests','residency_requests','good_moral_requests','solo_parent_requests','guardianship_requests'
             ];
             foreach ($requestTables as $tbl) {
@@ -106,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
-/* ---------- DETAIL VIEW (AJAX-friendly) ---------- */
+/* DETAIL VIEW (AJAX-friendly) */
 if (isset($_GET['transaction_id'])) {
     $tx = $_GET['transaction_id'];
     $isAjax = isset($_GET['ajax']) && $_GET['ajax'] == '1';
@@ -123,13 +112,12 @@ if (isset($_GET['transaction_id'])) {
         if (!$brow) {
             echo "<div class='text-danger p-3'>Equipment borrowing request not found.</div>";
         } else {
-            $payStatus = ''; // borrow requests typically don't have a payment_status column
+            $payStatus = '';
             $docStatus = $brow['status'] ?? 'Pending';
             $request_type = 'Equipment Borrowing';
             $pmap = map_payment_progress($payStatus, $request_type);
             $dmap = map_document_progress($docStatus);
 
-            // summary (top)
             echo '<div class="detail-summary">';
             echo '  <div class="summary-left">';
             if (!empty($brow['resident_name'])) {
@@ -139,7 +127,6 @@ if (isset($_GET['transaction_id'])) {
             echo '  </div>';
             echo '</div>';
 
-            // details (skip resident_name & status to avoid duplication)
             echo '<div class="detail-grid">';
             $equipName = null;
             if (!empty($brow['equipment_sn'])) {
@@ -163,7 +150,6 @@ if (isset($_GET['transaction_id'])) {
             }
             echo '</div>';
 
-            // emit meta including payment & document progress info
             echo '<div class="detail-meta" style="display:none"'
                 . ' data-status="'.htmlspecialchars($docStatus).'"'
                 . ' data-pay="'.htmlspecialchars($payStatus).'"'
@@ -187,7 +173,8 @@ if (isset($_GET['transaction_id'])) {
         } else {
             switch ($vrow['request_type']) {
                 case 'Barangay ID': $tbl = 'barangay_id_requests'; break;
-                case 'Business Permit': $tbl = 'business_permit_requests'; break;
+                case 'Business Clearance': $tbl = 'business_clearance_requests'; break;
+                case 'Barangay Clearance': $tbl = 'barangay_clearance_requests'; break;
                 case 'Certification': $tbl = 'certification_requests'; break;
                 case 'Indigency': $tbl = 'indigency_requests'; break;
                 case 'Residency': $tbl = 'residency_requests'; break;
@@ -249,7 +236,6 @@ if (isset($_GET['transaction_id'])) {
             }
             echo '</div>';
 
-            // emit meta including payment & document progress info
             echo '<div class="detail-meta" style="display:none"'
                 . ' data-status="'.htmlspecialchars($docStatus).'"'
                 . ' data-pay="'.htmlspecialchars($payStatus).'"'
@@ -264,20 +250,12 @@ if (isset($_GET['transaction_id'])) {
 
     $content = ob_get_clean();
     if ($isAjax) {
-        // When AJAX requested, return the HTML fragment only (no page-level CSS)
         echo $content;
         exit();
     } else {
-        // Non-AJAX: full page render
-        // NOTE: removed inline styles to avoid duplication with panels_user.css.
-        // Ensure panels_user.css contains your modal, band and btn-cancel styles.
-        // Material Icons used for band icon ligatures are included below once.
-        // If panels_user.css is in a different path, update the href accordingly.
         ?>
-        <!-- load Material Icons + your panels_user stylesheet (single source of truth for styles) -->
         <link href="https://fonts.googleapis.com/css2?family=Material+Icons+Outlined" rel="stylesheet">
         <link rel="stylesheet" href="panels_user.css">
-
         <?php
         echo "<div class='container py-3'><div class='card shadow-sm p-4 mb-4'>";
         echo $content;
@@ -290,7 +268,7 @@ if (isset($_GET['transaction_id'])) {
     }
 }
 
-/* ----------  LIST + PAGINATION + FILTER + SEARCH  ---------- */
+/* LIST + PAGINATION + FILTER + SEARCH */
 $limit = 10;
 $page = isset($_GET['pagination']) && is_numeric($_GET['pagination']) ? (int) $_GET['pagination'] : 1;
 $offset = ($page - 1) * $limit;
@@ -333,7 +311,6 @@ function find_datetime_column($conn,$tableName) {
     $r = $st->get_result()->fetch_assoc(); $st->close(); return $r ? $r['COLUMN_NAME'] : null;
 }
 
-// IMPORTANT: prefer the explicit `created_at` column on view_request so grouping/sorting is always by creation time
 if (table_has_column($conn, 'view_request', 'created_at')) {
     $vr_ts_col = 'created_at';
 } else {
@@ -386,10 +363,8 @@ WHERE $br_where
 
 $mainSql = "($selectVr) UNION ALL ($selectBr) ORDER BY created_at DESC LIMIT ? OFFSET ?";
 
-/* prepare main statement and bind parameters */
 $st = $conn->prepare($mainSql);
 if (!$st) {
-    // fatal if main listing can't prepare — helpful error during development
     die("Query preparation failed: " . htmlspecialchars($conn->error));
 }
 $bindTypes = $vr_types . $br_types . 'ii';
@@ -398,10 +373,8 @@ if ($bindParams) $st->bind_param($bindTypes, ...$bindParams);
 $st->execute();
 $result = $st->get_result();
 
-/* helper functions for display */
 function displayPaymentText($pay, $requestType) {
     $rt = strtolower(trim((string)$requestType));
-    // If Indigency and no explicit pay text, show Free of Charge
     if (($pay === '' || $pay === null) && $rt === 'indigency') return 'Free of Charge';
     if ($pay !== '') return htmlspecialchars($pay);
     if ($rt === 'equipment borrowing') return 'No Payment';
@@ -431,12 +404,9 @@ function humanDateLabel($dateTimeStr) {
 $filterMap = ['all'=>'All Requests','completed'=>'Completed Requests','cancelled'=>'Cancelled Requests'];
 $pageTitle = $filterMap[$filter] ?? 'My Requests';
 ?>
-<!-- load Material Icons once for the page so JS-inserted spans render -->
 <link href="https://fonts.googleapis.com/css2?family=Material+Icons+Outlined" rel="stylesheet">
-<!-- load your panels_user stylesheet: single source of truth for page styles -->
 <link rel="stylesheet" href="panels_user.css">
 
-<!-- main layout (list + modal) -->
 <div class="container py-3">
     <div class="card shadow-sm p-3">
         <div class="requests-header">
@@ -560,7 +530,6 @@ $pageTitle = $filterMap[$filter] ?? 'My Requests';
               <div class="band-type" id="bandType">Request</div>
               <div class="band-sub" id="bandSub" aria-hidden="true"></div>
             </div>
-            <!-- band-badge intentionally left empty -->
             <div class="band-badge" id="bandBadge" aria-hidden="true"></div>
           </div>
         </div>
@@ -580,9 +549,7 @@ $pageTitle = $filterMap[$filter] ?? 'My Requests';
   </div>
 </div>
 
-<!-- JavaScript (keeps your logic for band / progress / grouping) -->
 <script>
-/* helper functions */
 function getStatusClass(status) {
     if (!status) return 'st-pending';
     const s = status.toString().trim().toLowerCase();
@@ -605,16 +572,12 @@ function updateCardStatus(tx, newStatus) {
     });
 }
 
-/* top progress helper (not used in band) - kept for backward compatibility */
-function createBandTopProgress(payMeta, docMeta) { /* ... same as before ... */ }
-
-/* create material icon HTML (ligature) */
 function createBandIconHtml(rtype) {
     const low = (rtype || '').toString().toLowerCase();
     let icon = 'description';
     if (low.includes('equipment') || low.includes('borrow')) icon = 'build';
     else if (low.includes('barangay') || (low.includes('id') && !low.includes('residency'))) icon = 'badge';
-    else if (low.includes('business') || low.includes('permit')) icon = 'apartment';
+    else if (low.includes('business') || low.includes('permit') || low.includes('clearance')) icon = 'apartment';
     else if (low.includes('solo') || low.includes('parent')) icon = 'family_restroom';
     else if (low.includes('guard') || low.includes('guardianship')) icon = 'security';
     else if (low.includes('certification') || low.includes('certificate') || low.includes('indigency') || low.includes('residency') || low.includes('good moral')) icon = 'description';
@@ -627,7 +590,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const modalInner = document.getElementById('requestDetailInner');
     const modalBandType = document.getElementById('bandType');
     const modalBandIcon = document.getElementById('bandIcon');
-    const bandBadgeHolder = document.getElementById('bandBadge'); // left empty intentionally
+    const bandBadgeHolder = document.getElementById('bandBadge');
     const loading = document.getElementById('requestDetailLoading');
     const bandSub = document.getElementById('bandSub');
 
@@ -676,7 +639,7 @@ document.addEventListener('DOMContentLoaded', function () {
         loading.style.display = 'block';
         modalInner.appendChild(loading);
 
-        bandBadgeHolder.innerHTML = ''; // ensure empty - removed top payment/doc
+        bandBadgeHolder.innerHTML = '';
         modalCancelBtn.setAttribute('data-tx', tx);
         modalCancelBtn.disabled = false;
 
@@ -694,7 +657,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 modalInner.innerHTML = '';
 
-                // TRANSACTION LABEL + ID + COPY BUTTON
                 const txWrap = document.createElement('div');
                 txWrap.className = 'tx-highlight';
 
@@ -736,7 +698,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 const usedMeta = meta || modalInner.querySelector('.detail-meta');
                 const status = (usedMeta && usedMeta.getAttribute('data-status')) ? usedMeta.getAttribute('data-status') : 'Processing';
 
-                // read server-provided progress meta (bottom segments)
                 let payMeta = null, docMeta = null;
                 if (usedMeta) {
                     const payPct = usedMeta.getAttribute('data-pay-pct');
@@ -757,21 +718,17 @@ document.addEventListener('DOMContentLoaded', function () {
                     modalCancelBtn.disabled = false;
                 }
 
-                // bottom progress bars (kept unchanged)
                 modalBottomInfo.innerHTML = '';
 
-                // ---- PAYMENT SEGMENT ----
                 const pWrap = document.createElement('div'); pWrap.className = 'seg-wrap';
                 const pTitle = document.createElement('div'); pTitle.className = 'seg-title'; pTitle.textContent = 'Payment';
                 const pBar = document.createElement('div'); pBar.className = 'seg-bar';
                 const pFill = document.createElement('div'); pFill.className = 'seg-fill';
 
-                // Prefer server-provided payMeta (data-pay-pct / data-pay-label / data-pay-color) if available
                 let pPct = (payMeta && typeof payMeta.pct === 'number' && !isNaN(payMeta.pct)) ? Number(payMeta.pct) : null;
                 let pLabel = (payMeta && payMeta.label) ? String(payMeta.label) : null;
                 let pColor = (payMeta && payMeta.color) ? String(payMeta.color) : null;
 
-                // If server did not provide a numeric pct, fall back to existing heuristics
                 if (pPct === null) {
                     pPct = 0;
                     pLabel = pLabel || 'Not set';
@@ -789,19 +746,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 }
 
-                // Ensure numeric and in 0..100
                 pPct = Math.max(0, Math.min(100, Number(pPct) || 0));
                 pLabel = pLabel || 'Not set';
                 pColor = pColor || '#6B7280';
 
-                // Start with 0 width then animate to target for smooth transition
                 pFill.style.width = '0%';
                 pFill.style.background = pColor;
                 pBar.appendChild(pFill);
                 const pCaption = document.createElement('div'); pCaption.className = 'seg-caption'; pCaption.textContent = pLabel;
                 pWrap.appendChild(pTitle); pWrap.appendChild(pBar); pWrap.appendChild(pCaption);
 
-                // ---- DOCUMENT SEGMENT (keeps original logic) ----
                 const dWrap = document.createElement('div'); dWrap.className = 'seg-wrap';
                 const dTitle = document.createElement('div'); dTitle.className = 'seg-title'; dTitle.textContent = 'Document';
                 const dBar = document.createElement('div'); dBar.className = 'seg-bar';
@@ -818,21 +772,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 const dCaption = document.createElement('div'); dCaption.className = 'seg-caption'; dCaption.textContent = dLabel;
                 dWrap.appendChild(dTitle); dWrap.appendChild(dBar); dWrap.appendChild(dCaption);
 
-                // append to modal and animate both fills
                 modalBottomInfo.appendChild(pWrap); modalBottomInfo.appendChild(dWrap);
                 modalBottomInfo.setAttribute('aria-hidden','false');
 
-                // animate to final widths after a tick (so CSS transitions run)
                 setTimeout(()=> {
                     pFill.style.width = pPct + '%';
                     dFill.style.width = dPct + '%';
                 }, 40);
 
-                // update accessible value attributes (optional but helpful)
                 pFill.setAttribute('aria-valuenow', String(Math.round(pPct)));
                 dFill.setAttribute('aria-valuenow', String(Math.round(dPct)));
 
-                /* grouping details — same logic as before */
                 (function groupDetails() {
                     const grid = modalInner.querySelector('.detail-grid');
                     if (!grid) return;
@@ -863,8 +813,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         return 'application';
                     }
 
-                    const appRows = [], otherRows = []; 
-                    let payRows = []; // changed from const -> let so we can filter for Indigency
+                    const appRows = [], otherRows = [];
+                    let payRows = [];
 
                     rows.forEach(row => {
                         const lab = (row.querySelector('.label') && row.querySelector('.label').textContent) ? row.querySelector('.label').textContent : '';
@@ -877,7 +827,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         else otherRows.push(row.cloneNode(true));
                     });
 
-                    // --- NEW: when request is Indigency, remove specific payment rows (Payment Method & Amount)
                     if ((rtype || '').toString().toLowerCase().includes('indigency')) {
                         const forbidden = ['payment method', 'amount'];
                         payRows = payRows.filter(row => {
@@ -921,7 +870,6 @@ document.addEventListener('DOMContentLoaded', function () {
                             return c;
                         }
 
-                        // Only add Payment Details column if there are payment rows to display
                         if (payRows.length > 0) cols.appendChild(makeCol('Payment Details', payRows));
                         cols.appendChild(makeCol('Other Details', otherRows));
                         modalInner.appendChild(cols);
@@ -938,7 +886,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
 
                         cols.appendChild(makeCol('Application Details', appRows));
-                        // Only add Payment Details column if payRows is not empty
                         if (payRows.length > 0) cols.appendChild(makeCol('Payment Details', payRows));
                         cols.appendChild(makeCol('Other Details', otherRows));
                         modalInner.appendChild(cols);
@@ -952,7 +899,6 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     });
 
-    // set dropdown label visually
     document.querySelectorAll('.dropdown-menu .dropdown-item').forEach(function (el) {
         el.addEventListener('click', function (ev) {
             const label = this.textContent.trim();
@@ -971,13 +917,12 @@ document.addEventListener('DOMContentLoaded', function () {
         bandSub.textContent = '';
     });
 
-    // material icon helper - duplicate to keep closure safe
     function createBandIconHtml(rtype) {
         const low = (rtype || '').toString().toLowerCase();
         let icon = 'description';
         if (low.includes('equipment') || low.includes('borrow')) icon = 'build';
         else if (low.includes('barangay') || (low.includes('id') && !low.includes('residency'))) icon = 'badge';
-        else if (low.includes('business') || low.includes('permit')) icon = 'apartment';
+        else if (low.includes('business') || low.includes('permit') || low.includes('clearance')) icon = 'apartment';
         else if (low.includes('solo') || low.includes('parent')) icon = 'family_restroom';
         else if (low.includes('guard') || low.includes('guardianship')) icon = 'security';
         else if (low.includes('certification') || low.includes('certificate') || low.includes('indigency') || low.includes('residency') || low.includes('good moral')) icon = 'description';
@@ -987,7 +932,6 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 <?php
-// safely close main statement and connection
 if (isset($st) && $st instanceof mysqli_stmt) {
     $st->close();
 }

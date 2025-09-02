@@ -316,26 +316,27 @@ $defaultProvince = 'Camarines Norte';
 
                     // Determine whether existing purpose matches one of the predefined ones
                     $is_prefilled_in_list = in_array($existingPurpose, $purposes, true);
-                    // If not in list and there is an existing purpose, we'll show "Others" + fill the text input.
+
+                    // If existing purpose not in the list, keep its value in hidden input so server still receives it,
+                    // but DO NOT pre-select "Others" or show the visible custom input. Visible select shows placeholder.
                     $prefill_other_value = $is_prefilled_in_list ? '' : $existingPurpose;
                     ?>
                     <!-- select used for user UI; note name changed so only hidden field 'purpose' is submitted -->
                     <select id="purposeSelect" name="purpose_select" class="form-control custom-input" required>
-                        <option value="">Select purpose</option>
+                        <!-- Placeholder text shown to the user -->
+                        <option value="">Select Purpose</option>
                         <?php
                         foreach ($purposes as $p) {
-                            // if the existing purpose is in the list, select it; otherwise select "Others"
-                            $sel = '';
-                            if ($is_prefilled_in_list && $existingPurpose === $p) $sel = 'selected';
-                            if (!$is_prefilled_in_list && $p === 'Others') $sel = 'selected';
+                            // only pre-select if existing purpose matches one of the predefined ones
+                            $sel = ($is_prefilled_in_list && $existingPurpose === $p) ? 'selected' : '';
                             echo "<option value=\"" . htmlspecialchars($p) . "\" $sel>" . htmlspecialchars($p) . "</option>";
                         }
                         ?>
                     </select>
 
-                    <!-- visible text input for custom purpose (kept name purpose_other for backward compatibility) -->
+                    <!-- visible text input for custom purpose (hidden by default; only shown when user picks "Others") -->
                     <input type="text" id="purposeOther" name="purpose_other"
-                        class="form-control custom-input mt-2 <?php echo ($prefill_other_value !== '') ? '' : 'd-none'; ?>"
+                        class="form-control custom-input mt-2 d-none"
                         placeholder="Please specify purpose"
                         value="<?php echo htmlspecialchars($prefill_other_value); ?>">
 
@@ -666,27 +667,29 @@ document.addEventListener('DOMContentLoaded', function(){
 
     function togglePurposeOther(){
         if(!purposeSelect) return;
-        // When user chooses 'Others', show the textfield and make it required.
+        // Show the free-text field ONLY when user explicitly selects 'Others'
         if(purposeSelect.value === 'Others'){
             purposeOther.classList.remove('d-none');
             purposeOther.required = true;
-            // if purposeOther has value use it; otherwise leave hidden as 'Others' until typed
+            // if purposeOther has value use it otherwise keep hidden value 'Others' until typed
             if(purposeOther.value.trim()) {
                 purposeHidden.value = purposeOther.value.trim();
-                // also update the option value for consistency
-                const othersOption = Array.from(purposeSelect.options).find(o => o.value === 'Others');
-                if(othersOption) othersOption.value = purposeOther.value.trim();
             } else {
+                // keep hidden as 'Others' while user types
                 purposeHidden.value = 'Others';
             }
         } else {
             // hide other input and copy selected value to hidden
             purposeOther.classList.add('d-none');
             purposeOther.required = false;
-            purposeHidden.value = purposeSelect.value;
-            // restore Others option value to 'Others' if it was overwritten earlier
-            const othersOption = Array.from(purposeSelect.options).find(o => o.text === 'Others' || o.value === purposeOther.value);
-            if(othersOption) othersOption.value = 'Others';
+            // if user selected a predefined option, use it
+            if(purposeSelect.value) {
+                purposeHidden.value = purposeSelect.value;
+            } else {
+                // if placeholder is selected and there is already a hidden custom value (from prefill),
+                // keep it (so server receives the existing custom purpose). Otherwise clear.
+                // (purposeHidden was initialized on server-side with any existing value)
+            }
         }
         updateSummary();
     }
@@ -713,16 +716,12 @@ document.addEventListener('DOMContentLoaded', function(){
 
     if(purposeSelect){
         purposeSelect.addEventListener('change', togglePurposeOther);
-        // if prefilled 'Others' was shown and had custom text, ensure the hidden value is set on load
     }
 
     if(purposeOther){
         purposeOther.addEventListener('input', function(){
             const val = purposeOther.value.trim();
             purposeHidden.value = val || 'Others';
-            // update the Others option value so select and hidden remain consistent
-            const othersOption = Array.from(purposeSelect.options).find(o => o.text === 'Others');
-            if(othersOption) othersOption.value = val || 'Others';
             updateSummary();
         });
     }
@@ -733,7 +732,7 @@ document.addEventListener('DOMContentLoaded', function(){
         if(el) el.addEventListener('input', updateSummary);
     });
 
-    // initial toggle based on prefills
+    // initial toggle based on prefills (we intentionally keep the "other" input hidden unless user picks Others)
     togglePurposeOther();
     updateSummary();
 
@@ -741,11 +740,9 @@ document.addEventListener('DOMContentLoaded', function(){
     const form = document.getElementById('barangayClearanceForm');
     if(form){
         form.addEventListener('submit', function(e){
-            // the hidden input 'purposeHidden' already has the right value due to listeners,
-            // but this ensures if user leaves 'Others' selected without typing anything we still send 'Others'
             if(purposeSelect && purposeSelect.value === 'Others' && purposeOther && purposeOther.value.trim()){
                 purposeHidden.value = purposeOther.value.trim();
-            } else if(purposeSelect){
+            } else if(purposeSelect && purposeSelect.value){
                 purposeHidden.value = purposeSelect.value;
             }
             // continue submitting

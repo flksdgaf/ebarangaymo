@@ -318,7 +318,7 @@ h4 {
 }
 
 /* small utilities */
-.d-none { display:none !important; }
+/* .d-none { display:none !important; } */
 .text-success { color:#198754; font-weight:600; }
 
 /* ---------- Responsive ---------- */

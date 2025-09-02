@@ -197,7 +197,7 @@ html, body {
                   </a>
               </div>
               <div class="col d-flex">
-                  <a href="userPanel.php?page=serviceBusinessPermit" class="service-card mid-green w-100">
+                  <a href="userPanel.php?page=serviceBusinessClearance" class="service-card mid-green w-100">
                       <i class="fas fa-store icon"></i>
                       <div>
                           <h4>Business Permit</h4>

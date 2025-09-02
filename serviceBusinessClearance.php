@@ -1,4 +1,7 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 require 'functions/dbconn.php';
 
 // User auth assumed (same as your reference):
@@ -38,7 +41,7 @@ if ($stmt) {
     $stmt->close();
 }
 
-// Try to parse full name into parts (assuming stored as "Surname, First Middle" or plain)
+// parse full name into parts
 $lastName = $firstName = $middleName = '';
 if ($fullName) {
     if (strpos($fullName, ',') !== false) {
@@ -51,7 +54,6 @@ if ($fullName) {
             $middleName = implode(' ', $restParts);
         }
     } else {
-        // fallback: split by spaces, assume last token is surname
         $parts = preg_split('/\s+/', $fullName, -1, PREG_SPLIT_NO_EMPTY);
         if (count($parts) === 1) {
             $firstName = $parts[0];
@@ -79,7 +81,7 @@ if (!empty($birthdate) && $birthdate !== '0000-00-00') {
 $existingRequest = [];
 $chosenPayment = null;
 if ($transactionId) {
-    $stmt = $conn->prepare("SELECT * FROM barangay_clearance_requests WHERE transaction_id = ? LIMIT 1");
+    $stmt = $conn->prepare("SELECT * FROM business_clearance_requests WHERE transaction_id = ? LIMIT 1");
     if ($stmt) {
         $stmt->bind_param("s", $transactionId);
         $stmt->execute();
@@ -92,13 +94,13 @@ if ($transactionId) {
     }
 }
 
-// Defaults (prefill) you requested
+// Defaults
 $defaultBarangay = 'Magang';
 $defaultMunicipality = 'Daet';
 $defaultProvince = 'Camarines Norte';
 ?>
 
-<link rel="stylesheet" href="serviceBarangayClearance.css">
+<link rel="stylesheet" href="serviceBusinessClearance.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <div class="container py-4 px-3">
@@ -143,10 +145,10 @@ $defaultProvince = 'Camarines Norte';
 
     <div class="card shadow-sm px-5 py-5 mb-5 mt-4">
         <h2 class="mb-1 text-success fw-bold" id="mainHeader"></h2>
-        <p id="subHeader" class="mb-2">Provide the necessary details to request a Barangay Clearance.</p>
+        <p id="subHeader" class="mb-2">Provide the necessary details to request a Business Clearance.</p>
         <hr id="mainHr" class="mb-4">
 
-        <form id="barangayClearanceForm" action="functions/serviceBarangayClearance_submit.php" method="POST" enctype="multipart/form-data">
+        <form id="businessClearanceForm" action="functions/serviceBusinessClearance_submit.php" method="POST" enctype="multipart/form-data">
             <!-- Step 1: Application Form -->
             <div class="step <?php echo $transactionId ? 'completed' : 'active-step'; ?>">
 
@@ -182,17 +184,6 @@ $defaultProvince = 'Camarines Norte';
                 </div>
                 </div>
 
-                <!-- STREET (optional) -->
-                <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Street (Optional)</label>
-                <div class="col-md-8">
-                    <input type="text" id="street" name="street"
-                        class="form-control custom-input"
-                        placeholder="Street (optional)"
-                        value="<?php echo htmlspecialchars($existingRequest['street'] ?? ''); ?>">
-                </div>
-                </div>
-
                 <!-- PUROK -->
                 <div class="row mb-3">
                 <label class="col-md-4 text-start fw-bold">Purok</label>
@@ -210,7 +201,7 @@ $defaultProvince = 'Camarines Norte';
                 </div>
                 </div>
 
-                <!-- BARANGAY (prefilled to Magang but editable) -->
+                <!-- BARANGAY -->
                 <div class="row mb-3">
                 <label class="col-md-4 text-start fw-bold">Barangay</label>
                 <div class="col-md-8">
@@ -221,7 +212,7 @@ $defaultProvince = 'Camarines Norte';
                 </div>
                 </div>
 
-                <!-- MUNICIPALITY (prefilled to Daet but editable) -->
+                <!-- MUNICIPALITY -->
                 <div class="row mb-3">
                 <label class="col-md-4 text-start fw-bold">Municipality</label>
                 <div class="col-md-8">
@@ -232,7 +223,7 @@ $defaultProvince = 'Camarines Norte';
                 </div>
                 </div>
 
-                <!-- PROVINCE (prefilled to Daet but editable) -->
+                <!-- PROVINCE -->
                 <div class="row mb-3">
                 <label class="col-md-4 text-start fw-bold">Province</label>
                 <div class="col-md-8">
@@ -243,17 +234,6 @@ $defaultProvince = 'Camarines Norte';
                 </div>
                 </div>
 
-                <!-- BIRTHDATE -->
-                <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Birthdate</label>
-                <div class="col-md-8">
-                    <input type="date" id="birthdate" name="birthdate"
-                        class="form-control custom-input"
-                        required
-                        value="<?php echo (!empty($birthdate) && $birthdate !== '0000-00-00') ? date('Y-m-d', strtotime($birthdate)) : ''; ?>">
-                </div>
-                </div>
-
                 <!-- AGE -->
                 <div class="row mb-3">
                 <label class="col-md-4 text-start fw-bold">Age</label>
@@ -261,18 +241,7 @@ $defaultProvince = 'Camarines Norte';
                     <input type="number" id="age" name="age"
                         class="form-control custom-input"
                         min="0" max="150" required
-                        value="<?php echo htmlspecialchars($age); ?>">
-                </div>
-                </div>
-
-                <!-- BIRTHPLACE -->
-                <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Birthplace</label>
-                <div class="col-md-8">
-                    <input type="text" id="birthplace" name="birth_place"
-                        class="form-control custom-input"
-                        required placeholder="City, Province"
-                        value="<?php echo htmlspecialchars($existingRequest['birth_place'] ?? ''); ?>">
+                        value="<?php echo htmlspecialchars($existingRequest['age'] ?? $age); ?>">
                 </div>
                 </div>
 
@@ -292,6 +261,39 @@ $defaultProvince = 'Camarines Norte';
                 </div>
                 </div>
 
+                <!-- BUSINESS NAME -->
+                <div class="row mb-3">
+                <label class="col-md-4 text-start fw-bold">Name of Business</label>
+                <div class="col-md-8">
+                    <input type="text" id="business_name" name="business_name"
+                        class="form-control custom-input"
+                        required
+                        value="<?php echo htmlspecialchars($existingRequest['business_name'] ?? ''); ?>">
+                </div>
+                </div>
+
+                <!-- BUSINESS TYPE -->
+                <div class="row mb-3">
+                <label class="col-md-4 text-start fw-bold">Type of Business</label>
+                <div class="col-md-8">
+                    <input type="text" id="business_type" name="business_type"
+                        class="form-control custom-input"
+                        required
+                        value="<?php echo htmlspecialchars($existingRequest['business_type'] ?? ''); ?>">
+                </div>
+                </div>
+
+                <!-- ADDRESS (business address) -->
+                <div class="row mb-3">
+                <label class="col-md-4 text-start fw-bold">Business Address</label>
+                <div class="col-md-8">
+                    <input type="text" id="address" name="address"
+                        class="form-control custom-input"
+                        required
+                        value="<?php echo htmlspecialchars($existingRequest['address'] ?? ''); ?>">
+                </div>
+                </div>
+
                 <!-- CTC NUMBER -->
                 <div class="row mb-3">
                 <label class="col-md-4 text-start fw-bold">CTC Number</label>
@@ -303,53 +305,9 @@ $defaultProvince = 'Camarines Norte';
                 </div>
                 </div>
 
-                <!-- PURPOSE (NEW: select + hidden real 'purpose' field) -->
+                <!-- PICTURE -->
                 <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Purpose</label>
-                <div class="col-md-8">
-                    <?php
-                    // Define fixed purpose options
-                    $purposes = ['Employment','ID','School Enrollment','Passport','Travel','Business','Others'];
-
-                    // Existing purpose from DB (if any)
-                    $existingPurpose = $existingRequest['purpose'] ?? '';
-
-                    // Determine whether existing purpose matches one of the predefined ones
-                    $is_prefilled_in_list = in_array($existingPurpose, $purposes, true);
-                    // If not in list and there is an existing purpose, we'll show "Others" + fill the text input.
-                    $prefill_other_value = $is_prefilled_in_list ? '' : $existingPurpose;
-                    ?>
-                    <!-- select used for user UI; note name changed so only hidden field 'purpose' is submitted -->
-                    <select id="purposeSelect" name="purpose_select" class="form-control custom-input" required>
-                        <option value="">Select purpose</option>
-                        <?php
-                        foreach ($purposes as $p) {
-                            // if the existing purpose is in the list, select it; otherwise select "Others"
-                            $sel = '';
-                            if ($is_prefilled_in_list && $existingPurpose === $p) $sel = 'selected';
-                            if (!$is_prefilled_in_list && $p === 'Others') $sel = 'selected';
-                            echo "<option value=\"" . htmlspecialchars($p) . "\" $sel>" . htmlspecialchars($p) . "</option>";
-                        }
-                        ?>
-                    </select>
-
-                    <!-- visible text input for custom purpose (kept name purpose_other for backward compatibility) -->
-                    <input type="text" id="purposeOther" name="purpose_other"
-                        class="form-control custom-input mt-2 <?php echo ($prefill_other_value !== '') ? '' : 'd-none'; ?>"
-                        placeholder="Please specify purpose"
-                        value="<?php echo htmlspecialchars($prefill_other_value); ?>">
-
-                    <!-- Hidden input that carries the final value for 'purpose' the server expects -->
-                    <input type="hidden" id="purposeHidden" name="purpose" value="<?php
-                        // initial hidden value: if existing purpose in the predefined list, use it; otherwise use the custom value
-                        echo htmlspecialchars($is_prefilled_in_list ? $existingPurpose : $prefill_other_value);
-                    ?>">
-                </div>
-                </div>
-
-                <!-- OPTIONAL: Picture (not required unless you want) -->
-                <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Attach Picture (optional)</label>
+                <label class="col-md-4 text-start fw-bold">Attach Picture</label>
                 <div class="col-md-8">
                     <input type="file" id="picture" name="picture"
                         class="form-control custom-input"
@@ -359,7 +317,7 @@ $defaultProvince = 'Camarines Norte';
 
                 <!-- CLAIM DATE -->
                 <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Please select preferred claim date</label>
+                <label class="col-md-4 text-start fw-bold">Preferred Claim Date</label>
                 <div class="col-md-8">
                     <input type="date" id="claimdate" name="claim_date"
                         class="form-control custom-input"
@@ -367,6 +325,7 @@ $defaultProvince = 'Camarines Norte';
                         value="<?php echo htmlspecialchars($existingRequest['claim_date'] ?? ''); ?>">
                 </div>
                 </div>
+
             </div>
 
             <!-- Step 2: Payment -->
@@ -377,7 +336,7 @@ $defaultProvince = 'Camarines Norte';
                 <!-- LEFT COLUMN: Fee -->
                 <div class="col-md-4">
                     <div class="fee-box p-4 rounded shadow-sm border bg-light text-center">
-                        <h5 class="fw-bold text-success mb-2">Barangay Clearance Fee</h5>
+                        <h5 class="fw-bold text-success mb-2">Business Clearance Fee</h5>
                         <div class="display-6 fw-bold text-dark mb-2">₱130.00</div>
                         <p class="text-muted small mb-0">
                             Settle the fee using your preferred<br>payment method on the right.
@@ -429,7 +388,7 @@ $defaultProvince = 'Camarines Norte';
                         <li>Go to the <strong>Barangay Payment Device</strong> located at the barangay hall.</li>
                         <li>Scan the code and insert <strong>₱130.00</strong>.</li>
                         <li>Wait for the confirmation and printed receipt.</li>
-                        <li>Submit the receipt and claim your Barangay Clearance.</li>
+                        <li>Submit the receipt and claim your Business Clearance.</li>
                         </ol>
                     </div>
 
@@ -476,11 +435,6 @@ $defaultProvince = 'Camarines Norte';
                     </li>
 
                     <li class="list-group-item d-flex justify-content-between">
-                        <span class="fw-bold">Street:</span>
-                        <span class="text-success" id="summaryStreet"></span>
-                    </li>
-
-                    <li class="list-group-item d-flex justify-content-between">
                         <span class="fw-bold">Purok:</span>
                         <span class="text-success" id="summaryPurok"></span>
                     </li>
@@ -491,28 +445,23 @@ $defaultProvince = 'Camarines Norte';
                     </li>
 
                     <li class="list-group-item d-flex justify-content-between">
-                        <span class="fw-bold">Birthdate / Age:</span>
-                        <span class="text-success" id="summaryBirthAge"></span>
+                        <span class="fw-bold">Age / Marital Status:</span>
+                        <span class="text-success" id="summaryAgeMarital"></span>
                     </li>
 
                     <li class="list-group-item d-flex justify-content-between">
-                        <span class="fw-bold">Birthplace:</span>
-                        <span class="text-success" id="summaryBirthplace"></span>
+                        <span class="fw-bold">Business Name / Type:</span>
+                        <span class="text-success" id="summaryBusiness"></span>
                     </li>
 
                     <li class="list-group-item d-flex justify-content-between">
-                        <span class="fw-bold">Marital Status:</span>
-                        <span class="text-success" id="summaryMaritalStatus"></span>
+                        <span class="fw-bold">Business Address:</span>
+                        <span class="text-success" id="summaryBusinessAddress"></span>
                     </li>
 
                     <li class="list-group-item d-flex justify-content-between">
                         <span class="fw-bold">CTC Number:</span>
                         <span class="text-success" id="summaryCTC"></span>
-                    </li>
-
-                    <li class="list-group-item d-flex justify-content-between">
-                        <span class="fw-bold">Purpose:</span>
-                        <span class="text-success" id="summaryPurpose"></span>
                     </li>
 
                     <li class="list-group-item d-flex justify-content-between">
@@ -657,101 +606,4 @@ $defaultProvince = 'Camarines Norte';
     window.initialStep = <?php echo $initial; ?>;
 </script>
 
-<script>
-// small inline helper to show/hide the "other" purpose input and keep summary in sync
-document.addEventListener('DOMContentLoaded', function(){
-    const purposeSelect = document.getElementById('purposeSelect');
-    const purposeOther = document.getElementById('purposeOther');
-    const purposeHidden = document.getElementById('purposeHidden'); // final value submitted as 'purpose'
-
-    function togglePurposeOther(){
-        if(!purposeSelect) return;
-        // When user chooses 'Others', show the textfield and make it required.
-        if(purposeSelect.value === 'Others'){
-            purposeOther.classList.remove('d-none');
-            purposeOther.required = true;
-            // if purposeOther has value use it; otherwise leave hidden as 'Others' until typed
-            if(purposeOther.value.trim()) {
-                purposeHidden.value = purposeOther.value.trim();
-                // also update the option value for consistency
-                const othersOption = Array.from(purposeSelect.options).find(o => o.value === 'Others');
-                if(othersOption) othersOption.value = purposeOther.value.trim();
-            } else {
-                purposeHidden.value = 'Others';
-            }
-        } else {
-            // hide other input and copy selected value to hidden
-            purposeOther.classList.add('d-none');
-            purposeOther.required = false;
-            purposeHidden.value = purposeSelect.value;
-            // restore Others option value to 'Others' if it was overwritten earlier
-            const othersOption = Array.from(purposeSelect.options).find(o => o.text === 'Others' || o.value === purposeOther.value);
-            if(othersOption) othersOption.value = 'Others';
-        }
-        updateSummary();
-    }
-
-    function updateSummary(){
-        const byId = id => document.getElementById(id);
-        if(byId('summaryLastName')) byId('summaryLastName').textContent = document.getElementById('lastname').value;
-        if(byId('summaryFirstName')) byId('summaryFirstName').textContent = document.getElementById('firstname').value;
-        if(byId('summaryMiddleName')) byId('summaryMiddleName').textContent = document.getElementById('middlename').value;
-        if(byId('summaryStreet')) byId('summaryStreet').textContent = document.getElementById('street').value;
-        if(byId('summaryPurok')) byId('summaryPurok').textContent = document.getElementById('purok').value;
-        if(byId('summaryAddress')) byId('summaryAddress').textContent = [document.getElementById('barangay').value, document.getElementById('municipality').value, document.getElementById('province').value].filter(Boolean).join(' / ');
-        if(byId('summaryBirthAge')) byId('summaryBirthAge').textContent = [document.getElementById('birthdate').value, document.getElementById('age').value ? (' / ' + document.getElementById('age').value) : ''].join('');
-        if(byId('summaryBirthplace')) byId('summaryBirthplace').textContent = document.getElementById('birthplace').value;
-        if(byId('summaryMaritalStatus')) byId('summaryMaritalStatus').textContent = document.getElementById('maritalstatus').value;
-        if(byId('summaryCTC')) byId('summaryCTC').textContent = document.getElementById('ctcnumber').value;
-        if(byId('summaryClaimDate')) byId('summaryClaimDate').textContent = document.getElementById('claimdate').value;
-        if(byId('summaryPaymentMethod')) byId('summaryPaymentMethod').textContent = document.getElementById('paymentMethod').value;
-        if(byId('summaryPurpose')){
-            // show the final purpose value from the hidden input
-            byId('summaryPurpose').textContent = purposeHidden.value || '';
-        }
-    }
-
-    if(purposeSelect){
-        purposeSelect.addEventListener('change', togglePurposeOther);
-        // if prefilled 'Others' was shown and had custom text, ensure the hidden value is set on load
-    }
-
-    if(purposeOther){
-        purposeOther.addEventListener('input', function(){
-            const val = purposeOther.value.trim();
-            purposeHidden.value = val || 'Others';
-            // update the Others option value so select and hidden remain consistent
-            const othersOption = Array.from(purposeSelect.options).find(o => o.text === 'Others');
-            if(othersOption) othersOption.value = val || 'Others';
-            updateSummary();
-        });
-    }
-
-    // update summary live when fields change (so when user visits review step it's populated)
-    ['lastname','firstname','middlename','street','purok','barangay','municipality','province','birthdate','age','birthplace','maritalstatus','ctcnumber','claimdate'].forEach(id => {
-        const el = document.getElementById(id);
-        if(el) el.addEventListener('input', updateSummary);
-    });
-
-    // initial toggle based on prefills
-    togglePurposeOther();
-    updateSummary();
-
-    // Ensure form submission uses the hidden 'purpose' value
-    const form = document.getElementById('barangayClearanceForm');
-    if(form){
-        form.addEventListener('submit', function(e){
-            // the hidden input 'purposeHidden' already has the right value due to listeners,
-            // but this ensures if user leaves 'Others' selected without typing anything we still send 'Others'
-            if(purposeSelect && purposeSelect.value === 'Others' && purposeOther && purposeOther.value.trim()){
-                purposeHidden.value = purposeOther.value.trim();
-            } else if(purposeSelect){
-                purposeHidden.value = purposeSelect.value;
-            }
-            // continue submitting
-        });
-    }
-});
-</script>
-
-<script src="js/serviceBarangayClearance.js"></script>
+<script src="js/serviceBusinessClearance.js"></script>

@@ -1,5 +1,5 @@
 <?php
-// residentList.php
+// adminResidents.php (updated)
 require_once 'functions/dbconn.php';
 
 // Determine purok (default=1)
@@ -43,7 +43,7 @@ $whereSQL = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 $tableName = "purok{$purokNum}_rbi";
 
 // --- Pagination setup ---
-$limit = 9;
+$limit = 10;
 $page_num = max((int)($_GET['page_num'] ?? 1), 1);
 $offset = ($page_num - 1) * $limit;
 
@@ -124,23 +124,14 @@ while ($row = $result->fetch_assoc()) {
 }
 $stmt->close();
 
-// // Fetch all columns plus role from user_accounts
-// $sql = "SELECT r.*, ua.role FROM `{$tableName}` AS r LEFT JOIN user_accounts AS ua ON r.account_ID = ua.account_id {$whereSQL}";
+// starting row number for this page
+$startRowNo = $offset + 1;
 
-// $stmt = $conn->prepare($sql);
-// if ($whereSQL) {
-//   $stmt->bind_param($types, ...$params);
-// }
-// $stmt->execute();
-// $result = $stmt->get_result();
+// --- small paging counters for the footer ---
+$shownCount   = count($allRows);                             // how many rows are on this page
+$startDisplay = $totalResidentsPurok > 0 ? ($offset + 1) : 0; // 1-based start index (or 0 when empty)
+$endDisplay   = $offset + $shownCount;                       // 1-based end index
 
-// // Build PHP array for JS
-// $allRows = [];
-// while ($row = $result->fetch_assoc()) {
-//   $row['purok'] = $purokNum;
-//   $allRows[] = $row;
-// }
-// $stmt->close();
 ?>
 
 <title>eBarangay Mo | Residents</title>
@@ -179,7 +170,7 @@ $stmt->close();
       <table class="table table-hover align-middle resident-table">
         <thead class="table-light">
           <tr>
-            <th class="text-nowrap">Account ID</th>
+            <th class="text-nowrap">No.</th>
             <th class="text-nowrap">Full Name</th>
             <!-- <th class="text-nowrap">Birthdate</th>
             <th class="text-nowrap">House No.</th>
@@ -192,9 +183,9 @@ $stmt->close();
         </thead>
         <tbody>
           <?php if (empty($allRows)): ?>
-            <tr><td colspan="7" class="text-center">No data for Purok <?= $purokNum ?></td></tr>
+            <tr><td colspan="4" class="text-center">No data for Purok <?= $purokNum ?></td></tr>
           <?php else: ?>
-            <?php foreach ($allRows as $row):
+            <?php $no = $startRowNo; foreach ($allRows as $row):
               // map enum to CSS color
               switch($row['remarks']) {
                 case 'On Hold': $bgColor = 'yellow'; break;
@@ -204,12 +195,16 @@ $stmt->close();
               }
               $cellStyle = $bgColor ? "background-color:{$bgColor}!important;" : '';
               $escapedName = htmlspecialchars($row['full_name'], ENT_QUOTES);
+              $acctId = htmlspecialchars($row['account_ID'] ?? '');
             ?>
-              <!-- <tr class="resident-row" data-name="<= $escapedName ?>"> -->
-              <!-- <tr class="resident-row" data-name="<= $escapedName ?>" data-role="<= htmlspecialchars($row['role'] ?? '', ENT_QUOTES) ?>"> -->
-              <tr class="resident-row" data-name="<?= $escapedName ?>" data-role="<?= htmlspecialchars($row['role'] ?? '', ENT_QUOTES) ?>">
-                <td style="<?= $cellStyle ?>"><?= htmlspecialchars($row['account_ID']) ?></td>
-                <td style="<?= $cellStyle ?>"><?= $escapedName ?></td>
+              <tr class="resident-row" data-name="<?= $escapedName ?>" data-role="<?= htmlspecialchars($row['role'] ?? '', ENT_QUOTES) ?>" data-account="<?= $acctId ?>">
+                <td style="<?= $cellStyle ?>"><?= $no ?></td>
+                <td style="<?= $cellStyle ?>">
+                  <div class="d-flex flex-column">
+                    <span><?= $escapedName ?></span>
+                    <small class="text-muted">Account ID: <?= $acctId ?></small>
+                  </div>
+                </td>
                 <!-- <td style="<= $cellStyle ?>"><= htmlspecialchars($row['birthdate']) ?></td>
                 <td style="<= $cellStyle ?>"><= htmlspecialchars($row['house_number'] ?? '—') ?></td>
                 <td style="<= $cellStyle ?>"><= htmlspecialchars($row['relationship_to_head'] ?? '—') ?></td>
@@ -240,7 +235,7 @@ $stmt->close();
                   </select>
                 </td>
               </tr>
-            <?php endforeach; ?>
+            <?php $no++; endforeach; ?>
           <?php endif; ?>
         </tbody>
       </table>
@@ -280,37 +275,22 @@ $stmt->close();
     <?php endif; ?>
 
     <div id="purokTotalText"
-      class="position-absolute end-0 bottom-0 pe-3 pb-2 text-muted user-select-none pointer-events-none">
+     class="position-absolute end-0 bottom-0 pe-3 pb-2 text-muted user-select-none pointer-events-none">
       <small class="d-block fs-6">
-        <span class="fw-semibold">Purok <?= $purokNum ?></span>
-        <span class="mx-2">•</span>
-        <span class="fw-bold text-dark"><?= (int)$totalResidentsPurok ?></span>
-        <span class="ms-1">residents</span>
+        <?php if ($totalResidentsPurok > 0): ?>
+          <!-- <span class="mx-2">•</span> -->
+          <span class="text-muted small">
+            Showing <strong><?= $startDisplay ?></strong>–<strong><?= $endDisplay ?></strong> of <strong><?= (int)$totalResidentsPurok ?></strong> Residents
+          </span>
+        <?php else: ?>
+          <!-- <span class="mx-2">•</span> -->
+          <span class="text-muted small">No Residents Found</span>
+        <?php endif; ?>
       </small>
     </div>
 
   </div>
 </div>
-
-<!-- Details / Edit Modal -->
-<!-- <div class="modal fade" id="residentDetailsModal" tabindex="-1" aria-labelledby="residentDetailsLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title"><span id="detailsModalTitle">Resident Details</span></h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <form id="residentDetailsForm">
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary" id="detailsEditSaveBtn">Edit</button>
-      </div>
-    </div>
-  </div>
-</div> -->
 
 <!-- Resident Details Modal -->
 <div class="modal fade" id="residentDetailsModal" tabindex="-1" aria-labelledby="residentDetailsLabel" aria-hidden="true">
@@ -347,35 +327,6 @@ $stmt->close();
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
         <button type="button" class="btn btn-primary" id="confirmSaveBtn">Yes, Save</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Redesigned Confirmation Modal -->
-<div class="modal fade" id="roleConfirmModal" tabindex="-1" aria-labelledby="roleConfirmModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content shadow">
-      <div class="modal-header text-white" style="background-color: #13411F;">
-        <h5 class="modal-title d-flex align-items-center" id="roleConfirmModalLabel">
-          <span class="material-symbols-outlined me-2">warning</span>
-          Confirm Role Change
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body text-center">
-        <p class="mb-1" id="roleConfirmMessage">
-          Are you sure you want to change this role?
-        </p>
-        <small class="text-muted">This change will affect administrative permissions.</small>
-      </div>
-      <div class="modal-footer justify-content-center">
-        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">
-          Cancel
-        </button>
-        <button type="button" class="btn btn-success px-4" id="roleConfirmBtn">
-          Yes, Change Role
-        </button>
       </div>
     </div>
   </div>
@@ -504,128 +455,60 @@ $stmt->close();
       });
     });
 
-    // --- Role dropdown handler
-    // document.querySelectorAll('.role-select').forEach(sel => {
-    //   sel.addEventListener('change', async function() {
-    //     const tr = this.closest('tr');
-    //     const acct = tr.children[0].textContent.trim();
-    //     const newRole = this.value;
-    //     await fetch('functions/update_role.php', {
-    //       method: 'POST',
-    //       headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    //       body: new URLSearchParams({ account_id: acct, role: newRole })
-    //     });
-    //   });
-    // });
+    // --- Role dropdown handler (replacement)
+    document.querySelectorAll('.role-select').forEach(sel => {
+      // store current value baseline so we can revert on failure
+      sel.dataset.original = sel.value;
 
-    // --- Role dropdown handler (confirm for all admin roles + revert + server JSON handling)
-    (function() {
-      const roleChangers = ['Brgy Captain','Brgy Bookkeeper','Brgy Secretary'];
-      const adminRoles = ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Treasurer','Brgy Kagawad','Lupon Tagapamayapa'];
+      sel.addEventListener('change', async function() {
+        const tr = sel.closest('tr');
+        const acct = (tr && tr.dataset && tr.dataset.account) ? tr.dataset.account.trim() : '';
+        const newRole = sel.value;
+        const oldRole = sel.dataset.original || tr.dataset.role || '';
 
-      const canChangeRole = roleChangers.includes(window.loggedInUserRole);
-
-      if (!canChangeRole) {
-        document.querySelectorAll('.role-select').forEach(s => s.disabled = true);
-        return;
-      }
-
-      // modal elements
-      const roleConfirmModalEl = document.getElementById('roleConfirmModal');
-      const roleConfirmModal = new bootstrap.Modal(roleConfirmModalEl);
-      const roleConfirmMessage = document.getElementById('roleConfirmMessage');
-      const roleConfirmBtn = document.getElementById('roleConfirmBtn');
-
-      // pendingConfirm holds data while modal is open
-      // structure: { sel, oldRole, newRole, acct, doUpdate, confirmed }
-      let pendingConfirm = null;
-
-      document.querySelectorAll('.role-select').forEach(sel => {
-        // remember current baseline so we can revert
-        sel.dataset.original = sel.value;
-
-        sel.addEventListener('change', (e) => {
-          const newRole = sel.value;
-          const tr = sel.closest('tr');
-          const acct = tr.children[0].textContent.trim();
-          const oldRole = tr.dataset.role || sel.dataset.original || '';
-
-          // nothing changed
-          if (newRole === oldRole) return;
-
-          const affectsAdmin = adminRoles.includes(oldRole) || adminRoles.includes(newRole);
-
-          // define the update operation (captures sel/oldRole/newRole/tr/acct)
-          const doUpdate = async () => {
-            try {
-              const body = new URLSearchParams({ account_id: acct, role: newRole, purok: tr.dataset.purok ?? '' });
-              const res = await fetch('functions/update_role.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body
-              });
-              const json = await res.json();
-
-              if (!json.success) {
-                // revert UI
-                sel.value = oldRole;
-                showBootstrapAlert(json.error || 'Failed to update role', 'danger');
-              } else {
-                // success: update dataset baseline
-                tr.dataset.role = newRole;
-                sel.dataset.original = newRole;
-                showBootstrapAlert(json.message || 'Role updated', 'success');
-              }
-            } catch (err) {
-              sel.value = oldRole;
-              showBootstrapAlert('Network error while updating role', 'danger');
-              console.error(err);
-            }
-          };
-
-          if (affectsAdmin) {
-            // prepare pendingConfirm and show modal
-            pendingConfirm = { sel, oldRole, newRole, acct, doUpdate, confirmed: false };
-
-            roleConfirmMessage.innerHTML = `
-              <p>Are you sure you want to change the role for account <strong>${acct}</strong>?</p>
-              <p>From: <em>${oldRole || '—'}</em><br>To: <em>${newRole}</em></p>
-              <p class="text-muted small">This affects administrative positions — please confirm.</p>
-            `;
-            roleConfirmModal.show();
-          } else {
-            // no admin role involved — update immediately
-            doUpdate();
-          }
-        });
-      });
-
-      // Confirm button — runs the stored doUpdate and mark confirmed
-      roleConfirmBtn.addEventListener('click', () => {
-        if (!pendingConfirm) return;
-        pendingConfirm.confirmed = true;
-        // hide modal first (so hidden.bs.modal will run after)
-        roleConfirmModal.hide();
-        // call update
-        pendingConfirm.doUpdate();
-        // clear pending after action (safe guard)
-        pendingConfirm = null;
-      });
-
-      // If modal is closed without confirming, revert the select
-      roleConfirmModalEl.addEventListener('hidden.bs.modal', () => {
-        if (!pendingConfirm) return;
-        if (!pendingConfirm.confirmed) {
-          // user cancelled/closed modal — revert select to oldRole
-          try {
-            pendingConfirm.sel.value = pendingConfirm.oldRole;
-          } catch (e) {
-            console.error('Failed to revert role select', e);
-          }
+        if (!acct) {
+          showBootstrapAlert('Account ID not found for this row', 'danger');
+          sel.value = oldRole;
+          return;
         }
-        pendingConfirm = null;
+
+        if (newRole === oldRole) return;
+
+        // optimistic UI: disable while updating
+        sel.disabled = true;
+
+        try {
+          const res = await fetch('functions/update_role.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ account_id: acct, role: newRole })
+          });
+
+          let json;
+          try { json = await res.json(); } catch (e) {
+            sel.value = oldRole;
+            showBootstrapAlert('Invalid server response while updating role', 'danger');
+            return;
+          }
+
+          if (!json.success) {
+            sel.value = oldRole;
+            showBootstrapAlert(json.error || 'Failed to update role', 'danger');
+          } else {
+            // success: update dataset & baseline
+            tr.dataset.role = newRole;
+            sel.dataset.original = newRole;
+            showBootstrapAlert(json.message || 'Role updated', 'success');
+          }
+        } catch (err) {
+          sel.value = oldRole;
+          showBootstrapAlert('Network error while updating role', 'danger');
+          console.error(err);
+        } finally {
+          sel.disabled = false;
+        }
       });
-    })();
+    });
 
     // --- Details / Edit Modal setup ---
     const modalEl = document.getElementById('residentDetailsModal');
@@ -816,7 +699,7 @@ $stmt->close();
         // ['sex','civil_status','blood_type','highest_educational_attainment']
         //   .forEach(k => document.getElementById(`field_${k}`).disabled = false);
 
-          // enable only editable controls
+        // enable only editable controls
        ['purok','full_name','house_number','relationship_to_head','registry_number','total_population',
         'sex','civil_status','blood_type', 'birth_registration_number','highest_educational_attainment', 'occupation'
        ].forEach(k => {

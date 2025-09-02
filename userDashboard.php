@@ -564,7 +564,7 @@ if (is_numeric($userId) && intval($userId) > 0) {
           </a>
 
           <!-- bottom-left -->
-          <a href="?page=serviceBusinessPermit" class="most-requested-tile service-secondary-tile" tabindex="0" role="button" aria-label="Business Permit">
+          <a href="?page=serviceBusinessClearance" class="most-requested-tile service-secondary-tile" tabindex="0" role="button" aria-label="Business Permit">
             <span class="material-icons tile-icon" aria-hidden="true">business_center</span>
             <div class="tile-label">Business Permit</div>
           </a>

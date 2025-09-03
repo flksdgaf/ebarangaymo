@@ -1,63 +1,60 @@
 <?php
 // functions/borrow_reject.php
-session_start();
-require '../functions/dbconn.php';
+require __DIR__ . '/dbconn.php';
+
 header('Content-Type: application/json; charset=utf-8');
 
-$role = $_SESSION['loggedInUserRole'] ?? '';
-$allowed = ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper'];
-if (!in_array($role, $allowed, true)) {
-  http_response_code(403);
-  echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+  echo json_encode(['success' => false, 'error' => 'Invalid request method']);
   exit;
 }
 
-$id = isset($_POST['id']) ? (int) $_POST['id'] : 0;
-$remarks = trim($_POST['remarks'] ?? '');
+$id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+$reason = isset($_POST['reason']) ? trim($_POST['reason']) : '';
 
-if (!$id) {
-  http_response_code(400);
-  echo json_encode(['success' => false, 'message' => 'Missing id']);
+if ($id <= 0) {
+  echo json_encode(['success' => false, 'error' => 'Invalid id']);
+  exit;
+}
+if ($reason === '') {
+  echo json_encode(['success' => false, 'error' => 'Rejection reason is required']);
   exit;
 }
 
-// ensure it is pending
-$stmt = $conn->prepare("SELECT status FROM borrow_requests WHERE id = ? LIMIT 1");
-$stmt->bind_param('i', $id);
-$stmt->execute();
-$res = $stmt->get_result();
-$row = $res->fetch_assoc();
-$stmt->close();
+$conn->begin_transaction();
 
-if (!$row) {
-  http_response_code(404);
-  echo json_encode(['success' => false, 'message' => 'Request not found']);
+try {
+  // Lock the borrow_requests row
+  $sel = $conn->prepare("SELECT status, equipment_sn, qty FROM borrow_requests WHERE id = ? FOR UPDATE");
+  if (!$sel) throw new Exception('Prepare failed (select borrow_requests): ' . $conn->error);
+  $sel->bind_param('i', $id);
+  $sel->execute();
+  $res = $sel->get_result();
+  $br = $res ? $res->fetch_assoc() : null;
+  $sel->close();
+
+  if (!$br) throw new Exception('Borrow request not found');
+  if (($br['status'] ?? '') !== 'Pending') throw new Exception('Borrow request is not pending');
+
+  // Update borrow_requests: set status to Rejected and save reason + timestamp
+  $upd = $conn->prepare("UPDATE borrow_requests SET status = 'Rejected', rejection_reason = ?, rejected_at = NOW() WHERE id = ?");
+  if (!$upd) throw new Exception('Prepare failed (update borrow_requests): ' . $conn->error);
+  $upd->bind_param('si', $reason, $id);
+  if (!$upd->execute()) throw new Exception('Failed to update borrow request: ' . $upd->error);
+  $upd->close();
+
+  $conn->commit();
+  echo json_encode(['success' => true, 'message' => 'Borrow request rejected']);
+  exit;
+
+} catch (Exception $e) {
+  $conn->rollback();
+  // For production, sanitize message — useful for dev
+  echo json_encode(['success' => false, 'error' => $e->getMessage()]);
   exit;
 }
-if ($row['status'] !== 'Pending') {
-  http_response_code(409);
-  echo json_encode(['success' => false, 'message' => 'Request is not pending']);
-  exit;
-}
 
-// Update to Rejected (store remarks if column exists)
-$hasRemarksCol = false;
-$check = $conn->query("SHOW COLUMNS FROM borrow_requests LIKE 'rejected_remarks'");
-if ($check && $check->num_rows) $hasRemarksCol = true;
-
-if ($hasRemarksCol) {
-  $u = $conn->prepare("UPDATE borrow_requests SET status = 'Rejected', rejected_remarks = ? WHERE id = ?");
-  $u->bind_param('si', $remarks, $id);
-} else {
-  $u = $conn->prepare("UPDATE borrow_requests SET status = 'Rejected' WHERE id = ?");
-  $u->bind_param('i', $id);
-}
-if ($u->execute()) {
-  echo json_encode(['success' => true, 'message' => 'Rejected']);
-} else {
-  http_response_code(500);
-  echo json_encode(['success' => false, 'message' => 'Update failed']);
-}
-$u->close();
+$conn->close();
+echo json_encode(['success' => false, 'error' => 'Unknown error']);
 exit;
 ?>

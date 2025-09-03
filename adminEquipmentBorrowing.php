@@ -233,8 +233,8 @@ if ($filter_esn !== '') {
 
 if ($filter_date_from !== '' ) {
   if (valid_date($filter_date_from)) {
-    $borrowWhere[] = "br.borrow_date >= ?";
-    $bParams[] = $filter_date_from . ' 00:00:00';
+    $borrowWhere[] = "br.borrow_date_from >= ?";
+    $bParams[] = $filter_date_from;
     $bTypes .= 's';
   } else {
     error_log("Invalid filter_date_from: " . $filter_date_from);
@@ -243,8 +243,8 @@ if ($filter_date_from !== '' ) {
 
 if ($filter_date_to !== '') {
   if (valid_date($filter_date_to)) {
-    $borrowWhere[] = "br.borrow_date <= ?";
-    $bParams[] = $filter_date_to . ' 23:59:59';
+    $borrowWhere[] = "br.borrow_date_to <= ?";
+    $bParams[] = $filter_date_to;
     $bTypes .= 's';
   } else {
     error_log("Invalid filter_date_to: " . $filter_date_to);
@@ -258,10 +258,12 @@ if ($bsearch !== '') {
                      OR CAST(br.qty AS CHAR) LIKE ? 
                      OR br.location LIKE ? 
                      OR br.used_for LIKE ? 
-                     OR br.borrow_date LIKE ? 
+                     OR br.borrow_date_from LIKE ? 
+                     OR br.borrow_date_to LIKE ? 
                      OR br.pudo LIKE ?)";
   $blike = '%' . $bsearch . '%';
-  for ($i = 0; $i < 8; $i++) {
+  // 9 placeholders above
+  for ($i = 0; $i < 9; $i++) {
     $bParams[] = $blike;
     $bTypes .= 's';
   }
@@ -270,7 +272,7 @@ if ($bsearch !== '') {
 if ($borrowWhere) {
   $borrowSql .= ' WHERE ' . implode(' AND ', $borrowWhere);
 }
-$borrowSql .= ' ORDER BY br.borrow_date DESC, br.id DESC';
+$borrowSql .= ' ORDER BY br.borrow_date_from DESC, br.id DESC';
 
 $borrows = [];
 $brStmt = $conn->prepare($borrowSql);
@@ -523,7 +525,7 @@ if (!$brStmt) {
 
                 <!-- FILTER: Date range -->
                 <div class="mb-2">
-                  <label class="form-label form-label-sm">Date range</label>
+                  <label class="form-label form-label-sm">Date Request Range</label>
                   <div class="d-flex gap-2">
                     <input type="date" name="filter_date_from" class="form-control form-control-sm" value="<?= htmlspecialchars($filter_date_from, ENT_QUOTES) ?>" placeholder="From">
                     <input type="date" name="filter_date_to" class="form-control form-control-sm" value="<?= htmlspecialchars($filter_date_to, ENT_QUOTES) ?>" placeholder="To">
@@ -531,7 +533,7 @@ if (!$brStmt) {
                 </div>
 
                 <div class="d-flex">
-                  <a href="?page=adminEquipmentBorrowing&tab=equipments&equip_page=1" class="btn btn-sm btn-outline-secondary me-2">Reset</a>
+                  <a href="?page=adminEquipmentBorrowing&tab=borrows" class="btn btn-sm btn-outline-secondary me-2">Reset</a>
                   <button type="submit" class="btn btn-sm btn-success flex-grow-1">Apply</button>
                 </div>
               </form>
@@ -569,43 +571,58 @@ if (!$brStmt) {
           <table class="table table-hover align-middle text-start">
             <thead class="table-light">
               <tr>
-                <th>Resident’s Name</th>
+                <th>Transaction ID</th>
+                <th>Resident</th>
                 <th>Equipment</th>
-                <th>Qty</th>
-                <th>Date Requested</th>
+                <th>Quantity</th>
+                <th>Borrow Date</th>
                 <th>Status</th>
                 <th class="text-center">Action</th>
               </tr>
             </thead>
             <tbody>
               <?php if (empty($borrows)): ?>
-                <tr><td colspan="5" class="text-center">No borrow requests.</td></tr>
+                <tr><td colspan="6" class="text-center">No borrow requests.</td></tr>
               <?php else: foreach($borrows as $br):
                 $status = $br['status'] ?? 'Pending';
               ?>
                 <tr
                   data-id="<?= (int)$br['id'] ?>"
+                  data-transaction-id="<?= htmlspecialchars($br['transaction_id'], ENT_QUOTES) ?>"
                   data-resident="<?= htmlspecialchars($br['resident_name'], ENT_QUOTES) ?>"
                   data-esn="<?= htmlspecialchars($br['equipment_sn'], ENT_QUOTES) ?>"
                   data-equipment="<?= htmlspecialchars($br['equipment_name'], ENT_QUOTES) ?>"
                   data-qty="<?= (int)$br['qty'] ?>"
                   data-location="<?= htmlspecialchars($br['location'], ENT_QUOTES) ?>"
                   data-usedfor="<?= htmlspecialchars($br['used_for'], ENT_QUOTES) ?>"
-                  data-date="<?= htmlspecialchars($br['borrow_date'], ENT_QUOTES) ?>"
+                  data-borrow-from="<?= htmlspecialchars($br['borrow_date_from'] ?? '', ENT_QUOTES) ?>"
+                  data-borrow-to="<?= htmlspecialchars($br['borrow_date_to'] ?? '', ENT_QUOTES) ?>"
                   data-pudo="<?= htmlspecialchars($br['pudo'], ENT_QUOTES) ?>"
-                  data-status="<?= htmlspecialchars($status, ENT_QUOTES) ?>"
+                  data-status="<?= htmlspecialchars($br['status'], ENT_QUOTES) ?>"
                 >
+                  <td><?= htmlspecialchars($br['transaction_id']) ?></td>
                   <td><?= htmlspecialchars($br['resident_name']) ?></td>
                   <td><?= htmlspecialchars($br['equipment_name'] ?: $br['equipment_sn']) ?></td>
                   <td><?= (int)$br['qty'] ?></td>
-                  <td><?= htmlspecialchars($br['borrow_date']) ?></td>
+                  <?php
+                    // display a friendly range: if from == to show single date, otherwise show "from — to"
+                    $from = $br['borrow_date_from'] ?? '';
+                    $to = $br['borrow_date_to'] ?? '';
+                    if ($from && $to) {
+                      $displayDate = ($from === $to) ? $from : ($from . ' — ' . $to);
+                    } else {
+                      // fallback to empty or any pre-existing single-date field if present
+                      $displayDate = htmlspecialchars($br['borrow_date_from'] ?? $br['borrow_date'] ?? '');
+                    }
+                  ?>
+                  <td><?= htmlspecialchars($displayDate) ?></td>
                   <td>
                     <?php
                       // compute badge class
                       $badgeClass = 'bg-secondary';
-                      if ($status === 'Pending') $badgeClass = 'bg-info';
-                      if ($status === 'Borrowed') $badgeClass = 'bg-success';
-                      if ($status === 'Returned') $badgeClass = 'bg-primary';
+                      if ($status === 'Pending') $badgeClass = 'bg-warning';
+                      if ($status === 'Borrowed') $badgeClass = 'bg-primary';
+                      if ($status === 'Returned') $badgeClass = 'bg-success';
                       if ($status === 'Rejected') $badgeClass = 'bg-danger';
                     ?>
                     <span class="badge <?= $badgeClass ?>"><?= htmlspecialchars($status) ?></span>
@@ -617,7 +634,7 @@ if (!$brStmt) {
                     ?>
 
                     <!-- Always allow View for staff and treasurer (adjust as needed) -->
-                    <?php if ($isStaff || $currentRole === 'Brgy Treasurer'): ?>
+                    <?php if ($isStaff): ?>
                       <button class="btn btn-sm btn-warning borrow-view-btn me-1" title="View" data-id="<?= (int)$br['id'] ?>">
                         <span class="material-symbols-outlined" style="font-size:12px;">visibility</span>
                       </button>
@@ -652,7 +669,7 @@ if (!$brStmt) {
 
   <!-- Add Equipment Modal -->
   <div class="modal fade" id="addEquipmentModal" tabindex="-1" aria-labelledby="addEquipmentLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
       <form class="modal-content" method="POST" action="functions/equipment_add.php">
         <div class="modal-header text-white" style="background-color: #13411F;">
           <h5 class="modal-title" id="addEquipmentLabel">Add New Equipment</h5>
@@ -682,7 +699,7 @@ if (!$brStmt) {
 
   <!-- Edit Equipment Modal -->
   <div class="modal fade" id="editEquipmentModal" tabindex="-1" aria-labelledby="editEquipmentLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
       <form class="modal-content" method="POST" action="functions/equipment_edit.php">
         <div class="modal-header text-white" style="background-color: #13411F;">
           <h5 class="modal-title" id="editEquipmentLabel">
@@ -751,6 +768,7 @@ if (!$brStmt) {
           <h5 class="modal-title" id="addBorrowLabel">New Borrow Request</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
+
         <div class="modal-body">
           <div class="row gy-3">
             <div class="col-md-6">
@@ -758,17 +776,24 @@ if (!$brStmt) {
               <input type="text" id="borrow-resident-name" name="resident_name" class="form-control" placeholder="Lastname, Firstname M." required>
             </div>
 
+            <!-- VISIBLE: Equipment NAME (for user) -->
             <div class="col-md-6 position-relative">
-              <label class="form-label">Equipment SN</label> <!-- for="borrow-equipment-esn" -->
-              <input type="text" id="borrowedEsn" name="equipment_sn" class="form-control" placeholder="Type or select ESN" autocomplete="off" required>
-              <ul id="borrowedEsnList" class="list-group position-absolute w-100 shadow-sm bg-white" style="top:100%; left:0; max-height:150px; overflow-y:auto; display:none;">
-              </ul>
+              <label class="form-label">Equipment</label>
+              <input type="text" id="borrowedEquipment" class="form-control" placeholder="Type or select equipment name" autocomplete="off" required>
+              <input type="hidden" id="borrowedEsn" name="equipment_sn" value="">
+              <ul id="borrowedEquipmentList" class="list-group position-absolute w-100 shadow-sm bg-white" style="top:100%; left:0; max-height:180px; overflow-y:auto; display:none; z-index:1050;"></ul>
+
+              <!-- muted availability text -->
+              <div class="form-text text-muted" id="esnAvailableText" style="margin-top:.25rem;">
+                Available: —
+              </div>
             </div>
 
             <div class="col-md-6">
               <label for="borrow-qty" class="form-label">Quantity</label>
               <input type="number" id="borrow-qty" name="qty" class="form-control" min="1" placeholder="1" required>
             </div>
+
             <div class="col-md-6">
               <label for="borrow-location" class="form-label">Location</label>
               <input type="text" id="borrow-location" name="location" class="form-control" placeholder="Office / Home / Event Venue" required>
@@ -778,6 +803,7 @@ if (!$brStmt) {
               <label for="borrow-used-for" class="form-label">Used For</label>
               <input type="text" id="borrow-used-for" name="used_for" class="form-control" placeholder="e.g., Presentation, Workshop" required>
             </div>
+
             <div class="col-md-6">
               <label for="borrow-pudo" class="form-label">Pick-Up / Drop-Off</label>
               <select id="borrow-pudo" name="pudo" class="form-select" required>
@@ -786,6 +812,19 @@ if (!$brStmt) {
                 <option value="Drop Off">Drop Off</option>
               </select>
             </div>
+
+            <!-- Borrow date range -->
+            <?php $today = date('Y-m-d'); ?>
+            <div class="col-md-6">
+              <label for="borrow-date-from" class="form-label">Borrow From</label>
+              <input type="date" id="borrow-date-from" name="borrow_date_from" class="form-control" value="<?= htmlspecialchars($today, ENT_QUOTES) ?>" min="<?= htmlspecialchars($today, ENT_QUOTES) ?>" required>
+            </div>
+
+            <div class="col-md-6">
+              <label for="borrow-date-to" class="form-label">Borrow To</label>
+              <input type="date" id="borrow-date-to" name="borrow_date_to" class="form-control" value="<?= htmlspecialchars($today, ENT_QUOTES) ?>" min="<?= htmlspecialchars($today, ENT_QUOTES) ?>" required>
+            </div>
+
           </div>
         </div>
 
@@ -797,125 +836,130 @@ if (!$brStmt) {
     </div>
   </div>
 
-  <!-- View Borrow Modal -->
-  <div class="modal fade" id="viewBorrowModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
+  <!-- Borrow View Modal -->
+  <div class="modal fade" id="viewBorrowModal" tabindex="-1" aria-labelledby="viewBorrowLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
       <div class="modal-content">
-        <div class="modal-header text-white" style="background-color:#13411F;">
-          <h5 class="modal-title">Borrow Request Details</h5>
+        <div class="modal-header text-white" style="background-color: #13411F;">
+          <h5 class="modal-title" id="viewBorrowLabel">Borrow Request Details</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <div class="row g-2" id="viewBorrowFields">
-            <div class="col-12 col-md-6">
-              <label class="form-label fw-semibold">Resident</label>
-              <input type="text" readonly id="vb_resident" class="form-control form-control-sm">
-            </div>
-            <div class="col-12 col-md-6">
-              <label class="form-label fw-semibold">Equipment</label>
-              <input type="text" readonly id="vb_equipment" class="form-control form-control-sm">
-            </div>
-            <div class="col-12 col-md-3">
-              <label class="form-label fw-semibold">Quantity</label>
-              <input type="text" readonly id="vb_qty" class="form-control form-control-sm">
-            </div>
-            <div class="col-12 col-md-3">
-              <label class="form-label fw-semibold">Date</label>
-              <input type="text" readonly id="vb_date" class="form-control form-control-sm">
-            </div>
-            <div class="col-12 col-md-6">
-              <label class="form-label fw-semibold">Pick Up / Drop Off</label>
-              <input type="text" readonly id="vb_pudo" class="form-control form-control-sm">
-            </div>
-            <div class="col-12">
-              <label class="form-label fw-semibold">Location</label>
-              <textarea readonly id="vb_location" class="form-control form-control-sm" rows="2"></textarea>
-            </div>
-            <div class="col-12">
-              <label class="form-label fw-semibold">Used For</label>
-              <textarea readonly id="vb_usedfor" class="form-control form-control-sm" rows="2"></textarea>
-            </div>
-          </div>
+          <dl class="row mb-0">
+            <dt class="col-sm-4">Transaction ID</dt>
+            <dd class="col-sm-8" id="viewTransaction"></dd>
+
+            <dt class="col-sm-4">Resident’s Name</dt>
+            <dd class="col-sm-8" id="viewResident"></dd>
+
+            <dt class="col-sm-4">Equipment</dt>
+            <dd class="col-sm-8" id="viewEquipment"></dd>
+
+            <dt class="col-sm-4">Quantity</dt>
+            <dd class="col-sm-8" id="viewQty"></dd>
+
+            <dt class="col-sm-4">Location</dt>
+            <dd class="col-sm-8" id="viewLocation"></dd>
+
+            <dt class="col-sm-4">Used For</dt>
+            <dd class="col-sm-8" id="viewUsedFor"></dd>
+
+            <dt class="col-sm-4">Borrow Date</dt>
+            <dd class="col-sm-8" id="viewDates"></dd>
+
+            <dt class="col-sm-4">Pick-Up / Drop-Off</dt>
+            <dd class="col-sm-8" id="viewPudo"></dd>
+
+            <dt class="col-sm-4">Status</dt>
+            <dd class="col-sm-8" id="viewStatus"></dd>
+          </dl>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Accept Borrow Modal -->
-  <div class="modal fade" id="acceptBorrowModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-md">
-      <div class="modal-content border-success">
-        <form id="acceptBorrowForm">
-          <div class="modal-header bg-success text-white">
-            <h5 class="modal-title"><span class="material-symbols-outlined me-1">check_circle</span>Accept Borrow Request</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body">
-            <p id="acceptBorrowMessage">Are you sure you want to accept this borrow request?</p>
-            <input type="hidden" name="id" id="acceptBorrowId" value="">
-          </div>
-          <div class="modal-footer">
-            <button type="submit" class="btn btn-success">Confirm Accept</button>
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          </div>
-        </form>
+  <div class="modal fade" id="acceptBorrowModal" tabindex="-1" aria-labelledby="acceptBorrowLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title" id="acceptBorrowLabel">Accept Borrow Request</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-0">
+            Are you sure you want to <strong>accept</strong> this borrow request?<br>
+            <small class="text-muted">Transaction ID: <span id="acceptTransactionId"></span></small>
+          </p>
+
+          <!-- hidden field to store borrow_request id (server id) -->
+          <input type="hidden" id="acceptBorrowId" value="">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-success" id="confirmAcceptBtn">Accept</button>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- Reject Borrow Modal -->
-  <div class="modal fade" id="rejectBorrowModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered modal-md">
-      <div class="modal-content border-danger">
-        <form id="rejectBorrowForm">
-          <div class="modal-header bg-danger text-white">
-            <h5 class="modal-title"><span class="material-symbols-outlined me-1">warning</span>Reject Borrow Request</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+  <div class="modal fade" id="rejectBorrowModal" tabindex="-1" aria-labelledby="rejectBorrowLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title" id="rejectBorrowLabel">Reject Borrow Request</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p>
+            You are rejecting request <small class="text-muted">(Transaction ID: <span id="rejectTransactionId"></span>)</small>
+          </p>
+
+          <!-- hidden server-side borrow id -->
+          <input type="hidden" id="rejectBorrowId" value="">
+
+          <div class="mb-3">
+            <label for="rejectReason" class="form-label">Rejection Details</label>
+            <textarea id="rejectReason" class="form-control" rows="3" placeholder="Explain the reason for rejecting this request..." required></textarea>
           </div>
-          <div class="modal-body">
-            <p id="rejectBorrowMessage">Please provide a reason for rejection:</p>
-            <input type="hidden" name="id" id="rejectBorrowId">
-            <div class="mb-3">
-              <textarea name="remarks" id="rejectBorrowRemarks" class="form-control" rows="3" placeholder="Enter reason" required></textarea>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="submit" class="btn btn-danger">Confirm Reject</button>
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          </div>
-        </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" id="confirmRejectBtn">Reject Request</button>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- Edit Borrow Modal -->
-  <div class="modal fade" id="editBorrowModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered modal-md">
+  <div class="modal fade" id="editBorrowModal" tabindex="-1" aria-labelledby="editBorrowLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
       <div class="modal-content">
-        <form id="editBorrowForm">
-          <div class="modal-header text-white" style="background-color:#13411F;">
-            <h5 class="modal-title"><span class="material-symbols-outlined me-1">settings</span>Edit Borrow Request</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <div class="modal-header text-white" style="background-color: #13411F;">
+          <h5 class="modal-title" id="editBorrowLabel">Edit Borrow Request</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          <!-- store id -->
+          <input type="hidden" id="editBorrowId" value="">
+
+          <!-- friendly info text -->
+          <p id="editBorrowInfo" class="mb-3"></p>
+
+          
+        </div>
+
+        <div class="modal-footer">
+          <!-- Mark as returned button inside the body (as you requested) -->
+          <div class="d-grid">
+            <button type="button" id="markReturnedBtn" class="btn btn-success">Mark as Returned</button>
           </div>
-          <div class="modal-body">
-            <input type="hidden" name="id" id="editBorrowId">
-            <div class="mb-3">
-              <label class="form-label fw-semibold">Status</label>
-              <select name="status" id="editBorrowStatus" class="form-select form-select-sm" required>
-                <option value="Borrowed">Borrowed</option>
-                <option value="Returned">Returned</option>
-              </select>
-            </div>
-            <div class="mb-2 text-muted small">Changing status to <strong>Returned</strong> will increment equipment available quantity.</div>
-          </div>
-          <div class="modal-footer">
-            <button type="submit" class="btn btn-primary">Save Changes</button>
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          </div>
-        </form>
+        </div>
       </div>
     </div>
   </div>
@@ -1025,156 +1069,6 @@ if (!$brStmt) {
       // intentionally no input listener here either
     }
 
-    // ---------- Borrow requests UI wiring ----------
-    document.body.addEventListener('click', (evt) => {
-      // VIEW
-      const viewBtn = evt.target.closest('.borrow-view-btn');
-      if (viewBtn) {
-        const row = viewBtn.closest('tr');
-        document.getElementById('vb_resident').value = row.dataset.resident || '';
-        document.getElementById('vb_equipment').value = row.dataset.equipment || row.dataset.esn || '';
-        document.getElementById('vb_qty').value = row.dataset.qty || '';
-        document.getElementById('vb_date').value = row.dataset.date || '';
-        document.getElementById('vb_pudo').value = row.dataset.pudo || '';
-        document.getElementById('vb_location').value = row.dataset.location || '';
-        document.getElementById('vb_usedfor').value = row.dataset.usedfor || '';
-        new bootstrap.Modal(document.getElementById('viewBorrowModal')).show();
-        return;
-      }
-
-      // ACCEPT (open modal)
-      const acceptBtn = evt.target.closest('.borrow-accept-btn');
-      if (acceptBtn) {
-        const id = acceptBtn.dataset.id;
-        document.getElementById('acceptBorrowId').value = id;
-        const row = acceptBtn.closest('tr');
-        const resName = row.dataset.resident || '';
-        const eq = row.dataset.equipment || row.dataset.esn || '';
-        document.getElementById('acceptBorrowMessage').textContent = `Accept borrow request by ${resName} for ${eq}? This will reduce available stock.`;
-        new bootstrap.Modal(document.getElementById('acceptBorrowModal')).show();
-        return;
-      }
-
-      // REJECT (open modal)
-      const rejectBtn = evt.target.closest('.borrow-reject-btn');
-      if (rejectBtn) {
-        const id = rejectBtn.dataset.id;
-        document.getElementById('rejectBorrowId').value = id;
-        const row = rejectBtn.closest('tr');
-        const resName = row.dataset.resident || '';
-        const eq = row.dataset.equipment || row.dataset.esn || '';
-        document.getElementById('rejectBorrowMessage').textContent = `Reject borrow request by ${resName} for ${eq}? Provide reason below.`;
-        document.getElementById('rejectBorrowRemarks').value = '';
-        new bootstrap.Modal(document.getElementById('rejectBorrowModal')).show();
-        return;
-      }
-    });
-
-    // Accept form submit => POST to functions/borrow_accept.php
-    document.getElementById('acceptBorrowForm')?.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const id = document.getElementById('acceptBorrowId').value;
-      if (!id) return alert('Missing id');
-      const btn = e.submitter || null;
-      try {
-        const fd = new FormData();
-        fd.append('id', id);
-        const res = await fetch('functions/borrow_accept.php', { method: 'POST', body: fd, credentials: 'same-origin' });
-        const j = await res.json();
-        if (!j.success) throw new Error(j.message || 'Failed to accept');
-        location.reload();
-      } catch (err) {
-        alert('Error: ' + (err.message || err));
-      }
-    });
-
-    // Reject form submit => POST to functions/borrow_reject.php
-    document.getElementById('rejectBorrowForm')?.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const id = document.getElementById('rejectBorrowId').value;
-      const remarks = document.getElementById('rejectBorrowRemarks').value.trim();
-      if (!id) return alert('Missing id');
-      if (!remarks) return alert('Please enter a reason');
-      try {
-        const fd = new FormData();
-        fd.append('id', id);
-        fd.append('remarks', remarks);
-        const res = await fetch('functions/borrow_reject.php', { method: 'POST', body: fd, credentials: 'same-origin' });
-        const j = await res.json();
-        if (!j.success) throw new Error(j.message || 'Failed to reject');
-        location.reload();
-      } catch (err) {
-        alert('Error: ' + (err.message || err));
-      }
-    });
-
-        // ------- EDIT button open -------
-    document.body.addEventListener('click', (evt) => {
-      const editBtn = evt.target.closest('.borrow-edit-btn');
-      if (editBtn) {
-        const id = editBtn.dataset.id;
-        const status = editBtn.dataset.status || 'Borrowed';
-        document.getElementById('editBorrowId').value = id;
-        document.getElementById('editBorrowStatus').value = status;
-        new bootstrap.Modal(document.getElementById('editBorrowModal')).show();
-        return;
-      }
-    });
-
-    // ------- Edit form submit (changes status via borrow_toggle_status.php) -------
-    document.getElementById('editBorrowForm')?.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const id = document.getElementById('editBorrowId').value;
-      const status = document.getElementById('editBorrowStatus').value;
-      if (!id || !status) return alert('Missing data');
-
-      try {
-        const body = new URLSearchParams();
-        body.append('id', id);
-        body.append('status', status);
-        const res = await fetch('functions/borrow_toggle_status.php', {
-          method: 'POST',
-          headers: {'Content-Type':'application/x-www-form-urlencoded'},
-          body: body.toString()
-        });
-        const j = await res.json();
-        if (j.error) throw new Error(j.error || 'Update failed');
-
-        // update the row badge and available qty cell if available
-        const row = document.querySelector(`tr[data-id="${id}"]`);
-        if (row) {
-          const badge = row.querySelector('td:nth-child(4) .badge'); // status col is now 4th column
-          if (badge) {
-            badge.className = 'badge ' + (j.newStatus === 'Borrowed' ? 'bg-success' : (j.newStatus === 'Returned' ? 'bg-primary' : 'bg-secondary'));
-            badge.textContent = j.newStatus;
-          }
-        }
-        // If server returned updated equipment availability, reflect on equipments list
-        if (j.equipmentId && typeof j.availableQty !== 'undefined') {
-          const eqCell = document.querySelector(`.avail-qty[data-id="${j.equipmentId}"]`);
-          if (eqCell) eqCell.textContent = j.availableQty;
-        }
-
-        // hide modal and show a small alert
-        bootstrap.Modal.getInstance(document.getElementById('editBorrowModal')).hide();
-        const placeholder = document.getElementById('statusAlertPlaceholder');
-        const wrapper = document.createElement('div');
-        wrapper.innerHTML = `
-          <div class="alert alert-success alert-dismissible fade show" role="alert">
-            Status updated to <strong>${j.newStatus}</strong>.
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-          </div>`;
-        placeholder.append(wrapper);
-        setTimeout(() => {
-          const alertNode = bootstrap.Alert.getOrCreateInstance(wrapper.querySelector('.alert'));
-          alertNode.close();
-        }, 3000);
-
-      } catch (err) {
-        alert('Error updating status: ' + (err.message || err));
-      }
-    });
-
     // ── Delete Equipment ───────────────────────────
     document.querySelectorAll('.delete-equipment-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -1182,7 +1076,7 @@ if (!$brStmt) {
         const name = btn.dataset.name;
 
         // Update confirmation text
-        document.getElementById('confirmDeleteText').textContent = `Are you sure you want to delete “${name}”? This action cannot be undone.`;
+        document.getElementById('confirmDeleteText').textContent = `Are you sure you want to delete “${name}” from the equipment list? This action cannot be undone.`;
 
         // Set hidden input value & form action
         document.getElementById('delete-id').value = id;
@@ -1212,47 +1106,23 @@ if (!$brStmt) {
       });
     });
 
-    // ── Status dropdown change (optional AJAX hook) ─
-    document.querySelectorAll('.borrow-status').forEach(sel => {
-      sel.addEventListener('change', () => {
-        const id = sel.dataset.id;
-        const status = sel.value;
-        fetch('/functions/borrow_toggle_status.php', {
-          method: 'POST',
-          headers: {'Content-Type':'application/x-www-form-urlencoded'},
-          body: `id=${id}&status=${encodeURIComponent(status)}`
-        })
-        .then(r => r.json())
-        .then(j => {
-          if (j.error) {
-            alert('Error: ' + j.error);
-            sel.value = sel.dataset.prev;
-          } else {
-            sel.dataset.prev = j.newStatus;
-            const eqCell = document.querySelector(`.avail-qty[data-id="${j.equipmentId}"]`);
-            if (eqCell) eqCell.textContent = j.availableQty;
+    // Reset Add Equipment form when the modal is fully hidden
+    const addEquipModalEl = document.getElementById('addEquipmentModal');
+    if (addEquipModalEl) {
+      const addEquipForm = addEquipModalEl.querySelector('form');
+      addEquipModalEl.addEventListener('hidden.bs.modal', () => {
+        if (!addEquipForm) return;
+        // Reset fields to initial values
+        addEquipForm.reset();
 
-            const placeholder = document.getElementById('statusAlertPlaceholder');
-            const wrapper = document.createElement('div');
-            wrapper.innerHTML = `
-              <div class="alert alert-success alert-dismissible fade show" role="alert">
-                Status updated to <strong>${j.newStatus}</strong>.
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-              </div>`;
-            placeholder.append(wrapper);
+        // Clear any validation state (if you use Bootstrap validation classes)
+        addEquipForm.classList.remove('was-validated');
 
-            setTimeout(() => {
-              const alertNode = bootstrap.Alert.getOrCreateInstance(wrapper.querySelector('.alert'));
-              alertNode.close();
-            }, 3000);
-          }
-        })
-        .catch(err => {
-          console.error(err);
-          sel.value = sel.dataset.prev;
-        });
+        // Ensure the total_qty default is 1 (in case the HTML default changed)
+        const qty = addEquipForm.querySelector('input[name="total_qty"]');
+        if (qty) qty.value = 1;
       });
-    });
+    }
 
     // keep selected tab in the URL so refresh restores it
     (function () {
@@ -1279,6 +1149,484 @@ if (!$brStmt) {
         });
       });
     })();
+
+    // supplies: server-side array of equipment objects (id, equipment_sn, name, available_qty, total_qty, description)
+    const equipments = <?= json_encode($allEquipments, JSON_HEX_TAG) ?>;
+
+    // DOM elements
+    const visibleInput = document.getElementById('borrowedEquipment');
+    const hiddenEsn = document.getElementById('borrowedEsn'); // this is the value submitted to server
+    const borrowedList = document.getElementById('borrowedEquipmentList');
+    const borrowedqtyIn = document.getElementById('borrow-qty');
+    const availText = document.getElementById('esnAvailableText');
+
+    // helper: show friendly availability text
+    function setAvailText(n) {
+      if (n === null || n === undefined || n === '') {
+        availText.textContent = 'Available: —';
+      } else {
+        availText.textContent = 'Available: ' + (Number.isInteger(n) ? n : n);
+      }
+    }
+
+    // build a filtered list of equipment entries and render as clickable items
+    function rebuildList(items) {
+      borrowedList.innerHTML = '';
+      items.forEach(item => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item list-group-item-action py-1';
+        li.style.cursor = 'pointer';
+        // show name and ESN, click will store ESN and show name
+        li.textContent = item.name + ' (' + item.equipment_sn + ')';
+        li.addEventListener('mousedown', (ev) => {
+          // set visible to NAME (the user requested the NAME to show)
+          visibleInput.value = item.name;
+          // store ESN in hidden input for form submit
+          hiddenEsn.value = item.equipment_sn;
+          // update availability and cap qty
+          const avail = parseInt(item.available_qty) || 0;
+          setAvailText(avail);
+          if (borrowedqtyIn) {
+            borrowedqtyIn.max = avail;
+            if (!borrowedqtyIn.value) borrowedqtyIn.value = avail ? 1 : '';
+            else borrowedqtyIn.value = Math.min(parseInt(borrowedqtyIn.value || 0), avail || 0) || (avail ? 1 : '');
+            borrowedqtyIn.placeholder = avail ? `(max ${avail})` : `(unknown ESN)`;
+          }
+          // hide list after selection
+          borrowedList.style.display = 'none';
+        });
+        borrowedList.appendChild(li);
+      });
+
+      borrowedList.style.display = items.length ? 'block' : 'none';
+    }
+
+    // show full list on focus/click
+    const options = equipments; // array
+    if (visibleInput) {
+      visibleInput.addEventListener('focus', () => rebuildList(options));
+      visibleInput.addEventListener('click', () => rebuildList(options));
+
+      // filter while typing
+      visibleInput.addEventListener('input', () => {
+        const v = (visibleInput.value || '').trim().toLowerCase();
+        if (!v) {
+          // no filter -> show all
+          rebuildList(options);
+          // clear hidden ESN & availability because user is typing a new value
+          hiddenEsn.value = '';
+          setAvailText(null);
+          if (borrowedqtyIn) { borrowedqtyIn.removeAttribute('max'); borrowedqtyIn.placeholder = ''; }
+          return;
+        }
+        const filtered = options.filter(e =>
+          (e.name && e.name.toLowerCase().includes(v)) ||
+          (e.equipment_sn && e.equipment_sn.toLowerCase().includes(v))
+        );
+        rebuildList(filtered);
+        // clear hidden value until an exact selection is chosen
+        hiddenEsn.value = '';
+        setAvailText(null);
+        if (borrowedqtyIn) { borrowedqtyIn.removeAttribute('max'); borrowedqtyIn.placeholder = ''; }
+      });
+
+      // hide after blur (small delay to catch clicks)
+      visibleInput.addEventListener('blur', () => setTimeout(() => {
+        borrowedList.style.display = 'none';
+      }, 150));
+    }
+
+    // If user pastes or programmatically changes the hidden ESN elsewhere,
+    // keep availability and qty cap in sync. Also allow the JS to react when
+    // someone manually edits the hiddenEsn (rare).
+    function updateFromHiddenEsn() {
+      const esn = hiddenEsn.value || '';
+      if (!esn) {
+        setAvailText(null);
+        if (borrowedqtyIn) { borrowedqtyIn.removeAttribute('max'); borrowedqtyIn.placeholder = ''; }
+        return;
+      }
+      const item = options.find(e => e.equipment_sn === esn);
+      if (!item) {
+        setAvailText(null);
+        if (borrowedqtyIn) { borrowedqtyIn.removeAttribute('max'); borrowedqtyIn.placeholder = ''; }
+        return;
+      }
+      const avail = parseInt(item.available_qty) || 0;
+      setAvailText(avail);
+      if (borrowedqtyIn) {
+        borrowedqtyIn.max = avail;
+        borrowedqtyIn.value = avail ? Math.min(parseInt(borrowedqtyIn.value || 0) || 1, avail) : '';
+        borrowedqtyIn.placeholder = avail ? `(max ${avail})` : `(unknown ESN)`;
+      }
+      // set visible text to name (in case hidden was changed externally)
+      if (visibleInput && visibleInput.value !== item.name) visibleInput.value = item.name;
+    }
+
+    // If your code previously updated `borrowedEsn` directly, call updateFromHiddenEsn() after that change.
+    // Add listener to hidden input in case of programmatic changes
+    hiddenEsn.addEventListener('change', updateFromHiddenEsn);
+
+    // Ensure when the modal is shown, availability reflects any pre-filled ESN
+    const addBorrowModalEl = document.getElementById('addBorrowModal');
+    if (addBorrowModalEl) {
+      addBorrowModalEl.addEventListener('shown.bs.modal', () => {
+        updateFromHiddenEsn();
+      });
+      // reset when hidden
+      addBorrowModalEl.addEventListener('hidden.bs.modal', () => {
+        if (visibleInput) visibleInput.value = '';
+        hiddenEsn.value = '';
+        setAvailText(null);
+        if (borrowedqtyIn) { borrowedqtyIn.value = ''; borrowedqtyIn.removeAttribute('max'); borrowedqtyIn.placeholder = ''; }
+      });
+    }
+
+    // Borrow date range
+    const fromInput = document.getElementById('borrow-date-from');
+    const toInput = document.getElementById('borrow-date-to');
+
+    if (!fromInput || !toInput) return;
+
+    // Keep to.min in sync with from.value
+    function syncToMin() {
+      if (!fromInput.value) return;
+      toInput.min = fromInput.value;
+      // if 'to' is earlier than 'from', set it to from
+      if (toInput.value && (toInput.value < fromInput.value)) {
+        toInput.value = fromInput.value;
+      }
+    }
+
+    // When user changes from-date, update to-date min and auto-fill if needed
+    fromInput.addEventListener('change', () => {
+      syncToMin();
+    });
+
+    // If to < from on page load, fix it
+    syncToMin();
+
+    // Reset Add Equipment form when the modal is fully hidden
+    const addBorrowModal = document.getElementById('addBorrowModal');
+    if (addBorrowModal) {
+      const addEquipForm = addBorrowModal.querySelector('form');
+      addBorrowModal.addEventListener('hidden.bs.modal', () => {
+        if (!addEquipForm) return;
+        // Reset fields to initial values
+        addEquipForm.reset();
+      });
+    }
+
+    // ── Borrow View ─────────────────────────────
+    document.querySelectorAll('.borrow-view-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tr = btn.closest('tr');
+        if (!tr) return;
+
+        // Transaction ID
+        document.getElementById('viewTransaction').textContent = tr.dataset.transactionId || '—';
+
+        // Other fields
+        document.getElementById('viewResident').textContent = tr.dataset.resident || '—';
+        document.getElementById('viewEquipment').textContent = tr.dataset.equipment || tr.dataset.esn || '—';
+        document.getElementById('viewQty').textContent = tr.dataset.qty || '—';
+        document.getElementById('viewLocation').textContent = tr.dataset.location || '—';
+        document.getElementById('viewUsedFor').textContent = tr.dataset.usedfor || '—';
+
+        // Borrow dates
+        const from = tr.dataset.borrowFrom || '';
+        const to = tr.dataset.borrowTo || '';
+        document.getElementById('viewDates').textContent = (from && to)
+          ? (from === to ? from : from + ' — ' + to)
+          : '—';
+
+        document.getElementById('viewPudo').textContent = tr.dataset.pudo || '—';
+        document.getElementById('viewStatus').textContent = tr.dataset.status || 'Pending';
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('viewBorrowModal'));
+        modal.show();
+      });
+    });
+
+    // ── Wire Accept button ─────────────────────────────
+    document.querySelectorAll('.borrow-accept-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tr = btn.closest('tr');
+        if (!tr) return;
+
+        // Get transaction id (for display) and numeric id (for server)
+        const tid = tr.dataset.transactionId || '—';
+        const brId = tr.dataset.id || '';
+
+        // Put them inside modal
+        document.getElementById('acceptTransactionId').textContent = tid;
+        document.getElementById('acceptBorrowId').value = brId;
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('acceptBorrowModal'));
+        modal.show();
+      });
+    });
+
+    // Confirm Accept button — send request to server
+    const confirmAcceptBtn = document.getElementById('confirmAcceptBtn');
+    if (confirmAcceptBtn) {
+      confirmAcceptBtn.addEventListener('click', async (ev) => {
+        const id = document.getElementById('acceptBorrowId').value;
+        if (!id) return;
+
+        // disable to prevent double clicks
+        confirmAcceptBtn.disabled = true;
+        confirmAcceptBtn.textContent = 'Processing...';
+
+        try {
+          const form = new FormData();
+          form.append('id', id);
+
+          const resp = await fetch('functions/borrow_accept.php', {
+            method: 'POST',
+            body: form,
+            credentials: 'same-origin'
+          });
+
+          const data = await resp.json();
+
+          if (data && data.success) {
+            // optionally show a brief success alert then reload
+            const placeholder = document.getElementById('statusAlertPlaceholder');
+            if (placeholder) {
+              placeholder.innerHTML = '<div class="alert alert-success alert-dismissible fade show" role="alert">Borrow request accepted. Reloading...<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+            }
+            // close modal then reload to reflect changes
+            const mEl = document.getElementById('acceptBorrowModal');
+            bootstrap.Modal.getInstance(mEl)?.hide();
+            // small timeout so user sees the modal close animation / alert
+            setTimeout(() => location.reload(), 300);
+          } else {
+            const err = (data && data.error) ? data.error : 'Unknown error';
+            const placeholder = document.getElementById('statusAlertPlaceholder');
+            if (placeholder) {
+              placeholder.innerHTML = '<div class="alert alert-danger alert-dismissible fade show" role="alert">Accept failed: ' + String(err) + '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+            } else {
+              alert('Accept failed: ' + err);
+            }
+            confirmAcceptBtn.disabled = false;
+            confirmAcceptBtn.textContent = 'Accept';
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Network or server error while accepting.');
+          confirmAcceptBtn.disabled = false;
+          confirmAcceptBtn.textContent = 'Accept';
+        }
+      });
+    }
+
+    // ── Wire Reject button ─────────────────────────────
+    document.querySelectorAll('.borrow-reject-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tr = btn.closest('tr');
+        if (!tr) return;
+
+        const tid = tr.dataset.transactionId || '—';
+        const brId = tr.dataset.id || '';
+
+        // Put into modal
+        document.getElementById('rejectTransactionId').textContent = tid;
+        document.getElementById('rejectBorrowId').value = brId;
+
+        // Clear previous reason
+        const reasonEl = document.getElementById('rejectReason');
+        if (reasonEl) reasonEl.value = '';
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('rejectBorrowModal'));
+        modal.show();
+      });
+    });
+
+    // Confirm Reject button — send to server
+    const confirmRejectBtn = document.getElementById('confirmRejectBtn');
+    if (confirmRejectBtn) {
+      confirmRejectBtn.addEventListener('click', async () => {
+        const id = document.getElementById('rejectBorrowId').value;
+        const reasonEl = document.getElementById('rejectReason');
+        const reason = reasonEl ? reasonEl.value.trim() : '';
+
+        if (!id) {
+          alert('Missing borrow request id.');
+          return;
+        }
+        if (!reason) {
+          // simple client-side validation
+          if (reasonEl) {
+            reasonEl.focus();
+          }
+          alert('Please provide a rejection reason.');
+          return;
+        }
+
+        confirmRejectBtn.disabled = true;
+        confirmRejectBtn.textContent = 'Processing...';
+
+        try {
+          const form = new FormData();
+          form.append('id', id);
+          form.append('reason', reason);
+
+          const resp = await fetch('functions/borrow_reject.php', {
+            method: 'POST',
+            body: form,
+            credentials: 'same-origin'
+          });
+
+          const data = await resp.json();
+
+          if (data && data.success) {
+            const placeholder = document.getElementById('statusAlertPlaceholder');
+            if (placeholder) {
+              placeholder.innerHTML = '<div class="alert alert-success alert-dismissible fade show" role="alert">Borrow request rejected. Reloading...<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+            }
+            // hide modal then reload so UI updates
+            const mEl = document.getElementById('rejectBorrowModal');
+            bootstrap.Modal.getInstance(mEl)?.hide();
+            setTimeout(() => location.reload(), 300);
+          } else {
+            const err = (data && data.error) ? data.error : 'Unknown error';
+            const placeholder = document.getElementById('statusAlertPlaceholder');
+            if (placeholder) {
+              placeholder.innerHTML = '<div class="alert alert-danger alert-dismissible fade show" role="alert">Reject failed: ' + String(err) + '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+            } else {
+              alert('Reject failed: ' + err);
+            }
+            confirmRejectBtn.disabled = false;
+            confirmRejectBtn.textContent = 'Reject Request';
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Network or server error while rejecting.');
+          confirmRejectBtn.disabled = false;
+          confirmRejectBtn.textContent = 'Reject Request';
+        }
+      });
+    }
+
+        // helper: simple escaped text to avoid XSS
+    function escapeHtml(s) {
+      if (!s) return '';
+      return s.replace(/[&<>"'\/]/g, function (c) {
+        return {
+          '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#47;'
+        }[c];
+      });
+    }
+
+        // ── Wire Edit (Mark returned) ─────────────────────────────
+    document.querySelectorAll('.borrow-edit-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tr = btn.closest('tr');
+        if (!tr) return;
+
+        const id = tr.dataset.id;
+        const qty = tr.dataset.qty || '0';
+        const equipment = tr.dataset.equipment || tr.dataset.esn || '—';
+
+        // fill modal
+        document.getElementById('editBorrowId').value = id;
+        document.getElementById('editBorrowInfo').innerHTML =
+          `<strong>${escapeHtml(qty)}</strong> <strong>${escapeHtml(equipment)}</strong> is currently borrowed. Mark as returned?`;
+
+        // show modal
+        const modalEl = document.getElementById('editBorrowModal');
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+      });
+    });
+
+    // Mark as Returned button handler (inside modal body)
+    const markReturnedBtn = document.getElementById('markReturnedBtn');
+    if (markReturnedBtn) {
+      markReturnedBtn.addEventListener('click', async (ev) => {
+        const id = document.getElementById('editBorrowId').value;
+        if (!id) return;
+
+        markReturnedBtn.disabled = true;
+        const originalTxt = markReturnedBtn.textContent;
+        markReturnedBtn.textContent = 'Processing...';
+
+        try {
+          const body = new URLSearchParams();
+          body.append('id', id);
+          body.append('action', 'return');
+
+          const resp = await fetch('functions/borrow_update.php', {
+            method: 'POST',
+            body: body
+          });
+
+          const json = await resp.json();
+          if (json && json.success) {
+            // Update table row: change badge, data-status, remove edit button
+            const tr = document.querySelector(`tr[data-id="${id}"]`);
+            if (tr) {
+              tr.dataset.status = 'Returned';
+              // update the badge element (assumes there's a .badge in the status cell)
+              const badge = tr.querySelector('.badge');
+              if (badge) {
+                badge.className = 'badge bg-success';
+                badge.textContent = 'Returned';
+              }
+              // remove edit button if present
+              const editBtn = tr.querySelector('.borrow-edit-btn');
+              if (editBtn) editBtn.remove();
+            }
+
+            // hide modal
+            const modalEl = document.getElementById('editBorrowModal');
+            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+            if (modalInstance) modalInstance.hide();
+
+            showStatusAlert('Borrow request marked as returned', 'success');
+          } else {
+            const err = (json && json.error) ? json.error : 'Failed to mark as returned';
+            showStatusAlert(err, 'danger');
+          }
+
+        } catch (err) {
+          showStatusAlert(err.message || 'Request failed', 'danger');
+        } finally {
+          markReturnedBtn.disabled = false;
+          markReturnedBtn.textContent = originalTxt;
+        }
+      });
+    }
+
+    // helper: show a bootstrap alert in #statusAlertPlaceholder
+    function showStatusAlert(message, type='success', timeout=4000) {
+      const placeholder = document.getElementById('statusAlertPlaceholder');
+      if (!placeholder) return;
+      const id = 'alert-' + Math.random().toString(36).slice(2,9);
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = `
+        <div id="${id}" class="alert alert-${type} alert-dismissible fade show" role="alert">
+          ${escapeHtml(message)}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>`;
+      placeholder.appendChild(wrapper.firstElementChild);
+      if (timeout > 0) {
+        setTimeout(() => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.classList.remove('show');
+            el.classList.add('hide');
+            // remove after fade
+            setTimeout(() => el.remove(), 300);
+          }
+        }, timeout);
+      }
+    }
+
 
   });
 </script>

@@ -147,6 +147,8 @@ if ($queryString) {
     'indigency_requests',
     'residency_requests',
     'solo_parent_requests',
+    'barangay_clearance_requests',
+    'business_clearance_requests',
     // 'blotter_records',
     // 'complaint_records',
     // 'katarungan_pambarangay_records',

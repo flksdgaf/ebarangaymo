@@ -1,0 +1,2 @@
+2025-08-31 02:20:13 - Creating GCash source - {"transaction_id":"TEST-1756578013","amount":100,"success_url":"http:\/\/localhost:3000\/functions\/gcash_success.php?transaction_id=TEST-1756578013","failed_url":"http:\/\/localhost:3000\/functions\/gcash_failed.php?transaction_id=TEST-1756578013"}
+2025-08-31 02:20:14 - GCash source created successfully - {"source_id":"src_3SQ9JXQxA6EUmzEKrJdbs3oL","transaction_id":"TEST-1756578013"}

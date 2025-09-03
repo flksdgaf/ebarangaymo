@@ -12,7 +12,7 @@ $row = $conn->query("
   SELECT MAX(CAST(SUBSTRING(equipment_sn, 4) AS UNSIGNED)) AS maxnum FROM equipment_list
 ")->fetch_assoc();
 $nextNum = (int)$row['maxnum'] + 1;
-$equipmentSn = 'EQ-' . str_pad($nextNum, 5, '0', STR_PAD_LEFT);
+$equipmentSn = 'EQ-' . str_pad($nextNum, 7, '0', STR_PAD_LEFT);
 
 // 2) Now insert, explicitly passing equipment_sn
 $stmt = $conn->prepare("

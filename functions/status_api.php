@@ -8,7 +8,7 @@ $deviceName = 'IOTPS-Magang-01';
 // 1) Device status
 $stmt = $conn->prepare("
   SELECT last_seen, TIMESTAMPDIFF(SECOND, last_seen, NOW()) AS secs_ago
-    FROM collection_table
+    FROM device_management
    WHERE device_id = ?
    LIMIT 1
 ");
@@ -28,7 +28,7 @@ $timestamp   = date('m-d-Y H:i:s', strtotime($lastSeen));
 $stmt = $conn->prepare("
   SELECT one_peso, five_peso, ten_peso, twenty_peso,
          twenty_bill, fifty_bill, one_hundred_bill, two_hundred_bill
-    FROM collection_table
+    FROM device_management
    WHERE device_id = ?
    LIMIT 1
 ");

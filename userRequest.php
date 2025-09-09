@@ -316,7 +316,15 @@ if (table_has_column($conn, 'view_request', 'created_at')) {
 } else {
     $vr_ts_col = find_datetime_column($conn,'view_request');
 }
-$br_ts_col = find_datetime_column($conn,'borrow_requests');
+
+/* --- UPDATED: prefer created_at on borrow_requests for grouping/sorting --- */
+if (table_has_column($conn, 'borrow_requests', 'created_at')) {
+    $br_ts_col = 'created_at';
+} else {
+    $br_ts_col = find_datetime_column($conn,'borrow_requests');
+}
+/* --------------------------------------------------------------------- */
+
 $vr_ts_sql = $vr_ts_col ? "`{$vr_ts_col}`" : "NOW()";
 $br_ts_sql = $br_ts_col ? "`{$br_ts_col}`" : "NOW()";
 
@@ -837,48 +845,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     modalInner.querySelectorAll('.detail-grid').forEach(n => n.remove());
 
-                    const isBarangayID = (rtype || '').toLowerCase().includes('barangay') || (rtype || '').toLowerCase().includes('id');
-
-                    if (isBarangayID) {
-                        const appSection = document.createElement('div');
-                        appSection.className = 'application-section';
-                        const appTitle = document.createElement('h5'); appTitle.textContent = 'Application Details';
-                        appSection.appendChild(appTitle);
-
-                        const appGrid = document.createElement('div');
-                        appGrid.className = 'application-grid';
-                        const leftCol = document.createElement('div'); leftCol.style.display = 'flex'; leftCol.style.flexDirection = 'column'; leftCol.style.gap = '10px';
-                        const rightCol = document.createElement('div'); rightCol.style.display = 'flex'; rightCol.style.flexDirection = 'column'; rightCol.style.gap = '10px';
-                        appRows.forEach((r, idx) => {
-                            if (idx % 2 === 0) leftCol.appendChild(r);
-                            else rightCol.appendChild(r);
-                        });
-                        appGrid.appendChild(leftCol);
-                        appGrid.appendChild(rightCol);
-                        appSection.appendChild(appGrid);
-                        modalInner.appendChild(appSection);
-
-                        const cols = document.createElement('div'); cols.className = 'details-columns';
-                        cols.style.gridTemplateColumns = '1fr 1fr';
+                    // --- UPDATED: make Residency, Barangay Clearance and Barangay ID use three columns ---
+                    const rtypeLow = (rtype || '').toLowerCase();
+                    const isThreeCol = rtypeLow.includes('barangay') || rtypeLow.includes('residency') || (rtypeLow.includes('id') && !rtypeLow.includes('residency'));
+                    if (isThreeCol) {
+                        const cols = document.createElement('div');
+                        cols.className = 'details-columns';
+                        cols.style.display = 'grid';
+                        cols.style.gridTemplateColumns = '1fr 1fr 1fr';
+                        cols.style.gap = '20px';
 
                         function makeCol(title, rowsArr) {
                             const c = document.createElement('div');
-                            const h = document.createElement('h5'); h.textContent = title; h.style.color = 'var(--green-a)'; h.style.margin = '0 0 10px 0'; h.style.fontWeight = '700';
-                            const body = document.createElement('div'); body.style.display = 'flex'; body.style.flexDirection = 'column'; body.style.gap = '10px';
-                            rowsArr.forEach(r => body.appendChild(r));
-                            c.appendChild(h); c.appendChild(body);
-                            return c;
-                        }
-
-                        if (payRows.length > 0) cols.appendChild(makeCol('Payment Details', payRows));
-                        cols.appendChild(makeCol('Other Details', otherRows));
-                        modalInner.appendChild(cols);
-
-                    } else {
-                        const cols = document.createElement('div'); cols.className = 'details-columns';
-                        function makeCol(title, rowsArr) {
-                            const c = document.createElement('div');
-                            const h = document.createElement('h5'); h.textContent = title; h.style.color = 'var(--green-a)'; h.style.margin = '0 0 10px 0'; h.style.fontWeight = '700';
+                            const h = document.createElement('h5'); h.textContent = title;
+                            h.style.color = 'var(--green-a)'; h.style.margin = '0 0 10px 0'; h.style.fontWeight = '700';
                             const body = document.createElement('div'); body.style.display = 'flex'; body.style.flexDirection = 'column'; body.style.gap = '10px';
                             rowsArr.forEach(r => body.appendChild(r));
                             c.appendChild(h); c.appendChild(body);
@@ -886,11 +866,168 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
 
                         cols.appendChild(makeCol('Application Details', appRows));
-                        if (payRows.length > 0) cols.appendChild(makeCol('Payment Details', payRows));
+                        // If payment rows empty, still include the middle column to keep consistent three-column layout
+                        cols.appendChild(makeCol('Payment Details', payRows.length > 0 ? payRows : []));
                         cols.appendChild(makeCol('Other Details', otherRows));
                         modalInner.appendChild(cols);
+                        return;
+                    }
+                    // --------------------------------------------------------------------
+
+                    // fallback / existing behavior for other types
+                    const cols = document.createElement('div'); cols.className = 'details-columns';
+                    function makeCol(title, rowsArr) {
+                        const c = document.createElement('div');
+                        const h = document.createElement('h5'); h.textContent = title; h.style.color = 'var(--green-a)'; h.style.margin = '0 0 10px 0'; h.style.fontWeight = '700';
+                        const body = document.createElement('div'); body.style.display = 'flex'; body.style.flexDirection = 'column'; body.style.gap = '10px';
+                        rowsArr.forEach(r => body.appendChild(r));
+                        c.appendChild(h); c.appendChild(body);
+                        return c;
+                    }
+
+                    cols.appendChild(makeCol('Application Details', appRows));
+                    if (payRows.length > 0) cols.appendChild(makeCol('Payment Details', payRows));
+                    cols.appendChild(makeCol('Other Details', otherRows));
+                    modalInner.appendChild(cols);
+                })();
+
+                // --- REPLACED: Insert QR INTO the Payment Details column if present; fallback to previous behavior ---
+                (function maybeInsertQR() {
+                    try {
+                        // find "Payment Method" or "Payment" row inside the modal
+                        const rows = Array.from(modalInner.querySelectorAll('.detail-row'));
+                        const pmRow = rows.find(r => {
+                            const lbl = r.querySelector('.label')?.textContent?.trim().toLowerCase() || '';
+                            return lbl === 'payment method' || lbl === 'payment';
+                        });
+                        const pmValue = pmRow ? (pmRow.querySelector('.value')?.textContent?.trim() || '') : '';
+
+                        if (!pmValue) return; // nothing to do
+
+                        const pmLow = pmValue.toLowerCase();
+                        if (!(pmLow.includes('brgy payment') || pmLow.includes('brgy payment device') || pmLow.includes('barangay payment'))) {
+                            return; // only insert QR for Barangay Payment methods
+                        }
+
+                        // QR size (you can change this value to resize)
+                        const qrSize = 160;
+
+                        // Prepare QR section
+                        const qrSection = document.createElement('div');
+                        qrSection.className = 'modal-section qr-section';
+                        qrSection.style.display = 'flex';
+                        qrSection.style.flexDirection = 'column';
+                        qrSection.style.alignItems = 'left';
+                        qrSection.style.gap = '8px';
+                        // qrSection.style.borderTop = '1px dashed rgba(0,0,0,0.06)';
+                        // added green border, radius and a bit more padding for a cleaner look
+                        qrSection.style.border = '1px solid #059669';
+                        qrSection.style.borderRadius = '8px';
+                        qrSection.style.padding = '15px';
+
+                        // const qrTitle = document.createElement('div');
+                        // qrTitle.style.fontWeight = '700';
+                        // qrTitle.style.color = 'var(--green-a)';
+                        // qrTitle.textContent = 'Barangay Payment QR';
+
+                        const qrContainer = document.createElement('div');
+                        qrContainer.id = 'modal-qrcode';
+                        qrContainer.style.width = qrSize + 'px';
+                        qrContainer.style.height = qrSize + 'px';
+                        qrContainer.style.margin = '0 auto';
+
+                        const downloadBtn = document.createElement('button');
+                        downloadBtn.type = 'button';
+                        downloadBtn.className = 'btn download-btn btn-success';
+                        downloadBtn.textContent = 'Download QR Code';
+                        downloadBtn.style.marginTop = '6px';
+
+                        const hint = document.createElement('div');
+                        hint.className = 'text-muted';
+                        hint.style.fontSize = '0.5rem';
+                        hint.style.textAlign = 'center';
+                        hint.textContent = 'Scan this QR code at the Barangay Payment Device.';
+
+                        // qrSection.appendChild(qrTitle);
+                        qrSection.appendChild(qrContainer);
+                        qrSection.appendChild(downloadBtn);
+                        qrSection.appendChild(hint);
+
+                        // Try to locate Payment Details column header (case-insensitive)
+                        let paymentBody = null;
+                        const headers = Array.from(modalInner.querySelectorAll('.details-columns h5'));
+                        const paymentHeader = headers.find(h => h.textContent && h.textContent.trim().toLowerCase() === 'payment details');
+                        if (paymentHeader) {
+                            // the body element is expected to be the next sibling (the body created in makeCol)
+                            paymentBody = paymentHeader.nextElementSibling;
+                        }
+
+                        // If paymentBody exists, append the QR inside it; otherwise fall back to previous insertion point
+                        if (paymentBody) {
+                            paymentBody.appendChild(qrSection);
+                        } else {
+                            // append after the transaction highlight as fallback
+                            const txHighlight = modalInner.querySelector('.tx-highlight');
+                            if (txHighlight && txHighlight.nextSibling) txHighlight.parentNode.insertBefore(qrSection, txHighlight.nextSibling);
+                            else modalInner.appendChild(qrSection);
+                        }
+
+                        function generateQRonce() {
+                            if (typeof QRCode !== 'undefined') {
+                                // clear existing children (if any)
+                                qrContainer.innerHTML = '';
+                                new QRCode(qrContainer, {
+                                    text: tx,
+                                    width: qrSize,
+                                    height: qrSize,
+                                });
+
+                                // hook up download action
+                                downloadBtn.addEventListener('click', function () {
+                                    // QRCode.js inserts an <img> or <canvas>
+                                    const img = qrContainer.querySelector('img');
+                                    if (img && img.src) {
+                                        const link = document.createElement('a');
+                                        link.href = img.src;
+                                        link.download = tx + '.png';
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
+                                        return;
+                                    }
+                                    // fallback for canvas
+                                    const canvas = qrContainer.querySelector('canvas');
+                                    if (canvas) {
+                                        const link = document.createElement('a');
+                                        link.href = canvas.toDataURL('image/png');
+                                        link.download = tx + '.png';
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
+                                    }
+                                });
+                                return true;
+                            }
+                            return false;
+                        }
+
+                        if (!generateQRonce()) {
+                            // dynamically load QRCode.js (CDN) only if not present
+                            const script = document.createElement('script');
+                            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+                            script.onload = function () { generateQRonce(); };
+                            script.onerror = function () {
+                                // fail silently (or inform user)
+                                hint.textContent = 'Unable to load QR generator. Please try downloading the QR from the submission screen.';
+                            };
+                            document.head.appendChild(script);
+                        }
+
+                    } catch (e) {
+                        console.error('QR insert error', e);
                     }
                 })();
+
 
             })
             .catch(err => {

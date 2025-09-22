@@ -143,8 +143,8 @@ $news = $ress->fetch_all(MYSQLI_ASSOC);
         <button type="button" class="service-card light-green border-0" style="width: 280px;" data-bs-toggle="modal" data-bs-target="#businessPermitModal">
           <i class="fas fa-store icon"></i>
           <div>
-            <h4>Business Permit</h4>
-            <p>Pahintulot para mag​‑operate sa loob ng barangay.</p>
+            <h4>Business Clearance</h4>
+            <p>Pahintulot upang mag​‑operate sa loob ng barangay.</p>
           </div>
         </button>
       </div>

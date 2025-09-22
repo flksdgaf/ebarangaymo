@@ -429,7 +429,7 @@ $result = $st->get_result();
             <!-- <php endif; ?> -->
             
             <ul class="dropdown-menu" aria-labelledby="addRequestDropdown">
-              <?php foreach (['Barangay ID','Business Permit','Good Moral','Guardianship','Indigency','Residency','Solo Parent'] as $type): ?> <!-- 'Equipment Borrowing' -->
+              <?php foreach (['Barangay ID','Barangay Clearance','Business Clearance','Good Moral','Guardianship','Indigency','Residency','Solo Parent'] as $type): ?> <!-- ,'Business Permit' -->
                 <li>
                   <button type="button" class="dropdown-item request-trigger" data-type="<?= $type ?>"><?= $type ?></button>
                 </li>
@@ -592,6 +592,208 @@ $result = $st->get_result();
                 </div>
               </div>
             </template>
+
+            <!-- BARANGAY CLEARANCE TEMPLATE -->
+            <template id="tpl-Barangay Clearance">
+              <div class="row gy-2">
+                <!-- Section Title: Applicant Details -->
+                <div class="col-12">
+                  <h6 class="fw-bold fs-5" style="color: #13411F;">Applicant Details</h6>
+                  <hr class="my-2">
+                </div>
+
+                <!-- Name -->
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-bold">Last Name</label>
+                  <input name="clearance_last_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-bold">First Name</label>
+                  <input name="clearance_first_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
+                  <input name="clearance_middle_name" type="text" class="form-control form-control-sm">
+                </div>
+
+                <!-- Address: Street, Purok, Barangay -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-bold">Street</label>
+                  <input name="clearance_street" type="text" class="form-control form-control-sm" placeholder="Street / Block" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Purok</label>
+                  <select name="clearance_purok" class="form-select form-select-sm" required>
+                    <option value="">Select…</option>
+                    <option>Purok 1</option>
+                    <option>Purok 2</option>
+                    <option>Purok 3</option>
+                    <option>Purok 4</option>
+                    <option>Purok 5</option>
+                    <option>Purok 6</option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Barangay</label>
+                  <input name="clearance_barangay" type="text" class="form-control form-control-sm" required>
+                </div>
+
+                <!-- Municipality & Province -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-bold">Municipality / City</label>
+                  <input name="clearance_municipality" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-bold">Province</label>
+                  <input name="clearance_province" type="text" class="form-control form-control-sm" required>
+                </div>
+
+                <!-- Birthdate, Age, Birthplace -->
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-bold">Birthdate</label>
+                  <input name="clearance_birthdate" id="clearance_birthdate" type="date" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-2">
+                  <label class="form-label fw-bold">Age</label>
+                  <input name="clearance_age" id="clearance_age" type="number" min="0" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-bold">Birth Place</label>
+                  <input name="clearance_birthplace" type="text" class="form-control form-control-sm" placeholder="Municipality / Province" required>
+                </div>
+
+                <!-- Marital Status, CTC No., Purpose -->
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-bold">Marital Status</label>
+                  <select name="clearance_marital_status" class="form-select form-select-sm" required>
+                    <option value="">Select…</option>
+                    <option>Single</option>
+                    <option>Married</option>
+                    <option>Divorced</option>
+                    <option>Separated</option>
+                    <option>Widowed</option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-bold">CTC Number <small class="fw-normal">(if applicable)</small></label>
+                  <input name="clearance_ctc_number" type="text" class="form-control form-control-sm" placeholder="CTC No.">
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-bold">Purpose</label>
+                  <input name="clearance_purpose" type="text" class="form-control form-control-sm" placeholder="e.g., Employment, Travel" required>
+                </div>
+
+                <!-- Formal Picture -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-bold">Formal Picture (1×1 / 2×2)</label>
+                  <input id="clearance_photoInput" name="clearance_photo" type="file" accept="image/*" class="form-control form-control-sm">
+                  <div id="clearance_currentPhotoName" class="form-text text-muted d-none"></div>
+                </div>
+              </div>
+            </template>
+
+            <!-- BUSINESS CLEARANCE TEMPLATE -->
+            <template id="tpl-Business Clearance">
+              <div class="row gy-2">
+                <!-- Section Title: Applicant / Business Details -->
+                <div class="col-12">
+                  <h6 class="fw-bold fs-5" style="color: #13411F;">Business Clearance - Applicant & Business Details</h6>
+                  <hr class="my-2">
+                </div>
+
+                <!-- Name -->
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-bold">Last Name</label>
+                  <input name="business_last_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-bold">First Name</label>
+                  <input name="business_first_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
+                  <input name="business_middle_name" type="text" class="form-control form-control-sm">
+                </div>
+
+                <!-- Address: Purok, Barangay -->
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Purok</label>
+                  <select name="business_purok" class="form-select form-select-sm" required>
+                    <option value="">Select…</option>
+                    <option>Purok 1</option>
+                    <option>Purok 2</option>
+                    <option>Purok 3</option>
+                    <option>Purok 4</option>
+                    <option>Purok 5</option>
+                    <option>Purok 6</option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Barangay</label>
+                  <input name="business_barangay" type="text" class="form-control form-control-sm" required>
+                </div>
+
+                <!-- Municipality & Province -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-bold">Municipality / City</label>
+                  <input name="business_municipality" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-bold">Province</label>
+                  <input name="business_province" type="text" class="form-control form-control-sm" required>
+                </div>
+
+                <!-- Age & Marital Status -->
+                <div class="col-12 col-md-2">
+                  <label class="form-label fw-bold">Age</label>
+                  <input name="business_age" type="number" min="0" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-bold">Marital Status</label>
+                  <select name="business_marital_status" class="form-select form-select-sm" required>
+                    <option value="">Select…</option>
+                    <option>Single</option>
+                    <option>Married</option>
+                    <option>Divorced</option>
+                    <option>Separated</option>
+                    <option>Widowed</option>
+                  </select>
+                </div>
+
+                <!-- Business Name & Type -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-bold">Name of Business</label>
+                  <input name="business_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-bold">Type of Business</label>
+                  <input name="business_type" type="text" class="form-control form-control-sm" placeholder="e.g., Retail, Food Service, Manufacturing" required>
+                </div>
+
+                <!-- Business Address -->
+                <div class="col-12">
+                  <label class="form-label fw-bold">Business Address</label>
+                  <input name="business_address" type="text" class="form-control form-control-sm" placeholder="Street / Block / Lot / Purok" required>
+                </div>
+
+                <!-- CTC Number & Picture -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-bold">CTC Number <small class="fw-normal">(if applicable)</small></label>
+                  <input name="business_ctc_number" type="text" class="form-control form-control-sm" placeholder="CTC No.">
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-bold">Owner's Picture (1×1 / 2×2)</label>
+                  <input id="business_photoInput" name="business_photo" type="file" accept="image/*" class="form-control form-control-sm">
+                  <div id="business_currentPhotoName" class="form-text text-muted d-none"></div>
+                </div>
+
+                <!-- Notes / Instructions -->
+                <div class="col-12">
+                  <small class="text-muted">Check that all information is accurate. Provide CTC and photo if required by local policy.</small>
+                </div>
+              </div>
+            </template>
+
 
             <!-- BUSINESS PERMIT TEMPLATE -->
             <template id="tpl-Business Permit">
@@ -1643,7 +1845,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (tpl) {
         dynamicFields.appendChild(tpl.content.cloneNode(true));
       } else {
-        dynamicFields.innerHTML = '<div class="col-12 text-muted">No extra fields required.</div>';
+        dynamicFields.innerHTML = '<div class="col-12 text-muted">No template found.</div>';
       }
 
       const sel = dynamicFields.querySelector('#religionSelect');

@@ -26,7 +26,7 @@ $logoUrl = 'images/' . $info['logo'];
     $currentPage = $_GET['page'] ?? 'userDashboard';
 
     // Services should be active on both userServices *and* any serviceX pages
-    $isServicesActive = in_array($currentPage, ['userServices', 'serviceBarangayID', 'serviceCertification', 'serviceEquipmentBorrowing', 'serviceBusinessPermit']);
+    $isServicesActive = in_array($currentPage, ['userServices', 'serviceBarangayID', 'serviceCertification', 'serviceEquipmentBorrowing', 'serviceBarangayClearance', 'serviceBusinessClearance']);
     ?>
 
     <ul class="nav flex-column gap-2">

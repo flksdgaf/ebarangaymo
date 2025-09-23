@@ -18,7 +18,7 @@ $civilStatus   = $data['civil_status'] ?? '';
 $sex           = $data['sex'] ?? '';
 $age           = $data['age'] ?? '';
 $purok         = $data['purok'] ?? '';
-$subdivision   = $data['subdivision'] ?? '';
+$address   = $data['address'] ?? '';
 $purpose       = $data['purpose'] ?? '';
 $paymentMethod = $data['payment_method'] ?? '';
 $amount        = $data['amount'] ?? '';
@@ -138,9 +138,9 @@ if ($download || $print) {
           <strong><u><?= htmlspecialchars(strtoupper($fullName)) ?></u></strong>,
           <strong><?= htmlspecialchars($age) ?></strong> years old,
           <?= htmlspecialchars(strtoupper($civilStatus)) ?>,
-          is a resident of <?= htmlspecialchars($subdivision) ?>,
+          is a resident of <?= htmlspecialchars($address) ?>,
           <?= htmlspecialchars($purok) ?>,
-          Magang, Daet, Camarines Norte.
+          Barangay Magang, Daet, Camarines Norte.
         </p>
 
         <p>
@@ -158,7 +158,7 @@ if ($download || $print) {
 
         <p>
           This certification is issued upon request of the above-named person for
-          <span><strong><?= htmlspecialchars($purpose) ?></strong></span> purposes.
+          <span><strong><?= htmlspecialchars(strtoupper($purpose)) ?></strong></span> purposes.
         </p>
 
         <p>
@@ -256,9 +256,9 @@ if ($download || $print) {
         <strong><u><?= htmlspecialchars(strtoupper($fullName)) ?></u></strong>,
         <strong><?= htmlspecialchars($age) ?></strong> years old,
         <?= htmlspecialchars(strtoupper($civilStatus)) ?>,
-        is a resident of <?= htmlspecialchars($subdivision) ?>,
+        is a resident of <?= htmlspecialchars($address) ?>,
         <?= htmlspecialchars($purok) ?>,
-        Magang, Daet, Camarines Norte.
+        Barangay Magang, Daet, Camarines Norte.
       </p>
 
       <p>
@@ -276,7 +276,7 @@ if ($download || $print) {
 
       <p>
         This certification is issued upon request of the above-named person for
-        <span><strong><?= htmlspecialchars($purpose) ?></strong></span> purposes.
+        <span><strong><?= htmlspecialchars(strtoupper($purpose)) ?></strong></span> purposes.
       </p>
 
       <p>

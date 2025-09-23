@@ -951,8 +951,8 @@ $result = $st->get_result();
 
                 <!-- Full Address -->
                 <div class="col-12 col-md-6">
-                  <label class="form-label fw-bold">Full Address</label>
-                  <input name="good_moral_subdivision" type="text" class="form-control form-control-sm" placeholder="Street / Subdivision / Lot / Block" required/>
+                  <label class="form-label fw-bold">Address</label>
+                  <input name="good_moral_address" type="text" class="form-control form-control-sm" placeholder="Street / Subdivision / Lot / Block"/>
                 </div>
 
                 <div class="col-12 col-md-2">
@@ -1019,7 +1019,14 @@ $result = $st->get_result();
                   <label class="form-label fw-bold">Age</label>
                   <input name="guardianship_age" type="number" min="0" class="form-control form-control-sm" required>
                 </div>
-                <div class="col-12 col-md-3 mb-3">
+
+                <!-- Full Address -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-bold">Address</label>
+                  <input name="guardianship_address" type="text" class="form-control form-control-sm" placeholder="Street / Subdivision / Lot / Block"/>
+                </div>
+                
+                <div class="col-12 col-md-2 mb-3">
                   <label class="form-label fw-bold">Purok</label>
                   <div class="d-flex gap-2">
                     <select name="guardianship_purok" class="form-select form-select-sm" required>
@@ -1039,7 +1046,7 @@ $result = $st->get_result();
                   <hr class="my-2">
                 </div>
 
-                <div class="col-12 col-md-3">
+                <!-- <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">First Name</label>
                   <input name="child_first_name" type="text" class="form-control form-control-sm" required>
                 </div>
@@ -1054,6 +1061,11 @@ $result = $st->get_result();
                 <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
                   <input name="child_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
+                </div> -->
+
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-bold">Full Name</label>
+                  <input name="child_full_name" type="text" class="form-control form-control-sm" required>
                 </div>
 
                 <!-- Row 3: Purpose -->
@@ -1883,7 +1895,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ],
 
     good_moral_requests: [
-      { title: 'Personal Information', fields: ['full_name','sex','age','civil_status','purok','subdivision'] },
+      { title: 'Personal Information', fields: ['full_name','sex','age','civil_status','purok','address'] },
       { title: 'Request Details', fields: ['purpose','transaction_id','request_type','payment_method','created_at'] }, //'amount',
     ],
 

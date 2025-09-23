@@ -1120,7 +1120,7 @@ $result = $st->get_result();
                 </div>
                 
                 <!-- Row 3: Full Address -->
-                <div class="col-12 col-md-3">
+                <div class="col-12 col-md-2">
                   <label class="form-label fw-bold">Purok</label>
                   <div class="d-flex gap-2">
                     <select name="indigency_purok" class="form-select form-select-sm" required>

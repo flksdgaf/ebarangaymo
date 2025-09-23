@@ -144,7 +144,7 @@ if ($download || $print) {
       </p>
 
       <p>
-        This certification is issued this <strong><?= formatWithSuffix($issuedDate) ?></strong> day of <?= date('F, Y', strtotime($issuedDate)) ?> at Barangay Magang, Daet, Camarines Norte, for <strong><?= htmlspecialchars($purpose) ?></strong> purposes.
+        This certification is issued this <strong><?= formatWithSuffix($issuedDate) ?></strong> day of <?= date('F, Y', strtotime($issuedDate)) ?> at Barangay Magang, Daet, Camarines Norte, for <strong><?= htmlspecialchars(strtoupper($purpose)) ?></strong> purposes.
       </p>
     </body>
     </html>
@@ -237,7 +237,7 @@ if ($download || $print) {
     </p>
 
     <p>
-      This certification is issued this <strong><?= formatWithSuffix($issuedDate) ?></strong> day of <?= date('F, Y', strtotime($issuedDate)) ?> at Barangay Magang, Daet, Camarines Norte, for <strong><?= htmlspecialchars($purpose) ?></strong> purposes.
+      This certification is issued this <strong><?= formatWithSuffix($issuedDate) ?></strong> day of <?= date('F, Y', strtotime($issuedDate)) ?> at Barangay Magang, Daet, Camarines Norte, for <strong><?= htmlspecialchars(strtoupper($purpose)) ?></strong> purposes.
     </p>
   </div>
 </body>

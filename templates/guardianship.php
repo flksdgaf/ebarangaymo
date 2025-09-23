@@ -134,7 +134,7 @@ ob_start();
 
     <p>
       This is to certify that <span style="text-transform: uppercase;"><strong><u><?= htmlspecialchars($fullName) ?></u></strong></span>,
-       legal age, <span style="text-transform: uppercase;"><?= htmlspecialchars($civilStatus) ?></span>, 
+       <!-- legal age--> <strong><?= htmlspecialchars($age) ?></strong> years old, <span style="text-transform: uppercase;"><?= htmlspecialchars($civilStatus) ?></span>,  
        is a bonafide resident of <?= htmlspecialchars($purok) ?>, Barangay Magang, Daet, Camarines Norte.
     </p>
     <p>
@@ -232,7 +232,7 @@ if ($download || $print) {
 
       <p>
         This is to certify that <span style="text-transform: uppercase;"><strong><u><?= htmlspecialchars($fullName) ?></u></strong></span>,
-         legal age, <span style="text-transform: uppercase;"><?= htmlspecialchars($civilStatus) ?></span>, 
+         <!-- legal age --><strong><?= htmlspecialchars($age) ?></strong> years old, <span style="text-transform: uppercase;"><?= htmlspecialchars($civilStatus) ?></span>, 
          is a bonafide resident of <?= htmlspecialchars($purok) ?>, Barangay Magang, Daet, Camarines Norte.
       </p>
       <p>

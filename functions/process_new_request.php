@@ -345,14 +345,14 @@ switch($requestType) {
     $purok = $_POST['guardianship_purok'] ?? '';
 
     // Child's Name
-    $fnChild = trim($_POST['child_first_name'] ?? '');
-    $mnChild = trim($_POST['child_middle_name'] ?? '');
-    $lnChild = trim($_POST['child_last_name'] ?? '');
-    $snChild = trim($_POST['child_suffix'] ?? '');
-    $middlePartChild = $mnChild ? " {$mnChild}" : '';
-    $suffixPartChild = $snChild ? " {$snChild}" : '';
-    $fullNameChild = "{$lnChild}{$suffixPartChild}, {$fnChild}{$middlePartChild}";
-    // $childName = trim($_POST['child_name'] ?? '');
+    // $fnChild = trim($_POST['child_first_name'] ?? '');
+    // $mnChild = trim($_POST['child_middle_name'] ?? '');
+    // $lnChild = trim($_POST['child_last_name'] ?? '');
+    // $snChild = trim($_POST['child_suffix'] ?? '');
+    // $middlePartChild = $mnChild ? " {$mnChild}" : '';
+    // $suffixPartChild = $snChild ? " {$snChild}" : '';
+    // $fullNameChild = "{$lnChild}{$suffixPartChild}, {$fnChild}{$middlePartChild}";
+    $childName = trim($_POST['child_full_name'] ?? '');
 
     $purpose = trim($_POST['guardianship_purpose'] ?? '');
     $paymentMethod = 'Over-the-Counter';
@@ -375,7 +375,7 @@ switch($requestType) {
     // 3) Insert into guardianship_request
     $sql = "INSERT INTO guardianship_requests (account_id, transaction_id, full_name, civil_status, age, purok, child_name, purpose, claim_date, payment_method, document_status) VALUES (?,?,?,?,?,?,?,?,NULL,?,?)";
     $ins = $conn->prepare($sql);
-    $ins->bind_param('isssisssss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $fullNameChild, $purpose, $paymentMethod, $documentStatus);
+    $ins->bind_param('isssisssss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $childName, $purpose, $paymentMethod, $documentStatus);
     $ins->execute();
     $ins->close();
 

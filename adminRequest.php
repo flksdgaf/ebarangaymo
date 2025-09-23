@@ -1021,10 +1021,10 @@ $result = $st->get_result();
                 </div>
 
                 <!-- Full Address -->
-                <div class="col-12 col-md-6">
+                <!-- <div class="col-12 col-md-6">
                   <label class="form-label fw-bold">Address</label>
                   <input name="guardianship_address" type="text" class="form-control form-control-sm" placeholder="Street / Subdivision / Lot / Block"/>
-                </div>
+                </div> -->
                 
                 <div class="col-12 col-md-2 mb-3">
                   <label class="form-label fw-bold">Purok</label>

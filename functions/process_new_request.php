@@ -268,6 +268,7 @@ switch($requestType) {
     $sn = trim($_POST['good_moral_suffix'] ?? '');
     $middlePart = $mn ? " {$mn}" : '';
     $suffixPart = $sn ? " {$sn}" : '';
+    // $fullName = "{$ln}, {$fn}, {$middlePart}, {$suffixPart}";
     $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
     // $fullName = trim($_POST['full_name'] ?? '');
 
@@ -276,7 +277,7 @@ switch($requestType) {
     $age = (int)($_POST['good_moral_age'] ?? 0);
     $purok = $_POST['good_moral_purok'] ?? '';
     // $barangay = $_POST['barangay'] ?? '';
-    $subdivision = trim($_POST['good_moral_subdivision'] ?? '');
+    $address = trim($_POST['good_moral_address'] ?? '');
     // $fullAddress = "{$subdivision}, {$purok}, {$barangay}";
     $purpose = trim($_POST['good_moral_purpose'] ?? '');
     $paymentMethod = 'Over-the-Counter';
@@ -298,9 +299,9 @@ switch($requestType) {
     $stmt->close();
 
     // 3) Insert into good_moral_requests
-    $sql = "INSERT INTO good_moral_requests (account_id, transaction_id, full_name, civil_status, sex, age, purok, subdivision, purpose, claim_date, payment_method, document_status) VALUES (?,?,?,?,?,?,?,?,?,NULL,?,?)";
+    $sql = "INSERT INTO good_moral_requests (account_id, transaction_id, full_name, civil_status, sex, age, purok, address, purpose, claim_date, payment_method, document_status) VALUES (?,?,?,?,?,?,?,?,?,NULL,?,?)";
     $ins = $conn->prepare($sql);
-    $ins->bind_param('issssisssss', $userId, $transactionId, $fullName, $civilStatus, $sex, $age, $purok, $subdivision, $purpose, $paymentMethod, $documentStatus);
+    $ins->bind_param('issssisssss', $userId, $transactionId, $fullName, $civilStatus, $sex, $age, $purok, $address, $purpose, $paymentMethod, $documentStatus);
     $ins->execute();
     $ins->close();
 

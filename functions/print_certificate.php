@@ -45,7 +45,7 @@ $requestFields = [
     'civil_status', 'name_of_business', 'type_of_business', 'full_address', 'payment_method', 'amount', 'created_at'
   ],
   'good_moral_requests' => [
-    'transaction_id', 'request_type', 'full_name', 'civil_status', 'sex', 'age', 'purok', 'subdivision', 
+    'transaction_id', 'request_type', 'full_name', 'civil_status', 'sex', 'age', 'purok', 'address', 
     'purpose', 'payment_method', 'amount', 'created_at'
   ],
   'guardianship_requests' => [

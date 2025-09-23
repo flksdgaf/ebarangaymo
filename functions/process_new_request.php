@@ -547,14 +547,14 @@ switch($requestType) {
     $yearsSoloParent = (int) ($_POST['solo_parent_years_solo_parent'] ?? 0);
 
     // Child Name
-    $fnChild = trim($_POST['solo_parent_child_first_name'] ?? '');
-    $mnChild = trim($_POST['solo_parent_child_middle_name'] ?? '');
-    $lnChild = trim($_POST['solo_parent_child_last_name'] ?? '');
-    $snChild = trim($_POST['solo_parent_child_suffix'] ?? '');
-    $middlePartChild = $mnChild ? " {$mnChild}" : '';
-    $suffixPartChild = $snChild ? " {$snChild}" : '';
-    $fullNameChild = "{$lnChild}{$suffixPartChild}, {$fnChild}{$middlePartChild}";
-    // $childName = trim($_POST['child_name'] ?? '');
+    // $fnChild = trim($_POST['solo_parent_child_first_name'] ?? '');
+    // $mnChild = trim($_POST['solo_parent_child_middle_name'] ?? '');
+    // $lnChild = trim($_POST['solo_parent_child_last_name'] ?? '');
+    // $snChild = trim($_POST['solo_parent_child_suffix'] ?? '');
+    // $middlePartChild = $mnChild ? " {$mnChild}" : '';
+    // $suffixPartChild = $snChild ? " {$snChild}" : '';
+    // $fullNameChild = "{$lnChild}{$suffixPartChild}, {$fnChild}{$middlePartChild}";
+    $childName = trim($_POST['child_full_name'] ?? '');
 
     $childSex = $_POST['solo_parent_child_sex'] ?? '';
     // $childAge = (int) ($_POST['child_age'] ?? 0);
@@ -581,7 +581,7 @@ switch($requestType) {
     // 4) Insert into solo_parent_requests
     $sql = "INSERT INTO solo_parent_requests (account_id, transaction_id, full_name, civil_status, age, purok, years_solo_parent, child_name, child_age, child_sex, purpose, payment_method, claim_date, document_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,NULL,?)";
     $ins = $conn->prepare($sql);
-    $ins->bind_param('isssisisissss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $yearsSoloParent, $fullNameChild, $childAge, $childSex, $purpose, $paymentMethod, $documentStatus);
+    $ins->bind_param('isssisisissss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $yearsSoloParent, $childName, $childAge, $childSex, $purpose, $paymentMethod, $documentStatus);
     $ins->execute();
     $ins->close();
 

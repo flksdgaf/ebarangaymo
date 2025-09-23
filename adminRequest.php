@@ -1250,6 +1250,9 @@ $result = $st->get_result();
                   <label class="form-label fw-bold">Civil Status</label>
                   <select name="solo_parent_civil_status" class="form-select form-select-sm" required>
                     <option value="">Select…</option>
+                    <option>Single</option>
+                    <option>Married</option>
+                    <option>Divorced</option>
                     <option>Separated</option>
                     <option>Widowed</option>
                   </select>
@@ -1281,7 +1284,7 @@ $result = $st->get_result();
                 </div>
 
                 <!-- Row 4: Child’s Name, Sex & Age -->
-                <div class="col-12 col-md-3">
+                <!-- <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">First Name</label>
                   <input name="solo_parent_child_first_name" type="text" class="form-control form-control-sm" required>
                 </div>
@@ -1296,6 +1299,11 @@ $result = $st->get_result();
                 <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
                   <input name="solo_parent_child_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
+                </div> -->
+
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-bold">Full Name</label>
+                  <input name="child_full_name" type="text" class="form-control form-control-sm" required>
                 </div>
 
                 <div class="col-12 col-md-3">

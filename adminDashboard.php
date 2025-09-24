@@ -427,39 +427,389 @@ if ($queryString) {
     </div>
 
   <?php elseif ($currentRole === 'Brgy Treasurer'): ?>
-    <!-- Treasurer’s dashboard -->
+    <?php
+    // Get today's date for filtering
+    $today = date('Y-m-d');
+    
+    // Count online payments (assuming payment_method contains 'online', 'gcash', etc.)
+    $onlineCount = 0;
+    $onlineResult = $conn->query("SELECT COUNT(*) as count FROM view_dashboard WHERE payment_method IN ('GCash', 'PayMaya', 'Online Banking', 'Credit Card') AND DATE(created_at) = '{$today}'");
+    if ($onlineResult) {
+        $onlineCount = $onlineResult->fetch_assoc()['count'];
+    }
+    
+    // Count walk-in payments (assuming payment_method is 'Cash' or 'Walk-in')
+    $walkinCount = 0;
+    $walkinResult = $conn->query("SELECT COUNT(*) as count FROM view_dashboard WHERE payment_method IN ('Cash', 'Walk-in') AND DATE(created_at) = '{$today}'");
+    if ($walkinResult) {
+        $walkinCount = $walkinResult->fetch_assoc()['count'];
+    }
+    
+    // Count QR created (you might need to adjust this based on your QR system)
+    $qrCount = 0;
+    $qrResult = $conn->query("SELECT COUNT(*) as count FROM view_dashboard WHERE payment_method = 'QR Code' AND DATE(created_at) = '{$today}'");
+    if ($qrResult) {
+        $qrCount = $qrResult->fetch_assoc()['count'];
+    }
+    
+    // Calculate today's collection (sum of paid transactions today)
+    $todayCollection = 0;
+    // You'll need to add an amount column to your view_dashboard or calculate from service fees
+    // For now, assuming a base fee structure
+    $collectionResult = $conn->query("SELECT COUNT(*) as count FROM view_dashboard WHERE payment_status = 'Paid' AND DATE(created_at) = '{$today}'");
+    if ($collectionResult) {
+        $paidCount = $collectionResult->fetch_assoc()['count'];
+        $todayCollection = $paidCount * 10; // Assuming 10 pesos average per service
+    }
+    
+    // Get recent payment methods data for line graph (last 7 days)
+    $paymentMethodsData = [];
+    $gcashData = [];
+    $paymentDeviceData = [];
+    $overCounterData = [];
+    $dates = [];
+    
+    for ($i = 6; $i >= 0; $i--) {
+        $date = date('Y-m-d', strtotime("-{$i} days"));
+        $dates[] = date('M d', strtotime($date));
+        
+        // GCash payments
+        $gcashResult = $conn->query("SELECT COUNT(*) as count FROM view_dashboard WHERE payment_method = 'GCash' AND DATE(created_at) = '{$date}'");
+        $gcashData[] = $gcashResult ? $gcashResult->fetch_assoc()['count'] : 0;
+        
+        // Payment Device (assuming PayMaya, Online Banking, etc.)
+        $deviceResult = $conn->query("SELECT COUNT(*) as count FROM view_dashboard WHERE payment_method IN ('PayMaya', 'Online Banking', 'Credit Card') AND DATE(created_at) = '{$date}'");
+        $paymentDeviceData[] = $deviceResult ? $deviceResult->fetch_assoc()['count'] : 0;
+        
+        // Over-the-Counter (Cash payments)
+        $counterResult = $conn->query("SELECT COUNT(*) as count FROM view_dashboard WHERE payment_method = 'Cash' AND DATE(created_at) = '{$date}'");
+        $overCounterData[] = $counterResult ? $counterResult->fetch_assoc()['count'] : 0;
+    }
+    
+    // Get pending ORs (Official Receipts) - transactions that are paid but not yet released
+    $pendingORsResult = $conn->query("SELECT transaction_id, full_name, request_type, payment_method, payment_status FROM view_dashboard WHERE payment_status = 'Paid' AND document_status != 'Released' ORDER BY created_at DESC LIMIT 10");
+    ?>
+    
+    <!-- Treasurer's Dashboard -->
     <div class="row g-4 mb-4">
-      <div class="col-md-6 col-sm-12">
-        <div class="card shadow-sm text-center p-3">
-          <span class="material-symbols-outlined fs-2 text-primary">payments</span>
-          <h2 class="fw-bold"><?= number_format($serviceCount) ?></h2>
-          <p class="text-muted">Total Services</p>
+        <!-- Stats Cards Row -->
+        <div class="col-md-3 col-sm-6">
+            <div class="card shadow-sm text-center p-3">
+                <span class="material-symbols-outlined fs-2 text-success">smartphone</span>
+                <h2 class="fw-bold"><?= number_format($onlineCount) ?></h2>
+                <p class="text-muted">Online</p>
+            </div>
         </div>
-      </div>
-      <div class="col-md-6 col-sm-12">
-        <div class="card shadow-sm text-center p-3">
-          <span class="material-symbols-outlined fs-2 text-secondary">account_balance</span>
-          <h2 class="fw-bold"><?= number_format($pendingRequests) ?></h2>
-          <p class="text-muted">Pending Account Requests</p>
+        
+        <div class="col-md-3 col-sm-6">
+            <div class="card shadow-sm text-center p-3">
+                <span class="material-symbols-outlined fs-2 text-success">store</span>
+                <h2 class="fw-bold"><?= number_format($walkinCount) ?></h2>
+                <p class="text-muted">Walk-In</p>
+            </div>
         </div>
-      </div>
-      <!-- add other Treasurer‑specific cards here… -->
+        
+        <div class="col-md-3 col-sm-6">
+            <div class="card shadow-sm text-center p-3">
+                <span class="material-symbols-outlined fs-2 text-success">qr_code</span>
+                <h2 class="fw-bold"><?= number_format($qrCount) ?></h2>
+                <p class="text-muted">QR Created</p>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6">
+            <div class="card shadow-sm text-center p-3">
+                <span class="material-symbols-outlined fs-2 text-success">payments</span>
+                <h2 class="fw-bold">₱<?= number_format($todayCollection, 2) ?></h2>
+                <p class="text-muted">Today's Collection</p>
+            </div>
+        </div>
     </div>
-    <p class="text-center text-muted">
-      For transaction history and detailed services, please use the menu.
-    </p>
+    
+    <!-- Chart Section -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm p-4">
+                <div class="mb-3">
+                    <h6 class="text-success mb-0" style="font-size: 1.1rem; font-weight: 600;">Recent Payment Methods</h6>
+                </div>
+                
+                <!-- Large "LINE GRAPH" text overlay -->
+                <div class="position-relative">
+                    <div class="position-absolute w-100 h-100 d-flex align-items-center justify-content-center" style="z-index: 1; pointer-events: none;">
+                        <h1 class="fw-bold text-success" style="font-size: 4rem; opacity: 0.1; letter-spacing: 0.2em;">LINE GRAPH</h1>
+                    </div>
+                    <canvas id="paymentMethodsChart" style="height: 300px; position: relative; z-index: 2;"></canvas>
+                </div>
+                
+                <!-- Legend -->
+                <div class="d-flex justify-content-center mt-3" style="gap: 2rem;">
+                    <div class="d-flex align-items-center">
+                        <div style="width: 12px; height: 12px; background-color: #28a745; border-radius: 2px; margin-right: 8px;"></div>
+                        <small class="text-muted">GCash</small>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div style="width: 12px; height: 12px; background-color: #20c997; border-radius: 2px; margin-right: 8px;"></div>
+                        <small class="text-muted">Payment Device</small>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div style="width: 12px; height: 12px; background-color: #343a40; border-radius: 2px; margin-right: 8px;"></div>
+                        <small class="text-muted">Over-the-Counter</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pending ORs Table -->
+    <div class="row g-4">
+        <div class="col-12">
+            <div class="card shadow-sm p-4">
+                <div class="mb-3">
+                    <h6 class="text-success mb-0" style="font-size: 1.1rem; font-weight: 600;">Pending ORs</h6>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead style="background-color: #f8f9fa;">
+                            <tr>
+                                <th class="text-muted" style="font-size: 0.875rem; font-weight: 500;">Transaction No.</th>
+                                <th class="text-muted" style="font-size: 0.875rem; font-weight: 500;">Name</th>
+                                <th class="text-muted" style="font-size: 0.875rem; font-weight: 500;">Request</th>
+                                <th class="text-muted" style="font-size: 0.875rem; font-weight: 500;">Payment Method</th>
+                                <th class="text-muted" style="font-size: 0.875rem; font-weight: 500;">Payment Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if ($pendingORsResult && $pendingORsResult->num_rows > 0): ?>
+                                <?php while ($row = $pendingORsResult->fetch_assoc()): ?>
+                                    <tr>
+                                        <td style="font-size: 0.875rem;"><?= htmlspecialchars($row['transaction_id']) ?></td>
+                                        <td style="font-size: 0.875rem;"><?= htmlspecialchars($row['full_name']) ?></td>
+                                        <td style="font-size: 0.875rem;"><?= htmlspecialchars($row['request_type']) ?></td>
+                                        <td style="font-size: 0.875rem;"><?= htmlspecialchars($row['payment_method']) ?></td>
+                                        <td>
+                                            <span class="badge" style="background-color: #28a745; color: white; font-size: 0.75rem;">
+                                                <?= htmlspecialchars($row['payment_status']) ?>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                <?php endwhile; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted" style="padding: 2rem;">No pending ORs found</td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 
   <?php elseif ($currentRole === 'Lupon Tagapamayapa'): ?>
-    <!-- Lupon Tagapamayapa’s dashboard -->
-    <div class="row g-4 mb-4">
-      <div class="col-md-12">
-        <div class="card shadow-sm text-center p-5">
-          <span class="material-symbols-outlined fs-2 text-dark">gavel</span>
-          <h2 class="fw-bold">Katarungang Pambarangay</h2>
-          <p class="text-muted">Use the menu to review recent complaints and summaries.</p>
+   <?php
+    // Get current month and year
+    $currentMonth = isset($_GET['month']) ? (int)$_GET['month'] : date('n');
+    $currentYear = isset($_GET['year']) ? (int)$_GET['year'] : date('Y');
+    
+    // Validate month and year
+    if ($currentMonth < 1 || $currentMonth > 12) $currentMonth = date('n');
+    if ($currentYear < 2020 || $currentYear > 2030) $currentYear = date('Y');
+    
+    // Get month name
+    $monthNames = [
+        1 => 'JANUARY', 2 => 'FEBRUARY', 3 => 'MARCH', 4 => 'APRIL',
+        5 => 'MAY', 6 => 'JUNE', 7 => 'JULY', 8 => 'AUGUST',
+        9 => 'SEPTEMBER', 10 => 'OCTOBER', 11 => 'NOVEMBER', 12 => 'DECEMBER'
+    ];
+    
+    // Get first day of month and number of days
+    $firstDay = mktime(0, 0, 0, $currentMonth, 1, $currentYear);
+    $firstDayWeek = date('w', $firstDay); // 0 = Sunday, 1 = Monday, etc.
+    $daysInMonth = date('t', $firstDay);
+    
+    // Sample meeting data - you can replace this with actual database queries
+    $meetings = [
+        '2025-04-04' => [
+            ['time' => '8:00 AM', 'title' => 'Yamada vs Beltran', 'type' => 'katarungan', 'status' => 'scheduled'],
+            ['time' => '9:30 AM', 'title' => 'Yamada vs Beltran', 'type' => 'katarungan', 'status' => 'scheduled'],
+            ['time' => '1:00 PM', 'title' => 'Yamada vs Beltran', 'type' => 'katarungan', 'status' => 'scheduled'],
+            ['time' => '3:00 PM', 'title' => 'Yamada vs Beltran', 'type' => 'katarungan', 'status' => 'scheduled'],
+        ],
+        // Add more sample data as needed
+    ];
+    
+    // Get today's date for highlighting
+    $today = date('Y-m-d');
+    $todayFormatted = date('Y-n-j');
+    
+    // Navigation URLs
+    $prevMonth = $currentMonth == 1 ? 12 : $currentMonth - 1;
+    $prevYear = $currentMonth == 1 ? $currentYear - 1 : $currentYear;
+    $nextMonth = $currentMonth == 12 ? 1 : $currentMonth + 1;
+    $nextYear = $currentMonth == 12 ? $currentYear + 1 : $currentYear;
+    
+    $prevUrl = "?month={$prevMonth}&year={$prevYear}";
+    $nextUrl = "?month={$nextMonth}&year={$nextYear}";
+    ?>
+    
+    <!-- Lupon Tagapamayapa Dashboard -->
+    <div class="row g-4">
+        <!-- Calendar Section -->
+        <div class="col-md-8">
+            <div class="card shadow-sm p-4">
+                <!-- Calendar Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="text-success mb-0 fw-bold">Meeting Schedule</h5>
+                    <div class="d-flex align-items-center">
+                        <a href="<?= $prevUrl ?>" class="btn btn-sm btn-outline-secondary me-2">
+                            <span class="material-symbols-outlined" style="font-size: 1rem;">chevron_left</span>
+                        </a>
+                        <h6 class="mb-0 mx-3 text-uppercase fw-bold"><?= $monthNames[$currentMonth] ?> | <?= $currentYear ?></h6>
+                        <a href="<?= $nextUrl ?>" class="btn btn-sm btn-outline-secondary ms-2">
+                            <span class="material-symbols-outlined" style="font-size: 1rem;">chevron_right</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Calendar Grid -->
+                <div class="table-responsive">
+                    <table class="table table-bordered" style="table-layout: fixed;">
+                        <thead>
+                            <tr style="height: 40px;">
+                                <th class="text-center fw-bold text-muted" style="font-size: 0.875rem;">SUN</th>
+                                <th class="text-center fw-bold text-muted" style="font-size: 0.875rem;">MON</th>
+                                <th class="text-center fw-bold text-muted" style="font-size: 0.875rem;">TUE</th>
+                                <th class="text-center fw-bold text-muted" style="font-size: 0.875rem;">WED</th>
+                                <th class="text-center fw-bold text-muted" style="font-size: 0.875rem;">THU</th>
+                                <th class="text-center fw-bold text-muted" style="font-size: 0.875rem;">FRI</th>
+                                <th class="text-center fw-bold text-muted" style="font-size: 0.875rem;">SAT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php
+                            $dayCounter = 1;
+                            $weekCount = 0;
+                            
+                            // Calculate total weeks needed
+                            $totalCells = $firstDayWeek + $daysInMonth;
+                            $weeksNeeded = ceil($totalCells / 7);
+                            
+                            for ($week = 0; $week < $weeksNeeded; $week++):
+                            ?>
+                            <tr style="height: 70px;">
+                                <?php for ($day = 0; $day < 7; $day++): ?>
+                                    <td class="align-top p-2" style="width: 14.28%; position: relative;">
+                                        <?php
+                                        $cellNumber = ($week * 7) + $day + 1;
+                                        $dayNumber = $cellNumber - $firstDayWeek;
+                                        
+                                        if ($dayNumber >= 1 && $dayNumber <= $daysInMonth):
+                                            $currentDate = sprintf('%04d-%02d-%02d', $currentYear, $currentMonth, $dayNumber);
+                                            $isToday = $currentDate === $today;
+                                            $hasMeetings = isset($meetings[$currentDate]);
+                                        ?>
+                                            <!-- Day Number -->
+                                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                                <span class="fw-bold <?= $isToday ? 'text-white bg-success rounded-circle px-2 py-1' : 'text-dark' ?>" 
+                                                      style="font-size: 0.875rem; min-width: 24px; text-align: center;">
+                                                    <?= $dayNumber ?>
+                                                </span>
+                                            </div>
+                                            
+                                            <!-- Meeting Indicators -->
+                                            <?php if ($hasMeetings): ?>
+                                                <div style="font-size: 0.75rem;">
+                                                    <?php foreach (array_slice($meetings[$currentDate], 0, 3) as $meeting): ?>
+                                                        <div class="mb-1">
+                                                            <?php if ($meeting['type'] === 'katarungan'): ?>
+                                                                <div class="badge bg-success text-white w-100 text-start p-1" style="font-size: 0.7rem;">
+                                                                    Katarungan Meeting
+                                                                </div>
+                                                            <?php elseif ($meeting['type'] === 'mediation'): ?>
+                                                                <div class="badge bg-primary text-white w-100 text-start p-1" style="font-size: 0.7rem;">
+                                                                    Mediation Session  
+                                                                </div>
+                                                            <?php else: ?>
+                                                                <div class="badge bg-secondary text-white w-100 text-start p-1" style="font-size: 0.7rem;">
+                                                                    General Meeting
+                                                                </div>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    <?php endforeach; ?>
+                                                </div>
+                                            <?php endif; ?>
+                                        <?php endif; ?>
+                                    </td>
+                                <?php endfor; ?>
+                            </tr>
+                            <?php endfor; ?>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Legend -->
+                <div class="d-flex justify-content-center mt-3" style="gap: 2rem;">
+                    <div class="d-flex align-items-center">
+                        <div class="badge bg-success me-2">●</div>
+                        <small class="text-muted">Unang Patawag</small>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div class="badge bg-primary me-2">●</div>
+                        <small class="text-muted">Ikalawang Patawag</small>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div class="badge bg-dark me-2">●</div>
+                        <small class="text-muted">Ikatlong Patawag</small>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-      <!-- you can add any other Lupon‑specific stats here… -->
+        
+        <!-- Today's Schedule Sidebar -->
+        <div class="col-md-4">
+            <?php
+            $todayMeetings = $meetings[$today] ?? [];
+            $sidebarDate = date('F j, Y');
+            $sidebarDay = strtoupper(date('D'));
+            ?>
+            
+            <div class="card shadow-sm p-4">
+                <div class="text-center mb-4">
+                    <h6 class="text-muted mb-1"><?= $sidebarDate ?></h6>
+                    <h5 class="fw-bold"><?= $sidebarDay ?></h5>
+                </div>
+                
+                <div class="schedule-list">
+                    <?php if (!empty($todayMeetings)): ?>
+                        <?php foreach ($todayMeetings as $meeting): ?>
+                            <div class="d-flex align-items-start mb-3">
+                                <div class="badge bg-success rounded-circle me-3 mt-1" style="width: 12px; height: 12px;"></div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold text-success" style="font-size: 0.875rem;">
+                                        <?= htmlspecialchars($meeting['time']) ?> 
+                                        <?= htmlspecialchars($meeting['title']) ?>
+                                    </div>
+                                    <small class="text-muted">Katarungang Pambarangay</small>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <div class="text-center text-muted py-5">
+                            <span class="material-symbols-outlined fs-2 mb-2 d-block">event_available</span>
+                            <p>No meetings scheduled for today</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+                
+                <?php if (!empty($todayMeetings) && count($todayMeetings) > 3): ?>
+                    <div class="text-center mt-3">
+                        <button class="btn btn-sm btn-outline-success">View All</button>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
     </div>
 
   <?php endif; ?>
@@ -467,36 +817,134 @@ if ($queryString) {
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  // Search/clear logic
+  // Search/clear logic (for Core Admin)
   const form = document.getElementById('searchForm');
   const input = document.getElementById('searchInput');
   const btn = document.getElementById('searchBtn');
-  const hasSearch  = <?= $search !== '' ? 'true' : 'false' ?>;
+  const hasSearch = <?= $search !== '' ? 'true' : 'false' ?>;
   
-  btn.addEventListener('click', () => {
-    if (hasSearch) input.value = '';
-    form.submit();
-  });
+  if (form && input && btn) {
+    btn.addEventListener('click', () => {
+      if (hasSearch) input.value = '';
+      form.submit();
+    });
+  }
 
-  const ctx = document.getElementById('agePieChart').getContext('2d');
-  new Chart(ctx, {
-    type: 'pie',
-    data: {
-      labels: <?= json_encode(array_keys($ageGroups)) ?>,
-      datasets: [{data: <?= json_encode(array_values($ageGroups)) ?>,
-      backgroundColor: [
-          '#198754',  
-          '#20c997',  
-          '#28a745' 
-        ]
-      }]
-    },
-    options: {responsive: true,
-      plugins: {
-        legend: { position: 'bottom' },
-        tooltip: { callbacks: { label: ctx => ctx.label + ': ' + ctx.formattedValue } }
+  // Age Pie Chart (Core Admin Dashboard)
+  if (document.getElementById('agePieChart')) {
+    const pieCtx = document.getElementById('agePieChart').getContext('2d');
+    new Chart(pieCtx, {
+      type: 'pie',
+      data: {
+        labels: <?= json_encode(array_keys($ageGroups)) ?>,
+        datasets: [{
+          data: <?= json_encode(array_values($ageGroups)) ?>,
+          backgroundColor: [
+            '#198754',  
+            '#20c997',  
+            '#28a745' 
+          ]
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom' },
+          tooltip: { 
+            callbacks: { 
+              label: ctx => ctx.label + ': ' + ctx.formattedValue 
+            } 
+          }
+        }
       }
-    }
-  });
+    });
+  }
+
+  // Payment Methods Line Chart (Treasurer Dashboard)
+  if (document.getElementById('paymentMethodsChart')) {
+    const lineCtx = document.getElementById('paymentMethodsChart').getContext('2d');
+    
+    new Chart(lineCtx, {
+      type: 'line',
+      data: {
+        labels: <?= isset($dates) ? json_encode($dates) : '[]' ?>,
+        datasets: [
+          {
+            label: 'GCash',
+            data: <?= isset($gcashData) ? json_encode($gcashData) : '[]' ?>,
+            borderColor: '#28a745',
+            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+            fill: false,
+            tension: 0.4,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          },
+          {
+            label: 'Payment Device',
+            data: <?= isset($paymentDeviceData) ? json_encode($paymentDeviceData) : '[]' ?>,
+            borderColor: '#20c997',
+            backgroundColor: 'rgba(32, 201, 151, 0.1)',
+            fill: false,
+            tension: 0.4,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          },
+          {
+            label: 'Over-the-Counter',
+            data: <?= isset($overCounterData) ? json_encode($overCounterData) : '[]' ?>,
+            borderColor: '#343a40',
+            backgroundColor: 'rgba(52, 58, 64, 0.1)',
+            fill: false,
+            tension: 0.4,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false // Using custom legend below
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+          }
+        },
+        scales: {
+          x: {
+            grid: {
+              color: 'rgba(0,0,0,0.1)'
+            },
+            ticks: {
+              color: '#6c757d',
+              font: {
+                size: 12
+              }
+            }
+          },
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: 'rgba(0,0,0,0.1)'
+            },
+            ticks: {
+              color: '#6c757d',
+              font: {
+                size: 12
+              }
+            }
+          }
+        },
+        interaction: {
+          mode: 'nearest',
+          axis: 'x',
+          intersect: false
+        }
+      }
+    });
+  }
 });
 </script>

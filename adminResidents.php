@@ -43,7 +43,7 @@ $whereSQL = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 $tableName = "purok{$purokNum}_rbi";
 
 // --- Pagination setup ---
-$limit = 10;
+$limit = 8;
 $page_num = max((int)($_GET['page_num'] ?? 1), 1);
 $offset = ($page_num - 1) * $limit;
 
@@ -166,7 +166,7 @@ $endDisplay   = $offset + $shownCount;                       // 1-based end inde
       </form>
     </div>
 
-    <div class="table-responsive admin-table" style="height:500px;overflow-y:auto;">
+    <div class="table-responsive admin-table" style="height:500px;overflow-y:hidden;"><!-- style="height:500px;overflow-y:auto;"  -->
       <table class="table table-hover align-middle resident-table">
         <thead class="table-light">
           <tr>

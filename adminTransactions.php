@@ -12,12 +12,7 @@ $reportTypes = ['All','Barangay ID', 'Business Permit', 'Good Moral', 'Guardians
     <!-- Resident Reports -->
     <div class="accordion-item">
       <h2 class="accordion-header" id="headingResident">
-        <button class="accordion-button collapsed text-success fw-bold"
-                type="button"
-                data-bs-toggle="collapse"
-                data-bs-target="#collapseResident"
-                aria-expanded="false"
-                aria-controls="collapseResident">
+        <button class="accordion-button collapsed text-success fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseResident" aria-expanded="false" aria-controls="collapseResident">
           Resident Reports
         </button>
       </h2>
@@ -114,12 +109,7 @@ $reportTypes = ['All','Barangay ID', 'Business Permit', 'Good Moral', 'Guardians
     <!-- Blotter Reports -->
     <div class="accordion-item">
       <h2 class="accordion-header" id="headingBlotter">
-        <button class="accordion-button collapsed text-success fw-bold"
-                type="button"
-                data-bs-toggle="collapse"
-                data-bs-target="#collapseBlotter"
-                aria-expanded="false"
-                aria-controls="collapseBlotter">
+        <button class="accordion-button collapsed text-success fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseBlotter" aria-expanded="false" aria-controls="collapseBlotter">
           Blotter Reports
         </button>
       </h2>
@@ -159,85 +149,62 @@ $reportTypes = ['All','Barangay ID', 'Business Permit', 'Good Moral', 'Guardians
       </div>
     </div>
 
-    <!-- Complaint Reports -->
-    <!-- <div class="accordion-item">
-      <h2 class="accordion-header" id="headingComplaint">
-        <button class="accordion-button collapsed text-success fw-bold"
-                type="button"
-                data-bs-toggle="collapse"
-                data-bs-target="#collapseComplaint"
-                aria-expanded="false"
-                aria-controls="collapseComplaint">
-          Complaint Reports
+        <!-- Kasambahay Reports -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingKasambahay">
+        <button class="accordion-button collapsed text-success fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseKasambahay" aria-expanded="false" aria-controls="collapseKasambahay">
+          Kasambahay Reports
         </button>
       </h2>
-      <div id="collapseComplaint" class="accordion-collapse collapse"
-           aria-labelledby="headingComplaint"
-           data-bs-parent="#adminAccordion">
+      <div id="collapseKasambahay" class="accordion-collapse collapse" aria-labelledby="headingKasambahay" data-bs-parent="#adminAccordion">
         <div class="accordion-body p-0">
           <div class="card border-0">
             <div class="card-body">
-              <form method="post" action="functions/generate_complaint_report.php" target="_blank">
-                <div class="row align-items-end g-3 mb-4">
-                  <div class="col-md-3">
-                    <label for="complaintFrom" class="form-label">From</label>
-                    <input type="date" id="complaintFrom" name="date_from" class="form-control" required>
-                  </div>
-                  <div class="col-md-3">
-                    <label for="complaintTo" class="form-label">To</label>
-                    <input type="date" id="complaintTo" name="date_to" class="form-control" required>
-                  </div>
-                  <div class="col-md-6 text-end">
-                    <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">CSV</button>
-                    <button type="submit" name="format" value="pdf" class="btn btn-success">PDF</button>
-                  </div>
-                </div>
-              </form>
+              <!-- TODO: Add Kasambahay report filters and form here -->
+              <p class="text-muted mb-0">No filters or report options available yet.</p>
             </div>
           </div>
         </div>
       </div>
-    </div> -->
+    </div>
+
+    <!-- VAWC Reports -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingVAWC">
+        <button class="accordion-button collapsed text-success fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseVAWC" aria-expanded="false" aria-controls="collapseVAWC">
+          VAWC Reports
+        </button>
+      </h2>
+      <div id="collapseVAWC" class="accordion-collapse collapse" aria-labelledby="headingVAWC" data-bs-parent="#adminAccordion">
+        <div class="accordion-body p-0">
+          <div class="card border-0">
+            <div class="card-body">
+              <!-- TODO: Add VAWC report filters and form here -->
+              <p class="text-muted mb-0">No filters or report options available yet.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Katarungang Pambarangay Reports -->
-    <!-- <div class="accordion-item">
-      <h2 class="accordion-header" id="headingKatarungang">
-        <button class="accordion-button collapsed text-success fw-bold"
-                type="button"
-                data-bs-toggle="collapse"
-                data-bs-target="#collapseKatarungang"
-                aria-expanded="false"
-                aria-controls="collapseKatarungang">
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingKP">
+        <button class="accordion-button collapsed text-success fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseKP" aria-expanded="false" aria-controls="collapseKP">
           Katarungang Pambarangay Reports
         </button>
       </h2>
-      <div id="collapseKatarungang" class="accordion-collapse collapse"
-           aria-labelledby="headingKatarungang"
-           data-bs-parent="#adminAccordion">
+      <div id="collapseKP" class="accordion-collapse collapse" aria-labelledby="headingKP" data-bs-parent="#adminAccordion">
         <div class="accordion-body p-0">
           <div class="card border-0">
             <div class="card-body">
-              <form method="post" action="functions/generate_katarungang_report.php" target="_blank">
-                <div class="row align-items-end g-3 mb-4">
-                  <div class="col-md-3">
-                    <label for="kataFrom" class="form-label">From</label>
-                    <input type="date" id="kataFrom" name="date_from" class="form-control" required>
-                  </div>
-                  <div class="col-md-3">
-                    <label for="kataTo" class="form-label">To</label>
-                    <input type="date" id="kataTo" name="date_to" class="form-control" required>
-                  </div>
-                  <div class="col-md-6 text-end">
-                    <button type="submit" name="format" value="csv" class="btn btn-outline-success me-2">CSV</button>
-                    <button type="submit" name="format" value="pdf" class="btn btn-success">PDF</button>
-                  </div>
-                </div>
-              </form>
+              <!-- TODO: Add KP report filters and form here -->
+              <p class="text-muted mb-0">No filters or report options available yet.</p>
             </div>
           </div>
         </div>
       </div>
-    </div> -->
+    </div>
 
   </div>
 </div>

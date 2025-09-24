@@ -35,15 +35,16 @@ if (empty($_SESSION['loggedInUserID'])) {
 }
 $userId = (int) $_SESSION['loggedInUserID'];
 
-// Collect fields
-$resident_name = trim($_POST['resident_name'] ?? '');
-$purok_post    = trim($_POST['purok'] ?? '');
-$equipment_sn  = trim($_POST['equipment_sn'] ?? '');
-$qty           = isset($_POST['qty']) ? (int) $_POST['qty'] : 0;
-$location      = trim($_POST['location'] ?? '');
-$used_for      = trim($_POST['used_for'] ?? '');
-$borrow_date   = trim($_POST['borrow_date'] ?? '');
-$pudo_option   = trim($_POST['pudo_option'] ?? '');
+// Collect fields (updated to accept from/to)
+$resident_name     = trim($_POST['resident_name'] ?? '');
+$purok_post        = trim($_POST['purok'] ?? '');
+$equipment_sn      = trim($_POST['equipment_sn'] ?? '');
+$qty               = isset($_POST['qty']) ? (int) $_POST['qty'] : 0;
+$location          = trim($_POST['location'] ?? '');
+$used_for          = trim($_POST['used_for'] ?? '');
+$borrow_date_from  = trim($_POST['borrow_date_from'] ?? '');
+$borrow_date_to    = trim($_POST['borrow_date_to'] ?? '');
+$pudo_option       = trim($_POST['pudo_option'] ?? '');
 
 // Validate
 $errors = [];
@@ -52,8 +53,14 @@ if ($equipment_sn === '') $errors[] = 'Equipment identifier required.';
 if ($qty < 1) $errors[] = 'Quantity must be at least 1.';
 if ($location === '') $errors[] = 'Location is required.';
 if ($used_for === '') $errors[] = 'Purpose is required.';
-if ($borrow_date === '') $errors[] = 'Borrow date is required.';
+if ($borrow_date_from === '') $errors[] = 'Borrow date (From) is required.';
+if ($borrow_date_to === '') $errors[] = 'Borrow date (To) is required.';
 if ($pudo_option === '') $errors[] = 'Pick-up or Drop-off selection is required.';
+
+// validate date order if both present (ISO date strings: safe to compare)
+if ($borrow_date_from !== '' && $borrow_date_to !== '' && $borrow_date_from > $borrow_date_to) {
+    $errors[] = 'Borrow Date (From) must be the same or earlier than Borrow Date (To).';
+}
 
 if (!empty($errors)) {
     if ($isAjax) json_res(['status' => 'error', 'message' => implode(' ', $errors)], 400);
@@ -111,8 +118,33 @@ $stmt->close();
 
 // Build insert for borrow_requests
 $table = 'borrow_requests';
-$cols = ['transaction_id', 'resident_name','equipment_sn','qty','location','used_for','date','status'];
-$values = [$transactionId, $resident_name, $equipment_sn, $qty, $location, $used_for, $borrow_date, 'Pending'];
+// updated: use borrow_date_from and borrow_date_to columns instead of `date`
+$cols = [
+    'transaction_id',
+    'account_id',
+    'resident_name',
+    'equipment_sn',
+    'qty',
+    'location',
+    'used_for',
+    'borrow_date_from',
+    'borrow_date_to',
+    'status'
+];
+
+// note: $userId is set earlier from session: $userId = (int) $_SESSION['loggedInUserID'];
+$values = [
+    $transactionId,
+    $userId,
+    $resident_name,
+    $equipment_sn,
+    $qty,
+    $location,
+    $used_for,
+    $borrow_date_from,
+    $borrow_date_to,
+    'Pending'
+];
 
 // Add purok if column exists
 if ($purok_post !== '' && column_exists($conn, $table, 'purok')) {
@@ -129,6 +161,12 @@ if (column_exists($conn, $table, 'pudo')) {
     $_SESSION['submit_error'] = "Database missing 'pudo' column.";
     header("Location: ../userPanel.php?page=serviceEquipmentBorrowing");
     exit();
+}
+
+// -- ensure request_source = 'Online' is stored when column exists
+if (column_exists($conn, $table, 'request_source')) {
+    $cols[] = 'request_source';
+    $values[] = 'Online';
 }
 
 // Prepare and execute insert

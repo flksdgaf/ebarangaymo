@@ -13,23 +13,24 @@ $transactionId = $_GET['tid'] ?? null;
 $t = $transactionId ? true : false;
 
 // --- fetch user from whichever purok table they’re in ---
+// NOTE: added selection of `sex` so client-side can prefill sex-based fields (e.g. Parent Sex)
 $sql = "
-  SELECT full_name, birthdate, civil_status, 'Purok 1' AS purok
+  SELECT full_name, birthdate, civil_status, sex, 'Purok 1' AS purok
     FROM purok1_rbi WHERE account_ID = ?
   UNION ALL
-  SELECT full_name, birthdate, civil_status, 'Purok 2' AS purok
+  SELECT full_name, birthdate, civil_status, sex, 'Purok 2' AS purok
     FROM purok2_rbi WHERE account_ID = ?
   UNION ALL
-  SELECT full_name, birthdate, civil_status, 'Purok 3' AS purok
+  SELECT full_name, birthdate, civil_status, sex, 'Purok 3' AS purok
     FROM purok3_rbi WHERE account_ID = ?
   UNION ALL
-  SELECT full_name, birthdate, civil_status, 'Purok 4' AS purok
+  SELECT full_name, birthdate, civil_status, sex, 'Purok 4' AS purok
     FROM purok4_rbi WHERE account_ID = ?
   UNION ALL
-  SELECT full_name, birthdate, civil_status, 'Purok 5' AS purok
+  SELECT full_name, birthdate, civil_status, sex, 'Purok 5' AS purok
     FROM purok5_rbi WHERE account_ID = ?
   UNION ALL
-  SELECT full_name, birthdate, civil_status, 'Purok 6' AS purok
+  SELECT full_name, birthdate, civil_status, sex, 'Purok 6' AS purok
     FROM purok6_rbi WHERE account_ID = ?
   LIMIT 1
 ";
@@ -51,31 +52,186 @@ $chosenPayment = '';
 $existingCertType = null;
 $chosenAmount = null;
 $chosenPaymentStatus = null;
+$existingRequestRow = []; // will hold the full row if tid is found
+$existingParentSex = '';  // NEW: hold parent_sex from existing request if present
+$existingParentAddress = ''; // NEW: hold parent_address if present
 
 if ($transactionId) {
-    // first, find the cert type for this tid and fetch payment columns too
+    // first, find the cert type for this tid and fetch the full row (so we can read claim_date/claim_time)
     foreach ($map as $typeName => $m) {
         $tbl = $m['table'];
-        $q = $conn->prepare("SELECT payment_method, amount, payment_status FROM `$tbl` WHERE transaction_id = ? LIMIT 1");
+        // Select entire row (we need claim_date and claim_time)
+        $q = $conn->prepare("SELECT * FROM `$tbl` WHERE transaction_id = ? LIMIT 1");
         $q->bind_param('s', $transactionId);
         $q->execute();
         $r = $q->get_result();
-        if ($r->num_rows) {
+        if ($r && $r->num_rows) {
             $row = $r->fetch_assoc();
-            $chosenPayment = $row['payment_method'];
-            $chosenAmount = $row['amount'];
-            $chosenPaymentStatus = $row['payment_status'];
+            $chosenPayment = $row['payment_method'] ?? '';
+            $chosenAmount = $row['amount'] ?? '';
+            $chosenPaymentStatus = $row['payment_status'] ?? '';
             $existingCertType = $typeName; // remember which certificate this tid belongs to
+            $existingRequestRow = $row;
+            // NEW: capture parent_sex & parent_address if available
+            $existingParentSex = $row['parent_sex'] ?? '';
+            $existingParentAddress = $row['parent_address'] ?? '';
             $q->close();
             break;
         }
         $q->close();
     }
 }
-?>
 
+// === NEW: compute the default fee label to display in the fee box ===
+$feeLabelDefault = $existingCertType ? ($existingCertType . ' Certificate Fee') : 'Barangay ID Fee';
+
+/**
+ * Business-day generator
+ *
+ * Behavior:
+ *  - If the request is made on Saturday or Sunday, the claim options START from next Monday.
+ *  - Otherwise, claim options start from tomorrow, but only business days (Mon-Fri) are included.
+ *  - Returns DateTime objects for the next $count business days.
+ */
+function getNextBusinessDays($fromDate, $count = 3) {
+    $results = [];
+    $d = clone $fromDate;
+
+    // If request is on Saturday (6) or Sunday (7), start at next Monday
+    $weekdayNow = (int)$d->format('N'); // 1=Mon .. 7=Sun
+    if ($weekdayNow === 6) { // Saturday
+        // move to Monday (+2)
+        $d->modify('+2 days');
+    } elseif ($weekdayNow === 7) { // Sunday
+        // move to Monday (+1)
+        $d->modify('+1 day');
+    } else {
+        // For Mon-Fri, options start from TOMORROW
+        $d->modify('+1 day');
+    }
+
+    while (count($results) < $count) {
+        $weekday = (int)$d->format('N'); // 1..7
+        if ($weekday <= 5) { // Monday - Friday
+            $results[] = clone $d;
+        }
+        $d->modify('+1 day');
+    }
+    return $results;
+}
+
+// Build claim options server-side (3 business days)
+$today = new DateTime('now', new DateTimeZone('Asia/Manila'));
+$businessDays = getNextBusinessDays($today, 3);
+
+$claimOptions = [];
+foreach ($businessDays as $bd) {
+    $dateStr = $bd->format('Y-m-d'); // machine
+    $label = $bd->format('F j, Y'); // human readable
+    $claimOptions[] = [
+        'date' => $dateStr,
+        'label' => $label,
+        'parts' => [
+            ['key' => 'Morning', 'label' => 'Morning (8:00 AM to 12:00 NN)'],
+            ['key' => 'Afternoon', 'label' => 'Afternoon (1:00 PM to 5:00 PM)'],
+        ],
+    ];
+}
+
+// existing claim pref - support both legacy "YYYY-MM-DD|Part" and separate columns claim_date & claim_time
+$existingClaimDate = '';
+$existingClaimPart = '';
+
+if (!empty($existingRequestRow)) {
+    // Prefer separate columns if available
+    if (!empty($existingRequestRow['claim_date'])) {
+        $raw = $existingRequestRow['claim_date'];
+        if (strpos($raw, '|') !== false) {
+            // legacy format: "YYYY-MM-DD|Morning"
+            [$d, $p] = explode('|', $raw, 2);
+            $existingClaimDate = trim($d);
+            $existingClaimPart = trim($p);
+        } else {
+            // date-only stored here — use claim_time column if present
+            $existingClaimDate = $raw;
+            if (!empty($existingRequestRow['claim_time'])) {
+                $existingClaimPart = $existingRequestRow['claim_time'];
+            } else {
+                // default to Morning when only date present
+                $existingClaimPart = 'Morning';
+            }
+        }
+    } else {
+        // No claim_date value stored; check separate fields (rare)
+        if (!empty($existingRequestRow['claim_time'])) {
+            $existingClaimPart = $existingRequestRow['claim_time'];
+        }
+        if (!empty($existingRequestRow['claim_date'])) {
+            $existingClaimDate = $existingRequestRow['claim_date'];
+        }
+    }
+}
+?>
 <link rel="stylesheet" href="serviceCertification.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<!-- Minimal claim-specific styles (scoped to this page) -->
+<style>
+    /* claim grid: two columns per date (left: Morning, right: Afternoon) */
+    .claim-grid .date-row {
+        margin-bottom: .6rem;
+    }
+    .claim-grid .claim-card {
+        transition: box-shadow .12s ease, transform .08s ease;
+        border-radius: .5rem;
+        padding: .75rem;
+        display: flex;
+        align-items: flex-start;
+        gap: .75rem;
+        min-height: 64px;
+    }
+    .claim-grid .claim-card .form-check {
+        margin-top: 4px;
+    }
+    .claim-grid .claim-card.active {
+        box-shadow: 0 6px 18px rgba(0,0,0,.06);
+        transform: translateY(-2px);
+        border: 1px solid #198754;
+        background: #fffefb;
+    }
+    .claim-date-label {
+        font-weight:600;
+    }
+    .claim-time {
+        font-size: .95rem;
+        color: #6b7280;
+    }
+    .claim-grid .date-label {
+        font-weight:700;
+        margin-bottom: .35rem;
+    }
+    .claim-card {
+        border: 1px solid #e9ecef;        /* neutral outline */
+        background: #ffffff;
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+        transition: box-shadow .12s ease, transform .08s ease, border-color .12s ease, outline .08s ease;
+        display: flex;
+        align-items: flex-start;
+        gap: .75rem;
+        min-height: 64px;
+        cursor: pointer;
+        outline: none;                    /* avoid default UA outline */
+    }
+
+    /* responsive adjustment */
+    @media (max-width: 575.98px) {
+        .claim-grid .col-sm-6 {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+    }
+</style>
 
 <div class="container py-4 px-3">
     <div class="progress-container">
@@ -158,7 +314,6 @@ if ($transactionId) {
 
                 <div id="certFields"></div>
 
-                <!-- … then the rest of your Step 1 fields (Full Name, etc.) … -->
             </div>
             
             <!-- Step 2: Payment -->
@@ -169,7 +324,8 @@ if ($transactionId) {
                     <!-- LEFT COLUMN: Fee -->
                     <div class="col-md-4">
                         <div class="fee-box p-4 rounded shadow-sm border bg-light text-center">
-                            <h5 class="fw-bold text-success mb-2">Barangay ID Fee</h5>
+                            <!-- UPDATED: dynamic fee title (server default + client-side updater will modify on selection) -->
+                            <h5 id="feeTitle" class="fw-bold text-success mb-2"><?php echo htmlspecialchars($feeLabelDefault); ?></h5>
                             <div class="display-6 fw-bold text-dark mb-2">₱130.00</div>
                             <p class="text-muted small mb-0">
                                 Settle the fee using your preferred<br>payment method on the right.
@@ -398,137 +554,113 @@ if ($transactionId) {
     window.existingPaymentMethod = <?php echo json_encode($chosenPayment); ?>;
     window.existingPaymentAmount = <?php echo json_encode($chosenAmount); ?>;
     window.existingPaymentStatus = <?php echo json_encode($chosenPaymentStatus); ?>;
+    // also expose the server default fee label so client-side can use it
+    window.feeLabelDefault = <?php echo json_encode($feeLabelDefault); ?>;
+
+    // Expose claim options & existing claim object for client-side use
+    window._claimOptions = <?php echo json_encode($claimOptions, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
+    window._existingClaimObj = <?php echo json_encode(['date' => $existingClaimDate, 'part' => $existingClaimPart], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
+
+    // NEW: expose existing parent sex & address so client-side can prefill the parent sex dropdown and show previously-entered address
+    window.existingParentSex = <?php echo json_encode($existingParentSex, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
+    window.existingParentAddress = <?php echo json_encode($existingParentAddress, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
 </script>
 
+<!-- Claim handling script (keeps logic local so external JS can remain unchanged) -->
 <script>
-/*
-  Inline behavior adjustments specific to "Indigency" certificate:
-  - Remove/hide the Payment step from the UI when Type is "Indigency"
-  - Renumber the progress circles and labels so we get 3 steps:
-      1. APPLICATION FORM
-      2. REVIEW & CONFIRMATION
-      3. SUBMISSION
-  - Ensure hidden payment inputs are cleared so backend can treat them as empty/NULL
-  - Do NOT remove payment_status from the summary for Indigency — we want to show it.
-*/
-(function(){
-    const certInput = document.getElementById('certType');
-    const paymentStepEl = document.getElementById('paymentStep'); // outer .step for payment
-    const paymentProgressStep = document.querySelector('.payment-progress-step');
-    const summaryContainer = document.getElementById('summaryContainer');
-    const paymentMethodInput = document.getElementById('paymentMethod');
-    const paymentAmountInput = document.getElementById('paymentAmount');
-    const paymentStatusInput = document.getElementById('paymentStatus');
+document.addEventListener('DOMContentLoaded', function () {
+    const claimGroup = document.getElementById('claimOptionsGroup');
+    const hiddenDate = document.getElementById('hiddenClaimDate');
+    const hiddenTime = document.getElementById('hiddenClaimTime');
 
-    function isIndigencyValue(val){
-        if (!val) return false;
-        return val.trim().toLowerCase() === 'indigency';
+    if (!claimGroup) return;
+
+    function clearActiveCards() {
+        claimGroup.querySelectorAll('.claim-card').forEach(function(card){
+            card.classList.remove('active');
+        });
     }
 
-    function applyIndigencyMode(){
-        // 1) Remove the payment step from the flow (both the step content and progress)
-        if (paymentStepEl && paymentStepEl.parentNode) {
-            paymentStepEl.parentNode.removeChild(paymentStepEl);
-        }
-        if (paymentProgressStep && paymentProgressStep.parentNode) {
-            paymentProgressStep.parentNode.removeChild(paymentProgressStep);
-        }
-
-        // 2) Renumber remaining progress circles and update labels
-        const progressSteps = document.querySelectorAll('.stepss .steps');
-        const newLabels = ['APPLICATION FORM', 'REVIEW & CONFIRMATION', 'SUBMISSION'];
-        progressSteps.forEach((s, idx) => {
-            const circle = s.querySelector('.circle');
-            const label = s.querySelector('.step-label');
-            if (circle) circle.textContent = idx + 1;
-            if (label) label.textContent = newLabels[idx] || label.textContent;
-            s.setAttribute('data-step', idx+1);
-        });
-
-        // 3) clear hidden payment fields so submit receives empty values
-        if (paymentMethodInput) paymentMethodInput.value = '';
-        if (paymentAmountInput) paymentAmountInput.value = '';
-        // keep paymentStatusInput untouched here because we want to display/show payment_status for Indigency
-        // if you want it cleared for brand-new indigency creation, you may set it to '' here. We'll keep it as-is.
-
-        // 4) ensure any payment UI is not accidentally visible: hide elements that may reference fee/instructions
-        const feeBoxes = document.querySelectorAll('.payment-container, .fee-box, #payment-instructions, .payment-instruction, .payment-btn');
-        feeBoxes.forEach(el => {
-            if (el && el.style) el.style.display = 'none';
-        });
-
-        // 5) remove payment_method and amount from the summary, but KEEP payment_status for indigency
-        // we will remove nodes containing "Payment Method" and "Amount" but keep "Payment Status"
-        if (!summaryContainer) return;
-        const nodes = summaryContainer.querySelectorAll('*');
-        nodes.forEach(node => {
-            if (node.children.length === 0) {
-                const txt = (node.textContent || '').trim().toLowerCase();
-                if (txt.includes('payment method') || txt === 'amount:' || txt.includes('amount')) {
-                    node.remove();
-                }
-            }
-        });
-
-        // 6) observe summary for future injection and remove payment method/amount nodes if they appear
-        observeSummaryForPaymentRemoval();
+    function setHiddenValues(date, part) {
+        if (hiddenDate) hiddenDate.value = date || '';
+        if (hiddenTime) hiddenTime.value = part || '';
     }
 
-    function observeSummaryForPaymentRemoval(){
-        if (!summaryContainer) return;
-        const mo = new MutationObserver(mutations => {
-            // remove payment method/amount nodes if they reappear
-            const nodes = summaryContainer.querySelectorAll('*');
-            nodes.forEach(node => {
-                if (node.children.length === 0) {
-                    const txt = (node.textContent || '').trim().toLowerCase();
-                    if (txt.includes('payment method') || txt === 'amount:' || txt.includes('amount')) {
-                        node.remove();
-                    }
-                }
-            });
-        });
-        mo.observe(summaryContainer, { childList: true, subtree: true, characterData: true });
-    }
+    // on change, update hidden inputs & active styles
+    claimGroup.addEventListener('change', function (e) {
+        clearActiveCards();
+        const checked = claimGroup.querySelector('input[name="claim_slot"]:checked');
+        if (!checked) return;
+        const parentLabel = checked.closest('label');
+        if (parentLabel) parentLabel.classList.add('active');
 
-    // react when user changes the certificate type
-    function onCertTypeChanged(){
-        const val = certInput.value || '';
-        if (isIndigencyValue(val)) {
-            applyIndigencyMode();
-        } else {
-            // if user switches back to a paid cert, reload page or restore original UI.
-            // We intentionally keep this conservative: simplest behaviour is to reload so the full payment step appears correctly.
-            // But only reload if payment step was removed (to avoid infinite reload loops)
-            if (!document.getElementById('paymentStep')) {
-                location.reload();
+        const date = checked.dataset.date || '';
+        const part = checked.dataset.part || '';
+
+        // set hidden fields (prefer data-* attributes)
+        setHiddenValues(date, part);
+
+        // also ensure the value fallback (legacy) is acceptable
+        if ((!date || !part) && checked.value && checked.value.indexOf('|') !== -1) {
+            const parts = checked.value.split('|');
+            if (parts.length === 2) {
+                setHiddenValues(parts[0], parts[1]);
             }
         }
-    }
-
-    // initial application: if existingCertType was passed from PHP as "Indigency" or the current input has Indigency
-    document.addEventListener('DOMContentLoaded', function(){
-        // pre-populate certType if viewing an existing transaction
-        if (window.existingCertType) {
-            document.getElementById('certType').value = window.existingCertType;
-        }
-
-        // If this page was loaded for an existing transaction that belongs to Indigency, apply indigency mode.
-        if (window.existingCertType && window.existingCertType.toLowerCase() === 'indigency') {
-            applyIndigencyMode();
-        } else {
-            // If the user typed/selected Indigency before JS runs
-            if (isIndigencyValue(certInput.value)) {
-                applyIndigencyMode();
-            }
-        }
-
-        // Monitor user changes (typing/selecting) on the certificate type field
-        certInput.addEventListener('change', onCertTypeChanged);
-        certInput.addEventListener('blur', onCertTypeChanged);
-        certInput.addEventListener('input', function(){ /* optional - don't aggressively act on typing */ });
     });
-})();
+
+    // make labels clickable (ensure change event fires)
+    claimGroup.querySelectorAll('label').forEach(function(lbl) {
+        lbl.addEventListener('click', function(){
+            const input = lbl.querySelector('input[type="radio"]');
+            if (!input) return;
+            if (!input.checked) {
+                input.checked = true;
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+            } else {
+                // still dispatch to update UI
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+    });
+
+    // Prefill selection if there is an existing claim
+    if (window._existingClaimObj && window._existingClaimObj.date) {
+        const d = window._existingClaimObj.date;
+        const p = window._existingClaimObj.part;
+        const desiredNew = claimGroup.querySelector(`input[name="claim_slot"][data-date="${d}"][data-part="${p}"]`);
+        if (desiredNew) {
+            desiredNew.checked = true;
+            desiredNew.dispatchEvent(new Event('change', { bubbles: true }));
+        } else {
+            // fallback: match date only (prefer morning)
+            const fallback = claimGroup.querySelector(`input[name="claim_slot"][data-date="${d}"]`);
+            if (fallback) {
+                fallback.checked = true;
+                fallback.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
+    } else {
+        // select first radio by default if none checked
+        const firstRadio = claimGroup.querySelector('input[name="claim_slot"]');
+        if (firstRadio && !claimGroup.querySelector('input[name="claim_slot"]:checked')) {
+            firstRadio.checked = true;
+            firstRadio.dispatchEvent(new Event('change', { bubbles: true }));
+        } else if (firstRadio && claimGroup.querySelector('input[name="claim_slot"]:checked')) {
+            // sync hidden inputs with already-checked option
+            const already = claimGroup.querySelector('input[name="claim_slot"]:checked');
+            if (already) {
+                const d = already.dataset.date || '';
+                const p = already.dataset.part || '';
+                if (d && p) setHiddenValues(d, p);
+                else if (already.value && already.value.indexOf('|') !== -1) {
+                    const parts = already.value.split('|');
+                    if (parts.length === 2) setHiddenValues(parts[0], parts[1]);
+                }
+            }
+        }
+    }
+});
 </script>
 
 <script src="js/serviceCertification.js"></script>
@@ -537,6 +669,7 @@ if ($transactionId) {
   Override populateSummary after the main JS file loads so the Review summary shows:
    - Indigency -> Payment Status only
    - Others   -> Amount + Payment Status
+   - NEW: Good Moral -> also show Parent Sex & Parent Address (address optional)
 -->
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -555,6 +688,14 @@ document.addEventListener('DOMContentLoaded', function () {
             ['Civil Status:', (document.querySelector('[name="civil_status"]')?.value) || '—'],
             ['Purok:', (document.querySelector('[name="purok"]')?.value) || '—']
         ];
+
+        // NEW: Good Moral -> include Parent Sex and optional Parent Address
+        if (type === 'good moral') {
+            const parentSex = document.querySelector('[name="parent_sex"]')?.value || window.existingParentSex || '—';
+            const parentAddress = document.querySelector('[name="parent_address"]')?.value || window.existingParentAddress || '—';
+            rows.push(['Parent Sex:', parentSex]);
+            rows.push(['Parent Address:', parentAddress]);
+        }
 
         // Solo Parent: Child details + years
         if (type === 'solo parent') {
@@ -589,10 +730,23 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Common fields for all types
-        rows.push(
-            ['Claim Date:', document.querySelector('[name="claim_date"]')?.value || '—'],
-            ['Purpose:', document.querySelector('[name="purpose"]')?.value || '—']
-        );
+        // Note: summary reads hidden claim_date field populated by the claim widget above
+        const claimDateVal = document.querySelector('[name="claim_date"]')?.value;
+        const claimTimeVal = document.querySelector('[name="claim_time"]')?.value;
+        let claimDisplay = '—';
+        if (claimDateVal && claimTimeVal) {
+            // try to find friendly label from window._claimOptions
+            if (window._claimOptions && Array.isArray(window._claimOptions)) {
+                const found = window._claimOptions.find(c => c.date === claimDateVal);
+                const dateLabel = found ? found.label : claimDateVal;
+                const part = (found && Array.isArray(found.parts)) ? (found.parts.find(p => p.key === claimTimeVal)?.label || claimTimeVal) : claimTimeVal;
+                claimDisplay = `${dateLabel} - ${part}`;
+            } else {
+                claimDisplay = `${claimDateVal} - ${claimTimeVal}`;
+            }
+        }
+        rows.push(['Claim Date:', claimDisplay]);
+        rows.push(['Purpose:', document.querySelector('[name="purpose"]')?.value || '—']);
 
         // Payment details — different rules for Indigency vs others
         const paymentAmountEl = document.getElementById('paymentAmount');
@@ -606,8 +760,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const statusVal = clientStatus || window.existingPaymentStatus || '';
 
         if (type === 'indigency') {
-            // show payment_status for indigency (if empty show '—' so user sees something)
-            rows.push(['Payment Status:', statusVal || '—']);
+            // show payment_status for indigency (default to "Free of Charge")
+            rows.push(['Payment Status:', statusVal || 'Free of Charge']);
         } else {
             // for other certificates, include amount and payment_status.
             // Format amount nicely if numeric

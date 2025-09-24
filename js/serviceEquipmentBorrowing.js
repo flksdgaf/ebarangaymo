@@ -46,7 +46,13 @@
     document.getElementById('s_location').textContent = document.getElementById('location').value || '-';
     const pickupOptEl = document.getElementById('pudo_option');
     document.getElementById('s_pudo_option').textContent = pickupOptEl ? pickupOptEl.options[pickupOptEl.selectedIndex].text : '-';
-    document.getElementById('s_borrow_info').textContent = document.getElementById('borrow_date').value || '-';
+
+    // UPDATED: show both From and To dates in the summary
+    const from = document.getElementById('borrow_date_from').value || '';
+    const to = document.getElementById('borrow_date_to').value || '';
+    const display = (from || to) ? (from + (from && to ? ' — ' + to : '')) : '-';
+    const sBorrow = document.getElementById('s_borrow_info');
+    if (sBorrow) sBorrow.textContent = display;
   }
 
   prevBtn.addEventListener('click', () => { if (current>1) { current--; showStep(current); } });
@@ -57,12 +63,20 @@
       const available = Number(document.getElementById('availableQty').textContent || 0);
       const used_for = document.getElementById('used_for').value.trim();
       const location = document.getElementById('location').value.trim();
-      const borrow_date = document.getElementById('borrow_date').value;
+      const borrow_from = document.getElementById('borrow_date_from').value;
+      const borrow_to = document.getElementById('borrow_date_to').value;
       const pudo_option = document.getElementById('pudo_option').value;
-      if (!used_for || !location || !borrow_date || qty < 1 || !pudo_option) {
+
+      // validate required fields and date order
+      if (!used_for || !location || !borrow_from || !borrow_to || qty < 1 || !pudo_option) {
         new bootstrap.Modal(document.getElementById('validationModal')).show();
         return;
       }
+      if (borrow_from > borrow_to) {
+        alert('Date of Borrowing (From) must be the same as or earlier than Date of Borrowing (To).');
+        return;
+      }
+
       if (qty > available) { alert('Requested quantity exceeds available quantity.'); return; }
       fillSummary(); current = 2; showStep(current); return;
     }
@@ -80,7 +94,12 @@
       formData.append('qty', document.getElementById('qty').value);
       formData.append('location', document.getElementById('location').value);
       formData.append('used_for', document.getElementById('used_for').value);
-      formData.append('borrow_date', document.getElementById('borrow_date').value);
+
+      // UPDATED: send borrow_date_from and borrow_date_to
+      formData.append('borrow_date_from', document.getElementById('borrow_date_from').value);
+      formData.append('borrow_date_to', document.getElementById('borrow_date_to').value);
+
+      // send the pudo option (server expects 'pudo_option')
       formData.append('pudo_option', document.getElementById('pudo_option').value);
 
       // POST to functions/serviceEquipmentBorrowing_submit.php (submit file is in functions folder)

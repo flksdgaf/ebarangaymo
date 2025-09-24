@@ -1,372 +1,755 @@
+// js/serviceBarangayClearance.js
+// Updated to use single fullname field and to show '-' when fields are empty.
+// Also keeps claim radio / single-date support and payment/purpose logic intact.
 document.addEventListener("DOMContentLoaded", function () {
     let currentStep = window.initialStep || 1;
+
     const steps = document.querySelectorAll(".step");
-    const mainHeader = document.getElementById("mainHeader");
-    const subHeader = document.getElementById("subHeader");
     const circleSteps = document.querySelectorAll('.circle');
-    const progressFill = document.getElementById('progressFill');
-    const nextBtn = document.getElementById('nextBtn');
-    const backBtn = document.getElementById('backBtn');
     const stepLabels = document.querySelectorAll('.step-label');
+    const progressFill = document.getElementById('progressFill');
     const totalSteps = circleSteps.length;
 
+    const mainHeader = document.getElementById("mainHeader");
+    const subHeader = document.getElementById("subHeader");
+    const nextBtn = document.getElementById('nextBtn');
+    const backBtn = document.getElementById('backBtn');
+
     // Payment controls
-    const paymentButtons    = document.querySelectorAll('.payment-btn');
+    const paymentButtons = document.querySelectorAll('.payment-btn');
     const instructionPanels = document.querySelectorAll('.payment-instruction');
     const hiddenPaymentInput = document.getElementById('paymentMethod');
 
-    // Purpose controls (ids updated to match PHP)
-    const purposeSelect = document.getElementById('purposeSelect'); // select UI
-    const purposeOther  = document.getElementById('purposeOther');  // visible custom text input
-    const purposeHidden = document.getElementById('purposeHidden'); // hidden final value submitted as 'purpose'
+    // Purpose controls (may not exist)
+    const purposeSelect = document.getElementById('purposeSelect');
+    const purposeOther = document.getElementById('purposeOther');
+    const purposeHidden = document.getElementById('purposeHidden');
 
-    // Confirmation modal
+    // Modals / confirmation
+    const validationModalEl = document.getElementById("validationModal");
     const confirmationModalEl = document.getElementById("confirmationModal");
-    const confirmationModal = (confirmationModalEl) ? new bootstrap.Modal(confirmationModalEl) : null;
+    const validationModal = validationModalEl ? new bootstrap.Modal(validationModalEl) : null;
+    const confirmationModal = confirmationModalEl ? new bootstrap.Modal(confirmationModalEl) : null;
     const confirmSubmitBtn = document.getElementById("confirmSubmitBtn");
 
-    // Initial setup
-    updateNavigation();
-    setupPaymentControls();
-    setupPurposeControls();
+    // form (expects id barangayClearanceForm)
+    const form = document.getElementById("barangayClearanceForm");
 
-    nextBtn.addEventListener('click', () => {
-        // If we're on final submission screen, treat as redirect/back-to-home
-        if (currentStep === 4) {
-            window.location.href = 'userPanel.php?page=userDashboard';
-            return;
+    // Claim inputs (supports both radio group and single date input)
+    const claimOptionsGroup = document.getElementById('claimOptionsGroup'); // optional
+    const hiddenClaimDate = document.getElementById('hiddenClaimDate');     // optional (YYYY-MM-DD)
+    const hiddenClaimTime = document.getElementById('hiddenClaimTime');     // optional (Morning|Afternoon)
+    const claimDateInput = document.getElementById('claimdate');            // optional single date input
+    const claimNoticeContainerSelector = '.claim-list'; // used for weekend notice
+
+    // allowed claim dates (from server or fallback)
+    let claimAllowedDates = [];
+    let claimAllowedSet = new Set();
+
+    // --- Helpers ---
+    function toISODate(d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${dd}`;
+    }
+
+    function fallbackComputeAllowedDates(count = 3) {
+        const now = new Date();
+        now.setHours(0,0,0,0);
+        const weekday = now.getDay(); // 0=Sun,1=Mon...6=Sat
+        const cursor = new Date(now);
+
+        if (weekday === 6) { // Sat -> next Mon
+            cursor.setDate(cursor.getDate() + 2);
+        } else if (weekday === 0) { // Sun -> next Mon
+            cursor.setDate(cursor.getDate() + 1);
+        } else {
+            // Mon-Fri -> start tomorrow
+            cursor.setDate(cursor.getDate() + 1);
         }
 
-        let isValid = true;
-
-        // If on payment step, ensure a payment method is chosen
-        if (currentStep === 2 && (!hiddenPaymentInput || !hiddenPaymentInput.value)) {
-            isValid = false;
+        const out = [];
+        while (out.length < count) {
+            const dow = cursor.getDay();
+            if (dow !== 0 && dow !== 6) out.push(toISODate(cursor));
+            cursor.setDate(cursor.getDate() + 1);
         }
+        return out;
+    }
 
-        // Validate required inputs on step 1
-        if (currentStep === 1) {
-            document.querySelectorAll(".step.active-step input[required], .step.active-step select[required], .step.active-step textarea[required]")
-              .forEach(field => {
-                // For file inputs, check files length
-                if (field.type === 'file') {
-                    if (!field.files || field.files.length === 0) {
-                        // if file is required (none in default clearance form) mark invalid
-                        if (field.hasAttribute('required')) {
-                            isValid = false;
-                            field.classList.add('is-invalid');
-                        } else {
-                            field.classList.remove('is-invalid');
-                        }
-                    } else {
-                        field.classList.remove('is-invalid');
-                    }
-                    return;
-                }
+    function initClaimOptionsFromServer() {
+        if (window._claimOptions && Array.isArray(window._claimOptions) && window._claimOptions.length > 0) {
+            claimAllowedDates = window._claimOptions.map(co => co.date);
+        } else {
+            claimAllowedDates = fallbackComputeAllowedDates(3);
+        }
+        claimAllowedSet = new Set(claimAllowedDates);
+    }
+    initClaimOptionsFromServer();
 
-                // Normal value check (numbers, text, date)
-                const val = (field.value || '').toString().trim();
-                if (!val) {
-                    isValid = false;
-                    field.classList.add('is-invalid');
-                } else {
-                    field.classList.remove('is-invalid');
-                }
-            });
+    function isValidDateString(d) {
+        return /^\d{4}-\d{2}-\d{2}$/.test(d);
+    }
 
-            // Additional validation: purpose - use the hidden 'purposeHidden' as canonical final value
-            if (purposeSelect) {
-                const selectVal = (purposeSelect.value || '').trim();
-                // select must not be empty
-                if (!selectVal) {
-                    isValid = false;
-                    purposeSelect.classList.add('is-invalid');
-                } else {
-                    purposeSelect.classList.remove('is-invalid');
-                }
+    function isAllowedClaimDate(d) {
+        return isValidDateString(d) && claimAllowedSet.has(d);
+    }
 
-                // If Others, make sure the other input (and final hidden) are non-empty
-                if (selectVal === 'Others') {
-                    const otherVal = (purposeOther && purposeOther.value || '').trim();
-                    if (!otherVal) {
-                        isValid = false;
-                        purposeOther && purposeOther.classList.add('is-invalid');
-                    } else {
-                        purposeOther && purposeOther.classList.remove('is-invalid');
-                    }
-                }
+    function isValidClaimSeparate(date, part) {
+        if (!date || !isValidDateString(date)) return false;
+        if (!claimAllowedSet.has(date)) return false;
+        if (!['Morning','Afternoon'].includes(part)) return false;
+        return true;
+    }
 
-                // Finally, the hidden final value should exist (it may contain custom text or the selected option)
-                if (purposeHidden && (!purposeHidden.value || !purposeHidden.value.trim())) {
-                    isValid = false;
-                    // visually mark select as invalid if final value missing
-                    purposeSelect.classList.add('is-invalid');
-                }
+    function isValidClaimRaw(raw) {
+        if (!raw) return false;
+        const parts = raw.split('|');
+        if (parts.length !== 2) return false;
+        const date = parts[0];
+        const part = parts[1];
+        if (!isValidDateString(date)) return false;
+        if (!claimAllowedSet.has(date)) return false;
+        if (!['Morning','Afternoon'].includes(part)) return false;
+        return true;
+    }
+
+    function getFriendlyClaimLabelFromParts(date, part) {
+        if (!date) return '';
+        if (window._claimOptions && Array.isArray(window._claimOptions)) {
+            const co = window._claimOptions.find(c => c.date === date);
+            if (co) {
+                const dateLabel = co.label || date;
+                const found = Array.isArray(co.parts) ? co.parts.find(p => p.key === part) : null;
+                const partLabel = found ? found.label : part;
+                return `${dateLabel} - ${partLabel}`;
             }
         }
-
-        if (!isValid) {
-            const validationModal = new bootstrap.Modal(document.getElementById("validationModal"));
-            validationModal.show();
-            return;
+        try {
+            const d = new Date(date + 'T00:00:00');
+            const opts = { year: 'numeric', month: 'long', day: 'numeric' };
+            const dateLabel = d.toLocaleDateString(undefined, opts);
+            return `${dateLabel} - ${part}`;
+        } catch (e) {
+            return `${date} - ${part}`;
         }
+    }
 
-        // If stepping into confirmation (summary) step
-        if (currentStep === 3) {
-            // Show confirmation modal before final submit
-            confirmationModal && confirmationModal.show();
-            return;
+    function getFriendlyClaimLabelSimple(date) {
+        if (!date) return '';
+        if (window._claimOptions && Array.isArray(window._claimOptions)) {
+            const co = window._claimOptions.find(c => c.date === date);
+            if (co) return co.label || date;
         }
+        try {
+            const d = new Date(date + 'T00:00:00');
+            const opts = { year: 'numeric', month: 'long', day: 'numeric' };
+            return d.toLocaleDateString(undefined, opts);
+        } catch (e) {
+            return date;
+        }
+    }
 
-        // Move forward one step
-        steps[currentStep - 1].classList.remove("active-step");
-        circleSteps[currentStep - 1].classList.add('completed');
-        stepLabels[currentStep - 1].classList.add('completed');
+    // Weekend notice if request made on weekend (mirrors server behavior)
+    function showWeekendNoticeIfApplicable() {
+        try {
+            const container = document.querySelector(claimNoticeContainerSelector);
+            if (!container) return;
 
-        currentStep++;
-        steps[currentStep - 1].classList.add("active-step");
-        circleSteps[currentStep - 1].classList.add('active');
-        stepLabels[currentStep - 1].classList.add('active');
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const isWeekendRequest = (today.getDay() === 6 || today.getDay() === 0);
 
-        // Update progress bar (percentage across steps)
-        const progressPercent = ((currentStep - 1) / (totalSteps - 1)) * 100;
-        progressFill.style.width = `${progressPercent}%`;
+            const firstDate = claimAllowedDates && claimAllowedDates.length ? claimAllowedDates[0] : null;
+            let firstDateObj = null;
+            if (firstDate) firstDateObj = new Date(firstDate + 'T00:00:00');
 
-        // If stepping into summary, populate fields
-        if (currentStep === 3) {
+            const existingNotice = document.getElementById('claim-weekend-notice');
+            if (existingNotice) existingNotice.remove();
+
+            if (isWeekendRequest && firstDateObj && firstDateObj.getDay() === 1) { // Monday
+                let friendly = firstDate;
+                if (window._claimOptions && Array.isArray(window._claimOptions)) {
+                    const found = window._claimOptions.find(co => co.date === firstDate);
+                    if (found && found.label) friendly = found.label;
+                } else {
+                    const opts = { year:'numeric', month:'long', day:'numeric' };
+                    friendly = firstDateObj.toLocaleDateString(undefined, opts);
+                }
+
+                const note = document.createElement('div');
+                note.id = 'claim-weekend-notice';
+                note.className = 'alert alert-info small mt-2';
+                note.textContent = `Note: You submitted this request on a weekend. Available claim slots start on Monday (${friendly}) during barangay hours (Mon–Fri, 8:00 AM – 5:00 PM).`;
+                container.appendChild(note);
+            }
+        } catch (e) {
+            console.warn('claim notice render error', e);
+        }
+    }
+
+    showWeekendNoticeIfApplicable();
+
+    // Single-date input legacy handling (keeps a claim_time hidden if the single input contains "YYYY-MM-DD|Morning")
+    function ensureClaimTimeHiddenForSingleInput() {
+        if (!claimDateInput) return null;
+        let el = document.getElementById('claimTimeHidden');
+        if (!el) {
+            el = document.createElement('input');
+            el.type = 'hidden';
+            el.id = 'claimTimeHidden';
+            el.name = 'claim_time';
+            if (form) form.appendChild(el);
+        }
+        const currentVal = (claimDateInput.value || '').trim();
+        const rawAttr = claimDateInput.getAttribute('value') || '';
+        if (!isValidDateString(currentVal) && rawAttr && rawAttr.indexOf('|') !== -1) {
+            const parts = rawAttr.split('|');
+            if (parts.length === 2 && isValidDateString(parts[0])) {
+                try { claimDateInput.value = parts[0]; } catch (e) {}
+                el.value = parts[1].trim();
+            }
+        } else if (rawAttr && rawAttr.indexOf('|') !== -1 && !el.value) {
+            const parts = rawAttr.split('|');
+            if (parts.length === 2) el.value = parts[1].trim();
+        }
+        return el;
+    }
+
+    (function configureSingleDateInput() {
+        if (!claimDateInput) return;
+        if (claimAllowedDates.length > 0) {
+            claimDateInput.setAttribute('min', claimAllowedDates[0]);
+            claimDateInput.placeholder = claimAllowedDates[0];
+        }
+        claimDateInput.addEventListener('change', function () {
+            const v = (claimDateInput.value || '').trim();
+            if (v && !isValidDateString(v)) {
+                claimDateInput.classList.add('is-invalid');
+            } else {
+                claimDateInput.classList.remove('is-invalid');
+            }
             populateSummary();
+        });
+        ensureClaimTimeHiddenForSingleInput();
+    })();
+
+    // Radio handlers (business-style claim grid)
+    function setHiddenFromRadio(radio) {
+        if (!radio) return;
+        const d = radio.dataset && radio.dataset.date ? radio.dataset.date : null;
+        const p = radio.dataset && radio.dataset.part ? radio.dataset.part : null;
+
+        if (d && p) {
+            if (hiddenClaimDate) hiddenClaimDate.value = d;
+            if (hiddenClaimTime) hiddenClaimTime.value = p;
+            return;
         }
 
-        updateNavigation();
-    });
-
-    backBtn.addEventListener('click', () => {
-        if (currentStep > 1) {
-            steps[currentStep - 1].classList.remove("active-step");
-            circleSteps[currentStep - 1].classList.remove('active');
-            stepLabels[currentStep - 1].classList.remove('active');
-
-            // Un-complete the previous step
-            circleSteps[currentStep - 2].classList.remove('completed');
-            stepLabels[currentStep - 2].classList.remove('completed');
-
-            const newPercent = ((currentStep - 2) / (totalSteps - 1)) * 100;
-            progressFill.style.width = `${newPercent}%`;
-
-            currentStep--;
-            steps[currentStep - 1].classList.add("active-step");
-            circleSteps[currentStep - 1].classList.add('active');
-            stepLabels[currentStep - 1].classList.add('active');
-
-            updateNavigation();
+        if (radio.value && radio.value.indexOf('|') !== -1) {
+            const parts = radio.value.split('|');
+            if (parts.length === 2) {
+                if (hiddenClaimDate) hiddenClaimDate.value = parts[0];
+                if (hiddenClaimTime) hiddenClaimTime.value = parts[1];
+            }
         }
-    });
+    }
 
-    confirmSubmitBtn && confirmSubmitBtn.addEventListener('click', () => {
-        // Submit the clearance form
-        const form = document.getElementById("barangayClearanceForm");
-        if (form) {
-            // ensure the hidden purpose contains the canonical value before submit
-            syncPurposeHidden();
-            form.submit();
-        }
-    });
+    function attachClaimRadioListeners() {
+        if (!claimOptionsGroup) return;
+        // attach keyboard/click handlers and change listener (same behavior as before)
+        claimOptionsGroup.querySelectorAll('label').forEach(function (lbl) {
+            lbl.addEventListener('keydown', function (ev) {
+                if (ev.key === ' ' || ev.key === 'Enter') {
+                    ev.preventDefault();
+                    const input = lbl.querySelector('input[type="radio"]');
+                    if (input) {
+                        input.checked = true;
+                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                        input.focus();
+                    }
+                }
+            });
+            lbl.addEventListener('click', function () {
+                const input = lbl.querySelector('input[type="radio"]');
+                if (!input) return;
+                if (!input.checked) {
+                    input.checked = true;
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                } else {
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            });
 
-    function updateNavigation() {
-        backBtn.style.visibility = currentStep === 1 ? 'hidden' : 'visible';
+            const inputInside = lbl.querySelector('input[type="radio"]');
+            if (inputInside) {
+                inputInside.addEventListener('focus', function () {
+                    const parent = inputInside.closest('.claim-card');
+                    if (parent) parent.classList.add('outlined');
+                });
+                inputInside.addEventListener('blur', function () {
+                    const parent = inputInside.closest('.claim-card');
+                    if (parent) parent.classList.remove('outlined');
+                });
+            }
+        });
 
-        if (currentStep === 1) {
-            if (mainHeader) mainHeader.textContent = "APPLICATION FORM";
-            if (subHeader) subHeader.textContent = "Provide the necessary details to request a Barangay Clearance.";
-            nextBtn.textContent = "NEXT >";
-        } else if (currentStep === 2) {
-            if (mainHeader) mainHeader.textContent = "PAYMENT";
-            if (subHeader) subHeader.textContent = "Settle your payment for the Barangay Clearance.";
-            nextBtn.textContent = "NEXT >";
-        } else if (currentStep === 3) {
-            if (mainHeader) mainHeader.textContent = "REVIEW and CONFIRMATION";
-            if (subHeader) subHeader.textContent = "Please review all your information before submitting.";
-            nextBtn.textContent = "SUBMIT";
-        } else if (currentStep === 4) {
-            // On submission screen we remove headers and change button behavior
-            if (mainHeader) mainHeader.remove();
-            if (subHeader) subHeader.remove();
-            const mainHr = document.getElementById('mainHr');
-            if (mainHr) mainHr.remove();
-
-            backBtn.style.visibility = 'hidden';
-            nextBtn.textContent = "Back to Home";
-
-            // Replace nextBtn to remove existing listeners then add one simple redirect
-            const newNext = nextBtn.cloneNode(true);
-            nextBtn.parentNode.replaceChild(newNext, nextBtn);
-            newNext.addEventListener('click', () => {
-                window.location.href = 'userPanel.php?page=userDashboard';
+        function clearCardStates() {
+            claimOptionsGroup.querySelectorAll('.claim-card').forEach(card => {
+                card.classList.remove('active', 'outlined', 'invalid');
+                card.setAttribute('aria-pressed', 'false');
+                card.removeAttribute('aria-invalid');
             });
         }
+
+        claimOptionsGroup.addEventListener('change', function () {
+            clearCardStates();
+
+            const checkedNew = claimOptionsGroup.querySelector('input[name="claim_slot"]:checked');
+            const checkedLegacy = claimOptionsGroup.querySelector('input[name="claim_date"]:checked');
+            const checked = checkedNew || checkedLegacy;
+
+            if (checked) {
+                const parentLabel = checked.closest('label');
+                if (parentLabel) {
+                    parentLabel.classList.add('active');
+                    parentLabel.setAttribute('aria-pressed', 'true');
+                    parentLabel.removeAttribute('aria-invalid');
+                }
+
+                setHiddenFromRadio(checked);
+
+                const dateVal = hiddenClaimDate ? hiddenClaimDate.value : null;
+                const timeVal = hiddenClaimTime ? hiddenClaimTime.value : null;
+                const summaryEl = document.getElementById('summaryClaimDate');
+                if (summaryEl) {
+                    if (isValidClaimSeparate(dateVal, timeVal)) summaryEl.textContent = getFriendlyClaimLabelFromParts(dateVal, timeVal);
+                    else {
+                        if (checked.value && checked.value.indexOf('|') !== -1) {
+                            const parts = checked.value.split('|');
+                            if (parts.length === 2) summaryEl.textContent = getFriendlyClaimLabelFromParts(parts[0], parts[1]);
+                            else summaryEl.textContent = parts[0] || '-';
+                        } else {
+                            summaryEl.textContent = (dateVal ? getFriendlyClaimLabelSimple(dateVal) : '-');
+                        }
+                    }
+                }
+            }
+        });
+
+        // Pre-select existing claim if server provided window._existingClaimObj
+        if (window._existingClaimObj && window._existingClaimObj.date) {
+            const d = window._existingClaimObj.date;
+            const p = window._existingClaimObj.part;
+            const desiredNew = claimOptionsGroup.querySelector(`input[name="claim_slot"][data-date="${d}"][data-part="${p}"]`);
+            if (desiredNew) {
+                desiredNew.checked = true;
+                desiredNew.dispatchEvent(new Event('change', { bubbles: true }));
+            } else {
+                const legacyVal = `${d}|${p}`;
+                const desiredLegacy = claimOptionsGroup.querySelector(`input[name="claim_date"][value="${legacyVal}"]`);
+                if (desiredLegacy) {
+                    desiredLegacy.checked = true;
+                    desiredLegacy.dispatchEvent(new Event('change', { bubbles: true }));
+                } else {
+                    const dateMatchNew = claimOptionsGroup.querySelector(`input[name="claim_slot"][data-date="${d}"]`);
+                    if (dateMatchNew) {
+                        dateMatchNew.checked = true;
+                        dateMatchNew.dispatchEvent(new Event('change', { bubbles: true }));
+                    } else {
+                        const dateMatchLegacy = claimOptionsGroup.querySelector(`input[name="claim_date"][value^="${d}"]`);
+                        if (dateMatchLegacy) {
+                            dateMatchLegacy.checked = true;
+                            dateMatchLegacy.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                    }
+                }
+            }
+        } else {
+            const anyCheckedNew = claimOptionsGroup.querySelector('input[name="claim_slot"]:checked');
+            const anyCheckedLegacy = claimOptionsGroup.querySelector('input[name="claim_date"]:checked');
+            if (!anyCheckedNew && !anyCheckedLegacy) {
+                const firstRadio = claimOptionsGroup.querySelector('input[name="claim_slot"], input[name="claim_date"]');
+                if (firstRadio) {
+                    firstRadio.checked = true;
+                    firstRadio.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            } else {
+                const already = claimOptionsGroup.querySelector('input[name="claim_slot"]:checked') || claimOptionsGroup.querySelector('input[name="claim_date"]:checked');
+                if (already) setHiddenFromRadio(already);
+            }
+        }
     }
 
-    function populateSummary() {
-        // map form fields into the summary view (IDs from serviceBarangayClearance.php)
-        const safeVal = id => (document.getElementById(id) ? document.getElementById(id).value : '');
+    attachClaimRadioListeners();
 
-        // Basic fields
-        const last = safeVal('lastname');
-        const first = safeVal('firstname');
-        const middle = safeVal('middlename');
-        const street = safeVal('street');
-        const purok = safeVal('purok');
-        const barangay = safeVal('barangay');
-        const municipality = safeVal('municipality');
-        const province = safeVal('province');
-        const birthdate = safeVal('birthdate');
-        const age = safeVal('age');
-        const birthplace = safeVal('birthplace');
-        const marital = safeVal('maritalstatus');
-        const ctc = safeVal('ctcnumber');
-        const claim = safeVal('claimdate');
-        const payment = hiddenPaymentInput ? hiddenPaymentInput.value : '';
-
-        // Purpose resolution: read canonical final value from hidden input (if present)
-        let purposeVal = '';
-        if (purposeHidden && purposeHidden.value) {
-            purposeVal = purposeHidden.value;
-        } else if (purposeSelect) {
-            // fallback: try select/other text
-            purposeVal = (purposeSelect.value || '') === 'Others' ? (purposeOther && purposeOther.value.trim() ? purposeOther.value.trim() : 'Others') : (purposeSelect.value || '');
+    // Payment controls
+    function setupPaymentControls() {
+        if (!paymentButtons || paymentButtons.length === 0) {
+            if (hiddenPaymentInput && !hiddenPaymentInput.value) hiddenPaymentInput.value = 'Brgy Payment Device';
+            return;
         }
 
-        // Fill summary elements
-        if (document.getElementById('summaryLastName')) document.getElementById('summaryLastName').textContent = last;
-        if (document.getElementById('summaryFirstName')) document.getElementById('summaryFirstName').textContent = first;
-        if (document.getElementById('summaryMiddleName')) document.getElementById('summaryMiddleName').textContent = middle;
-        if (document.getElementById('summaryStreet')) document.getElementById('summaryStreet').textContent = street;
-        if (document.getElementById('summaryPurok')) document.getElementById('summaryPurok').textContent = purok;
-
-        const fullAddress = `${barangay || ''}${(barangay && municipality) ? ' / ' : ''}${municipality || ''}${(province) ? ' / ' + province : ''}`.replace(/^ \/ | \/ $/g, '').trim();
-        if (document.getElementById('summaryAddress')) document.getElementById('summaryAddress').textContent = fullAddress;
-
-        const birthAge = `${birthdate || ''}${(birthdate && age) ? ' / ' : ''}${age || ''}`;
-        if (document.getElementById('summaryBirthAge')) document.getElementById('summaryBirthAge').textContent = birthAge;
-
-        if (document.getElementById('summaryBirthplace')) document.getElementById('summaryBirthplace').textContent = birthplace;
-        if (document.getElementById('summaryMaritalStatus')) document.getElementById('summaryMaritalStatus').textContent = marital;
-        if (document.getElementById('summaryCTC')) document.getElementById('summaryCTC').textContent = ctc;
-        if (document.getElementById('summaryClaimDate')) document.getElementById('summaryClaimDate').textContent = claim;
-        if (document.getElementById('summaryPaymentMethod')) document.getElementById('summaryPaymentMethod').textContent = payment;
-        if (document.getElementById('summaryPurpose')) document.getElementById('summaryPurpose').textContent = purposeVal;
-    }
-
-    function setupPaymentControls() {
-        if (!paymentButtons || paymentButtons.length === 0) return;
-
-        // If there's an initial value in hiddenPaymentInput, mark corresponding button active
         const initialMethod = hiddenPaymentInput ? (hiddenPaymentInput.value || '') : '';
 
         paymentButtons.forEach(btn => {
-            // set active if matches initial method
             if (initialMethod && btn.dataset.method === initialMethod) {
                 btn.classList.add('active');
-                // show corresponding instruction panel
-                instructionPanels.forEach(panel => panel.classList.toggle('d-none', panel.dataset.method !== initialMethod));
+                instructionPanels.forEach(p => { p.classList.toggle('d-none', p.dataset.method !== initialMethod); });
             }
-
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', function () {
                 paymentButtons.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-
-                const method = btn.dataset.method;
+                this.classList.add('active');
+                const method = this.dataset.method;
                 if (hiddenPaymentInput) hiddenPaymentInput.value = method;
-
-                instructionPanels.forEach(panel => {
-                    panel.classList.toggle('d-none', panel.dataset.method !== method);
-                });
+                instructionPanels.forEach(p => p.classList.toggle('d-none', p.dataset.method !== method));
             });
         });
 
-        // If no initial method set, ensure a default is chosen (Brgy Payment Device as in PHP)
         if (!initialMethod) {
-            const defaultBtn = Array.from(paymentButtons).find(b => b.dataset.method === 'Brgy Payment Device');
-            if (defaultBtn) defaultBtn.click();
+            const def = Array.from(paymentButtons).find(b => b.dataset.method === 'Brgy Payment Device');
+            if (def) def.click();
         }
     }
 
-    function syncPurposeHidden() {
-        // Ensure purposeHidden reflects the current selection / custom input before reading/submit
+    // Purpose controls
+    function setupPurposeControls() {
         if (!purposeSelect || !purposeHidden) return;
 
-        if (purposeSelect.value === 'Others') {
-            const otherVal = (purposeOther && purposeOther.value || '').trim();
-            purposeHidden.value = otherVal || 'Others';
-        } else {
-            purposeHidden.value = purposeSelect.value;
-        }
-    }
-
-    function setupPurposeControls() {
-        if (!purposeSelect) return;
-
-        // Initialize hidden and other input from existing values (PHP may have prefilled them)
-        if (purposeHidden && purposeHidden.value) {
+        if (purposeHidden.value) {
             const hiddenVal = purposeHidden.value.trim();
-            // If the select currently doesn't match the hidden value and the hidden value is not one of the select options,
-            // switch the select to Others and populate purposeOther
-            const optionMatch = Array.from(purposeSelect.options).some(o => o.value === hiddenVal);
-            if (!optionMatch) {
-                // set select to Others (if present)
+            const match = Array.from(purposeSelect.options).some(o => o.value === hiddenVal);
+            if (!match) {
                 const othersOpt = Array.from(purposeSelect.options).find(o => o.text === 'Others' || o.value === 'Others');
-                if (othersOpt) {
-                    othersOpt.selected = true;
-                    if (purposeOther) purposeOther.value = hiddenVal;
-                }
-            } else {
-                // select already matches the hidden value - ensure select shows it
-                purposeSelect.value = hiddenVal;
-            }
-        } else {
-            // if no hidden prefill, set hidden to select's current value
-            if (purposeHidden) purposeHidden.value = purposeSelect.value || '';
-        }
+                if (othersOpt) { othersOpt.selected = true; if (purposeOther) purposeOther.value = hiddenVal; }
+            } else purposeSelect.value = hiddenVal;
+        } else purposeHidden.value = purposeSelect.value || '';
 
-        // Toggle visibility function
         const togglePurposeOther = () => {
             if (purposeSelect.value === 'Others') {
                 purposeOther && purposeOther.classList.remove('d-none');
                 purposeOther && (purposeOther.required = true);
-                // if purposeHidden has a custom value prefilled, ensure purposeOther shows it
-                if (purposeHidden && purposeHidden.value && purposeOther && !purposeOther.value) {
-                    // if hidden value isn't literally 'Others', assume it's the custom text
-                    if (purposeHidden.value !== 'Others') purposeOther.value = purposeHidden.value;
+                if (purposeHidden && purposeHidden.value && purposeHidden.value !== 'Others') {
+                    if (purposeOther && !purposeOther.value) purposeOther.value = purposeHidden.value;
                 }
-                // canonicalize hidden
-                if (purposeOther && purposeOther.value.trim()) {
-                    purposeHidden.value = purposeOther.value.trim();
-                } else if (purposeHidden && !purposeHidden.value.trim()) {
-                    purposeHidden.value = 'Others';
-                }
+                if (purposeOther && purposeOther.value.trim()) purposeHidden.value = purposeOther.value.trim();
+                else if (purposeHidden && !purposeHidden.value.trim()) purposeHidden.value = 'Others';
             } else {
                 purposeOther && purposeOther.classList.add('d-none');
                 purposeOther && (purposeOther.required = false);
                 purposeOther && purposeOther.classList.remove('is-invalid');
-                if (purposeHidden) purposeHidden.value = purposeSelect.value || '';
+                purposeHidden.value = purposeSelect.value || '';
             }
         };
 
-        // Attach listeners
-        purposeSelect.addEventListener('change', () => {
-            togglePurposeOther();
-            // Keep hidden in sync
-            syncPurposeHidden();
-            populateSummary();
-        });
-
-        purposeOther && purposeOther.addEventListener('input', () => {
-            // update canonical hidden value as user types
-            syncPurposeHidden();
-            populateSummary();
-        });
-
-        // initial toggle (in case form is prefilled when editing/viewing a tid)
+        purposeSelect.addEventListener('change', function () { togglePurposeOther(); populateSummary(); });
+        if (purposeOther) purposeOther.addEventListener('input', function () { purposeHidden.value = this.value.trim() || 'Others'; populateSummary(); });
         togglePurposeOther();
     }
+
+    function syncPurposeHidden() {
+        if (!purposeSelect || !purposeHidden) return;
+        if (purposeSelect.value === 'Others') {
+            if (purposeOther && purposeOther.value.trim()) purposeHidden.value = purposeOther.value.trim();
+            else purposeHidden.value = 'Others';
+        } else purposeHidden.value = purposeSelect.value;
+    }
+
+    // Summary population — uses single fullname and shows '-' for empty values.
+    function populateSummary() {
+        const get = id => (document.getElementById(id) ? (document.getElementById(id).value || '') : '');
+        const setTextOrDash = (id, val) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (val === null || val === undefined || (typeof val === 'string' && val.trim() === '')) el.textContent = '-';
+            else el.textContent = val;
+        };
+
+        const fullname = get('fullname');
+        const street = get('street');
+        const purok = get('purok');
+        const age = get('age');
+        const birthdate = get('birthdate');
+        const birthplace = get('birthplace');
+        const marital = get('maritalstatus');
+        const ctc = get('ctcnumber');
+
+        setTextOrDash('summaryFullName', fullname);
+        setTextOrDash('summaryStreet', street);
+        setTextOrDash('summaryPurok', purok);
+
+        const birthAge = birthdate ? (birthdate + (age ? (' / ' + age) : '')) : (age ? ('' + age) : '');
+        setTextOrDash('summaryBirthAge', birthAge);
+
+        setTextOrDash('summaryBirthplace', birthplace);
+        setTextOrDash('summaryMaritalStatus', marital);
+        setTextOrDash('summaryCTC', ctc);
+
+        // Claim resolution (supports hiddenClaimDate+hiddenClaimTime, single date input, or legacy radio)
+        let claimLabel = '';
+
+        if (hiddenClaimDate && hiddenClaimDate.value) {
+            const d = hiddenClaimDate.value.trim();
+            const p = (hiddenClaimTime && hiddenClaimTime.value) ? hiddenClaimTime.value.trim() : null;
+            if (p && isValidClaimSeparate(d, p)) {
+                claimLabel = getFriendlyClaimLabelFromParts(d, p);
+            } else if (isValidDateString(d)) {
+                claimLabel = getFriendlyClaimLabelSimple(d);
+            }
+        }
+
+        if (!claimLabel && claimDateInput && (claimDateInput.value || '').trim()) {
+            const d = (claimDateInput.value || '').trim();
+            if (isValidDateString(d)) {
+                claimLabel = getFriendlyClaimLabelSimple(d);
+                const claimTimeHidden = document.getElementById('claimTimeHidden');
+                if (claimTimeHidden && claimTimeHidden.value) claimLabel += ' - ' + claimTimeHidden.value;
+            }
+        }
+
+        if (!claimLabel) {
+            const legacyChecked = document.querySelector('input[name="claim_date"]:checked');
+            if (legacyChecked && legacyChecked.value) {
+                const parts = legacyChecked.value.split('|');
+                if (parts.length === 2 && isValidDateString(parts[0])) claimLabel = getFriendlyClaimLabelFromParts(parts[0], parts[1]);
+                else if (isValidDateString(legacyChecked.value)) claimLabel = getFriendlyClaimLabelSimple(legacyChecked.value);
+            }
+        }
+
+        setTextOrDash('summaryClaimDate', claimLabel);
+
+        // Payment & Purpose
+        const payment = hiddenPaymentInput ? (hiddenPaymentInput.value || '') : '';
+        setTextOrDash('summaryPaymentMethod', payment);
+
+        let purposeVal = '';
+        if (purposeHidden && purposeHidden.value) purposeVal = purposeHidden.value;
+        else if (purposeSelect) purposeVal = (purposeSelect.value === 'Others' ? (purposeOther && purposeOther.value.trim() ? purposeOther.value.trim() : '') : purposeSelect.value);
+        setTextOrDash('summaryPurpose', purposeVal);
+    }
+
+    // Live summary updates
+    function attachLiveSummaryUpdates() {
+        const ids = ['fullname','street','purok','birthdate','age','birthplace','maritalstatus','ctcnumber'];
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('input', populateSummary);
+            el.addEventListener('change', populateSummary);
+        });
+
+        if (hiddenClaimDate) hiddenClaimDate.addEventListener('change', populateSummary);
+        if (hiddenClaimTime) hiddenClaimTime.addEventListener('change', populateSummary);
+        if (claimDateInput) claimDateInput.addEventListener('change', populateSummary);
+
+        if (hiddenPaymentInput) hiddenPaymentInput.addEventListener('change', populateSummary);
+        if (purposeSelect) purposeSelect.addEventListener('change', populateSummary);
+        if (purposeOther) purposeOther.addEventListener('input', populateSummary);
+
+        // initial fill
+        populateSummary();
+    }
+
+    attachLiveSummaryUpdates();
+
+    // Initial render + other UI setup
+    showStep(currentStep);
+    setupPaymentControls();
+    setupPurposeControls();
+
+    // Navigation and helpers
+    function showStep(n) {
+        steps.forEach((s, idx) => {
+            s.classList.remove('active-step');
+            if (idx === n - 1) s.classList.add('active-step');
+        });
+        circleSteps.forEach((c, idx) => {
+            c.classList.remove('active','completed');
+            if (idx < n - 1) c.classList.add('completed');
+            if (idx === n - 1) c.classList.add('active');
+        });
+        const percent = ((n - 1) / (totalSteps - 1)) * 100;
+        if (progressFill) progressFill.style.width = percent + '%';
+        updateNavigation();
+    }
+
+    function goToStep(n) {
+        if (n < 1) n = 1;
+        if (n > totalSteps) n = totalSteps;
+
+        steps.forEach((s, idx) => {
+            s.classList.remove('active-step');
+            if (idx === n - 1) s.classList.add('active-step');
+        });
+
+        circleSteps.forEach((c, idx) => {
+            c.classList.remove('active', 'completed');
+            if (idx < n - 1) c.classList.add('completed');
+            if (idx === n - 1) c.classList.add('active');
+        });
+
+        stepLabels.forEach((l, idx) => {
+            l.classList.remove('active', 'completed');
+            if (idx < n - 1) l.classList.add('completed');
+            if (idx === n - 1) l.classList.add('active');
+        });
+
+        const percent = ((n - 1) / (totalSteps - 1)) * 100;
+        if (progressFill) progressFill.style.width = percent + '%';
+
+        currentStep = n;
+        updateNavigation();
+        if (currentStep === 3) populateSummary();
+    }
+
+    function updateNavigation() {
+        if (backBtn) backBtn.style.visibility = currentStep === 1 ? 'hidden' : 'visible';
+
+        if (currentStep === 1) {
+            if (mainHeader) mainHeader.textContent = "APPLICATION FORM";
+            if (subHeader) subHeader.textContent = "Provide the necessary details to request a Clearance.";
+            if (nextBtn) nextBtn.textContent = "NEXT >";
+        } else if (currentStep === 2) {
+            if (mainHeader) mainHeader.textContent = "PAYMENT";
+            if (subHeader) subHeader.textContent = "Settle your payment for the Clearance.";
+            if (nextBtn) nextBtn.textContent = "NEXT >";
+        } else if (currentStep === 3) {
+            if (mainHeader) mainHeader.textContent = "REVIEW & CONFIRMATION";
+            if (subHeader) subHeader.textContent = "Please review all information before submitting.";
+            if (nextBtn) nextBtn.textContent = "SUBMIT";
+        } else if (currentStep === 4) {
+            if (mainHeader && mainHeader.parentNode) mainHeader.remove();
+            if (subHeader && subHeader.parentNode) subHeader.remove();
+            const mainHr = document.getElementById('mainHr');
+            if (mainHr && mainHr.parentNode) mainHr.remove();
+
+            if (backBtn) backBtn.style.visibility = 'hidden';
+            if (nextBtn) {
+                nextBtn.textContent = "Back to Home";
+                const newNext = nextBtn.cloneNode(true);
+                nextBtn.parentNode.replaceChild(newNext, nextBtn);
+                newNext.addEventListener('click', () => {
+                    window.location.href = 'userPanel.php?page=userDashboard';
+                });
+            }
+        }
+    }
+
+    // Step 1 validation
+    function validateStep1() {
+        let ok = true;
+        document.querySelectorAll(".step.active-step input[required], .step.active-step select[required], .step.active-step textarea[required]")
+          .forEach(field => {
+            if (field.type === 'file') {
+                if (!field.files || field.files.length === 0) {
+                    if (field.hasAttribute('required')) { ok = false; field.classList.add('is-invalid'); }
+                    else field.classList.remove('is-invalid');
+                } else field.classList.remove('is-invalid');
+                return;
+            }
+            const val = (field.value || '').toString().trim();
+            if (!val) { ok = false; field.classList.add('is-invalid'); } else field.classList.remove('is-invalid');
+        });
+
+        // purpose validation (if present)
+        if (purposeSelect) {
+            const selectVal = (purposeSelect.value || '').trim();
+            if (!selectVal) { ok = false; purposeSelect.classList.add('is-invalid'); }
+            else purposeSelect.classList.remove('is-invalid');
+
+            if (selectVal === 'Others') {
+                const oth = (purposeOther && purposeOther.value || '').trim();
+                if (!oth) { ok = false; purposeOther && purposeOther.classList.add('is-invalid'); }
+                else purposeOther && purposeOther.classList.remove('is-invalid');
+            }
+
+            if (purposeHidden && (!purposeHidden.value || !purposeHidden.value.trim())) {
+                ok = false; purposeSelect.classList.add('is-invalid');
+            }
+        }
+
+        return ok;
+    }
+
+    // Navigation handlers
+    nextBtn && nextBtn.addEventListener('click', function () {
+        if (currentStep === totalSteps) {
+            window.location.href = 'userPanel.php?page=userDashboard';
+            return;
+        }
+
+        if (currentStep === 1) {
+            if (!validateStep1()) {
+                if (validationModal) validationModal.show();
+                return;
+            }
+        }
+
+        if (currentStep === 2) {
+            if (!hiddenPaymentInput || !hiddenPaymentInput.value) {
+                if (validationModal) validationModal.show();
+                return;
+            }
+        }
+
+        if (currentStep === 3) {
+            populateSummary();
+            if (confirmationModal) {
+                confirmationModal.show();
+                return;
+            }
+        }
+
+        goToStep(currentStep + 1);
+    });
+
+    backBtn && backBtn.addEventListener('click', function () {
+        if (currentStep > 1) goToStep(currentStep - 1);
+    });
+
+    if (confirmSubmitBtn) {
+        confirmSubmitBtn.addEventListener('click', function () {
+            syncPurposeHidden();
+            if (hiddenClaimDate && hiddenClaimTime) {
+                const cd = hiddenClaimDate.value || null;
+                const ct = hiddenClaimTime.value || null;
+                if (cd && ct && !isValidClaimSeparate(cd, ct)) {
+                    if (validationModal) validationModal.show();
+                    return;
+                }
+            }
+            if (claimDateInput && claimDateInput.value) {
+                const cd = claimDateInput.value.trim();
+                if (!isValidDateString(cd)) {
+                    if (validationModal) validationModal.show();
+                    return;
+                }
+            }
+            if (form) form.submit();
+        });
+    }
+
+    // initial step setup
+    (function initialStepSetup() {
+        steps.forEach(s => s.classList.remove('active-step'));
+        circleSteps.forEach(c => c.classList.remove('active','completed'));
+        stepLabels.forEach(l => l.classList.remove('active','completed'));
+
+        const idx = currentStep - 1;
+        if (steps[idx]) steps[idx].classList.add('active-step');
+        circleSteps.forEach((c, i) => {
+            if (i < idx) c.classList.add('completed');
+            if (i === idx) c.classList.add('active');
+        });
+        stepLabels.forEach((l, i) => {
+            if (i < idx) l.classList.add('completed');
+            if (i === idx) l.classList.add('active');
+        });
+
+        const percent = ((currentStep - 1) / (totalSteps - 1)) * 100;
+        if (progressFill) progressFill.style.width = percent + '%';
+        updateNavigation();
+    })();
+
 });

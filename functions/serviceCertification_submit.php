@@ -67,8 +67,105 @@ $acct   = (int) ($_SESSION['loggedInUserID'] ?? 0);
 $fields = $certConfigs[$type];
 $data   = [];
 
+// --- CLAIM inputs: prefer separate hidden fields; support legacy claim_slot ---
+$postedClaimDate = isset($_POST['claim_date']) ? trim($_POST['claim_date']) : null;
+$postedClaimTime = isset($_POST['claim_time']) ? trim($_POST['claim_time']) : null;
+$postedClaimSlot = isset($_POST['claim_slot']) ? trim($_POST['claim_slot']) : null;
+
+// Helper to validate date & part
+function is_valid_date($d) {
+    $dt = DateTime::createFromFormat('Y-m-d', $d);
+    return $dt && $dt->format('Y-m-d') === $d;
+}
+$allowedParts = ['Morning', 'Afternoon'];
+
+$claimDate = null;
+$claimPart = null;
+
+// 1) If both separate fields present, prefer them
+if (!empty($postedClaimDate) && !empty($postedClaimTime)) {
+    if (is_valid_date($postedClaimDate) && in_array($postedClaimTime, $allowedParts, true)) {
+        $claimDate = $postedClaimDate;
+        $claimPart = $postedClaimTime;
+    } else {
+        header("HTTP/1.1 400 Bad Request");
+        exit("Invalid preferred claim date or time part.");
+    }
+} else {
+    // 2) legacy claim_slot "YYYY-MM-DD|Morning"
+    if (!empty($postedClaimSlot) && strpos($postedClaimSlot, '|') !== false) {
+        [$d, $p] = explode('|', $postedClaimSlot, 2);
+        $d = trim($d); $p = trim($p);
+        if (is_valid_date($d) && in_array($p, $allowedParts, true)) {
+            $claimDate = $d;
+            $claimPart = $p;
+        } else {
+            header("HTTP/1.1 400 Bad Request");
+            exit("Invalid preferred claim format.");
+        }
+    } elseif (!empty($postedClaimDate) && strpos($postedClaimDate, '|') !== false) {
+        // 3) older frontend posted combined in claim_date
+        [$d, $p] = explode('|', $postedClaimDate, 2);
+        $d = trim($d); $p = trim($p);
+        if (is_valid_date($d) && in_array($p, $allowedParts, true)) {
+            $claimDate = $d;
+            $claimPart = $p;
+        } else {
+            header("HTTP/1.1 400 Bad Request");
+            exit("Invalid preferred claim format.");
+        }
+    } elseif (!empty($postedClaimDate) && is_valid_date($postedClaimDate)) {
+        // 4) date-only -> default to Morning
+        $claimDate = $postedClaimDate;
+        $claimPart = 'Morning';
+    } else {
+        // not provided -> will be checked below as required
+    }
+}
+
+// Ensure claim_date is present
+if ($claimDate === null) {
+    header("HTTP/1.1 400 Bad Request");
+    exit("Preferred claim date is required.");
+}
+
+// --- Compute allowed claim dates (server-side) matching serviceCertification.php behaviour ---
+$today = new DateTime('now', new DateTimeZone('Asia/Manila'));
+$weekdayNow = (int)$today->format('N'); // 1=Mon .. 7=Sun
+
+if ($weekdayNow === 6) { // Saturday -> next Monday (+2)
+    $start = (clone $today)->modify('+2 days');
+} elseif ($weekdayNow === 7) { // Sunday -> next Monday (+1)
+    $start = (clone $today)->modify('+1 day');
+} else {
+    // Monday - Friday -> start tomorrow
+    $start = (clone $today)->modify('+1 day');
+}
+
+$allowedDates = [];
+$cursor = clone $start;
+while (count($allowedDates) < 3) {
+    $dow = (int)$cursor->format('N'); // 1..7
+    if ($dow <= 5) { // Mon-Fri
+        $allowedDates[] = $cursor->format('Y-m-d');
+    }
+    $cursor->modify('+1 day');
+}
+
+// validate claimDate against allowedDates
+if (!in_array($claimDate, $allowedDates, true)) {
+    header("HTTP/1.1 400 Bad Request");
+    exit("Invalid preferred claim date. Available dates: " . implode(', ', $allowedDates));
+}
+
 // 5) Pull values out of $_POST in the order of $fields
+// Note: we specially handle 'claim_date' (we don't require $_POST['claim_date'] because legacy may have claim_slot)
 foreach ($fields as $field) {
+    if ($field === 'claim_date') {
+        // we'll use the parsed $claimDate (validated) instead of relying on raw $_POST
+        $data['claim_date'] = $claimDate;
+        continue;
+    }
     // residing_years is optional in some flows — accept NULL if missing
     if (!isset($_POST[$field]) && $field !== 'residing_years') {
         header("HTTP/1.1 400 Bad Request");
@@ -94,33 +191,90 @@ if ($type === 'Solo Parent') {
     $fields = array_merge($fields, ['child_name','child_age','child_sex','years_solo_parent']);
 }
 
+// --- NEW: collect parent_sex for Solo Parent and Guardianship (optional) ---
+// Accept values like 'Male', 'Female', or other strings provided by the dropdown.
+// If empty, treat as NULL so DB column can be NULL.
+if ($type === 'Guardianship' || $type === 'Solo Parent') {
+    $ps = isset($_POST['parent_sex']) ? trim($_POST['parent_sex']) : null;
+    if ($ps === '') $ps = null;
+    $data['parent_sex'] = $ps;
+    if (!in_array('parent_sex', $fields, true)) {
+        // add parent_sex so it will be included in the INSERT columns
+        $fields[] = 'parent_sex';
+    }
+}
+
+// --- NEW: For Good Moral: accept parent_sex and parent_address ---
+// parent_sex will be stored in the table column named `sex` (as requested).
+// parent_address is optional and stored in `parent_address` column (if your table contains it).
+if ($type === 'Good Moral') {
+    // parent sex (map into the 'sex' column)
+    $ps = isset($_POST['parent_sex']) ? trim($_POST['parent_sex']) : null;
+    if ($ps === '') $ps = null;
+    $data['sex'] = $ps;
+    if (!in_array('sex', $fields, true)) {
+        $fields[] = 'sex';
+    }
+
+    // parent address (optional)
+    $pa = isset($_POST['parent_address']) ? trim($_POST['parent_address']) : null;
+    if ($pa === '') $pa = null;
+    $data['address'] = $pa;
+    if (!in_array('address', $fields, true)) {
+        $fields[] = 'address';
+    }
+}
+
 // 6) Payment-related inputs from the form (these may be empty or absent for Indigency)
 $postPaymentMethod = isset($_POST['paymentMethod']) ? trim($_POST['paymentMethod']) : null;
 $postPaymentAmount = isset($_POST['paymentAmount']) ? trim($_POST['paymentAmount']) : null;
 $postPaymentStatus = isset($_POST['paymentStatus']) ? trim($_POST['paymentStatus']) : null;
 
 // Align behavior with serviceCertification.php:
-// - For Indigency: payment_method & amount => NULL; payment_status => posted value if provided, otherwise "Free of Charge"
+// - For Indigency: payment_method & amount => NULL; payment_status => POSTED value if present, otherwise "Free of Charge"
 // - For non-Indigency: ensure non-null defaults for method/amount/status so DB columns that disallow NULL are satisfied
 if (strtolower($type) === 'indigency') {
     $postPaymentMethod = null;
     $postPaymentAmount = null;
-    // keep posted paymentStatus if provided (e.g., viewing existing tid), otherwise set friendly default
-    if ($postPaymentStatus === null || $postPaymentStatus === '') {
-        $postPaymentStatus = 'Free of Charge';
-    }
+    // FORCE the payment_status to "Free of Charge" for Indigency so it is never inserted as empty or NULL.
+    // This ensures the summary and DB will consistently show "Free of Charge".
+    $postPaymentStatus = 'Free of Charge';
 } else {
     if ($postPaymentMethod === '' || $postPaymentMethod === null) {
-        // default to Barangay Payment Device (matches the UI default)
         $postPaymentMethod = 'Brgy Payment Device';
     }
     if ($postPaymentAmount === '' || $postPaymentAmount === null) {
         $postPaymentAmount = $defaultAmount;
     }
     if ($postPaymentStatus === '' || $postPaymentStatus === null) {
-        // reasonable initial status for unpaid requests
         $postPaymentStatus = 'Pending';
     }
+}
+
+// --- Detect claim_time vs legacy claim_part column for this certificate table ---
+// If present, append to $fields so it is inserted as its own column.
+$claimTimeColumn = null;
+$check = $conn->query("SHOW COLUMNS FROM `$table` LIKE 'claim_time'");
+if ($check && $check->num_rows > 0) {
+    $claimTimeColumn = 'claim_time';
+} else {
+    $check2 = $conn->query("SHOW COLUMNS FROM `$table` LIKE 'claim_part'");
+    if ($check2 && $check2->num_rows > 0) {
+        $claimTimeColumn = 'claim_part'; // legacy
+    }
+}
+if ($claimTimeColumn) {
+    // add to fields and set value from parsed claim part
+    if (!in_array($claimTimeColumn, $fields, true)) {
+        // place it right after claim_date if possible (not strictly necessary)
+        $pos = array_search('claim_date', $fields, true);
+        if ($pos === false) {
+            $fields[] = $claimTimeColumn;
+        } else {
+            array_splice($fields, $pos + 1, 0, $claimTimeColumn);
+        }
+    }
+    $data[$claimTimeColumn] = $claimPart;
 }
 
 // 7) Always-present columns — include payment_status column

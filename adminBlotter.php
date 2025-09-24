@@ -478,7 +478,7 @@ $stmt->close();
     </div>
 
     <!-- TABLE -->
-    <div class="table-responsive admin-table">
+    <div class="table-responsive admin-table" style="height:500px;overflow-y:auto;">
       <table class="table table-hover align-middle text-start">
         <thead class="table-light">
           <tr>

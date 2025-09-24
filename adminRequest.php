@@ -1597,7 +1597,7 @@ $result = $st->get_result();
       </form>
     </div>
 
-    <div class="table-responsive admin-table">
+    <div class="table-responsive admin-table" style="height:500px;overflow-y:auto;">
       <?php if ($processing_type === 'Official Receipt Logs' && $_SESSION['loggedInUserRole'] === 'Brgy Treasurer'): ?>
 
         <!-- OFFICIAL RECEIPT LOGS TABLE -->

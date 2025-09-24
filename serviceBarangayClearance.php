@@ -1,6 +1,13 @@
 <?php
 require 'functions/dbconn.php';
 
+// require session if not already started (safe to ensure)
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+date_default_timezone_set('Asia/Manila');
+
 // User auth assumed (same as your reference):
 $userId = $_SESSION['loggedInUserID'] ?? null;
 $transactionId = $_GET['tid'] ?? null;
@@ -38,31 +45,6 @@ if ($stmt) {
     $stmt->close();
 }
 
-// Try to parse full name into parts (assuming stored as "Surname, First Middle" or plain)
-$lastName = $firstName = $middleName = '';
-if ($fullName) {
-    if (strpos($fullName, ',') !== false) {
-        $parts = explode(',', $fullName, 2);
-        $lastName = trim($parts[0]);
-        $rest = trim($parts[1] ?? '');
-        $restParts = preg_split('/\s+/', $rest, -1, PREG_SPLIT_NO_EMPTY);
-        if (count($restParts) > 0) {
-            $firstName = array_shift($restParts);
-            $middleName = implode(' ', $restParts);
-        }
-    } else {
-        // fallback: split by spaces, assume last token is surname
-        $parts = preg_split('/\s+/', $fullName, -1, PREG_SPLIT_NO_EMPTY);
-        if (count($parts) === 1) {
-            $firstName = $parts[0];
-        } else {
-            $lastName = array_pop($parts);
-            $firstName = array_shift($parts);
-            $middleName = implode(' ', $parts);
-        }
-    }
-}
-
 // compute age if birthdate available
 $age = '';
 if (!empty($birthdate) && $birthdate !== '0000-00-00') {
@@ -92,13 +74,139 @@ if ($transactionId) {
     }
 }
 
-// Defaults (prefill) you requested
+// Defaults (kept if needed server-side)
 $defaultBarangay = 'Magang';
 $defaultMunicipality = 'Daet';
 $defaultProvince = 'Camarines Norte';
-?>
 
+/**
+ * Business-day generator (same behavior as your Business Clearance reference)
+ */
+function getNextBusinessDays($fromDate, $count = 3) {
+    $results = [];
+    $d = clone $fromDate;
+
+    $weekdayNow = (int)$d->format('N'); // 1=Mon .. 7=Sun
+    if ($weekdayNow === 6) {
+        $d->modify('+2 days');
+    } elseif ($weekdayNow === 7) {
+        $d->modify('+1 day');
+    } else {
+        $d->modify('+1 day');
+    }
+
+    while (count($results) < $count) {
+        $weekday = (int)$d->format('N'); // 1..7
+        if ($weekday <= 5) {
+            $results[] = clone $d;
+        }
+        $d->modify('+1 day');
+    }
+    return $results;
+}
+
+// Build claim options to render
+$today = new DateTime('now', new DateTimeZone('Asia/Manila'));
+$businessDays = getNextBusinessDays($today, 3);
+
+$claimOptions = [];
+foreach ($businessDays as $bd) {
+    $dateStr = $bd->format('Y-m-d');
+    $label = $bd->format('F j, Y');
+    $claimOptions[] = [
+        'date' => $dateStr,
+        'label' => $label,
+        'parts' => [
+            ['key' => 'Morning', 'label' => 'Morning (8:00 AM to 12:00 NN)'],
+            ['key' => 'Afternoon', 'label' => 'Afternoon (1:00 PM to 5:00 PM)'],
+        ],
+    ];
+}
+
+// existing claim pref - support both legacy "YYYY-MM-DD|Part" and separate columns claim_date & claim_time
+$existingClaimDate = '';
+$existingClaimPart = '';
+
+if (!empty($existingRequest)) {
+    if (!empty($existingRequest['claim_date'])) {
+        $raw = $existingRequest['claim_date'];
+        if (strpos($raw, '|') !== false) {
+            [$d, $p] = explode('|', $raw, 2);
+            $existingClaimDate = $d;
+            $existingClaimPart = $p;
+        } else {
+            $existingClaimDate = $raw;
+            if (!empty($existingRequest['claim_time'])) {
+                $existingClaimPart = $existingRequest['claim_time'];
+            } else {
+                $existingClaimPart = 'Morning';
+            }
+        }
+    } else {
+        if (!empty($existingRequest['claim_time'])) {
+            $existingClaimPart = $existingRequest['claim_time'];
+        }
+        if (!empty($existingRequest['claim_date'])) {
+            $existingClaimDate = $existingRequest['claim_date'];
+        }
+    }
+}
+?>
 <link rel="stylesheet" href="serviceBarangayClearance.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<style>
+/* claim styles kept as before (unchanged except scoping) */
+.claim-grid .date-row {
+    margin-bottom: .6rem;
+}
+.claim-grid .claim-card {
+    transition: box-shadow .12s ease, transform .08s ease;
+    border-radius: .5rem;
+    padding: .75rem;
+    display: flex;
+    align-items: flex-start;
+    gap: .75rem;
+    min-height: 64px;
+}
+.claim-grid .claim-card .form-check {
+    margin-top: 4px;
+}
+.claim-grid .claim-card.active {
+    box-shadow: 0 6px 18px rgba(0,0,0,.06);
+    transform: translateY(-2px);
+    border: 1px solid #198754;
+    background: #fffefb;
+}
+.claim-date-label { font-weight:600; }
+.claim-time { font-size: .95rem; color: #6b7280; }
+.claim-grid .date-label { font-weight:700; margin-bottom: .35rem; }
+
+/* rest of claim-card CSS unchanged */
+.claim-card {
+    border: 1px solid #e9ecef;
+    background: #ffffff;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    transition: box-shadow .12s ease, transform .08s ease, border-color .12s ease, outline .08s ease;
+    display: flex;
+    align-items: flex-start;
+    gap: .75rem;
+    min-height: 64px;
+    cursor: pointer;
+    outline: none;
+}
+.claim-card:hover { box-shadow: 0 6px 18px rgba(0,0,0,.04); transform: translateY(-1px); border-color: #cfe8d8; }
+.claim-card:focus-within { outline: 3px solid rgba(25,135,84,0.12); outline-offset: 2px; border-color: #b8e0c9; }
+.claim-card.outlined { outline: 2px solid rgba(0,0,0,0.08); outline-offset: 2px; }
+.claim-card.invalid { border-color: #dc3545; box-shadow: none; background: #fff5f5; outline: 2px solid rgba(220,53,69,0.08); outline-offset: 2px; }
+
+@media (max-width: 575.98px) {
+    .claim-grid .col-sm-6 { flex: 0 0 100%; max-width: 100%; }
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <div class="container py-4 px-3">
@@ -146,40 +254,21 @@ $defaultProvince = 'Camarines Norte';
         <p id="subHeader" class="mb-2">Provide the necessary details to request a Barangay Clearance.</p>
         <hr id="mainHr" class="mb-4">
 
-        <form id="barangayClearanceForm" action="functions/serviceBarangayClearance_submit.php" method="POST" enctype="multipart/form-data">
+        <!-- add class needs-claim so CSS validation hook works like the Business file -->
+        <form id="barangayClearanceForm" action="functions/serviceBarangayClearance_submit.php" method="POST" enctype="multipart/form-data" class="needs-claim">
             <!-- Step 1: Application Form -->
             <div class="step <?php echo $transactionId ? 'completed' : 'active-step'; ?>">
 
-                <!-- LAST NAME -->
+                <!-- FULL NAME (single field: First Middle Surname) -->
                 <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Last Name</label>
-                <div class="col-md-8">
-                    <input type="text" id="lastname" name="lastname"
-                        class="form-control custom-input"
-                        required
-                        value="<?php echo htmlspecialchars($lastName); ?>">
-                </div>
-                </div>
-
-                <!-- FIRST NAME -->
-                <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">First Name</label>
-                <div class="col-md-8">
-                    <input type="text" id="firstname" name="firstname"
-                        class="form-control custom-input"
-                        required
-                        value="<?php echo htmlspecialchars($firstName); ?>">
-                </div>
-                </div>
-
-                <!-- MIDDLE NAME -->
-                <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Middle Name</label>
-                <div class="col-md-8">
-                    <input type="text" id="middlename" name="middlename"
-                        class="form-control custom-input"
-                        value="<?php echo htmlspecialchars($middleName); ?>">
-                </div>
+                    <label class="col-md-4 text-start fw-bold">Full Name</label>
+                    <div class="col-md-8">
+                        <input type="text" id="fullname" name="fullname"
+                            class="form-control custom-input"
+                            readonly
+                            value="<?php echo htmlspecialchars($fullName); ?>"
+                            placeholder="First Middle Surname">
+                    </div>
                 </div>
 
                 <!-- STREET (optional) -->
@@ -210,39 +299,6 @@ $defaultProvince = 'Camarines Norte';
                 </div>
                 </div>
 
-                <!-- BARANGAY (prefilled to Magang but editable) -->
-                <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Barangay</label>
-                <div class="col-md-8">
-                    <input type="text" id="barangay" name="barangay"
-                        class="form-control custom-input"
-                        required
-                        value="<?php echo htmlspecialchars($existingRequest['barangay'] ?? $defaultBarangay); ?>">
-                </div>
-                </div>
-
-                <!-- MUNICIPALITY (prefilled to Daet but editable) -->
-                <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Municipality</label>
-                <div class="col-md-8">
-                    <input type="text" id="municipality" name="municipality"
-                        class="form-control custom-input"
-                        required
-                        value="<?php echo htmlspecialchars($existingRequest['municipality'] ?? $defaultMunicipality); ?>">
-                </div>
-                </div>
-
-                <!-- PROVINCE (prefilled to Daet but editable) -->
-                <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Province</label>
-                <div class="col-md-8">
-                    <input type="text" id="province" name="province"
-                        class="form-control custom-input"
-                        required
-                        value="<?php echo htmlspecialchars($existingRequest['province'] ?? $defaultProvince); ?>">
-                </div>
-                </div>
-
                 <!-- BIRTHDATE -->
                 <div class="row mb-3">
                 <label class="col-md-4 text-start fw-bold">Birthdate</label>
@@ -250,7 +306,7 @@ $defaultProvince = 'Camarines Norte';
                     <input type="date" id="birthdate" name="birthdate"
                         class="form-control custom-input"
                         required
-                        value="<?php echo (!empty($birthdate) && $birthdate !== '0000-00-00') ? date('Y-m-d', strtotime($birthdate)) : ''; ?>">
+                        value="<?php echo (!empty($birthdate) && $birthdate !== '0000-00-00') ? date('Y-m-d', strtotime($birthdate)) : ($existingRequest['birthdate'] ?? ''); ?>">
                 </div>
                 </div>
 
@@ -261,7 +317,7 @@ $defaultProvince = 'Camarines Norte';
                     <input type="number" id="age" name="age"
                         class="form-control custom-input"
                         min="0" max="150" required
-                        value="<?php echo htmlspecialchars($age); ?>">
+                        value="<?php echo htmlspecialchars($age ?: ($existingRequest['age'] ?? '')); ?>">
                 </div>
                 </div>
 
@@ -303,71 +359,107 @@ $defaultProvince = 'Camarines Norte';
                 </div>
                 </div>
 
-                <!-- PURPOSE (NEW: select + hidden real 'purpose' field) -->
+                <!-- PURPOSE (select + hidden final input) -->
                 <div class="row mb-3">
                 <label class="col-md-4 text-start fw-bold">Purpose</label>
                 <div class="col-md-8">
                     <?php
-                    // Define fixed purpose options
                     $purposes = ['Employment','ID','School Enrollment','Passport','Travel','Business','Others'];
-
-                    // Existing purpose from DB (if any)
                     $existingPurpose = $existingRequest['purpose'] ?? '';
-
-                    // Determine whether existing purpose matches one of the predefined ones
                     $is_prefilled_in_list = in_array($existingPurpose, $purposes, true);
-
-                    // If existing purpose not in the list, keep its value in hidden input so server still receives it,
-                    // but DO NOT pre-select "Others" or show the visible custom input. Visible select shows placeholder.
                     $prefill_other_value = $is_prefilled_in_list ? '' : $existingPurpose;
                     ?>
-                    <!-- select used for user UI; note name changed so only hidden field 'purpose' is submitted -->
                     <select id="purposeSelect" name="purpose_select" class="form-control custom-input" required>
-                        <!-- Placeholder text shown to the user -->
                         <option value="">Select Purpose</option>
                         <?php
                         foreach ($purposes as $p) {
-                            // only pre-select if existing purpose matches one of the predefined ones
                             $sel = ($is_prefilled_in_list && $existingPurpose === $p) ? 'selected' : '';
                             echo "<option value=\"" . htmlspecialchars($p) . "\" $sel>" . htmlspecialchars($p) . "</option>";
                         }
                         ?>
                     </select>
 
-                    <!-- visible text input for custom purpose (hidden by default; only shown when user picks "Others") -->
                     <input type="text" id="purposeOther" name="purpose_other"
                         class="form-control custom-input mt-2 d-none"
                         placeholder="Please specify purpose"
                         value="<?php echo htmlspecialchars($prefill_other_value); ?>">
 
-                    <!-- Hidden input that carries the final value for 'purpose' the server expects -->
-                    <input type="hidden" id="purposeHidden" name="purpose" value="<?php
-                        // initial hidden value: if existing purpose in the predefined list, use it; otherwise use the custom value
-                        echo htmlspecialchars($is_prefilled_in_list ? $existingPurpose : $prefill_other_value);
-                    ?>">
+                    <input type="hidden" id="purposeHidden" name="purpose" value="<?php echo htmlspecialchars($is_prefilled_in_list ? $existingPurpose : $prefill_other_value); ?>">
                 </div>
                 </div>
 
                 <!-- OPTIONAL: Picture (not required unless you want) -->
-                <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Attach Picture (optional)</label>
+                <div class="row mb-2">
+                <label class="col-md-4 text-start fw-bold">Formal Picture <span class="small text-muted">(Optional)</span></label>
                 <div class="col-md-8">
                     <input type="file" id="picture" name="picture"
                         class="form-control custom-input"
                         accept="image/*">
+                        <!-- NEW NOTE: ensure picture is recent -->
+                        <small class="form-text text-muted mt-1">
+                            Please ensure the picture is a recent/updated photo — clear, front-facing, with a plain background and no heavy filters.
+                        </small>
                 </div>
                 </div>
 
-                <!-- CLAIM DATE -->
-                <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Please select preferred claim date</label>
-                <div class="col-md-8">
-                    <input type="date" id="claimdate" name="claim_date"
-                        class="form-control custom-input"
-                        required
-                        value="<?php echo htmlspecialchars($existingRequest['claim_date'] ?? ''); ?>">
+                <!-- CLAIM DATE: two-column layout (morning / afternoon) -->
+                <div class="row mb-1">
+                <label class="col-md-4 text-start fw-bold">Claim Date</label>
+                <div class="col-md-8 p-3">
+                    <div id="claimOptionsGroup" class="claim-list claim-grid">
+                        <?php
+                        foreach ($claimOptions as $coIndex => $co) {
+                            $date = $co['date'];
+                            $dateLabel = $co['label'];
+                            $idMorning = "claim_{$coIndex}_morning";
+                            $valMorning = $date . '|Morning';
+                            $checkedMorning = ($existingClaimDate === $date && $existingClaimPart === 'Morning') ? 'checked' : '';
+                            $idAfternoon = "claim_{$coIndex}_afternoon";
+                            $valAfternoon = $date . '|Afternoon';
+                            $checkedAfternoon = ($existingClaimDate === $date && $existingClaimPart === 'Afternoon') ? 'checked' : '';
+                            ?>
+                            <div class="date-row">
+                                <div class="row gx-2">
+                                    <div class="col-sm-6 mb-2">
+                                        <label class="list-group-item list-group-item-action p-2 claim-card d-flex align-items-start <?php echo $checkedMorning ? 'active' : ''; ?>" for="<?php echo $idMorning; ?>" role="option" aria-pressed="<?php echo $checkedMorning ? 'true' : 'false'; ?>">
+                                            <div class="form-check me-2">
+                                                <input class="form-check-input" type="radio" name="claim_slot" id="<?php echo $idMorning; ?>" value="<?php echo htmlspecialchars($valMorning); ?>" data-date="<?php echo $date; ?>" data-part="Morning" <?php echo $checkedMorning; ?> <?php echo $coIndex === 0 ? 'required' : ''; ?>>
+                                            </div>
+                                            <div>
+                                                <div class="claim-date-label"><?php echo htmlspecialchars($dateLabel); ?></div>
+                                                <div class="claim-time"><?php echo htmlspecialchars($co['parts'][0]['label']); ?></div>
+                                            </div>
+                                        </label>
+                                    </div>
+
+                                    <div class="col-sm-6 mb-2">
+                                        <label class="list-group-item list-group-item-action p-2 claim-card d-flex align-items-start <?php echo $checkedAfternoon ? 'active' : ''; ?>" for="<?php echo $idAfternoon; ?>" role="option" aria-pressed="<?php echo $checkedAfternoon ? 'true' : 'false'; ?>">
+                                            <div class="form-check me-2">
+                                                <input class="form-check-input" type="radio" name="claim_slot" id="<?php echo $idAfternoon; ?>" value="<?php echo htmlspecialchars($valAfternoon); ?>" data-date="<?php echo $date; ?>" data-part="Afternoon" <?php echo $checkedAfternoon; ?> <?php echo $coIndex === 0 ? 'required' : ''; ?>>
+                                            </div>
+                                            <div>
+                                                <div class="claim-date-label"><?php echo htmlspecialchars($dateLabel); ?></div>
+                                                <div class="claim-time"><?php echo htmlspecialchars($co['parts'][1]['label']); ?></div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php
+                        }
+                        ?>
+                    </div>
+
+                    <!-- Hidden inputs that will actually be submitted -->
+                    <input type="hidden" id="hiddenClaimDate" name="claim_date" value="<?php echo htmlspecialchars($existingClaimDate); ?>">
+                    <input type="hidden" id="hiddenClaimTime" name="claim_time" value="<?php echo htmlspecialchars($existingClaimPart); ?>">
                 </div>
                 </div>
+
+                    <!-- NEW MESSAGE: Right Thumb Mark processing note -->
+                    <div class="text-center">
+                        <em class="small text-muted">Note: Your <b>Right Thumb Mark</b> will be processed personally onto your printed Barangay Clearance during issuance.</em>
+                    </div>
             </div>
 
             <!-- Step 2: Payment -->
@@ -462,70 +554,61 @@ $defaultProvince = 'Camarines Norte';
 
                     <ul class="list-group list-group-flush">
                     <li class="list-group-item d-flex justify-content-between">
-                        <span class="fw-bold">Last Name:</span>
-                        <span class="text-success" id="summaryLastName"></span>
-                    </li>
-
-                    <li class="list-group-item d-flex justify-content-between">
-                        <span class="fw-bold">First Name:</span>
-                        <span class="text-success" id="summaryFirstName"></span>
-                    </li>
-
-                    <li class="list-group-item d-flex justify-content-between">
-                        <span class="fw-bold">Middle Name:</span>
-                        <span class="text-success" id="summaryMiddleName"></span>
+                        <span class="fw-bold">Full Name:</span>
+                        <span class="text-success" id="summaryFullName">-</span>
                     </li>
 
                     <li class="list-group-item d-flex justify-content-between">
                         <span class="fw-bold">Street:</span>
-                        <span class="text-success" id="summaryStreet"></span>
+                        <span class="text-success" id="summaryStreet">-</span>
                     </li>
 
                     <li class="list-group-item d-flex justify-content-between">
                         <span class="fw-bold">Purok:</span>
-                        <span class="text-success" id="summaryPurok"></span>
+                        <span class="text-success" id="summaryPurok">-</span>
                     </li>
 
-                    <li class="list-group-item d-flex justify-content-between">
-                        <span class="fw-bold">Barangay / Municipality / Province:</span>
-                        <span class="text-success" id="summaryAddress"></span>
-                    </li>
+                    <!-- Removed Barangay / Municipality / Province summary as requested -->
 
                     <li class="list-group-item d-flex justify-content-between">
                         <span class="fw-bold">Birthdate / Age:</span>
-                        <span class="text-success" id="summaryBirthAge"></span>
+                        <span class="text-success" id="summaryBirthAge">-</span>
                     </li>
 
                     <li class="list-group-item d-flex justify-content-between">
                         <span class="fw-bold">Birthplace:</span>
-                        <span class="text-success" id="summaryBirthplace"></span>
+                        <span class="text-success" id="summaryBirthplace">-</span>
                     </li>
 
                     <li class="list-group-item d-flex justify-content-between">
                         <span class="fw-bold">Marital Status:</span>
-                        <span class="text-success" id="summaryMaritalStatus"></span>
+                        <span class="text-success" id="summaryMaritalStatus">-</span>
                     </li>
 
                     <li class="list-group-item d-flex justify-content-between">
                         <span class="fw-bold">CTC Number:</span>
-                        <span class="text-success" id="summaryCTC"></span>
+                        <span class="text-success" id="summaryCTC">-</span>
                     </li>
 
                     <li class="list-group-item d-flex justify-content-between">
                         <span class="fw-bold">Purpose:</span>
-                        <span class="text-success" id="summaryPurpose"></span>
+                        <span class="text-success" id="summaryPurpose">-</span>
                     </li>
 
                     <li class="list-group-item d-flex justify-content-between">
                         <span class="fw-bold">Claim Date:</span>
-                        <span class="text-success" id="summaryClaimDate"></span>
+                        <span class="text-success" id="summaryClaimDate">-</span>
                     </li>
 
                     <li class="list-group-item d-flex justify-content-between">
                         <span class="fw-bold">Payment Method:</span>
-                        <span class="text-success" id="summaryPaymentMethod"></span>
+                        <span class="text-success" id="summaryPaymentMethod">-</span>
                     </li>
                     </ul>
+
+                    <div class="mt-2 small text-muted">
+                        <em>Note: Your Right Thumb Mark will be processed personally at the barangay upon claim.</em>
+                    </div>
                 </div>
                 </div>
             </div>
@@ -656,10 +739,123 @@ $defaultProvince = 'Camarines Norte';
 <?php $initial = $transactionId ? 4 : 1; ?>
 <script>
     window.initialStep = <?php echo $initial; ?>;
+    window._claimOptions = <?php echo json_encode($claimOptions, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
+    window._existingClaimObj = <?php echo json_encode(['date' => $existingClaimDate, 'part' => $existingClaimPart], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
 </script>
 
 <script>
-// small inline helper to show/hide the "other" purpose input and keep summary in sync
+document.addEventListener('DOMContentLoaded', function () {
+    // Claim UI wiring (copied/adapted)
+    const claimGroup = document.getElementById('claimOptionsGroup');
+    const hiddenDate = document.getElementById('hiddenClaimDate');
+    const hiddenTime = document.getElementById('hiddenClaimTime');
+    const summaryEl = document.getElementById('summaryClaimDate');
+
+    function clearActiveCards() {
+        if (!claimGroup) return;
+        claimGroup.querySelectorAll('.claim-card').forEach(function(card){
+            card.classList.remove('active');
+        });
+    }
+
+    function setHiddenValues(date, part) {
+        if (hiddenDate) hiddenDate.value = date || '';
+        if (hiddenTime) hiddenTime.value = part || '';
+    }
+
+    function updateSummaryFriendly(date, part) {
+        if (!summaryEl) return;
+
+        // friendly label lookup
+        let friendlyDate = date;
+        if (window._claimOptions) {
+            for (const co of window._claimOptions) {
+                if (co.date === date) {
+                    friendlyDate = co.label;
+                    for (const p of co.parts) {
+                        if (p.key === part) {
+                            summaryEl.textContent = friendlyDate + ' - ' + p.label;
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        summaryEl.textContent = (date ? date : '-') + (part ? ' - ' + part : '');
+    }
+
+    if (claimGroup) {
+        claimGroup.addEventListener('change', function (e) {
+            const checked = claimGroup.querySelector('input[name="claim_slot"]:checked');
+            clearActiveCards();
+            if (checked) {
+                const parentLabel = checked.closest('label');
+                if (parentLabel) parentLabel.classList.add('active');
+
+                const date = checked.dataset.date || '';
+                const part = checked.dataset.part || '';
+                setHiddenValues(date, part);
+                updateSummaryFriendly(date, part);
+            }
+        });
+
+        if (window._existingClaimObj && window._existingClaimObj.date) {
+            const targetRadio = claimGroup.querySelector('input[name="claim_slot"][data-date="' + window._existingClaimObj.date + '"][data-part="' + window._existingClaimObj.part + '"]');
+            if (targetRadio) {
+                targetRadio.checked = true;
+                const evt = new Event('change', { bubbles: true });
+                targetRadio.dispatchEvent(evt);
+            } else {
+                const fallbackRadio = claimGroup.querySelector('input[name="claim_slot"][data-date="' + window._existingClaimObj.date + '"]');
+                if (fallbackRadio) {
+                    fallbackRadio.checked = true;
+                    const evt = new Event('change', { bubbles: true });
+                    fallbackRadio.dispatchEvent(evt);
+                }
+            }
+        } else {
+            const firstRadio = claimGroup.querySelector('input[name="claim_slot"]');
+            if (firstRadio && !claimGroup.querySelector('input[name="claim_slot"]:checked')) {
+                firstRadio.checked = true;
+                firstRadio.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
+
+        claimGroup.querySelectorAll('label').forEach(function(lbl) {
+            lbl.addEventListener('click', function(){
+                const input = lbl.querySelector('input[type="radio"]');
+                if (input && !input.checked) {
+                    input.checked = true;
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                } else {
+                    input && input.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            });
+        });
+    } else {
+        const preD = hiddenDate ? hiddenDate.value : '';
+        const preP = hiddenTime ? hiddenTime.value : '';
+        if (preD) updateSummaryFriendly(preD, preP);
+    }
+
+    if (hiddenDate && hiddenTime) {
+        let lastD = hiddenDate.value;
+        let lastP = hiddenTime.value;
+        setInterval(function(){
+            if (hiddenDate.value !== lastD || hiddenTime.value !== lastP) {
+                lastD = hiddenDate.value;
+                lastP = hiddenTime.value;
+                updateSummaryFriendly(lastD, lastP);
+            }
+        }, 500);
+    }
+});
+</script>
+
+<script>
+/* small inline helper to show/hide the "other" purpose input and keep summary in sync,
+   and updated summary logic to display '-' when a field is empty.
+*/
 document.addEventListener('DOMContentLoaded', function(){
     const purposeSelect = document.getElementById('purposeSelect');
     const purposeOther = document.getElementById('purposeOther');
@@ -667,51 +863,82 @@ document.addEventListener('DOMContentLoaded', function(){
 
     function togglePurposeOther(){
         if(!purposeSelect) return;
-        // Show the free-text field ONLY when user explicitly selects 'Others'
         if(purposeSelect.value === 'Others'){
             purposeOther.classList.remove('d-none');
             purposeOther.required = true;
-            // if purposeOther has value use it otherwise keep hidden value 'Others' until typed
-            if(purposeOther.value.trim()) {
-                purposeHidden.value = purposeOther.value.trim();
-            } else {
-                // keep hidden as 'Others' while user types
-                purposeHidden.value = 'Others';
-            }
+            if(purposeOther.value.trim()) purposeHidden.value = purposeOther.value.trim();
+            else purposeHidden.value = 'Others';
         } else {
-            // hide other input and copy selected value to hidden
             purposeOther.classList.add('d-none');
             purposeOther.required = false;
-            // if user selected a predefined option, use it
-            if(purposeSelect.value) {
-                purposeHidden.value = purposeSelect.value;
-            } else {
-                // if placeholder is selected and there is already a hidden custom value (from prefill),
-                // keep it (so server receives the existing custom purpose). Otherwise clear.
-                // (purposeHidden was initialized on server-side with any existing value)
-            }
+            if(purposeSelect.value) purposeHidden.value = purposeSelect.value;
         }
         updateSummary();
     }
 
+    function displayVal(v) {
+        if (typeof v === 'undefined' || v === null) return '-';
+        const s = ('' + v).trim();
+        return s === '' ? '-' : s;
+    }
+
     function updateSummary(){
         const byId = id => document.getElementById(id);
-        if(byId('summaryLastName')) byId('summaryLastName').textContent = document.getElementById('lastname').value;
-        if(byId('summaryFirstName')) byId('summaryFirstName').textContent = document.getElementById('firstname').value;
-        if(byId('summaryMiddleName')) byId('summaryMiddleName').textContent = document.getElementById('middlename').value;
-        if(byId('summaryStreet')) byId('summaryStreet').textContent = document.getElementById('street').value;
-        if(byId('summaryPurok')) byId('summaryPurok').textContent = document.getElementById('purok').value;
-        if(byId('summaryAddress')) byId('summaryAddress').textContent = [document.getElementById('barangay').value, document.getElementById('municipality').value, document.getElementById('province').value].filter(Boolean).join(' / ');
-        if(byId('summaryBirthAge')) byId('summaryBirthAge').textContent = [document.getElementById('birthdate').value, document.getElementById('age').value ? (' / ' + document.getElementById('age').value) : ''].join('');
-        if(byId('summaryBirthplace')) byId('summaryBirthplace').textContent = document.getElementById('birthplace').value;
-        if(byId('summaryMaritalStatus')) byId('summaryMaritalStatus').textContent = document.getElementById('maritalstatus').value;
-        if(byId('summaryCTC')) byId('summaryCTC').textContent = document.getElementById('ctcnumber').value;
-        if(byId('summaryClaimDate')) byId('summaryClaimDate').textContent = document.getElementById('claimdate').value;
-        if(byId('summaryPaymentMethod')) byId('summaryPaymentMethod').textContent = document.getElementById('paymentMethod').value;
-        if(byId('summaryPurpose')){
-            // show the final purpose value from the hidden input
-            byId('summaryPurpose').textContent = purposeHidden.value || '';
+        // Full name (single field)
+        if(byId('summaryFullName')) byId('summaryFullName').textContent = displayVal(document.getElementById('fullname') ? document.getElementById('fullname').value : '');
+
+        if(byId('summaryStreet')) byId('summaryStreet').textContent = displayVal(document.getElementById('street') ? document.getElementById('street').value : '');
+        if(byId('summaryPurok')) byId('summaryPurok').textContent = displayVal(document.getElementById('purok') ? document.getElementById('purok').value : '');
+        // Birthdate / Age combination
+        const bd = document.getElementById('birthdate') ? document.getElementById('birthdate').value : '';
+        const ag = document.getElementById('age') ? document.getElementById('age').value : '';
+        let birthAgeText = '-';
+        if (bd && ag) birthAgeText = bd + ' / ' + ag;
+        else if (bd) birthAgeText = bd;
+        else if (ag) birthAgeText = ag;
+        if(byId('summaryBirthAge')) byId('summaryBirthAge').textContent = displayVal(birthAgeText);
+
+        if(byId('summaryBirthplace')) byId('summaryBirthplace').textContent = displayVal(document.getElementById('birthplace') ? document.getElementById('birthplace').value : '');
+        if(byId('summaryMaritalStatus')) byId('summaryMaritalStatus').textContent = displayVal(document.getElementById('maritalstatus') ? document.getElementById('maritalstatus').value : '');
+        if(byId('summaryCTC')) byId('summaryCTC').textContent = displayVal(document.getElementById('ctcnumber') ? document.getElementById('ctcnumber').value : '');
+
+        // Claim date summary - prefer friendly label from claim hidden inputs
+        const hiddenDate = document.getElementById('hiddenClaimDate');
+        const hiddenTime = document.getElementById('hiddenClaimTime');
+        if (byId('summaryClaimDate')) {
+            if (hiddenDate && hiddenDate.value) {
+                let friendlyRendered = false;
+                if (window._claimOptions) {
+                    for (const co of window._claimOptions) {
+                        if (co.date === hiddenDate.value) {
+                            const partKey = hiddenTime && hiddenTime.value ? hiddenTime.value : null;
+                            if (partKey) {
+                                const found = Array.isArray(co.parts) ? co.parts.find(p => p.key === partKey) : null;
+                                if (found) {
+                                    byId('summaryClaimDate').textContent = co.label + ' - ' + found.label;
+                                } else {
+                                    byId('summaryClaimDate').textContent = co.label + (partKey ? ' - ' + partKey : '');
+                                }
+                            } else {
+                                byId('summaryClaimDate').textContent = co.label;
+                            }
+                            friendlyRendered = true;
+                            break;
+                        }
+                    }
+                }
+                if (!friendlyRendered) {
+                    const d = hiddenDate.value;
+                    const p = hiddenTime && hiddenTime.value ? hiddenTime.value : '';
+                    byId('summaryClaimDate').textContent = displayVal(d + (p ? ' - ' + p : ''));
+                }
+            } else {
+                byId('summaryClaimDate').textContent = '-';
+            }
         }
+
+        if(byId('summaryPaymentMethod')) byId('summaryPaymentMethod').textContent = displayVal(document.getElementById('paymentMethod') ? document.getElementById('paymentMethod').value : '');
+        if(byId('summaryPurpose')) byId('summaryPurpose').textContent = displayVal(purposeHidden ? purposeHidden.value : '');
     }
 
     if(purposeSelect){
@@ -726,13 +953,19 @@ document.addEventListener('DOMContentLoaded', function(){
         });
     }
 
-    // update summary live when fields change (so when user visits review step it's populated)
-    ['lastname','firstname','middlename','street','purok','barangay','municipality','province','birthdate','age','birthplace','maritalstatus','ctcnumber','claimdate'].forEach(id => {
+    // update summary live when fields change
+    ['fullname','street','purok','birthdate','age','birthplace','maritalstatus','ctcnumber'].forEach(id => {
         const el = document.getElementById(id);
         if(el) el.addEventListener('input', updateSummary);
     });
 
-    // initial toggle based on prefills (we intentionally keep the "other" input hidden unless user picks Others)
+    // also update when hidden claim fields change (these are updated by claim JS)
+    const hiddenClaimDateEl = document.getElementById('hiddenClaimDate');
+    const hiddenClaimTimeEl = document.getElementById('hiddenClaimTime');
+    if (hiddenClaimDateEl) hiddenClaimDateEl.addEventListener('change', updateSummary);
+    if (hiddenClaimTimeEl) hiddenClaimTimeEl.addEventListener('change', updateSummary);
+
+    // initial run
     togglePurposeOther();
     updateSummary();
 
@@ -745,7 +978,6 @@ document.addEventListener('DOMContentLoaded', function(){
             } else if(purposeSelect && purposeSelect.value){
                 purposeHidden.value = purposeSelect.value;
             }
-            // continue submitting
         });
     }
 });

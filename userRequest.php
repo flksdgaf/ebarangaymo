@@ -123,7 +123,7 @@ if (isset($_GET['transaction_id'])) {
             if (!empty($brow['resident_name'])) {
                 echo '    <div class="k-v"><div class="k">Resident</div><div class="v">' . htmlspecialchars($brow['resident_name']) . '</div></div>';
             }
-            echo '    <div class="k-v"><div class="k">Request</div><div class="v">Borrow Details</div></div>';
+            echo '    <div class="k-v"><div class="k">Request</div><div class="v">Equipment Borrowing</div></div>';
             echo '  </div>';
             echo '</div>';
 
@@ -137,8 +137,13 @@ if (isset($_GET['transaction_id'])) {
                 }
             }
 
+            // Only render columns with non-empty values
+            $printed = false;
             foreach ($brow as $col => $val) {
                 if (in_array($col, ['id','transaction_id','resident_name','status'])) continue;
+                // skip null/empty values
+                if ($val === null || trim((string)$val) === '') continue;
+
                 $label = ucwords(str_replace('_', ' ', $col));
                 $lowerCol = strtolower($col);
                 if (in_array($lowerCol, ['authorization','authorized_person','authorized_by','authorization_by','authorized'])) {
@@ -147,7 +152,13 @@ if (isset($_GET['transaction_id'])) {
                     $display = ($col === 'equipment_sn') ? (($equipName ? htmlspecialchars($equipName) . " " : "") . "(" . htmlspecialchars($val) . ")") : htmlspecialchars($val);
                 }
                 echo "<div class=\"detail-row\"><div class=\"label\">{$label}</div><div class=\"value\">{$display}</div></div>";
+                $printed = true;
             }
+
+            if (!$printed) {
+                echo "<div class='text-muted p-2'>No additional details</div>";
+            }
+
             echo '</div>';
 
             echo '<div class="detail-meta" style="display:none"'
@@ -207,8 +218,12 @@ if (isset($_GET['transaction_id'])) {
                 }
 
                 if ($drow) {
+                    $printed = false;
                     foreach ($drow as $col => $val) {
                         if (in_array($col, ['id','account_id','transaction_id','created_at'])) continue;
+                        // skip null/empty
+                        if ($val === null || trim((string)$val) === '') continue;
+
                         $label = ucwords(str_replace('_',' ',$col));
                         $lowerCol = strtolower($col);
                         if (in_array($lowerCol, ['authorization','authorized_person','authorized_by','authorization_by','authorized'])) {
@@ -217,13 +232,21 @@ if (isset($_GET['transaction_id'])) {
                             $displayVal = htmlspecialchars($val);
                         }
                         echo "<div class=\"detail-row\"><div class=\"label\">{$label}</div><div class=\"value\">{$displayVal}</div></div>";
+                        $printed = true;
+                    }
+                    if (!$printed) {
+                        echo "<div class='text-muted p-2'>No additional details</div>";
                     }
                 } else {
                     echo "<div class=\"detail-row\"><div class=\"label\">No additional details</div></div>";
                 }
             } else {
+                $printed = false;
                 foreach ($vrow as $col => $val) {
                     if (in_array($col, ['id','account_id','transaction_id'])) continue;
+                    // skip null/empty values
+                    if ($val === null || trim((string)$val) === '') continue;
+
                     $label = ucwords(str_replace('_',' ',$col));
                     $lowerCol = strtolower($col);
                     if (in_array($lowerCol, ['authorization','authorized_person','authorized_by','authorization_by','authorized'])) {
@@ -232,6 +255,10 @@ if (isset($_GET['transaction_id'])) {
                         $displayVal = htmlspecialchars($val);
                     }
                     echo "<div class=\"detail-row\"><div class=\"label\">{$label}</div><div class=\"value\">{$displayVal}</div></div>";
+                    $printed = true;
+                }
+                if (!$printed) {
+                    echo "<div class='text-muted p-2'>No additional details</div>";
                 }
             }
             echo '</div>';
@@ -925,11 +952,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         qrSection.style.borderRadius = '8px';
                         qrSection.style.padding = '15px';
 
-                        // const qrTitle = document.createElement('div');
-                        // qrTitle.style.fontWeight = '700';
-                        // qrTitle.style.color = 'var(--green-a)';
-                        // qrTitle.textContent = 'Barangay Payment QR';
-
                         const qrContainer = document.createElement('div');
                         qrContainer.id = 'modal-qrcode';
                         qrContainer.style.width = qrSize + 'px';
@@ -948,7 +970,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         hint.style.textAlign = 'center';
                         hint.textContent = 'Scan this QR code at the Barangay Payment Device.';
 
-                        // qrSection.appendChild(qrTitle);
                         qrSection.appendChild(qrContainer);
                         qrSection.appendChild(downloadBtn);
                         qrSection.appendChild(hint);

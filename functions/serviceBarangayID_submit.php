@@ -1,88 +1,351 @@
 <?php
-session_start();
+// functions/serviceBarangayID_submit.php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 require 'dbconn.php';
 
+// auth
 if (!isset($_SESSION['auth']) || $_SESSION['auth'] !== true) {
     header("Location: ../index.php");
     exit();
 }
 
-$userId = $_SESSION['loggedInUserID'];
+date_default_timezone_set('Asia/Manila');
 
-// 1) Collect posted fields
-$transactionType = $_POST['transactiontype'];
-$fullName        = $_POST['fullname'];
-$purok           = $_POST['purok'];
-// $address         = $_POST['address'];
-$height          = $_POST['height'];
-$weight          = $_POST['weight'];
-$birthdate       = $_POST['birthday'];
-$birthplace      = $_POST['birthplace'];
-$civilstatus     = $_POST['civilstatus'];
-$religion        = $_POST['religion'];
-$contactperson   = $_POST['contactperson'];
-$contactaddress  = $_POST['emergency_contact_address'];
-$claimDate       = $_POST['claimdate'];
-$paymentMethod   = $_POST['paymentMethod'];
-$requestSource = 'Online';
+$userId = (int)($_SESSION['loggedInUserID'] ?? 0);
+if ($userId <= 0) {
+    $_SESSION['svc_error'] = 'You must be logged in to submit a request.';
+    header("Location: ../serviceBarangayID.php");
+    exit();
+}
 
-// 2) Handle file upload
+// 1) Collect posted fields (trim safely)
+$transactionType = isset($_POST['transactiontype']) ? trim($_POST['transactiontype']) : '';
+$fullName        = isset($_POST['fullname']) ? trim($_POST['fullname']) : '';
+$purok           = isset($_POST['purok']) ? trim($_POST['purok']) : '';
+$height          = isset($_POST['height']) ? trim($_POST['height']) : '';
+$weight          = isset($_POST['weight']) ? trim($_POST['weight']) : '';
+// NEW optional valid ID
+$validIdNumber   = isset($_POST['valid_id_number']) ? trim($_POST['valid_id_number']) : '';
+$birthdate       = isset($_POST['birthday']) ? trim($_POST['birthday']) : '';
+$birthplace      = isset($_POST['birthplace']) ? trim($_POST['birthplace']) : '';
+$civilstatus     = isset($_POST['civilstatus']) ? trim($_POST['civilstatus']) : '';
+$religion        = isset($_POST['religion']) ? trim($_POST['religion']) : '';
+$contactperson   = isset($_POST['contactperson']) ? trim($_POST['contactperson']) : '';
+$contactaddress  = isset($_POST['emergency_contact_address']) ? trim($_POST['emergency_contact_address']) : '';
+// New frontend posts separate hidden fields claim_date (YYYY-MM-DD) and claim_time (Morning|Afternoon).
+$postedClaimDate = isset($_POST['claim_date']) ? trim($_POST['claim_date']) : null;
+$postedClaimTime = isset($_POST['claim_time']) ? trim($_POST['claim_time']) : null;
+// Backwards compatibility: legacy radio with value "YYYY-MM-DD|Morning"
+$postedClaimSlot = isset($_POST['claim_slot']) ? trim($_POST['claim_slot']) : null;
+
+$paymentMethod   = isset($_POST['paymentMethod']) ? trim($_POST['paymentMethod']) : '';
+$requestSource   = 'Online';
+
+// Basic required validation (server-side)
+$errors = [];
+if ($fullName === '') $errors[] = 'Full name is required.';
+if ($purok === '') $errors[] = 'Purok is required.';
+if ($height === '') $errors[] = 'Height is required.';
+if ($weight === '') $errors[] = 'Weight is required.';
+if ($birthdate === '') $errors[] = 'Birthdate is required.';
+if ($birthplace === '') $errors[] = 'Birthplace is required.';
+if ($civilstatus === '') $errors[] = 'Civil status is required.';
+if ($religion === '') $errors[] = 'Religion is required.';
+if ($contactperson === '') $errors[] = 'Contact person is required.';
+if ($contactaddress === '') $errors[] = 'Contact person address is required.';
+
+// Validate optional valid ID length (if provided) - keep it reasonable
+if ($validIdNumber !== '' && mb_strlen($validIdNumber) > 100) {
+    $errors[] = 'Valid ID number is too long.';
+}
+
+// 2) Handle file upload (formal picture). Required per form.
 $formalPicName = null;
-if (!empty($_FILES['brgyIDpicture']['name']) && $_FILES['brgyIDpicture']['error'] === UPLOAD_ERR_OK) {
+if (!empty($_FILES['brgyIDpicture']['name']) && isset($_FILES['brgyIDpicture']) && $_FILES['brgyIDpicture']['error'] === UPLOAD_ERR_OK) {
     $uploadDir = __DIR__ . '/../barangayIDpictures/';
-    if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
-    $formalPicName = uniqid() . '_' . basename($_FILES['brgyIDpicture']['name']);
-    move_uploaded_file($_FILES['brgyIDpicture']['tmp_name'], $uploadDir . $formalPicName);
-}
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
 
-// 3) Generate next transaction_id
-$stmt = $conn->prepare("
-    SELECT transaction_id 
-      FROM barangay_id_requests
-     ORDER BY id DESC 
-     LIMIT 1
-");
-$stmt->execute();
-$res = $stmt->get_result();
-if ($res && $res->num_rows === 1) {
-    $lastTid = $res->fetch_assoc()['transaction_id'];
-    $num     = intval(substr($lastTid, 7)) + 1;
+    $orig = basename($_FILES['brgyIDpicture']['name']);
+    $ext = pathinfo($orig, PATHINFO_EXTENSION);
+    $ext = $ext ? strtolower($ext) : '';
+    $allowedExt = ['jpg','jpeg','png','gif','webp'];
+    if (in_array($ext, $allowedExt, true)) {
+        try {
+            $safeName = 'brgyid_' . time() . '_' . bin2hex(random_bytes(5)) . ($ext ? '.' . $ext : '');
+        } catch (Exception $e) {
+            $safeName = 'brgyid_' . time() . '_' . mt_rand(1000,9999) . ($ext ? '.' . $ext : '');
+        }
+        $target = $uploadDir . $safeName;
+        if (move_uploaded_file($_FILES['brgyIDpicture']['tmp_name'], $target)) {
+            $formalPicName = $safeName;
+        } else {
+            // upload failed
+            $errors[] = 'Failed to upload formal picture.';
+        }
+    } else {
+        $errors[] = 'Unsupported formal picture file type.';
+    }
 } else {
-    $num = 1;
+    // no file provided or error
+    $errors[] = 'Formal picture is required.';
 }
+
+// Parse claim inputs with graceful fallback
+$claimDate = null; // YYYY-MM-DD
+$claimPart = null; // Morning | Afternoon
+
+// Helper to validate date & part
+function is_valid_date($d) {
+    $dt = DateTime::createFromFormat('Y-m-d', $d);
+    return $dt && $dt->format('Y-m-d') === $d;
+}
+$allowedParts = ['Morning', 'Afternoon'];
+
+// 1) If both separate fields present, prefer them
+if (!empty($postedClaimDate) && !empty($postedClaimTime)) {
+    if (is_valid_date($postedClaimDate) && in_array($postedClaimTime, $allowedParts, true)) {
+        $claimDate = $postedClaimDate;
+        $claimPart = $postedClaimTime;
+    } else {
+        $errors[] = 'Invalid preferred claim date or time part.';
+    }
+} else {
+    // 2) If postedClaimSlot exists (legacy radio with value "YYYY-MM-DD|Morning"), parse it
+    if (!empty($postedClaimSlot) && strpos($postedClaimSlot, '|') !== false) {
+        [$d, $p] = explode('|', $postedClaimSlot, 2);
+        $d = trim($d); $p = trim($p);
+        if (is_valid_date($d) && in_array($p, $allowedParts, true)) {
+            $claimDate = $d;
+            $claimPart = $p;
+        } else {
+            $errors[] = 'Invalid preferred claim format.';
+        }
+    } elseif (!empty($postedClaimDate) && strpos($postedClaimDate, '|') !== false) {
+        // 3) If claim_date contains legacy pipe (older frontend), parse it
+        [$d, $p] = explode('|', $postedClaimDate, 2);
+        $d = trim($d); $p = trim($p);
+        if (is_valid_date($d) && in_array($p, $allowedParts, true)) {
+            $claimDate = $d;
+            $claimPart = $p;
+        } else {
+            $errors[] = 'Invalid preferred claim format.';
+        }
+    } elseif (!empty($postedClaimDate) && is_valid_date($postedClaimDate)) {
+        // 4) If only a plain date provided, accept date and default to Morning
+        $claimDate = $postedClaimDate;
+        $claimPart = 'Morning';
+    } else {
+        // not provided — error later
+    }
+}
+
+if ($claimDate === null) {
+    $errors[] = 'Preferred claim date is required.';
+}
+
+// If any required missing -> redirect back
+if (!empty($errors)) {
+    $_SESSION['svc_error'] = implode(' ', $errors);
+    header("Location: ../serviceBarangayID.php");
+    exit();
+}
+
+// Server-side compute allowed claim dates matching serviceBarangayID.php behavior:
+// - If request is made on Saturday (6) or Sunday (7), start options from next Monday.
+// - Otherwise (Mon-Fri), options start from TOMORROW.
+// - Always include only Mon-Fri dates; take the next 3 business days.
+$today = new DateTime('now', new DateTimeZone('Asia/Manila'));
+$weekdayNow = (int)$today->format('N'); // 1=Mon .. 7=Sun
+
+if ($weekdayNow === 6) { // Saturday -> next Monday (+2)
+    $start = (clone $today)->modify('+2 days');
+} elseif ($weekdayNow === 7) { // Sunday -> next Monday (+1)
+    $start = (clone $today)->modify('+1 day');
+} else {
+    // Monday - Friday -> start tomorrow
+    $start = (clone $today)->modify('+1 day');
+}
+
+$allowedDates = [];
+$cursor = clone $start;
+while (count($allowedDates) < 3) {
+    $dow = (int)$cursor->format('N'); // 1..7
+    if ($dow <= 5) { // Mon-Fri
+        $allowedDates[] = $cursor->format('Y-m-d');
+    }
+    $cursor->modify('+1 day');
+}
+
+// validate claimDate against allowedDates
+if (!in_array($claimDate, $allowedDates, true)) {
+    $_SESSION['svc_error'] = 'Invalid preferred claim date. Available dates: ' . implode(', ', $allowedDates);
+    header("Location: ../serviceBarangayID.php");
+    exit();
+}
+
+// Generate next transaction_id (BRGYID-0000001)
+$lastNumber = 0;
+$stmt = $conn->prepare("SELECT transaction_id FROM barangay_id_requests ORDER BY id DESC LIMIT 1");
+if ($stmt) {
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($res && $res->num_rows === 1) {
+        $lastTid = $res->fetch_assoc()['transaction_id'];
+        if (preg_match('/(\d+)$/', $lastTid, $m)) {
+            $lastNumber = intval($m[1]);
+        }
+    }
+    $stmt->close();
+}
+$num = $lastNumber + 1;
 $transactionId = sprintf('BRGYID-%07d', $num);
+
+// Detect if DB has 'claim_time' column (preferred) or older 'claim_part'
+$claimTimeColumn = null;
+$check = $conn->query("SHOW COLUMNS FROM barangay_id_requests LIKE 'claim_time'");
+if ($check && $check->num_rows > 0) {
+    $claimTimeColumn = 'claim_time';
+} else {
+    $check2 = $conn->query("SHOW COLUMNS FROM barangay_id_requests LIKE 'claim_part'");
+    if ($check2 && $check2->num_rows > 0) {
+        $claimTimeColumn = 'claim_part'; // legacy support
+    }
+}
+
+// Build column list and placeholders dynamically
+$columns = [
+    'account_id','transaction_id','request_type','transaction_type','full_name','purok',
+    'birth_date','birth_place','civil_status','religion','height','weight',
+    // NEW: store valid_id_number here (optional)
+    'valid_id_number',
+    'emergency_contact_person','emergency_contact_address','formal_picture','claim_date',
+    // optionally claim_time/claim_part will be inserted next
+    'payment_method','amount','payment_status','document_status','created_at','updated_at','request_source'
+];
+
+if ($claimTimeColumn) {
+    // insert claim_time/claim_part right after claim_date
+    $pos = array_search('claim_date', $columns, true);
+    if ($pos === false) $columns[] = $claimTimeColumn;
+    else array_splice($columns, $pos + 1, 0, $claimTimeColumn);
+}
+
+// Prepare values in the same order as columns
+$createdAt = date('Y-m-d H:i:s');
+$updatedAt = $createdAt;
+$paymentStatus = 'Pending';
+$documentStatus = isset($_POST['document_status']) && $_POST['document_status'] !== '' ? trim($_POST['document_status']) : 'For Verification';
+$amount = (isset($_POST['amount']) && $_POST['amount'] !== '') ? floatval($_POST['amount']) : 100.00;
+$requestType = 'Barangay ID';
+
+// Map column -> value
+$colValues = [
+    'account_id' => $userId,
+    'transaction_id' => $transactionId,
+    'request_type' => $requestType,
+    'transaction_type' => $transactionType,
+    'full_name' => $fullName,
+    'purok' => $purok,
+    'birth_date' => $birthdate,
+    'birth_place' => $birthplace,
+    'civil_status' => $civilstatus,
+    'religion' => $religion,
+    'height' => $height,
+    'weight' => $weight,
+    // NEW: valid id number (optional)
+    'valid_id_number' => $validIdNumber !== '' ? mb_substr($validIdNumber, 0, 100) : null,
+    'emergency_contact_person' => $contactperson,
+    'emergency_contact_address' => $contactaddress,
+    'formal_picture' => $formalPicName,
+    'claim_date' => $claimDate,
+    'payment_method' => $paymentMethod,
+    'amount' => $amount,
+    'payment_status' => $paymentStatus,
+    'document_status' => $documentStatus,
+    'created_at' => $createdAt,
+    'updated_at' => $updatedAt,
+    'request_source' => $requestSource
+];
+
+// Add claim_time/claim_part value if DB supports it
+if ($claimTimeColumn) {
+    $colValues[$claimTimeColumn] = $claimPart;
+}
+
+// Build placeholders
+$placeholders = array_map(function($c){ return '?'; }, $columns);
+
+// Build SQL
+$sql = "INSERT INTO barangay_id_requests (" . implode(', ', $columns) . ") VALUES (" . implode(', ', $placeholders) . ")";
+$stmt = $conn->prepare($sql);
+if (!$stmt) {
+    error_log("Prepare failed (barangay_id insert): " . $conn->error . " SQL: " . $sql);
+    $_SESSION['svc_error'] = 'Server error. Please try again later.';
+    header("Location: ../serviceBarangayID.php");
+    exit();
+}
+
+// Build bind types and bind values array in the same order
+$types = '';
+$bindValues = [];
+foreach ($columns as $col) {
+    $val = $colValues[$col] ?? null;
+    // determine type
+    if ($col === 'account_id') {
+        $types .= 'i';
+        $bindValues[] = ($val === null ? null : (int)$val);
+    } elseif ($col === 'amount') {
+        $types .= 'd';
+        $bindValues[] = ($val === null ? null : (float)$val);
+    } else {
+        $types .= 's';
+        // for null strings, pass empty string or null? mysqli bind_param treats null differently;
+        // we'll convert null -> null and let DB accept NULL for columns that allow it
+        $bindValues[] = ($val === null ? null : (string)$val);
+    }
+}
+
+// Convert to references for call_user_func_array
+$refs = [];
+$refs[] = $types;
+for ($i = 0; $i < count($bindValues); $i++) {
+    $refs[] = &$bindValues[$i];
+}
+
+// Bind and execute
+if (!call_user_func_array([$stmt, 'bind_param'], $refs)) {
+    error_log("bind_param failed (barangay_id): " . $stmt->error . ' / ' . $conn->error);
+    $_SESSION['svc_error'] = 'Server error (binding). Please try again later.';
+    $stmt->close();
+    header("Location: ../serviceBarangayID.php");
+    exit();
+}
+
+if (!$stmt->execute()) {
+    error_log("Insert failed (barangay_id): " . $stmt->error);
+    $_SESSION['svc_error'] = 'Failed to save request. Please try again.';
+    $stmt->close();
+    header("Location: ../serviceBarangayID.php");
+    exit();
+}
+
 $stmt->close();
 
-// 4) Insert into barangay_id_requests
-$stmt = $conn->prepare("
-  INSERT INTO barangay_id_requests
-    (account_id, transaction_id, transaction_type, full_name, purok,
-     height, weight, birth_date, birth_place, civil_status, religion,
-     emergency_contact_person, emergency_contact_address, formal_picture, claim_date, payment_method, request_source)
-  VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-");
-$stmt->bind_param(
-    "issssddssssssssss",
-    $userId, $transactionId, $transactionType, $fullName, $purok,
-    $height, $weight, $birthdate, $birthplace, $civilstatus,
-    $religion, $contactperson, $contactaddress, $formalPicName, $claimDate, $paymentMethod, $requestSource
-);
-$stmt->execute();
-$stmt->close();
-
-// 5) Redirect back to the appropriate panel
+// 5) Redirect back to the appropriate panel (support admin/superAdmin flows)
 if (!empty($_POST['superAdminRedirect'])) {
-    // Came from the super‐admin panel → send back there
-    header("Location: ../superAdminPanel.php?page=superAdminRequest&transaction_id={$transactionId}");
+    header("Location: ../superAdminPanel.php?page=superAdminRequest&transaction_id=" . urlencode($transactionId));
     exit();
 }
 
 if (!empty($_POST['adminRedirect'])) {
-    // Came from the admin panel → send back there
-    header("Location: ../adminPanel.php?page=adminRequest&transaction_id={$transactionId}");
+    header("Location: ../adminPanel.php?page=adminRequest&transaction_id=" . urlencode($transactionId));
     exit();
 }
 
 // Default: user panel
-header("Location: ../userPanel.php?page=serviceBarangayID&tid={$transactionId}");
+header("Location: ../userPanel.php?page=serviceBarangayID&tid=" . urlencode($transactionId));
 exit();

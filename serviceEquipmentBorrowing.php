@@ -138,9 +138,16 @@ if ($equipment_sn) {
         </div>
 
         <div class="row mb-3">
-          <label class="col-md-4 text-start fw-bold">Date of borrowing</label>
+          <label class="col-md-4 text-start fw-bold">Date of Borrowing (From)</label>
           <div class="col-md-3">
-            <input type="date" class="form-control" id="borrow_date" name="borrow_date" required>
+            <input type="date" class="form-control" id="borrow_date_from" name="borrow_date_from" required>
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <label class="col-md-4 text-start fw-bold">Date of Borrowing (To)</label>
+          <div class="col-md-3">
+            <input type="date" class="form-control" id="borrow_date_to" name="borrow_date_to" required>
           </div>
         </div>
 
@@ -177,10 +184,16 @@ if ($equipment_sn) {
         </div>
       </div>
 
-      <div class="d-flex justify-content-between w-100 mt-4">
+      <!-- UPDATED: Buttons arranged so NEXT is lower-right -->
+      <div class="row mt-4">
+        <div class="col text-start">
           <button type="button" class="btn back-btn" id="prevBtn">&lt; PREVIOUS</button>
+        </div>
+        <div class="col text-end">
           <button type="button" class="btn next-btn" id="nextBtn">NEXT &gt;</button>
+        </div>
       </div>
+      <!-- END UPDATED -->
     </form>
   </div>
 </div>
@@ -293,7 +306,8 @@ if ($equipment_sn) {
       ['Purpose:', document.getElementById('used_for').value || '—'],
       ['Location:', document.getElementById('location').value || '—'],
       ['Pick-up / Drop-off:', pudoText || '—'],
-      ['Borrow Date:', document.getElementById('borrow_date').value || '—']
+      ['Date of Borrowing (From):', document.getElementById('borrow_date_from').value || '—'],
+      ['Date of Borrowing (To):', document.getElementById('borrow_date_to').value || '—']
     ];
 
     let html = `
@@ -335,13 +349,21 @@ if ($equipment_sn) {
       const available = Number(document.getElementById('availableQty').textContent || 0);
       const used_for = document.getElementById('used_for').value.trim();
       const location = document.getElementById('location').value.trim();
-      const borrow_date = document.getElementById('borrow_date').value;
+      const borrow_from = document.getElementById('borrow_date_from').value;
+      const borrow_to = document.getElementById('borrow_date_to').value;
       const pudo_option = document.getElementById('pudo_option').value;
 
-      if (!used_for || !location || !borrow_date || qty < 1 || !pudo_option) {
+      // Validation: required fields + date order
+      if (!used_for || !location || !borrow_from || !borrow_to || qty < 1 || !pudo_option) {
         new bootstrap.Modal(document.getElementById('validationModal')).show();
         return;
       }
+      // ensure from <= to (ISO date strings lexicographically comparable)
+      if (borrow_from > borrow_to) {
+        alert('Date of Borrowing (From) must be the same as or earlier than Date of Borrowing (To).');
+        return;
+      }
+
       if (qty > available) {
         alert('Requested quantity exceeds available quantity.');
         return;
@@ -366,7 +388,12 @@ if ($equipment_sn) {
       formData.append('qty', document.getElementById('qty').value);
       formData.append('location', document.getElementById('location').value);
       formData.append('used_for', document.getElementById('used_for').value);
-      formData.append('borrow_date', document.getElementById('borrow_date').value);
+
+      // UPDATED: send borrow_date_from and borrow_date_to
+      formData.append('borrow_date_from', document.getElementById('borrow_date_from').value);
+      formData.append('borrow_date_to', document.getElementById('borrow_date_to').value);
+      // END UPDATED
+
       formData.append('pudo_option', document.getElementById('pudo_option').value);
 
       fetch('functions/serviceEquipmentBorrowing_submit.php', {

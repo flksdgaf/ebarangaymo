@@ -7,9 +7,12 @@ require 'functions/dbconn.php';
 //     exit();
 // }
 
+// -- keep same behavior as before (session assumed started elsewhere)
 $userId = $_SESSION['loggedInUserID'];
 $transactionId = $_GET['tid'] ?? null;
 $t = $transactionId ? true : false;
+
+date_default_timezone_set('Asia/Manila'); // added for claim-date handling
 
 // --- 1) Check for existing Brgy-ID record: Renewal vs. New Application
 $stmtID = $conn->prepare("
@@ -90,10 +93,12 @@ if (!$isRenewal) {
 // Transaction label
 $transactionType = $isRenewal ? 'Renewal' : 'New Application';
 
+// --- Fetch existing request (if transaction provided) so we can prefill claim_date/claim_time and payment
+$existingRequest = [];
 $chosenPayment = null;
 if ($transactionId) {
     $stmt = $conn->prepare("
-      SELECT payment_method  
+      SELECT *  
        FROM barangay_id_requests
        WHERE transaction_id = ?  
        LIMIT 1
@@ -102,15 +107,183 @@ if ($transactionId) {
     $stmt->execute();
     $res = $stmt->get_result();
     if ($res && $res->num_rows) {
-        $chosenPayment = $res->fetch_assoc()['payment_method'];
+        $existingRequest = $res->fetch_assoc();
+        $chosenPayment = $existingRequest['payment_method'] ?? null;
     }
     $stmt->close();
 }
+
+// --- Prefill optional valid ID number from existing request (NEW: maps to valid_id_number column)
+$validIdNumber = $existingRequest['valid_id_number'] ?? '';
+
+/**
+ * Business-day generator
+ *
+ * Behavior:
+ *  - If the request is made on Saturday or Sunday, the claim options START from next Monday.
+ *  - Otherwise, claim options start from tomorrow, but only business days (Mon-Fri) are included.
+ *  - Returns DateTime objects for the next $count business days.
+ */
+function getNextBusinessDays($fromDate, $count = 3) {
+    $results = [];
+    $d = clone $fromDate;
+
+    // If request is on Saturday (6) or Sunday (7), start at next Monday
+    $weekdayNow = (int)$d->format('N'); // 1=Mon .. 7=Sun
+    if ($weekdayNow === 6) { // Saturday
+        // move to Monday (+2)
+        $d->modify('+2 days');
+    } elseif ($weekdayNow === 7) { // Sunday
+        // move to Monday (+1)
+        $d->modify('+1 day');
+    } else {
+        // For Mon-Fri, options start from TOMORROW
+        $d->modify('+1 day');
+    }
+
+    while (count($results) < $count) {
+        $weekday = (int)$d->format('N'); // 1..7
+        if ($weekday <= 5) { // Monday - Friday
+            $results[] = clone $d;
+        }
+        $d->modify('+1 day');
+    }
+    return $results;
+}
+
+// build claim options (3 business days)
+$today = new DateTime('now', new DateTimeZone('Asia/Manila'));
+$businessDays = getNextBusinessDays($today, 3);
+
+$claimOptions = [];
+foreach ($businessDays as $bd) {
+    $dateStr = $bd->format('Y-m-d'); // machine
+    $label = $bd->format('F j, Y'); // human readable
+    $claimOptions[] = [
+        'date' => $dateStr,
+        'label' => $label,
+        'parts' => [
+            ['key' => 'Morning', 'label' => 'Morning (8:00 AM to 12:00 NN)'],
+            ['key' => 'Afternoon', 'label' => 'Afternoon (1:00 PM to 5:00 PM)'],
+        ],
+    ];
+}
+
+// existing claim pref - support both legacy "YYYY-MM-DD|Part" and separate columns claim_date & claim_time
+$existingClaimDate = '';
+$existingClaimPart = '';
+
+if (!empty($existingRequest)) {
+    // Prefer separate columns if available
+    if (!empty($existingRequest['claim_date'])) {
+        $raw = $existingRequest['claim_date'];
+        if (strpos($raw, '|') !== false) {
+            // legacy format: "YYYY-MM-DD|Morning"
+            [$d, $p] = explode('|', $raw, 2);
+            $existingClaimDate = $d;
+            $existingClaimPart = $p;
+        } else {
+            // date-only stored here — use claim_time column if present
+            $existingClaimDate = $raw;
+            if (!empty($existingRequest['claim_time'])) {
+                $existingClaimPart = $existingRequest['claim_time'];
+            } else {
+                // default to Morning when only date present
+                $existingClaimPart = 'Morning';
+            }
+        }
+    } else {
+        // No claim_date value stored; check separate fields (rare)
+        if (!empty($existingRequest['claim_time'])) {
+            $existingClaimPart = $existingRequest['claim_time'];
+        }
+        if (!empty($existingRequest['claim_date'])) {
+            $existingClaimDate = $existingRequest['claim_date'];
+        }
+    }
+}
 ?>
-
-
 <link rel="stylesheet" href="serviceBarangayID.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<!-- Minimal claim-specific styles (kept small & scoped) -->
+<style>
+    /* claim grid: two columns per date (left: Morning, right: Afternoon) */
+    .claim-grid .date-row {
+        margin-bottom: .6rem;
+    }
+    .claim-grid .claim-card {
+        transition: box-shadow .12s ease, transform .08s ease;
+        border-radius: .5rem;
+        padding: .75rem;
+        display: flex;
+        align-items: flex-start;
+        gap: .75rem;
+        min-height: 64px;
+    }
+    .claim-grid .claim-card .form-check {
+        margin-top: 4px;
+    }
+    .claim-grid .claim-card.active {
+        box-shadow: 0 6px 18px rgba(0,0,0,.06);
+        transform: translateY(-2px);
+        border: 1px solid #198754;
+        background: #fffefb;
+    }
+    .claim-date-label {
+        font-weight:600;
+    }
+    .claim-time {
+        font-size: .95rem;
+        color: #6b7280;
+    }
+    .claim-grid .date-label {
+        font-weight:700;
+        margin-bottom: .35rem;
+    }
+    .claim-card {
+        border: 1px solid #e9ecef;        /* neutral outline */
+        background: #ffffff;
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+        transition: box-shadow .12s ease, transform .08s ease, border-color .12s ease, outline .08s ease;
+        display: flex;
+        align-items: flex-start;
+        gap: .75rem;
+        min-height: 64px;
+        cursor: pointer;
+        outline: none;                    /* avoid default UA outline */
+    }
+
+    /* hover */
+    .claim-card:hover {
+        box-shadow: 0 6px 18px rgba(0,0,0,.04);
+        transform: translateY(-1px);
+        border-color: #cfe8d8;
+    }
+
+    /* keyboard & internal focus (when input inside gets focus) */
+    .claim-card:focus-within {
+        outline: 3px solid rgba(25,135,84,0.12); /* subtle green focus ring */
+        outline-offset: 2px;
+        border-color: #b8e0c9;
+    }
+
+    /* active / selected look */
+    .claim-card.active {
+        border-color: #198754; /* green */
+        box-shadow: 0 8px 24px rgba(25,135,84,0.06);
+        background: #fbfffb;
+        transform: translateY(-2px);
+    }
+
+    @media (max-width: 575.98px) {
+        .claim-grid .col-sm-6 {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+    }
+</style>
 
 <div class="container py-4 px-3">
     <div class="progress-container">
@@ -200,26 +373,9 @@ if ($transactionId) {
                 </div>
                 </div>
 
-                <!-- HEIGHT AND WEIGHT (editable always) -->
-                <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Height & Weight</label>
-                <div class="col-md-4">
-                    <input type="text" id="height" name="height"
-                    class="form-control custom-input" 
-                    required placeholder="Height (in feet)" 
-                    value="<?= htmlspecialchars($height) ?>">
-                </div>
-                <div class="col-md-4">
-                    <input type="text" id="weight" name="weight" 
-                    class="form-control custom-input" required 
-                    placeholder="Weight (in kilograms)" 
-                    value="<?= htmlspecialchars($weight) ?>">
-                </div>
-                </div>
-
                 <!-- BIRTHDATE (always readonly) -->
                 <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Birthdate</label>
+                <label class="col-md-4 text-start fw-bold">Date of Birth</label>
                 <div class="col-md-8">
                     <input type="date" id="birthday" name="birthday"
                         class="form-control custom-input"
@@ -230,7 +386,7 @@ if ($transactionId) {
 
                 <!-- BIRTHPLACE (editable only on NEW) -->
                 <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Birthplace</label>
+                <label class="col-md-4 text-start fw-bold">Place of Birth</label>
                 <div class="col-md-8">
                     <input type="text" id="birthplace" name="birthplace"
                         class="form-control custom-input"
@@ -243,7 +399,7 @@ if ($transactionId) {
 
                 <!-- CIVIL STATUS (editable always) -->
                 <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Civil Status</label>
+                <label class="col-md-4 text-start fw-bold">Marital Status</label>
                 <div class="col-md-8">
                     <select id="civilstatus" name="civilstatus"
                             class="form-control custom-input"
@@ -270,13 +426,41 @@ if ($transactionId) {
                 </div>
                 </div>
 
+                <!-- HEIGHT AND WEIGHT (editable always) -->
+                <div class="row mb-3">
+                <label class="col-md-4 text-start fw-bold">Height & Weight</label>
+                <div class="col-md-4">
+                    <input type="text" id="height" name="height"
+                    class="form-control custom-input" 
+                    required placeholder="Height (in feet)" 
+                    value="<?= htmlspecialchars($height) ?>">
+                </div>
+                <div class="col-md-4">
+                    <input type="text" id="weight" name="weight" 
+                    class="form-control custom-input" required 
+                    placeholder="Weight (in kilograms)" 
+                    value="<?= htmlspecialchars($weight) ?>">
+                </div>
+                </div>
+
+                <!-- NEW: VALID ID NUMBER (optional) -->
+                <div class="row mb-3">
+                  <label class="col-md-4 text-start fw-bold">SSS / GSIS / Postal ID Number <span class="small text-muted">(Optional)</span></label>
+                  <div class="col-md-8">
+                    <input type="text" id="validIDNumber" name="valid_id_number"
+                      class="form-control custom-input"
+                      placeholder="Enter SSS / GSIS / Postal ID number"
+                      value="<?php echo htmlspecialchars($validIdNumber); ?>">
+                  </div>
+                </div>
+
                 <!-- CONTACT PERSON (editable always) -->
                 <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Contact Person (in case of emergency)</label>
+                <label class="col-md-4 text-start fw-bold">Name of Emergency Contact Person</label>
                 <div class="col-md-8">
                     <input type="text" id="contactperson" name="contactperson"
                         class="form-control custom-input"
-                        required placeholder="First Name | MI. | Surname"
+                        required placeholder="First Name MI. Surname (eg. Juan A. dela Cruz Sr.)"
                         value="<?php echo htmlspecialchars($contactperson); ?>">
                 </div>
                 </div>
@@ -284,7 +468,7 @@ if ($transactionId) {
                 <!-- CONTACT PERSON ADDRESS (editable) -->
                 <div class="row mb-3">
                   <label class="col-md-4 text-start fw-bold">
-                    Contact Person Address
+                    Address of Emergency Contact Person
                   </label>
                   <div class="col-md-8">
                     <input
@@ -312,18 +496,76 @@ if ($transactionId) {
                         class="form-control custom-input"
                         accept="image/*"
                         required>
+                    <!-- NEW NOTE: ensure picture is recent -->
+                    <small class="form-text text-muted mt-1">
+                        Please ensure the picture is a recent/updated photo — clear, front-facing, with a plain background and no heavy filters.
+                    </small>
+
                 </div>
                 </div>
 
-                <!-- CLAIM DATE (always editable) -->
-                <div class="row mb-3">
+                <!-- CLAIM DATE: replaced the simple date input with the Morning/Afternoon grid -->
+                <div class="row mb-1">
                 <label class="col-md-4 text-start fw-bold">Please select preferred claim date</label>
-                <div class="col-md-8">
-                    <input type="date" id="claimdate" name="claimdate"
-                        class="form-control custom-input"
-                        required>
+                <div class="col-md-8 p-3">
+                    <div id="claimOptionsGroup" class="claim-list claim-grid">
+                        <?php
+                        // Render each business day as a row with two columns: Morning (left) and Afternoon (right)
+                        foreach ($claimOptions as $coIndex => $co) {
+                            $date = $co['date'];
+                            $dateLabel = $co['label'];
+                            // morning
+                            $idMorning = "claim_{$coIndex}_morning";
+                            $valMorning = $date . '|Morning'; // legacy string - still helpful for value attribute but we will not post this name
+                            $checkedMorning = ($existingClaimDate === $date && $existingClaimPart === 'Morning') ? 'checked' : '';
+                            // afternoon
+                            $idAfternoon = "claim_{$coIndex}_afternoon";
+                            $valAfternoon = $date . '|Afternoon';
+                            $checkedAfternoon = ($existingClaimDate === $date && $existingClaimPart === 'Afternoon') ? 'checked' : '';
+                            ?>
+                            <div class="date-row">
+                                <div class="row gx-2">
+                                    <div class="col-sm-6 mb-2">
+                                        <label class="list-group-item list-group-item-action p-2 claim-card d-flex align-items-start <?php echo $checkedMorning ? 'active' : ''; ?>" for="<?php echo $idMorning; ?>" role="option" aria-pressed="<?php echo $checkedMorning ? 'true' : 'false'; ?>">
+                                            <div class="form-check me-2">
+                                                <!-- note: radios named claim_slot; we'll store the actual date & part into hidden inputs -->
+                                                <input class="form-check-input" type="radio" name="claim_slot" id="<?php echo $idMorning; ?>" value="<?php echo htmlspecialchars($valMorning); ?>" data-date="<?php echo $date; ?>" data-part="Morning" <?php echo $checkedMorning; ?> <?php echo $coIndex === 0 ? 'required' : ''; ?>>
+                                            </div>
+                                            <div>
+                                                <div class="claim-date-label"><?php echo htmlspecialchars($dateLabel); ?></div>
+                                                <div class="claim-time"><?php echo htmlspecialchars($co['parts'][0]['label']); ?></div>
+                                            </div>
+                                        </label>
+                                    </div>
+
+                                    <div class="col-sm-6 mb-2">
+                                        <label class="list-group-item list-group-item-action p-2 claim-card d-flex align-items-start <?php echo $checkedAfternoon ? 'active' : ''; ?>" for="<?php echo $idAfternoon; ?>" role="option" aria-pressed="<?php echo $checkedAfternoon ? 'true' : 'false'; ?>">
+                                            <div class="form-check me-2">
+                                                <input class="form-check-input" type="radio" name="claim_slot" id="<?php echo $idAfternoon; ?>" value="<?php echo htmlspecialchars($valAfternoon); ?>" data-date="<?php echo $date; ?>" data-part="Afternoon" <?php echo $checkedAfternoon; ?> <?php echo $coIndex === 0 ? 'required' : ''; ?>>
+                                            </div>
+                                            <div>
+                                                <div class="claim-date-label"><?php echo htmlspecialchars($dateLabel); ?></div>
+                                                <div class="claim-time"><?php echo htmlspecialchars($co['parts'][1]['label']); ?></div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php
+                        }
+                        ?>
+                    </div>
+
+                    <!-- Hidden inputs that will actually be submitted -->
+                    <input type="hidden" id="hiddenClaimDate" name="claim_date" value="<?php echo htmlspecialchars($existingClaimDate); ?>">
+                    <input type="hidden" id="hiddenClaimTime" name="claim_time" value="<?php echo htmlspecialchars($existingClaimPart); ?>">
                 </div>
                 </div>
+
+                    <!-- NEW MESSAGE: Right Thumb Mark & Signature processing note -->
+                    <div class="text-center">
+                        <em class="small text-muted">Note: Your <b>Right Thumb Mark</b> and <b>Signature</b> will be processed personally onto your printed Barangay ID card during issuance.</em>
+                    </div>
             </div>
             
             <!-- Step 2: Payment -->
@@ -359,7 +601,7 @@ if ($transactionId) {
                         <span class="label fw-bold">Brgy. Payment Device</span>
                     </button>
 
-                    <!-- Over‑the‑Counter -->
+                    <!-- Over-the-Counter -->
                     <button type="button" class="btn btn-outline-success payment-btn" data-method="Over-the-Counter">
                         <span class="material-symbols-outlined mb-2 payment-icon">paid</span>
                         <span class="label fw-bold">Over-the-Counter</span>
@@ -403,7 +645,7 @@ if ($transactionId) {
                     </div>
 
                     <!-- Hidden input to capture method -->
-                    <input type="hidden" id="paymentMethod" name="paymentMethod" value="Brgy Payment Device">
+                    <input type="hidden" id="paymentMethod" name="paymentMethod" value="<?php echo htmlspecialchars($existingRequest['payment_method'] ?? 'Brgy Payment Device'); ?>">
                 </div>
 
                 </div>
@@ -434,22 +676,12 @@ if ($transactionId) {
                     </li>
 
                     <li class="list-group-item d-flex justify-content-between">
-                        <span class="fw-bold">Height:</span>
-                        <span class="text-success" id="summaryHeight"></span>
-                    </li>
-
-                    <li class="list-group-item d-flex justify-content-between">
-                        <span class="fw-bold">Weight:</span>
-                        <span class="text-success" id="summaryWeight"></span>
-                    </li>
-
-                    <li class="list-group-item d-flex justify-content-between">
-                        <span class="fw-bold">Birthdate:</span>
+                        <span class="fw-bold">Date of Birth:</span>
                         <span class="text-success" id="summaryBirthdate"></span>
                     </li>
 
                     <li class="list-group-item d-flex justify-content-between">
-                        <span class="fw-bold">Birthplace:</span>
+                        <span class="fw-bold">Place of Birth:</span>
                         <span class="text-success" id="summaryBirthplace"></span>
                     </li>
 
@@ -461,6 +693,22 @@ if ($transactionId) {
                     <li class="list-group-item d-flex justify-content-between">
                         <span class="fw-bold">Religion:</span>
                         <span class="text-success" id="summaryReligion"></span>
+                    </li>
+
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="fw-bold">Height:</span>
+                        <span class="text-success" id="summaryHeight"></span>
+                    </li>
+
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="fw-bold">Weight:</span>
+                        <span class="text-success" id="summaryWeight"></span>
+                    </li>
+
+                    <!-- NEW: show valid ID number in summary (if provided) -->
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="fw-bold">SSS / GSIS / Postal ID: </span>
+                        <span class="text-success" id="summaryValidID"><?php echo htmlspecialchars($validIdNumber); ?></span>
                     </li>
 
                     <li class="list-group-item d-flex justify-content-between">
@@ -622,9 +870,153 @@ if ($transactionId) {
 
 <?php $initial = $transactionId ? 4 : 1; ?>
 <script>
-    // make the PHP value available to our external JS
+    // make the PHP values available to our claim JS
     window.initialStep = <?php echo $initial; ?>;
+    window._claimOptions = <?php echo json_encode($claimOptions, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
+    window._existingClaimObj = <?php echo json_encode(['date' => $existingClaimDate, 'part' => $existingClaimPart], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
+</script>
+
+<!-- Claim handling script (keeps logic local so external JS can remain unchanged) -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const claimGroup = document.getElementById('claimOptionsGroup');
+    const hiddenDate = document.getElementById('hiddenClaimDate');
+    const hiddenTime = document.getElementById('hiddenClaimTime');
+    const summaryEl = document.getElementById('summaryClaimDate');
+
+    function clearActiveCards() {
+        claimGroup.querySelectorAll('.claim-card').forEach(function(card){
+            card.classList.remove('active');
+        });
+    }
+
+    function setHiddenValues(date, part) {
+        if (hiddenDate) hiddenDate.value = date || '';
+        if (hiddenTime) hiddenTime.value = part || '';
+    }
+
+    function updateSummary(date, part) {
+        if (!summaryEl) return;
+
+        // friendly label lookup
+        let friendlyDate = date;
+        if (window._claimOptions) {
+            for (const co of window._claimOptions) {
+                if (co.date === date) {
+                    friendlyDate = co.label;
+                    for (const p of co.parts) {
+                        if (p.key === part) {
+                            summaryEl.textContent = friendlyDate + ' - ' + p.label;
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        summaryEl.textContent = (date ? date : '') + (part ? ' - ' + part : '');
+    }
+
+    if (claimGroup) {
+        claimGroup.addEventListener('change', function (e) {
+            // find checked radio and add active to its label parent
+            const checked = claimGroup.querySelector('input[name="claim_slot"]:checked');
+            clearActiveCards();
+            if (checked) {
+                const parentLabel = checked.closest('label');
+                if (parentLabel) parentLabel.classList.add('active');
+
+                const date = checked.dataset.date || '';
+                const part = checked.dataset.part || '';
+                setHiddenValues(date, part);
+                updateSummary(date, part);
+            }
+        });
+
+        // If there is an existing selection, apply it
+        if (window._existingClaimObj && window._existingClaimObj.date) {
+            const targetRadio = claimGroup.querySelector('input[name="claim_slot"][data-date="' + window._existingClaimObj.date + '"][data-part="' + window._existingClaimObj.part + '"]');
+            if (targetRadio) {
+                targetRadio.checked = true;
+                // set hidden values and update UI
+                const evt = new Event('change', { bubbles: true });
+                targetRadio.dispatchEvent(evt);
+            } else {
+                // if exact match not found, try to match date only (default to Morning if part not available)
+                const fallbackRadio = claimGroup.querySelector('input[name="claim_slot"][data-date="' + window._existingClaimObj.date + '"]');
+                if (fallbackRadio) {
+                    fallbackRadio.checked = true;
+                    const evt = new Event('change', { bubbles: true });
+                    fallbackRadio.dispatchEvent(evt);
+                }
+            }
+        } else {
+            // ensure first radio is selected by default if none selected
+            const firstRadio = claimGroup.querySelector('input[name="claim_slot"]');
+            if (firstRadio && !claimGroup.querySelector('input[name="claim_slot"]:checked')) {
+                firstRadio.checked = true;
+                firstRadio.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
+
+        // make card clickable (label already handles input toggling), but add click to label to set active
+        claimGroup.querySelectorAll('label').forEach(function(lbl) {
+            lbl.addEventListener('click', function(){
+                const input = lbl.querySelector('input[type="radio"]');
+                if (input && !input.checked) {
+                    input.checked = true;
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                } else {
+                    // still dispatch to ensure styles update
+                    input && input.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            });
+        });
+    } else {
+        console.warn('Claim options group not found in DOM.');
+    }
+
+    // populate summary placeholders initially (helpful if transaction already present)
+    (function(){
+        const txType = document.getElementById('transactiontype')?.value || '';
+        const tEl = document.getElementById('summarytransactionType');
+        if (tEl && (!tEl.textContent || tEl.textContent.trim()==='')) tEl.textContent = txType;
+
+        const fn = document.getElementById('fullname')?.value || '';
+        if (document.getElementById('summaryFullName') && (!document.getElementById('summaryFullName').textContent || document.getElementById('summaryFullName').textContent.trim()==='')) {
+            document.getElementById('summaryFullName').textContent = fn;
+        }
+
+        if (document.getElementById('summaryPurok')) {
+            const pu = document.getElementById('purok');
+            document.getElementById('summaryPurok').textContent = pu ? (pu.value || '') : '';
+        }
+        if (document.getElementById('summaryHeight')) document.getElementById('summaryHeight').textContent = document.getElementById('height')?.value || '';
+        if (document.getElementById('summaryWeight')) document.getElementById('summaryWeight').textContent = document.getElementById('weight')?.value || '';
+        if (document.getElementById('summaryBirthdate')) document.getElementById('summaryBirthdate').textContent = document.getElementById('birthday')?.value || '';
+        if (document.getElementById('summaryBirthplace')) document.getElementById('summaryBirthplace').textContent = document.getElementById('birthplace')?.value || '';
+        if (document.getElementById('summaryCivilStatus')) document.getElementById('summaryCivilStatus').textContent = document.getElementById('civilstatus')?.value || '';
+        if (document.getElementById('summaryReligion')) document.getElementById('summaryReligion').textContent = document.getElementById('religion')?.value || '';
+        if (document.getElementById('summaryContactPerson')) document.getElementById('summaryContactPerson').textContent = document.getElementById('contactperson')?.value || '';
+        if (document.getElementById('summaryContactAddress')) document.getElementById('summaryContactAddress').textContent = document.getElementById('contactAddress')?.value || '';
+
+        // NEW: populate valid ID summary if present in input (or prefilled from server)
+        const summaryValidID = document.getElementById('summaryValidID');
+        if (summaryValidID) {
+            const prefilled = "<?php echo htmlspecialchars($validIdNumber); ?>";
+            // if there's already server prefilled value, keep it; otherwise populate from input field
+            if (!prefilled && document.getElementById('validIDNumber')) {
+                summaryValidID.textContent = document.getElementById('validIDNumber')?.value || '';
+            } else {
+                summaryValidID.textContent = prefilled || (document.getElementById('validIDNumber')?.value || '');
+            }
+        }
+
+        const pm = document.getElementById('paymentMethod');
+        if (pm && document.getElementById('summaryPaymentMethod') && (!document.getElementById('summaryPaymentMethod').textContent || document.getElementById('summaryPaymentMethod').textContent.trim()==='')) {
+            document.getElementById('summaryPaymentMethod').textContent = pm.value;
+        }
+    })();
+});
 </script>
 
 <script src="js/serviceBarangayID.js"></script>
-

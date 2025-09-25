@@ -272,7 +272,7 @@ if ($bsearch !== '') {
 if ($borrowWhere) {
   $borrowSql .= ' WHERE ' . implode(' AND ', $borrowWhere);
 }
-$borrowSql .= ' ORDER BY br.borrow_date_from DESC, br.id DESC';
+$borrowSql .= ' ORDER BY br.borrow_date_from ASC, br.id ASC';
 
 $borrows = [];
 $brStmt = $conn->prepare($borrowSql);
@@ -327,9 +327,9 @@ if (!$brStmt) {
   <?php endif; ?>
 
   <!-- Alert for borrow -->
-  <?php if (($_GET['borrowed'] ?? '') === '1'): ?>
+  <?php if (($_GET['borrowed'] ?? '') !== ''): ?>
     <div class="alert alert-success alert-dismissible fade show" role="alert">
-      Borrow request submitted successfully!
+      Borrow request <strong><?= htmlspecialchars($_GET['borrowed']) ?></strong> submitted successfully!
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
   <?php elseif (($_GET['borrow_error'] ?? '') === 'toomany'): ?>
@@ -376,7 +376,7 @@ if (!$brStmt) {
                 <div class="mb-2">
                   <label for="filter_name" class="form-label form-label-sm">Equipment Name</label>
                   <select name="filter_name" id="filter_name" class="form-select form-select-sm">
-                    <option value="">All names</option>
+                    <option value="">All</option>
                     <?php foreach ($names as $n): ?>
                       <option value="<?= htmlspecialchars($n, ENT_QUOTES) ?>" <?= $filter_name === $n ? 'selected' : '' ?>>
                         <?= htmlspecialchars($n) ?>
@@ -514,7 +514,7 @@ if (!$brStmt) {
                 <div class="mb-2">
                   <label for="filter_esn" class="form-label form-label-sm">Equipment</label>
                   <select name="filter_esn" id="filter_esn" class="form-select form-select-sm">
-                    <option value="">All equipments</option>
+                    <option value="">All</option>
                     <?php foreach ($allEquipments as $ae): ?>
                       <option value="<?= htmlspecialchars($ae['equipment_sn'], ENT_QUOTES) ?>" <?= $filter_esn === $ae['equipment_sn'] ? 'selected' : ''?>>
                         <?= htmlspecialchars($ae['name']) ?> (<?= htmlspecialchars($ae['equipment_sn']) ?>)
@@ -582,7 +582,7 @@ if (!$brStmt) {
             </thead>
             <tbody>
               <?php if (empty($borrows)): ?>
-                <tr><td colspan="6" class="text-center">No borrow requests.</td></tr>
+                <tr><td colspan="7" class="text-center">No borrow requests found.</td></tr>
               <?php else: foreach($borrows as $br):
                 $status = $br['status'] ?? 'Pending';
               ?>
@@ -772,7 +772,7 @@ if (!$brStmt) {
         <div class="modal-body">
           <div class="row gy-3">
             <div class="col-md-6">
-              <label for="borrow-resident-name" class="form-label">Resident’s Name</label>
+              <label for="borrow-resident-name" class="form-label">Name</label>
               <input type="text" id="borrow-resident-name" name="resident_name" class="form-control" placeholder="Lastname, Firstname M." required>
             </div>
 
@@ -791,7 +791,7 @@ if (!$brStmt) {
 
             <div class="col-md-6">
               <label for="borrow-qty" class="form-label">Quantity</label>
-              <input type="number" id="borrow-qty" name="qty" class="form-control" min="1" placeholder="1" required>
+              <input type="number" id="borrow-qty" name="qty" class="form-control" min="1" placeholder="" required>
             </div>
 
             <div class="col-md-6">
@@ -1177,7 +1177,7 @@ if (!$brStmt) {
         li.className = 'list-group-item list-group-item-action py-1';
         li.style.cursor = 'pointer';
         // show name and ESN, click will store ESN and show name
-        li.textContent = item.name + ' (' + item.equipment_sn + ')';
+        li.textContent = item.name; //+ ' (' + item.equipment_sn + ')';
         li.addEventListener('mousedown', (ev) => {
           // set visible to NAME (the user requested the NAME to show)
           visibleInput.value = item.name;

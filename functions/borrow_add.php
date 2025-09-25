@@ -20,7 +20,8 @@ function valid_date(string $d): bool {
 
 // 0) Ensure user is logged in
 if (!isset($_SESSION['loggedInUserID'])) {
-    redirect(['borrow_error' => 'auth']);
+    // redirect(['borrow_error' => 'auth']);
+    redirect(['borrow_error' => 'auth', 'tab' => 'borrows']);
 }
 $userId = (int) ($_SESSION['loggedInUserID'] ?? 0);
 
@@ -38,35 +39,41 @@ $borrowDateTo    = trim($_POST['borrow_date_to'] ?? '');
 
 // Basic validation
 if ($resident === '' || $esn === '' || $qty < 1 || $location === '' || $used_for === '' || $pudo === '' || $borrowDateFrom === '' || $borrowDateTo === '') {
-    redirect(['borrow_error' => 'missing']);
+    // redirect(['borrow_error' => 'missing']);
+    redirect(['borrow_error' => 'missing', 'tab' => 'borrows']);
 }
 
 // Validate date formats
 if (! valid_date($borrowDateFrom) || ! valid_date($borrowDateTo)) {
-    redirect(['borrow_error' => 'date']);
+    // redirect(['borrow_error' => 'date']);
+    redirect(['borrow_error' => 'date', 'tab' => 'borrows']);
 }
 
 // Ensure from <= to
 if ($borrowDateFrom > $borrowDateTo) {
-    redirect(['borrow_error' => 'daterange']);
+    // redirect(['borrow_error' => 'daterange']);
+    redirect(['borrow_error' => 'daterange', 'tab' => 'borrows']);
 }
 
 // 2) Check that equipment exists and get available quantity (do NOT decrement here)
 $stmt = $conn->prepare("SELECT id, available_qty FROM equipment_list WHERE equipment_sn = ? LIMIT 1");
 if (!$stmt) {
     error_log("Prepare failed (equipment lookup): " . $conn->error);
-    redirect(['borrow_error' => 'db']);
+    // redirect(['borrow_error' => 'db']);
+    redirect(['borrow_error' => 'db', 'tab' => 'borrows']);
 }
 $stmt->bind_param('s', $esn);
 if (! $stmt->execute()) {
     error_log("Execute failed (equipment lookup): " . $stmt->error);
     $stmt->close();
-    redirect(['borrow_error' => 'db']);
+    // redirect(['borrow_error' => 'db']);
+    redirect(['borrow_error' => 'db', 'tab' => 'borrows']);
 }
 $res = $stmt->get_result();
 if (! $res || $res->num_rows !== 1) {
     $stmt->close();
-    redirect(['borrow_error' => 'notfound']);
+    // redirect(['borrow_error' => 'notfound']);
+    redirect(['borrow_error' => 'notfound', 'tab' => 'borrows']);
 }
 $row = $res->fetch_assoc();
 $equipId = (int)$row['id'];
@@ -75,7 +82,8 @@ $stmt->close();
 
 // 3) If requested qty is more than available, block creation
 if ($qty > $availQty) {
-    redirect(['borrow_error' => 'toomany']);
+    // redirect(['borrow_error' => 'toomany']);
+    redirect(['borrow_error' => 'toomany', 'tab' => 'borrows']);
 }
 
 // 4) Generate next transaction_id (BRW-0000001 style)
@@ -158,7 +166,8 @@ $insertSql = "INSERT INTO borrow_requests
 $ins = $conn->prepare($insertSql);
 if (!$ins) {
     error_log("Prepare failed (borrow insert): " . $conn->error . " -- SQL: " . $insertSql);
-    redirect(['borrow_error' => 'db']);
+    // redirect(['borrow_error' => 'db']);
+    redirect(['borrow_error' => 'db', 'tab' => 'borrows']);
 }
 
 // types for the 10 bound values:
@@ -180,17 +189,20 @@ if (! $ins->bind_param($types,
 )) {
     error_log("Bind failed (borrow insert): " . $ins->error . " -- types: {$types}");
     $ins->close();
-    redirect(['borrow_error' => 'db']);
+    // redirect(['borrow_error' => 'db']);
+    redirect(['borrow_error' => 'db', 'tab' => 'borrows']);
 }
 
 if (! $ins->execute()) {
     error_log("Execute failed (borrow insert): " . $ins->error);
     $ins->close();
-    redirect(['borrow_error' => 'db']);
+    // redirect(['borrow_error' => 'db']);
+    redirect(['borrow_error' => 'db', 'tab' => 'borrows']);
 }
 
 $ins->close();
 
 // success: redirect returning transaction id for display
-redirect(['borrowed' => $transactionId]);
+// redirect(['borrowed' => $transactionId]);
+redirect(['borrowed' => $transactionId, 'tab' => 'borrows']);
 ?>

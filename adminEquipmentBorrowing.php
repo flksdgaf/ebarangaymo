@@ -832,7 +832,7 @@ if (!$brStmt) {
 
   <!-- Add Borrow Modal -->
   <div class="modal fade" id="addBorrowModal" tabindex="-1" aria-labelledby="addBorrowLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
       <form class="modal-content" method="POST" action="functions/borrow_add.php">
         <div class="modal-header text-white" style="background-color: #13411F;">
           <h5 class="modal-title" id="addBorrowLabel">New Borrow Request</h5>
@@ -841,9 +841,28 @@ if (!$brStmt) {
 
         <div class="modal-body">
           <div class="row gy-3">
-            <div class="col-md-6">
-              <label for="borrow-resident-name" class="form-label">Name</label>
-              <input type="text" id="borrow-resident-name" name="resident_name" class="form-control" placeholder="Lastname, Firstname M." required>
+            <!-- First Name -->
+            <div class="col-md-3">
+              <label for="borrow-first-name" class="form-label">First Name</label>
+              <input type="text" id="borrow-first-name" name="first_name" class="form-control" required>
+            </div>
+
+            <!-- Middle Name (Optional) -->
+            <div class="col-md-3">
+              <label for="borrow-middle-name" class="form-label">Middle Name <small class="text-muted">(optional)</small></label>
+              <input type="text" id="borrow-middle-name" name="middle_name" class="form-control">
+            </div>
+
+            <!-- Last Name -->
+            <div class="col-md-3">
+              <label for="borrow-last-name" class="form-label">Last Name</label>
+              <input type="text" id="borrow-last-name" name="last_name" class="form-control" required>
+            </div>
+
+            <!-- Suffix (Optional) -->
+            <div class="col-md-3">
+              <label for="borrow-suffix" class="form-label">Suffix <small class="text-muted">(optional)</small></label>
+              <input type="text" id="borrow-suffix" name="suffix" class="form-control" placeholder="Jr., Sr., III...">
             </div>
 
             <!-- VISIBLE: Equipment NAME (for user) -->

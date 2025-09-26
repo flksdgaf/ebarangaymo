@@ -290,7 +290,7 @@ if ($borrowCountStmt) {
 }
 
 // 2) Fetch paginated borrow requests
-$borrowSql = "SELECT br.*, IFNULL(el.name, '') AS equipment_name " . $borrowBase . $borrowWhereSQL . " ORDER BY br.borrow_date_from ASC, br.id ASC LIMIT ? OFFSET ?";
+$borrowSql = "SELECT br.*, IFNULL(el.name, '') AS equipment_name " . $borrowBase . $borrowWhereSQL . " ORDER BY br.borrow_date_from DESC, br.id DESC LIMIT ? OFFSET ?";
 $brStmt = $conn->prepare($borrowSql);
 if (!$brStmt) {
   error_log("Prepare failed (borrowSql): " . $conn->error . " -- SQL: " . $borrowSql);
@@ -638,11 +638,16 @@ if (!$brStmt) {
                     // display a friendly range: if from == to show single date, otherwise show "from — to"
                     $from = $br['borrow_date_from'] ?? '';
                     $to = $br['borrow_date_to'] ?? '';
+                    
                     if ($from && $to) {
-                      $displayDate = ($from === $to) ? $from : ($from . ' — ' . $to);
+                      // Format dates as "MMM DD, YYYY"
+                      $fromFormatted = date('M j, Y', strtotime($from));
+                      $toFormatted = date('M j, Y', strtotime($to));
+                      $displayDate = ($from === $to) ? $fromFormatted : ($fromFormatted . ' — ' . $toFormatted);
                     } else {
-                      // fallback to empty or any pre-existing single-date field if present
-                      $displayDate = htmlspecialchars($br['borrow_date_from'] ?? $br['borrow_date'] ?? '');
+                      // fallback to empty or format single date if present
+                      $fallbackDate = $br['borrow_date_from'] ?? $br['borrow_date'] ?? '';
+                      $displayDate = $fallbackDate ? date('M j, Y', strtotime($fallbackDate)) : '';
                     }
                   ?>
                   <td><?= htmlspecialchars($displayDate) ?></td>

@@ -478,7 +478,7 @@ $stmt->close();
     </div>
 
     <!-- TABLE -->
-    <div class="table-responsive admin-table" style="height:500px;overflow-y:auto;">
+    <div class="table-responsive admin-table"> <!-- style="height:500px;overflow-y:auto;" -->
       <table class="table table-hover align-middle text-start">
         <thead class="table-light">
           <tr>
@@ -538,7 +538,7 @@ $stmt->close();
               </tr>
             <?php endwhile; ?>
           <?php else: ?>
-            <tr><td colspan="7" class="text-center">No records found.</td></tr>
+            <tr><td colspan="7" class="text-center">No Blotter Records Found.</td></tr>
           <?php endif; ?>
         </tbody>
       </table>

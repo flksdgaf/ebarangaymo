@@ -904,12 +904,12 @@ if (!$brStmt) {
 
             <!-- Borrow date range -->
             <?php $today = date('Y-m-d'); ?>
-            <div class="col-md-6">
+            <div class="col-md-3">
               <label for="borrow-date-from" class="form-label">Borrow From</label>
               <input type="date" id="borrow-date-from" name="borrow_date_from" class="form-control" value="<?= htmlspecialchars($today, ENT_QUOTES) ?>" min="<?= htmlspecialchars($today, ENT_QUOTES) ?>" required>
             </div>
 
-            <div class="col-md-6">
+            <div class="col-md-3">
               <label for="borrow-date-to" class="form-label">Borrow To</label>
               <input type="date" id="borrow-date-to" name="borrow_date_to" class="form-control" value="<?= htmlspecialchars($today, ENT_QUOTES) ?>" min="<?= htmlspecialchars($today, ENT_QUOTES) ?>" required>
             </div>

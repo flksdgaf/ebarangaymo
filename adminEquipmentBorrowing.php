@@ -316,7 +316,7 @@ if (!$brStmt) {
   <!-- Alert for updates -->
   <?php if (($_GET['updated'] ?? '') === 'none'): ?>
     <div class="alert alert-secondary alert-dismissible fade show" role="alert">
-      No changes were made. Equipment was not updated.
+      No changes were made.
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
   <?php elseif (($_GET['updated'] ?? '') === 'partial'): ?>
@@ -324,9 +324,19 @@ if (!$brStmt) {
       Equipment was updated, but quantity was not changed because some items are currently borrowed.
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
+  <?php elseif (($_GET['updated'] ?? '') === 'partial_with_borrowed'): ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      Equipment updated successfully. Available quantity was adjusted to account for currently borrowed items.
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
   <?php elseif (($_GET['updated'] ?? '') === 'full'): ?>
     <div class="alert alert-success alert-dismissible fade show" role="alert">
       Equipment updated successfully.
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <?php elseif (($_GET['updated'] ?? '') === 'error'): ?>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      Update failed: <?= htmlspecialchars($_GET['error_msg'] ?? 'Unknown error') ?>
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
   <?php endif; ?>

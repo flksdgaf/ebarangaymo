@@ -14,9 +14,14 @@ $filter_date_from = $_GET['filter_date_from'] ?? '';
 $filter_date_to = $_GET['filter_date_to'] ?? '';
 
 // pagination for equipments list
-$limit = 10;
+$limit = 8;
 $equip_page = max((int)($_GET['equip_page'] ?? 1), 1);
 $offset = ($equip_page - 1) * $limit;
+
+// pagination for borrow requests list
+$borrow_limit = 8;
+$borrow_page = max((int)($_GET['borrow_page'] ?? 1), 1);
+$borrow_offset = ($borrow_page - 1) * $borrow_limit;
 
 // small utility to build reference arrays for call_user_func_array
 function refValues($arr){
@@ -217,9 +222,8 @@ if (!$eqStmt) {
 
 // --- Build filtered borrow requests query ---
 // We'll LEFT JOIN equipment_list to allow searching/filtering by equipment name
-$borrowSql = "SELECT br.*, IFNULL(el.name, '') AS equipment_name
-              FROM borrow_requests br
-              LEFT JOIN equipment_list el ON br.equipment_sn = el.equipment_sn";
+$borrowBase = "FROM borrow_requests br
+               LEFT JOIN equipment_list el ON br.equipment_sn = el.equipment_sn";
 
 $borrowWhere = [];
 $bParams = [];
@@ -269,18 +273,32 @@ if ($bsearch !== '') {
   }
 }
 
-if ($borrowWhere) {
-  $borrowSql .= ' WHERE ' . implode(' AND ', $borrowWhere);
-}
-$borrowSql .= ' ORDER BY br.borrow_date_from ASC, br.id ASC';
+$borrowWhereSQL = $borrowWhere ? ' WHERE ' . implode(' AND ', $borrowWhere) : '';
 
-$borrows = [];
+// 1) Get total count for borrow requests
+$borrowCountSql = "SELECT COUNT(*) AS total " . $borrowBase . $borrowWhereSQL;
+$borrowCountStmt = $conn->prepare($borrowCountSql);
+if ($borrowCountStmt) {
+  $borrowCountRows = stmt_bind_execute_fetch($borrowCountStmt, $bTypes, $bParams);
+  $borrowCountStmt->close();
+  $borrowTotalRows = $borrowCountRows ? (int)$borrowCountRows[0]['total'] : 0;
+  $borrowTotalPages = $borrowTotalRows ? (int)ceil($borrowTotalRows / $borrow_limit) : 0;
+} else {
+  error_log("Prepare failed (borrowCountStmt): " . $conn->error . " -- SQL: " . $borrowCountSql);
+  $borrowTotalRows = 0;
+  $borrowTotalPages = 0;
+}
+
+// 2) Fetch paginated borrow requests
+$borrowSql = "SELECT br.*, IFNULL(el.name, '') AS equipment_name " . $borrowBase . $borrowWhereSQL . " ORDER BY br.borrow_date_from ASC, br.id ASC LIMIT ? OFFSET ?";
 $brStmt = $conn->prepare($borrowSql);
 if (!$brStmt) {
   error_log("Prepare failed (borrowSql): " . $conn->error . " -- SQL: " . $borrowSql);
   $borrows = [];
 } else {
-  $borrows = stmt_bind_execute_fetch($brStmt, $bTypes, $bParams);
+  $borrowTypesWithLimit = $bTypes . 'ii';
+  $borrowParamsWithLimit = array_merge($bParams, [$borrow_limit, $borrow_offset]);
+  $borrows = stmt_bind_execute_fetch($brStmt, $borrowTypesWithLimit, $borrowParamsWithLimit);
   $brStmt->close();
 }
 ?>
@@ -418,11 +436,11 @@ if (!$brStmt) {
           </form>
         </div>
 
-        <div class="table-responsive admin-table" style="height:500px;overflow-y:auto;">
+        <div class="table-responsive admin-table"> <!-- style="height:500px;overflow-y:hidden;" style="height:500px;overflow-y:auto;"  -->
           <table class="table table-hover align-middle text-start">
             <thead class="table-light">
               <tr>
-                <th>Equipment SN</th>
+                <th>Equipment ID</th>
                 <th>Name</th>
                 <th>Description</th>
                 <th>Avail Qty</th>
@@ -508,11 +526,12 @@ if (!$brStmt) {
             <div class="dropdown-menu p-3" aria-labelledby="filterDropdownBorrow" style="min-width:320px; --bs-body-font-size:.75rem; font-size:.75rem;">
               <form method="get" class="mb-0" id="filterFormBorrow">
                 <input type="hidden" name="page" value="adminEquipmentBorrowing">
+                <input type="hidden" name="borrow_page" value="1">
                 <input type="hidden" name="tab" value="borrows">
 
                 <!-- FILTER: Equipment (show name + esn) -->
                 <div class="mb-2">
-                  <label for="filter_esn" class="form-label form-label-sm">Equipment</label>
+                  <label for="filter_esn" class="form-label form-label-sm">Equipment Name</label>
                   <select name="filter_esn" id="filter_esn" class="form-select form-select-sm">
                     <option value="">All</option>
                     <?php foreach ($allEquipments as $ae): ?>
@@ -553,6 +572,7 @@ if (!$brStmt) {
             <input type="hidden" name="filter_esn" value="<?= htmlspecialchars($filter_esn, ENT_QUOTES) ?>">
             <input type="hidden" name="filter_date_from" value="<?= htmlspecialchars($filter_date_from, ENT_QUOTES) ?>">
             <input type="hidden" name="filter_date_to" value="<?= htmlspecialchars($filter_date_to, ENT_QUOTES) ?>">
+            <input type="hidden" name="borrow_page" value="1">
 
             <div class="input-group input-group-sm">
               <input name="bsearch" id="searchInputBorrow" type="text" class="form-control" placeholder="Search…" value="<?= htmlspecialchars($bsearch, ENT_QUOTES) ?>">
@@ -567,7 +587,7 @@ if (!$brStmt) {
         </div>
         
         <!-- simplified Borrow Requests table -->
-        <div class="table-responsive admin-table" style="height:500px;overflow-y:auto;">
+        <div class="table-responsive admin-table"> <!-- style="height:500px;overflow-y:auto;" -->
           <table class="table table-hover align-middle text-start">
             <thead class="table-light">
               <tr>
@@ -663,6 +683,46 @@ if (!$brStmt) {
             </tbody>
           </table>
         </div>
+
+        <?php if (!empty($borrowTotalPages) && $borrowTotalPages > 1): ?>
+          <?php
+            $bbp = [
+              'page' => 'adminEquipmentBorrowing',
+              'tab' => 'borrows',
+              'bsearch' => $bsearch,
+              'filter_esn' => $filter_esn,
+              'filter_date_from' => $filter_date_from,
+              'filter_date_to' => $filter_date_to
+            ];
+          ?>
+          <nav class="mt-3">
+            <ul class="pagination justify-content-center pagination-sm">
+              <li class="page-item <?= $borrow_page <= 1 ? 'disabled' : '' ?>">
+                <a class="page-link" href="?<?= http_build_query(array_merge($bbp, ['borrow_page'=>$borrow_page-1])) ?>">Previous</a>
+              </li>
+
+              <?php
+              $range = 2;
+              $dots = false;
+              for ($i = 1; $i <= $borrowTotalPages; $i++) {
+                if ($i == 1 || $i == $borrowTotalPages || ($i >= $borrow_page - $range && $i <= $borrow_page + $range)) {
+                  $active = $i == $borrow_page ? 'active' : '';
+                  echo "<li class='page-item {$active}'><a class='page-link' href='?" . http_build_query(array_merge($bbp, ['borrow_page' => $i])) . "'>$i</a></li>";
+                  $dots = true;
+                } elseif ($dots) {
+                  echo "<li class='page-item disabled'><span class='page-link'>…</span></li>";
+                  $dots = false;
+                }
+              }
+              ?>
+
+              <li class="page-item <?= $borrow_page >= $borrowTotalPages ? 'disabled' : '' ?>">
+                <a class="page-link" href="?<?= http_build_query(array_merge($bbp, ['borrow_page' => $borrow_page + 1])) ?>">Next</a>
+              </li>
+            </ul>
+          </nav>
+        <?php endif; ?>
+
       </div>
     </div>
   </div>
@@ -1142,6 +1202,8 @@ if (!$brStmt) {
           // reset equipment page to 1 when switching to equipments (optional)
           if (tabValue === 'equipments') {
             url.searchParams.set('equip_page', url.searchParams.get('equip_page') || '1');
+          } else if (tabValue === 'borrows') {
+            url.searchParams.set('borrow_page', url.searchParams.get('borrow_page') || '1');
           }
 
           // replace state (no navigation)

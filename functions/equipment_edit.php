@@ -29,23 +29,23 @@ if ($isSameName && $isSameDesc && $isSameTotal) {
     exit;
 }
 
-// 3) Decide which columns to update
-if ($currAvail === $currTotal) {
-    // No one is borrowing → safe to update all
-    $newAvail = $total;
-    $sql = "UPDATE equipment_list SET name = ?, description = ?, total_qty = ?, available_qty = ? WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param('ssiii', $name, $desc, $total, $newAvail, $id);
-    $resultFlag = 'full';
-} else {
-    // Some are borrowed → only update name & desc
-    $sql = "UPDATE equipment_list SET name = ?, description = ? WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param('ssi', $name, $desc, $id);
-    $resultFlag = 'partial';
+// 3) Calculate the new available quantity based on borrowed items
+$borrowedQty = $currTotal - $currAvail; // How many are currently borrowed
+$newAvail = $total - $borrowedQty; // New available = new total - borrowed
+
+// 4) Validate that the new total is not less than borrowed quantity
+if ($total < $borrowedQty) {
+    // Cannot set total quantity less than the number currently borrowed
+    header('Location: ../adminPanel.php?page=adminEquipmentBorrowing&updated=error&error_msg=' . urlencode("Cannot set total quantity to {$total} because {$borrowedQty} items are currently borrowed."));
+    exit;
 }
 
-// 4) Execute & redirect
+// 5) Update all fields including total_qty and recalculated available_qty
+$sql = "UPDATE equipment_list SET name = ?, description = ?, total_qty = ?, available_qty = ? WHERE id = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param('ssiii', $name, $desc, $total, $newAvail, $id);
+
+// 6) Execute & redirect
 if (!$stmt->execute()) {
     error_log("Failed to update equipment #{$id}: " . $stmt->error);
     header('HTTP/1.1 500 Internal Server Error');
@@ -53,6 +53,16 @@ if (!$stmt->execute()) {
 }
 
 $stmt->close();
+
+// 7) Determine the result flag for user feedback
+if ($borrowedQty > 0 && !$isSameTotal) {
+    // Total quantity was changed while items were borrowed
+    $resultFlag = 'partial_with_borrowed';
+} else {
+    // Normal full update
+    $resultFlag = 'full';
+}
+
 header("Location: ../adminPanel.php?page=adminEquipmentBorrowing&updated={$resultFlag}");
 exit;
 ?>

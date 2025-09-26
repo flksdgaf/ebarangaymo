@@ -18,15 +18,43 @@ function valid_date(string $d): bool {
     return ($dt && $dt->format('Y-m-d') === $d);
 }
 
+// Helper function to build full name from components
+function buildFullName($first, $middle, $last, $suffix) {
+    $first = trim($first);
+    $middle = trim($middle);
+    $last = trim($last);
+    $suffix = trim($suffix);
+    
+    // Build name: "Last, First Middle Suffix" format
+    $name = $last . ', ' . $first;
+    
+    if ($middle !== '') {
+        $name .= ' ' . $middle;
+    }
+    
+    if ($suffix !== '') {
+        $name .= ' ' . $suffix;
+    }
+    
+    return $name;
+}
+
 // 0) Ensure user is logged in
 if (!isset($_SESSION['loggedInUserID'])) {
-    // redirect(['borrow_error' => 'auth']);
     redirect(['borrow_error' => 'auth', 'tab' => 'borrows']);
 }
 $userId = (int) ($_SESSION['loggedInUserID'] ?? 0);
 
-// 1) Collect & sanitize inputs (adjust names if your form uses different keys)
-$resident        = trim($_POST['resident_name'] ?? '');
+// 1) Collect & sanitize inputs - NEW separate name fields
+$firstName       = trim($_POST['first_name'] ?? '');
+$middleName      = trim($_POST['middle_name'] ?? '');  // optional
+$lastName        = trim($_POST['last_name'] ?? '');
+$suffix          = trim($_POST['suffix'] ?? '');      // optional
+
+// Build the full name for storage
+$resident = buildFullName($firstName, $middleName, $lastName, $suffix);
+
+// Other existing fields
 $esn             = trim($_POST['equipment_sn'] ?? '');
 $qty             = isset($_POST['qty']) ? (int) $_POST['qty'] : 0;
 $location        = trim($_POST['location'] ?? '');
@@ -37,21 +65,18 @@ $pudo            = trim($_POST['pudo'] ?? 'Pick Up');
 $borrowDateFrom  = trim($_POST['borrow_date_from'] ?? '');
 $borrowDateTo    = trim($_POST['borrow_date_to'] ?? '');
 
-// Basic validation
-if ($resident === '' || $esn === '' || $qty < 1 || $location === '' || $used_for === '' || $pudo === '' || $borrowDateFrom === '' || $borrowDateTo === '') {
-    // redirect(['borrow_error' => 'missing']);
+// Basic validation - first name and last name are required
+if ($firstName === '' || $lastName === '' || $esn === '' || $qty < 1 || $location === '' || $used_for === '' || $pudo === '' || $borrowDateFrom === '' || $borrowDateTo === '') {
     redirect(['borrow_error' => 'missing', 'tab' => 'borrows']);
 }
 
 // Validate date formats
 if (! valid_date($borrowDateFrom) || ! valid_date($borrowDateTo)) {
-    // redirect(['borrow_error' => 'date']);
     redirect(['borrow_error' => 'date', 'tab' => 'borrows']);
 }
 
 // Ensure from <= to
 if ($borrowDateFrom > $borrowDateTo) {
-    // redirect(['borrow_error' => 'daterange']);
     redirect(['borrow_error' => 'daterange', 'tab' => 'borrows']);
 }
 
@@ -59,20 +84,17 @@ if ($borrowDateFrom > $borrowDateTo) {
 $stmt = $conn->prepare("SELECT id, available_qty FROM equipment_list WHERE equipment_sn = ? LIMIT 1");
 if (!$stmt) {
     error_log("Prepare failed (equipment lookup): " . $conn->error);
-    // redirect(['borrow_error' => 'db']);
     redirect(['borrow_error' => 'db', 'tab' => 'borrows']);
 }
 $stmt->bind_param('s', $esn);
 if (! $stmt->execute()) {
     error_log("Execute failed (equipment lookup): " . $stmt->error);
     $stmt->close();
-    // redirect(['borrow_error' => 'db']);
     redirect(['borrow_error' => 'db', 'tab' => 'borrows']);
 }
 $res = $stmt->get_result();
 if (! $res || $res->num_rows !== 1) {
     $stmt->close();
-    // redirect(['borrow_error' => 'notfound']);
     redirect(['borrow_error' => 'notfound', 'tab' => 'borrows']);
 }
 $row = $res->fetch_assoc();
@@ -82,7 +104,6 @@ $stmt->close();
 
 // 3) If requested qty is more than available, block creation
 if ($qty > $availQty) {
-    // redirect(['borrow_error' => 'toomany']);
     redirect(['borrow_error' => 'toomany', 'tab' => 'borrows']);
 }
 
@@ -107,57 +128,6 @@ if ($tidStmt) {
 $transactionId = sprintf($prefix . '%07d', $num);
 
 // 5) Insert into borrow_requests
-// ---------------------------------------------------------------------
-// NOTE: previously we stored a single `borrow_date` for compatibility.
-// That code is commented below. The active INSERT now only uses
-// borrow_date_from / borrow_date_to (and no longer writes borrow_date).
-// ---------------------------------------------------------------------
-
-/* Old compatibility version (commented out)
-$insertSql = "INSERT INTO borrow_requests
-    (account_id, transaction_id, request_type, resident_name, equipment_sn, qty, location, used_for,
-     borrow_date, borrow_date_from, borrow_date_to, pudo, status)
-    VALUES (?, ?, 'Equipment Borrowing', ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending')";
-
-$ins = $conn->prepare($insertSql);
-if (!$ins) {
-    error_log("Prepare failed (borrow insert): " . $conn->error . " -- SQL: " . $insertSql);
-    redirect(['borrow_error' => 'db']);
-}
-
-// types: account_id (i), transaction_id (s), resident (s), esn (s), qty (i),
-// location (s), used_for (s), borrow_date (s), borrow_date_from (s), borrow_date_to (s), pudo (s)
-$types = 'isssissssss'; // 11 types matching 11 bound values
-
-$borrowDate = $borrowDateFrom; // compatibility with existing borrow_date column
-
-if (! $ins->bind_param($types,
-    $userId,
-    $transactionId,
-    $resident,
-    $esn,
-    $qty,
-    $location,
-    $used_for,
-    $borrowDate,
-    $borrowDateFrom,
-    $borrowDateTo,
-    $pudo
-)) {
-    error_log("Bind failed (borrow insert): " . $ins->error . " -- types: {$types}");
-    $ins->close();
-    redirect(['borrow_error' => 'db']);
-}
-
-if (! $ins->execute()) {
-    error_log("Execute failed (borrow insert): " . $ins->error);
-    $ins->close();
-    redirect(['borrow_error' => 'db']);
-}
-$ins->close();
-*/
-
-// ------------------- Active INSERT (no borrow_date column) -------------------
 $insertSql = "INSERT INTO borrow_requests
     (account_id, transaction_id, request_type, resident_name, equipment_sn, qty, location, used_for,
      borrow_date_from, borrow_date_to, pudo, status)
@@ -166,7 +136,6 @@ $insertSql = "INSERT INTO borrow_requests
 $ins = $conn->prepare($insertSql);
 if (!$ins) {
     error_log("Prepare failed (borrow insert): " . $conn->error . " -- SQL: " . $insertSql);
-    // redirect(['borrow_error' => 'db']);
     redirect(['borrow_error' => 'db', 'tab' => 'borrows']);
 }
 
@@ -178,7 +147,7 @@ $types = 'isssisssss'; // corresponds to: i s s s i s s s s s (10 params)
 if (! $ins->bind_param($types,
     $userId,
     $transactionId,
-    $resident,
+    $resident,  // This now contains the formatted full name
     $esn,
     $qty,
     $location,
@@ -189,20 +158,17 @@ if (! $ins->bind_param($types,
 )) {
     error_log("Bind failed (borrow insert): " . $ins->error . " -- types: {$types}");
     $ins->close();
-    // redirect(['borrow_error' => 'db']);
     redirect(['borrow_error' => 'db', 'tab' => 'borrows']);
 }
 
 if (! $ins->execute()) {
     error_log("Execute failed (borrow insert): " . $ins->error);
     $ins->close();
-    // redirect(['borrow_error' => 'db']);
     redirect(['borrow_error' => 'db', 'tab' => 'borrows']);
 }
 
 $ins->close();
 
 // success: redirect returning transaction id for display
-// redirect(['borrowed' => $transactionId]);
 redirect(['borrowed' => $transactionId, 'tab' => 'borrows']);
 ?>

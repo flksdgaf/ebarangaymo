@@ -1597,7 +1597,7 @@ $result = $st->get_result();
       </form>
     </div>
 
-    <div class="table-responsive admin-table" style="height:500px;overflow-y:auto;">
+    <div class="table-responsive admin-table"> <!--  style="height:500px;overflow-y:auto;" -->
       <?php if ($processing_type === 'Official Receipt Logs' && $_SESSION['loggedInUserRole'] === 'Brgy Treasurer'): ?>
 
         <!-- OFFICIAL RECEIPT LOGS TABLE -->
@@ -1788,7 +1788,7 @@ $result = $st->get_result();
                 </tr>
               <?php endwhile; ?>
             <?php else: ?>
-              <tr><td colspan="7" class="text-center">No records found.</td></tr>
+              <tr><td colspan="7" class="text-center">No Document Requests Found.</td></tr>
             <?php endif; ?>
           </tbody>
         </table>

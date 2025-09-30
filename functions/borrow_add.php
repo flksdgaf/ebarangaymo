@@ -127,48 +127,66 @@ if ($tidStmt) {
 }
 $transactionId = sprintf($prefix . '%07d', $num);
 
-// 5) Insert into borrow_requests
-$insertSql = "INSERT INTO borrow_requests
-    (account_id, transaction_id, request_type, resident_name, equipment_sn, qty, location, used_for,
-     borrow_date_from, borrow_date_to, pudo, status)
-    VALUES (?, ?, 'Equipment Borrowing', ?, ?, ?, ?, ?, ?, ?, ?, 'Pending')";
+// 5) Start transaction to ensure atomicity
+$conn->begin_transaction();
 
-$ins = $conn->prepare($insertSql);
-if (!$ins) {
-    error_log("Prepare failed (borrow insert): " . $conn->error . " -- SQL: " . $insertSql);
-    redirect(['borrow_error' => 'db', 'tab' => 'borrows']);
-}
+try {
+    // 5a) Decrease available_qty in equipment_list immediately
+    $updateEquip = $conn->prepare("UPDATE equipment_list SET available_qty = available_qty - ? WHERE equipment_sn = ?");
+    if (!$updateEquip) {
+        throw new Exception("Prepare failed (equipment update): " . $conn->error);
+    }
+    
+    $updateEquip->bind_param('is', $qty, $esn);
+    if (!$updateEquip->execute()) {
+        throw new Exception("Execute failed (equipment update): " . $updateEquip->error);
+    }
+    $updateEquip->close();
 
-// types for the 10 bound values:
-// account_id (i), transaction_id (s), resident (s), esn (s), qty (i),
-// location (s), used_for (s), borrow_date_from (s), borrow_date_to (s), pudo (s)
-$types = 'isssisssss'; // corresponds to: i s s s i s s s s s (10 params)
+    // 5b) Insert into borrow_requests with status 'Pending'
+    $insertSql = "INSERT INTO borrow_requests
+        (account_id, transaction_id, request_type, resident_name, equipment_sn, qty, location, used_for,
+         borrow_date_from, borrow_date_to, pudo, status)
+        VALUES (?, ?, 'Equipment Borrowing', ?, ?, ?, ?, ?, ?, ?, ?, 'Pending')";
 
-if (! $ins->bind_param($types,
-    $userId,
-    $transactionId,
-    $resident,  // This now contains the formatted full name
-    $esn,
-    $qty,
-    $location,
-    $used_for,
-    $borrowDateFrom,
-    $borrowDateTo,
-    $pudo
-)) {
-    error_log("Bind failed (borrow insert): " . $ins->error . " -- types: {$types}");
+    $ins = $conn->prepare($insertSql);
+    if (!$ins) {
+        throw new Exception("Prepare failed (borrow insert): " . $conn->error);
+    }
+
+    $types = 'isssisssss';
+
+    if (! $ins->bind_param($types,
+        $userId,
+        $transactionId,
+        $resident,
+        $esn,
+        $qty,
+        $location,
+        $used_for,
+        $borrowDateFrom,
+        $borrowDateTo,
+        $pudo
+    )) {
+        throw new Exception("Bind failed (borrow insert): " . $ins->error);
+    }
+
+    if (! $ins->execute()) {
+        throw new Exception("Execute failed (borrow insert): " . $ins->error);
+    }
+
     $ins->close();
+    
+    // Commit transaction
+    $conn->commit();
+    
+    // Success: redirect returning transaction id for display
+    redirect(['borrowed' => $transactionId, 'tab' => 'borrows']);
+
+} catch (Exception $e) {
+    // Rollback on any error
+    $conn->rollback();
+    error_log("Borrow creation failed: " . $e->getMessage());
     redirect(['borrow_error' => 'db', 'tab' => 'borrows']);
 }
-
-if (! $ins->execute()) {
-    error_log("Execute failed (borrow insert): " . $ins->error);
-    $ins->close();
-    redirect(['borrow_error' => 'db', 'tab' => 'borrows']);
-}
-
-$ins->close();
-
-// success: redirect returning transaction id for display
-redirect(['borrowed' => $transactionId, 'tab' => 'borrows']);
 ?>

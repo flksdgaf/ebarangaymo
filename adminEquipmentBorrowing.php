@@ -290,7 +290,7 @@ if ($borrowCountStmt) {
 }
 
 // 2) Fetch paginated borrow requests
-$borrowSql = "SELECT br.*, IFNULL(el.name, '') AS equipment_name " . $borrowBase . $borrowWhereSQL . " ORDER BY br.borrow_date_from DESC, br.id DESC LIMIT ? OFFSET ?";
+$borrowSql = "SELECT br.*, IFNULL(el.name, '') AS equipment_name " . $borrowBase . $borrowWhereSQL . " ORDER BY br.borrow_date_from ASC, br.id ASC LIMIT ? OFFSET ?";
 $brStmt = $conn->prepare($borrowSql);
 if (!$brStmt) {
   error_log("Prepare failed (borrowSql): " . $conn->error . " -- SQL: " . $borrowSql);
@@ -357,7 +357,7 @@ if (!$brStmt) {
   <!-- Alert for borrow -->
   <?php if (($_GET['borrowed'] ?? '') !== ''): ?>
     <div class="alert alert-success alert-dismissible fade show" role="alert">
-      Borrow request <strong><?= htmlspecialchars($_GET['borrowed']) ?></strong> submitted successfully!
+      Borrow request <strong><?= htmlspecialchars($_GET['borrowed']) ?></strong> scheduled successfully! Equipment has been reserved.
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
   <?php elseif (($_GET['borrow_error'] ?? '') === 'toomany'): ?>
@@ -528,216 +528,61 @@ if (!$brStmt) {
     <div class="tab-pane fade <?= (($_GET['tab'] ?? '') === 'borrows') ? 'show active' : '' ?>" id="tab-borrows" role="tabpanel" aria-labelledby="tab-borrows-btn">
       <div class="card shadow-sm p-3">
         <div class="d-flex align-items-center mb-3">
-          <div class="dropdown">
-            <button class="btn btn-sm btn-outline-success dropdown-toggle" type="button" id="filterDropdownBorrow" data-bs-toggle="dropdown" aria-expanded="false">
-              <span class="material-symbols-outlined me-1" style="font-size:1rem; vertical-align:middle;">filter_list</span>
-              Filter
-            </button>
-            <div class="dropdown-menu p-3" aria-labelledby="filterDropdownBorrow" style="min-width:320px; --bs-body-font-size:.75rem; font-size:.75rem;">
-              <form method="get" class="mb-0" id="filterFormBorrow">
-                <input type="hidden" name="page" value="adminEquipmentBorrowing">
-                <input type="hidden" name="borrow_page" value="1">
-                <input type="hidden" name="tab" value="borrows">
-
-                <!-- FILTER: Equipment (show name + esn) -->
-                <div class="mb-2">
-                  <label for="filter_esn" class="form-label form-label-sm">Equipment Name</label>
-                  <select name="filter_esn" id="filter_esn" class="form-select form-select-sm">
-                    <option value="">All</option>
-                    <?php foreach ($allEquipments as $ae): ?>
-                      <option value="<?= htmlspecialchars($ae['equipment_sn'], ENT_QUOTES) ?>" <?= $filter_esn === $ae['equipment_sn'] ? 'selected' : ''?>>
-                        <?= htmlspecialchars($ae['name']) ?> (<?= htmlspecialchars($ae['equipment_sn']) ?>)
-                      </option>
-                    <?php endforeach; ?>
-                  </select>
-                </div>
-
-                <!-- FILTER: Date range -->
-                <div class="mb-2">
-                  <label class="form-label form-label-sm">Date Request Range</label>
-                  <div class="d-flex gap-2">
-                    <input type="date" name="filter_date_from" class="form-control form-control-sm" value="<?= htmlspecialchars($filter_date_from, ENT_QUOTES) ?>" placeholder="From">
-                    <input type="date" name="filter_date_to" class="form-control form-control-sm" value="<?= htmlspecialchars($filter_date_to, ENT_QUOTES) ?>" placeholder="To">
-                  </div>
-                </div>
-
-                <div class="d-flex">
-                  <a href="?page=adminEquipmentBorrowing&tab=borrows" class="btn btn-sm btn-outline-secondary me-2">Reset</a>
-                  <button type="submit" class="btn btn-sm btn-success flex-grow-1">Apply</button>
-                </div>
-              </form>
-            </div>
-          </div>
-
-          <button class="btn btn-sm btn-success ms-3" data-bs-toggle="modal" data-bs-target="#addBorrowModal">
+          <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addBorrowModal">
             <span class="material-symbols-outlined me-1" style="font-size:1rem; vertical-align:middle;">add</span>
             Borrow an Equipment
           </button>
-
-          <!-- Borrow search: uses bsearch param to avoid colliding with equipments search -->
-          <form method="get" id="searchFormBorrow" class="d-flex ms-auto me-2">
-            <input type="hidden" name="page" value="adminEquipmentBorrowing">
-            <input type="hidden" name="tab" value="borrows">
-            <!-- preserve current borrow filters when searching -->
-            <input type="hidden" name="filter_esn" value="<?= htmlspecialchars($filter_esn, ENT_QUOTES) ?>">
-            <input type="hidden" name="filter_date_from" value="<?= htmlspecialchars($filter_date_from, ENT_QUOTES) ?>">
-            <input type="hidden" name="filter_date_to" value="<?= htmlspecialchars($filter_date_to, ENT_QUOTES) ?>">
-            <input type="hidden" name="borrow_page" value="1">
-
-            <div class="input-group input-group-sm">
-              <input name="bsearch" id="searchInputBorrow" type="text" class="form-control" placeholder="Search…" value="<?= htmlspecialchars($bsearch, ENT_QUOTES) ?>">
-              <button type="button" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" id="searchBtnBorrow" title="Search">
-                <span class="material-symbols-outlined" id="searchIconBorrow"><?= $bsearch !== '' ? 'close' : 'search' ?></span>
-              </button>
+          
+          <!-- Calendar Navigation -->
+          <div class="ms-auto d-flex align-items-center">
+            <!-- View Toggle -->
+            <div class="btn-group me-3" role="group">
+              <input type="radio" class="btn-check" name="viewType" id="weekView" value="week" checked>
+              <label class="btn btn-outline-success btn-sm" for="weekView">Week</label>
+              
+              <input type="radio" class="btn-check" name="viewType" id="monthView" value="month">
+              <label class="btn btn-outline-success btn-sm" for="monthView">Month</label>
             </div>
-            <noscript>
-              <button type="submit" class="btn btn-outline-secondary">Search</button>
-            </noscript>
-          </form>
+            
+            <button id="prevPeriod" class="btn btn-sm btn-outline-success me-2">
+              <span class="material-symbols-outlined" style="font-size:1rem;">chevron_left</span>
+            </button>
+            <h5 id="currentPeriod" class="mb-0 mx-3"></h5>
+            <button id="nextPeriod" class="btn btn-sm btn-outline-success ms-2">
+              <span class="material-symbols-outlined" style="font-size:1rem;">chevron_right</span>
+            </button>
+          </div>
         </div>
-        
-        <!-- simplified Borrow Requests table -->
-        <div class="table-responsive admin-table"> <!-- style="height:500px;overflow-y:auto;" -->
-          <table class="table table-hover align-middle text-start">
+
+        <!-- Calendar Container -->
+        <div class="table-responsive">
+          <table class="table table-bordered mb-0">
             <thead class="table-light">
               <tr>
-                <th>Transaction ID</th>
-                <th>Resident</th>
-                <th>Equipment</th>
-                <th>Quantity</th>
-                <th>Borrow Date</th>
-                <th>Status</th>
-                <th class="text-center">Action</th>
+                <th class="text-center p-2" style="width: 14.28%;">Sun</th>
+                <th class="text-center p-2" style="width: 14.28%;">Mon</th>
+                <th class="text-center p-2" style="width: 14.28%;">Tue</th>
+                <th class="text-center p-2" style="width: 14.28%;">Wed</th>
+                <th class="text-center p-2" style="width: 14.28%;">Thu</th>
+                <th class="text-center p-2" style="width: 14.28%;">Fri</th>
+                <th class="text-center p-2" style="width: 14.28%;">Sat</th>
               </tr>
             </thead>
-            <tbody>
-              <?php if (empty($borrows)): ?>
-                <tr><td colspan="7" class="text-center">No borrow requests found.</td></tr>
-              <?php else: foreach($borrows as $br):
-                $status = $br['status'] ?? 'Pending';
-              ?>
-                <tr
-                  data-id="<?= (int)$br['id'] ?>"
-                  data-transaction-id="<?= htmlspecialchars($br['transaction_id'], ENT_QUOTES) ?>"
-                  data-resident="<?= htmlspecialchars($br['resident_name'], ENT_QUOTES) ?>"
-                  data-esn="<?= htmlspecialchars($br['equipment_sn'], ENT_QUOTES) ?>"
-                  data-equipment="<?= htmlspecialchars($br['equipment_name'], ENT_QUOTES) ?>"
-                  data-qty="<?= (int)$br['qty'] ?>"
-                  data-location="<?= htmlspecialchars($br['location'], ENT_QUOTES) ?>"
-                  data-usedfor="<?= htmlspecialchars($br['used_for'], ENT_QUOTES) ?>"
-                  data-borrow-from="<?= htmlspecialchars($br['borrow_date_from'] ?? '', ENT_QUOTES) ?>"
-                  data-borrow-to="<?= htmlspecialchars($br['borrow_date_to'] ?? '', ENT_QUOTES) ?>"
-                  data-pudo="<?= htmlspecialchars($br['pudo'], ENT_QUOTES) ?>"
-                  data-status="<?= htmlspecialchars($br['status'], ENT_QUOTES) ?>"
-                >
-                  <td><?= htmlspecialchars($br['transaction_id']) ?></td>
-                  <td><?= htmlspecialchars($br['resident_name']) ?></td>
-                  <td><?= htmlspecialchars($br['equipment_name'] ?: $br['equipment_sn']) ?></td>
-                  <td><?= (int)$br['qty'] ?></td>
-                  <?php
-                    // display a friendly range: if from == to show single date, otherwise show "from — to"
-                    $from = $br['borrow_date_from'] ?? '';
-                    $to = $br['borrow_date_to'] ?? '';
-                    
-                    if ($from && $to) {
-                      // Format dates as "MMM DD, YYYY"
-                      $fromFormatted = date('M j, Y', strtotime($from));
-                      $toFormatted = date('M j, Y', strtotime($to));
-                      $displayDate = ($from === $to) ? $fromFormatted : ($fromFormatted . ' — ' . $toFormatted);
-                    } else {
-                      // fallback to empty or format single date if present
-                      $fallbackDate = $br['borrow_date_from'] ?? $br['borrow_date'] ?? '';
-                      $displayDate = $fallbackDate ? date('M j, Y', strtotime($fallbackDate)) : '';
-                    }
-                  ?>
-                  <td><?= htmlspecialchars($displayDate) ?></td>
-                  <td>
-                    <?php
-                      // compute badge class
-                      $badgeClass = 'bg-secondary';
-                      if ($status === 'Pending') $badgeClass = 'bg-warning';
-                      if ($status === 'Borrowed') $badgeClass = 'bg-primary';
-                      if ($status === 'Returned') $badgeClass = 'bg-success';
-                      if ($status === 'Rejected') $badgeClass = 'bg-danger';
-                    ?>
-                    <span class="badge <?= $badgeClass ?>"><?= htmlspecialchars($status) ?></span>
-                  </td>
-
-                  <td class="text-center">
-                    <?php
-                      $isStaff = in_array($currentRole, ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper'], true);
-                    ?>
-
-                    <!-- Always allow View for staff and treasurer (adjust as needed) -->
-                    <?php if ($isStaff): ?>
-                      <button class="btn btn-sm btn-warning borrow-view-btn me-1" title="View" data-id="<?= (int)$br['id'] ?>">
-                        <span class="material-symbols-outlined" style="font-size:12px;">visibility</span>
-                      </button>
-                    <?php endif; ?>
-
-                    <!-- Pending: staff can Accept / Reject -->
-                    <?php if ($status === 'Pending' && $isStaff): ?>
-                      <button class="btn btn-sm btn-success borrow-accept-btn me-1" title="Accept" data-id="<?= (int)$br['id'] ?>">
-                        <span class="material-symbols-outlined" style="font-size:12px;">check</span>
-                      </button>
-                      <button class="btn btn-sm btn-danger borrow-reject-btn" title="Reject" data-id="<?= (int)$br['id'] ?>">
-                        <span class="material-symbols-outlined" style="font-size:12px;">close</span>
-                      </button>
-
-                    <!-- Borrowed: staff can Edit (change status to Returned etc.) -->
-                    <?php elseif ($status === 'Borrowed' && $isStaff): ?>
-                      <button class="btn btn-sm btn-primary borrow-edit-btn me-1" title="Edit" data-id="<?= (int)$br['id'] ?>" data-status="<?= htmlspecialchars($status, ENT_QUOTES) ?>">
-                        <span class="material-symbols-outlined" style="font-size:12px;">edit</span>
-                      </button>
-
-                    <!-- For other statuses (Returned / Rejected) we just show the badge (View already shown if allowed) -->
-                    <?php endif; ?>
-                  </td>
-                </tr>
-              <?php endforeach; endif; ?>
+            <tbody id="calendarBody">
+              <!-- Calendar dates will be populated by JavaScript -->
             </tbody>
           </table>
         </div>
 
-        <?php if (!empty($borrowTotalPages) && $borrowTotalPages > 1): ?>
-          <?php
-            $bbp = [
-              'page' => 'adminEquipmentBorrowing',
-              'tab' => 'borrows',
-              'bsearch' => $bsearch,
-              'filter_esn' => $filter_esn,
-              'filter_date_from' => $filter_date_from,
-              'filter_date_to' => $filter_date_to
-            ];
-          ?>
-          <nav class="mt-3">
-            <ul class="pagination justify-content-center pagination-sm">
-              <li class="page-item <?= $borrow_page <= 1 ? 'disabled' : '' ?>">
-                <a class="page-link" href="?<?= http_build_query(array_merge($bbp, ['borrow_page'=>$borrow_page-1])) ?>">Previous</a>
-              </li>
-
-              <?php
-              $range = 2;
-              $dots = false;
-              for ($i = 1; $i <= $borrowTotalPages; $i++) {
-                if ($i == 1 || $i == $borrowTotalPages || ($i >= $borrow_page - $range && $i <= $borrow_page + $range)) {
-                  $active = $i == $borrow_page ? 'active' : '';
-                  echo "<li class='page-item {$active}'><a class='page-link' href='?" . http_build_query(array_merge($bbp, ['borrow_page' => $i])) . "'>$i</a></li>";
-                  $dots = true;
-                } elseif ($dots) {
-                  echo "<li class='page-item disabled'><span class='page-link'>…</span></li>";
-                  $dots = false;
-                }
-              }
-              ?>
-
-              <li class="page-item <?= $borrow_page >= $borrowTotalPages ? 'disabled' : '' ?>">
-                <a class="page-link" href="?<?= http_build_query(array_merge($bbp, ['borrow_page' => $borrow_page + 1])) ?>">Next</a>
-              </li>
-            </ul>
-          </nav>
-        <?php endif; ?>
-
+        <!-- Legend -->
+        <div class="mt-3 text-center">
+          <small class="text-muted">
+            <span class="badge bg-warning me-2">Pending</span>
+            <span class="badge bg-primary me-2">Borrowed</span>
+            <span class="badge bg-success me-2">Returned</span>
+            <span class="badge bg-danger me-2">Rejected</span>
+          </small>
+        </div>
       </div>
     </div>
   </div>
@@ -870,12 +715,18 @@ if (!$brStmt) {
               <input type="text" id="borrow-suffix" name="suffix" class="form-control" placeholder="Jr., Sr., III...">
             </div>
 
-            <!-- VISIBLE: Equipment NAME (for user) -->
-            <div class="col-md-6 position-relative">
+            <!-- Equipment Dropdown -->
+            <div class="col-md-6">
               <label class="form-label">Equipment</label>
-              <input type="text" id="borrowedEquipment" class="form-control" placeholder="Type or select equipment name" autocomplete="off" required>
-              <input type="hidden" id="borrowedEsn" name="equipment_sn" value="">
-              <ul id="borrowedEquipmentList" class="list-group position-absolute w-100 shadow-sm bg-white" style="top:100%; left:0; max-height:180px; overflow-y:auto; display:none; z-index:1050;"></ul>
+              <select id="borrowedEquipment" name="equipment_sn" class="form-select" required>
+                <option value="">Select equipment...</option>
+                <?php foreach ($allEquipments as $eq): ?>
+                  <option value="<?= htmlspecialchars($eq['equipment_sn'], ENT_QUOTES) ?>" 
+                          data-avail="<?= (int)$eq['available_qty'] ?>">
+                    <?= htmlspecialchars($eq['name']) ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
 
               <!-- muted availability text -->
               <div class="form-text text-muted" id="esnAvailableText" style="margin-top:.25rem;">
@@ -930,134 +781,62 @@ if (!$brStmt) {
     </div>
   </div>
 
-  <!-- Borrow View Modal -->
-  <div class="modal fade" id="viewBorrowModal" tabindex="-1" aria-labelledby="viewBorrowLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header text-white" style="background-color: #13411F;">
-          <h5 class="modal-title" id="viewBorrowLabel">Borrow Request Details</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <dl class="row mb-0">
-            <dt class="col-sm-4">Transaction ID</dt>
-            <dd class="col-sm-8" id="viewTransaction"></dd>
-
-            <dt class="col-sm-4">Resident’s Name</dt>
-            <dd class="col-sm-8" id="viewResident"></dd>
-
-            <dt class="col-sm-4">Equipment</dt>
-            <dd class="col-sm-8" id="viewEquipment"></dd>
-
-            <dt class="col-sm-4">Quantity</dt>
-            <dd class="col-sm-8" id="viewQty"></dd>
-
-            <dt class="col-sm-4">Location</dt>
-            <dd class="col-sm-8" id="viewLocation"></dd>
-
-            <dt class="col-sm-4">Used For</dt>
-            <dd class="col-sm-8" id="viewUsedFor"></dd>
-
-            <dt class="col-sm-4">Borrow Date</dt>
-            <dd class="col-sm-8" id="viewDates"></dd>
-
-            <dt class="col-sm-4">Pick-Up / Drop-Off</dt>
-            <dd class="col-sm-8" id="viewPudo"></dd>
-
-            <dt class="col-sm-4">Status</dt>
-            <dd class="col-sm-8" id="viewStatus"></dd>
-          </dl>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Accept Borrow Modal -->
-  <div class="modal fade" id="acceptBorrowModal" tabindex="-1" aria-labelledby="acceptBorrowLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header bg-success text-white">
-          <h5 class="modal-title" id="acceptBorrowLabel">Accept Borrow Request</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <p class="mb-0">
-            Are you sure you want to <strong>accept</strong> this borrow request?<br>
-            <small class="text-muted">Transaction ID: <span id="acceptTransactionId"></span></small>
-          </p>
-
-          <!-- hidden field to store borrow_request id (server id) -->
-          <input type="hidden" id="acceptBorrowId" value="">
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-success" id="confirmAcceptBtn">Accept</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Reject Borrow Modal -->
-  <div class="modal fade" id="rejectBorrowModal" tabindex="-1" aria-labelledby="rejectBorrowLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header bg-danger text-white">
-          <h5 class="modal-title" id="rejectBorrowLabel">Reject Borrow Request</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <p>
-            You are rejecting request <small class="text-muted">(Transaction ID: <span id="rejectTransactionId"></span>)</small>
-          </p>
-
-          <!-- hidden server-side borrow id -->
-          <input type="hidden" id="rejectBorrowId" value="">
-
-          <div class="mb-3">
-            <label for="rejectReason" class="form-label">Rejection Details</label>
-            <textarea id="rejectReason" class="form-control" rows="3" placeholder="Explain the reason for rejecting this request..." required></textarea>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-danger" id="confirmRejectBtn">Reject Request</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- Edit Borrow Modal -->
   <div class="modal fade" id="editBorrowModal" tabindex="-1" aria-labelledby="editBorrowLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header text-white" style="background-color: #13411F;">
-          <h5 class="modal-title" id="editBorrowLabel">Edit Borrow Request</h5>
+          <h5 class="modal-title" id="editBorrowLabel">Borrow Request Details</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
 
         <div class="modal-body">
-          <!-- store id -->
           <input type="hidden" id="editBorrowId" value="">
 
-          <!-- friendly info text -->
-          <p id="editBorrowInfo" class="mb-3"></p>
+          <dl class="row mb-0">
+            <dt class="col-sm-3">Transaction ID</dt>
+            <dd class="col-sm-9" id="editTransaction"></dd>
 
-          
+            <dt class="col-sm-3">Resident's Name</dt>
+            <dd class="col-sm-9" id="editResident"></dd>
+
+            <dt class="col-sm-3">Equipment</dt>
+            <dd class="col-sm-9" id="editEquipment"></dd>
+
+            <dt class="col-sm-3">Quantity</dt>
+            <dd class="col-sm-9" id="editQty"></dd>
+
+            <dt class="col-sm-3">Location</dt>
+            <dd class="col-sm-9" id="editLocation"></dd>
+
+            <dt class="col-sm-3">Used For</dt>
+            <dd class="col-sm-9" id="editUsedFor"></dd>
+
+            <dt class="col-sm-3">Borrow Date</dt>
+            <dd class="col-sm-9" id="editDates"></dd>
+
+            <dt class="col-sm-3">Pick-Up / Drop-Off</dt>
+            <dd class="col-sm-9" id="editPudo"></dd>
+
+            <dt class="col-sm-3">Status</dt>
+            <dd class="col-sm-9">
+              <select id="editStatus" class="form-select form-select-sm" style="max-width: 200px;">
+                <option value="Pending">Pending</option>
+                <option value="Borrowed">Borrowed</option>
+                <option value="Returned">Returned</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+            </dd>
+          </dl>
         </div>
 
         <div class="modal-footer">
-          <!-- Mark as returned button inside the body (as you requested) -->
-          <div class="d-grid">
-            <button type="button" id="markReturnedBtn" class="btn btn-success">Mark as Returned</button>
-          </div>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" id="saveStatusBtn" class="btn btn-success">Save Changes</button>
         </div>
       </div>
     </div>
   </div>
-
 
 </div>
 
@@ -1246,135 +1025,53 @@ if (!$brStmt) {
       });
     })();
 
-    // supplies: server-side array of equipment objects (id, equipment_sn, name, available_qty, total_qty, description)
-    const equipments = <?= json_encode($allEquipments, JSON_HEX_TAG) ?>;
-
-    // DOM elements
-    const visibleInput = document.getElementById('borrowedEquipment');
-    const hiddenEsn = document.getElementById('borrowedEsn'); // this is the value submitted to server
-    const borrowedList = document.getElementById('borrowedEquipmentList');
+    // Equipment dropdown handler
+    const equipmentSelect = document.getElementById('borrowedEquipment');
     const borrowedqtyIn = document.getElementById('borrow-qty');
     const availText = document.getElementById('esnAvailableText');
 
-    // helper: show friendly availability text
-    function setAvailText(n) {
-      if (n === null || n === undefined || n === '') {
-        availText.textContent = 'Available: —';
-      } else {
-        availText.textContent = 'Available: ' + (Number.isInteger(n) ? n : n);
-      }
-    }
-
-    // build a filtered list of equipment entries and render as clickable items
-    function rebuildList(items) {
-      borrowedList.innerHTML = '';
-      items.forEach(item => {
-        const li = document.createElement('li');
-        li.className = 'list-group-item list-group-item-action py-1';
-        li.style.cursor = 'pointer';
-        // show name and ESN, click will store ESN and show name
-        li.textContent = item.name; //+ ' (' + item.equipment_sn + ')';
-        li.addEventListener('mousedown', (ev) => {
-          // set visible to NAME (the user requested the NAME to show)
-          visibleInput.value = item.name;
-          // store ESN in hidden input for form submit
-          hiddenEsn.value = item.equipment_sn;
-          // update availability and cap qty
-          const avail = parseInt(item.available_qty) || 0;
-          setAvailText(avail);
-          if (borrowedqtyIn) {
-            borrowedqtyIn.max = avail;
-            if (!borrowedqtyIn.value) borrowedqtyIn.value = avail ? 1 : '';
-            else borrowedqtyIn.value = Math.min(parseInt(borrowedqtyIn.value || 0), avail || 0) || (avail ? 1 : '');
-            borrowedqtyIn.placeholder = avail ? `(max ${avail})` : `(unknown ESN)`;
-          }
-          // hide list after selection
-          borrowedList.style.display = 'none';
-        });
-        borrowedList.appendChild(li);
-      });
-
-      borrowedList.style.display = items.length ? 'block' : 'none';
-    }
-
-    // show full list on focus/click
-    const options = equipments; // array
-    if (visibleInput) {
-      visibleInput.addEventListener('focus', () => rebuildList(options));
-      visibleInput.addEventListener('click', () => rebuildList(options));
-
-      // filter while typing
-      visibleInput.addEventListener('input', () => {
-        const v = (visibleInput.value || '').trim().toLowerCase();
-        if (!v) {
-          // no filter -> show all
-          rebuildList(options);
-          // clear hidden ESN & availability because user is typing a new value
-          hiddenEsn.value = '';
-          setAvailText(null);
-          if (borrowedqtyIn) { borrowedqtyIn.removeAttribute('max'); borrowedqtyIn.placeholder = ''; }
+    if (equipmentSelect && borrowedqtyIn && availText) {
+      equipmentSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        
+        if (!selectedOption || !selectedOption.value) {
+          // No equipment selected
+          availText.textContent = 'Available: —';
+          borrowedqtyIn.value = '';
+          borrowedqtyIn.removeAttribute('max');
+          borrowedqtyIn.placeholder = '';
           return;
         }
-        const filtered = options.filter(e =>
-          (e.name && e.name.toLowerCase().includes(v)) ||
-          (e.equipment_sn && e.equipment_sn.toLowerCase().includes(v))
-        );
-        rebuildList(filtered);
-        // clear hidden value until an exact selection is chosen
-        hiddenEsn.value = '';
-        setAvailText(null);
-        if (borrowedqtyIn) { borrowedqtyIn.removeAttribute('max'); borrowedqtyIn.placeholder = ''; }
+        
+        const avail = parseInt(selectedOption.getAttribute('data-avail')) || 0;
+        
+        // Update availability text
+        availText.textContent = 'Available: ' + avail;
+        
+        // Set quantity constraints
+        if (avail > 0) {
+          borrowedqtyIn.max = avail;
+          borrowedqtyIn.value = 1;
+          borrowedqtyIn.placeholder = `(max ${avail})`;
+        } else {
+          borrowedqtyIn.value = '';
+          borrowedqtyIn.max = 0;
+          borrowedqtyIn.placeholder = '(unavailable)';
+        }
       });
-
-      // hide after blur (small delay to catch clicks)
-      visibleInput.addEventListener('blur', () => setTimeout(() => {
-        borrowedList.style.display = 'none';
-      }, 150));
     }
 
-    // If user pastes or programmatically changes the hidden ESN elsewhere,
-    // keep availability and qty cap in sync. Also allow the JS to react when
-    // someone manually edits the hiddenEsn (rare).
-    function updateFromHiddenEsn() {
-      const esn = hiddenEsn.value || '';
-      if (!esn) {
-        setAvailText(null);
-        if (borrowedqtyIn) { borrowedqtyIn.removeAttribute('max'); borrowedqtyIn.placeholder = ''; }
-        return;
-      }
-      const item = options.find(e => e.equipment_sn === esn);
-      if (!item) {
-        setAvailText(null);
-        if (borrowedqtyIn) { borrowedqtyIn.removeAttribute('max'); borrowedqtyIn.placeholder = ''; }
-        return;
-      }
-      const avail = parseInt(item.available_qty) || 0;
-      setAvailText(avail);
-      if (borrowedqtyIn) {
-        borrowedqtyIn.max = avail;
-        borrowedqtyIn.value = avail ? Math.min(parseInt(borrowedqtyIn.value || 0) || 1, avail) : '';
-        borrowedqtyIn.placeholder = avail ? `(max ${avail})` : `(unknown ESN)`;
-      }
-      // set visible text to name (in case hidden was changed externally)
-      if (visibleInput && visibleInput.value !== item.name) visibleInput.value = item.name;
-    }
-
-    // If your code previously updated `borrowedEsn` directly, call updateFromHiddenEsn() after that change.
-    // Add listener to hidden input in case of programmatic changes
-    hiddenEsn.addEventListener('change', updateFromHiddenEsn);
-
-    // Ensure when the modal is shown, availability reflects any pre-filled ESN
+    // Reset form when modal is hidden
     const addBorrowModalEl = document.getElementById('addBorrowModal');
     if (addBorrowModalEl) {
-      addBorrowModalEl.addEventListener('shown.bs.modal', () => {
-        updateFromHiddenEsn();
-      });
-      // reset when hidden
       addBorrowModalEl.addEventListener('hidden.bs.modal', () => {
-        if (visibleInput) visibleInput.value = '';
-        hiddenEsn.value = '';
-        setAvailText(null);
-        if (borrowedqtyIn) { borrowedqtyIn.value = ''; borrowedqtyIn.removeAttribute('max'); borrowedqtyIn.placeholder = ''; }
+        if (equipmentSelect) equipmentSelect.value = '';
+        if (availText) availText.textContent = 'Available: —';
+        if (borrowedqtyIn) {
+          borrowedqtyIn.value = '';
+          borrowedqtyIn.removeAttribute('max');
+          borrowedqtyIn.placeholder = '';
+        }
       });
     }
 
@@ -1413,202 +1110,7 @@ if (!$brStmt) {
       });
     }
 
-    // ── Borrow View ─────────────────────────────
-    document.querySelectorAll('.borrow-view-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const tr = btn.closest('tr');
-        if (!tr) return;
-
-        // Transaction ID
-        document.getElementById('viewTransaction').textContent = tr.dataset.transactionId || '—';
-
-        // Other fields
-        document.getElementById('viewResident').textContent = tr.dataset.resident || '—';
-        document.getElementById('viewEquipment').textContent = tr.dataset.equipment || tr.dataset.esn || '—';
-        document.getElementById('viewQty').textContent = tr.dataset.qty || '—';
-        document.getElementById('viewLocation').textContent = tr.dataset.location || '—';
-        document.getElementById('viewUsedFor').textContent = tr.dataset.usedfor || '—';
-
-        // Borrow dates
-        const from = tr.dataset.borrowFrom || '';
-        const to = tr.dataset.borrowTo || '';
-        document.getElementById('viewDates').textContent = (from && to)
-          ? (from === to ? from : from + ' — ' + to)
-          : '—';
-
-        document.getElementById('viewPudo').textContent = tr.dataset.pudo || '—';
-        document.getElementById('viewStatus').textContent = tr.dataset.status || 'Pending';
-
-        // Show modal
-        const modal = new bootstrap.Modal(document.getElementById('viewBorrowModal'));
-        modal.show();
-      });
-    });
-
-    // ── Wire Accept button ─────────────────────────────
-    document.querySelectorAll('.borrow-accept-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const tr = btn.closest('tr');
-        if (!tr) return;
-
-        // Get transaction id (for display) and numeric id (for server)
-        const tid = tr.dataset.transactionId || '—';
-        const brId = tr.dataset.id || '';
-
-        // Put them inside modal
-        document.getElementById('acceptTransactionId').textContent = tid;
-        document.getElementById('acceptBorrowId').value = brId;
-
-        // Show modal
-        const modal = new bootstrap.Modal(document.getElementById('acceptBorrowModal'));
-        modal.show();
-      });
-    });
-
-    // Confirm Accept button — send request to server
-    const confirmAcceptBtn = document.getElementById('confirmAcceptBtn');
-    if (confirmAcceptBtn) {
-      confirmAcceptBtn.addEventListener('click', async (ev) => {
-        const id = document.getElementById('acceptBorrowId').value;
-        if (!id) return;
-
-        // disable to prevent double clicks
-        confirmAcceptBtn.disabled = true;
-        confirmAcceptBtn.textContent = 'Processing...';
-
-        try {
-          const form = new FormData();
-          form.append('id', id);
-
-          const resp = await fetch('functions/borrow_accept.php', {
-            method: 'POST',
-            body: form,
-            credentials: 'same-origin'
-          });
-
-          const data = await resp.json();
-
-          if (data && data.success) {
-            // optionally show a brief success alert then reload
-            const placeholder = document.getElementById('statusAlertPlaceholder');
-            if (placeholder) {
-              placeholder.innerHTML = '<div class="alert alert-success alert-dismissible fade show" role="alert">Borrow request accepted. Reloading...<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
-            }
-            // close modal then reload to reflect changes
-            const mEl = document.getElementById('acceptBorrowModal');
-            bootstrap.Modal.getInstance(mEl)?.hide();
-            // small timeout so user sees the modal close animation / alert
-            setTimeout(() => location.reload(), 300);
-          } else {
-            const err = (data && data.error) ? data.error : 'Unknown error';
-            const placeholder = document.getElementById('statusAlertPlaceholder');
-            if (placeholder) {
-              placeholder.innerHTML = '<div class="alert alert-danger alert-dismissible fade show" role="alert">Accept failed: ' + String(err) + '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
-            } else {
-              alert('Accept failed: ' + err);
-            }
-            confirmAcceptBtn.disabled = false;
-            confirmAcceptBtn.textContent = 'Accept';
-          }
-        } catch (err) {
-          console.error(err);
-          alert('Network or server error while accepting.');
-          confirmAcceptBtn.disabled = false;
-          confirmAcceptBtn.textContent = 'Accept';
-        }
-      });
-    }
-
-    // ── Wire Reject button ─────────────────────────────
-    document.querySelectorAll('.borrow-reject-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const tr = btn.closest('tr');
-        if (!tr) return;
-
-        const tid = tr.dataset.transactionId || '—';
-        const brId = tr.dataset.id || '';
-
-        // Put into modal
-        document.getElementById('rejectTransactionId').textContent = tid;
-        document.getElementById('rejectBorrowId').value = brId;
-
-        // Clear previous reason
-        const reasonEl = document.getElementById('rejectReason');
-        if (reasonEl) reasonEl.value = '';
-
-        // Show modal
-        const modal = new bootstrap.Modal(document.getElementById('rejectBorrowModal'));
-        modal.show();
-      });
-    });
-
-    // Confirm Reject button — send to server
-    const confirmRejectBtn = document.getElementById('confirmRejectBtn');
-    if (confirmRejectBtn) {
-      confirmRejectBtn.addEventListener('click', async () => {
-        const id = document.getElementById('rejectBorrowId').value;
-        const reasonEl = document.getElementById('rejectReason');
-        const reason = reasonEl ? reasonEl.value.trim() : '';
-
-        if (!id) {
-          alert('Missing borrow request id.');
-          return;
-        }
-        if (!reason) {
-          // simple client-side validation
-          if (reasonEl) {
-            reasonEl.focus();
-          }
-          alert('Please provide a rejection reason.');
-          return;
-        }
-
-        confirmRejectBtn.disabled = true;
-        confirmRejectBtn.textContent = 'Processing...';
-
-        try {
-          const form = new FormData();
-          form.append('id', id);
-          form.append('reason', reason);
-
-          const resp = await fetch('functions/borrow_reject.php', {
-            method: 'POST',
-            body: form,
-            credentials: 'same-origin'
-          });
-
-          const data = await resp.json();
-
-          if (data && data.success) {
-            const placeholder = document.getElementById('statusAlertPlaceholder');
-            if (placeholder) {
-              placeholder.innerHTML = '<div class="alert alert-success alert-dismissible fade show" role="alert">Borrow request rejected. Reloading...<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
-            }
-            // hide modal then reload so UI updates
-            const mEl = document.getElementById('rejectBorrowModal');
-            bootstrap.Modal.getInstance(mEl)?.hide();
-            setTimeout(() => location.reload(), 300);
-          } else {
-            const err = (data && data.error) ? data.error : 'Unknown error';
-            const placeholder = document.getElementById('statusAlertPlaceholder');
-            if (placeholder) {
-              placeholder.innerHTML = '<div class="alert alert-danger alert-dismissible fade show" role="alert">Reject failed: ' + String(err) + '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
-            } else {
-              alert('Reject failed: ' + err);
-            }
-            confirmRejectBtn.disabled = false;
-            confirmRejectBtn.textContent = 'Reject Request';
-          }
-        } catch (err) {
-          console.error(err);
-          alert('Network or server error while rejecting.');
-          confirmRejectBtn.disabled = false;
-          confirmRejectBtn.textContent = 'Reject Request';
-        }
-      });
-    }
-
-        // helper: simple escaped text to avoid XSS
+    // helper: simple escaped text to avoid XSS
     function escapeHtml(s) {
       if (!s) return '';
       return s.replace(/[&<>"'\/]/g, function (c) {
@@ -1618,82 +1120,150 @@ if (!$brStmt) {
       });
     }
 
-        // ── Wire Edit (Mark returned) ─────────────────────────────
+    // ── Wire Edit button to show full details with editable status ─────────────────────────────
     document.querySelectorAll('.borrow-edit-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const tr = btn.closest('tr');
         if (!tr) return;
 
         const id = tr.dataset.id;
-        const qty = tr.dataset.qty || '0';
-        const equipment = tr.dataset.equipment || tr.dataset.esn || '—';
-
-        // fill modal
+        
+        // Populate modal with all details
         document.getElementById('editBorrowId').value = id;
-        document.getElementById('editBorrowInfo').innerHTML =
-          `<strong>${escapeHtml(qty)}</strong> <strong>${escapeHtml(equipment)}</strong> is currently borrowed. Mark as returned?`;
+        document.getElementById('editTransaction').textContent = tr.dataset.transactionId || '—';
+        document.getElementById('editResident').textContent = tr.dataset.resident || '—';
+        document.getElementById('editEquipment').textContent = tr.dataset.equipment || tr.dataset.esn || '—';
+        document.getElementById('editQty').textContent = tr.dataset.qty || '—';
+        document.getElementById('editLocation').textContent = tr.dataset.location || '—';
+        document.getElementById('editUsedFor').textContent = tr.dataset.usedfor || '—';
+        
+        // Format dates
+        const from = tr.dataset.borrowFrom || '';
+        const to = tr.dataset.borrowTo || '';
+        document.getElementById('editDates').textContent = (from && to)
+          ? (from === to ? from : from + ' — ' + to)
+          : '—';
+        
+        document.getElementById('editPudo').textContent = tr.dataset.pudo || '—';
+        
+        // Set current status in dropdown
+        const currentStatus = tr.dataset.status || 'Pending';
+        document.getElementById('editStatus').value = currentStatus;
 
-        // show modal
+        // Show modal
         const modalEl = document.getElementById('editBorrowModal');
         const modal = new bootstrap.Modal(modalEl);
         modal.show();
       });
     });
 
-    // Mark as Returned button handler (inside modal body)
-    const markReturnedBtn = document.getElementById('markReturnedBtn');
-    if (markReturnedBtn) {
-      markReturnedBtn.addEventListener('click', async (ev) => {
+    // Save Status button handler
+    const saveStatusBtn = document.getElementById('saveStatusBtn');
+    if (saveStatusBtn) {
+      saveStatusBtn.addEventListener('click', async (ev) => {
         const id = document.getElementById('editBorrowId').value;
-        if (!id) return;
+        const newStatus = document.getElementById('editStatus').value;
+        
+        if (!id) {
+          console.error('No ID found');
+          return;
+        }
 
-        markReturnedBtn.disabled = true;
-        const originalTxt = markReturnedBtn.textContent;
-        markReturnedBtn.textContent = 'Processing...';
+        // Find the borrow record in our data
+        const borrowIndex = borrowsData.findIndex(b => b.id == id);
+        if (borrowIndex === -1) {
+          console.error('Borrow record not found in borrowsData');
+          showStatusAlert('Record not found', 'danger');
+          return;
+        }
+        
+        const currentStatus = borrowsData[borrowIndex].status;
+        
+        // If status hasn't changed, just close modal
+        if (currentStatus === newStatus) {
+          const modalEl = document.getElementById('editBorrowModal');
+          bootstrap.Modal.getInstance(modalEl)?.hide();
+          return;
+        }
+
+        saveStatusBtn.disabled = true;
+        const originalTxt = saveStatusBtn.textContent;
+        saveStatusBtn.textContent = 'Saving...';
 
         try {
           const body = new URLSearchParams();
           body.append('id', id);
-          body.append('action', 'return');
+          body.append('new_status', newStatus);
+          body.append('old_status', currentStatus);
 
-          const resp = await fetch('functions/borrow_update.php', {
+          console.log('Sending request:', { id, newStatus, currentStatus }); // Debug log
+
+          const resp = await fetch('functions/borrow_update_status.php', {
             method: 'POST',
             body: body
           });
 
+          console.log('Response status:', resp.status); // Debug log
+
           const json = await resp.json();
+          console.log('Response data:', json); // Debug log
+
           if (json && json.success) {
-            // Update table row: change badge, data-status, remove edit button
+            // Update borrowsData array
+            borrowsData[borrowIndex].status = newStatus;
+            
+            // Update table row if it exists (for list view)
             const tr = document.querySelector(`tr[data-id="${id}"]`);
             if (tr) {
-              tr.dataset.status = 'Returned';
-              // update the badge element (assumes there's a .badge in the status cell)
+              tr.dataset.status = newStatus;
+              
               const badge = tr.querySelector('.badge');
               if (badge) {
-                badge.className = 'badge bg-success';
-                badge.textContent = 'Returned';
+                badge.className = 'badge';
+                switch(newStatus) {
+                  case 'Pending':
+                    badge.classList.add('bg-warning', 'text-dark');
+                    break;
+                  case 'Borrowed':
+                    badge.classList.add('bg-primary');
+                    break;
+                  case 'Returned':
+                    badge.classList.add('bg-success');
+                    break;
+                  case 'Rejected':
+                    badge.classList.add('bg-danger');
+                    break;
+                }
+                badge.textContent = newStatus;
               }
-              // remove edit button if present
-              const editBtn = tr.querySelector('.borrow-edit-btn');
-              if (editBtn) editBtn.remove();
+              
+              // Remove edit button if status is Returned or Rejected
+              if (newStatus === 'Returned' || newStatus === 'Rejected') {
+                const editBtn = tr.querySelector('.borrow-edit-btn');
+                if (editBtn) editBtn.remove();
+              }
             }
 
-            // hide modal
-            const modalEl = document.getElementById('editBorrowModal');
-            const modalInstance = bootstrap.Modal.getInstance(modalEl);
-            if (modalInstance) modalInstance.hide();
+            // Refresh calendar to show updated status
+            updateCalendar();
 
-            showStatusAlert('Borrow request marked as returned', 'success');
+            // Hide modal
+            const modalEl = document.getElementById('editBorrowModal');
+            bootstrap.Modal.getInstance(modalEl)?.hide();
+
+            showStatusAlert('Status updated successfully', 'success');
           } else {
-            const err = (json && json.error) ? json.error : 'Failed to mark as returned';
+            const err = (json && json.error) ? json.error : 'Failed to update status';
+            console.error('Update failed:', err);
             showStatusAlert(err, 'danger');
           }
 
         } catch (err) {
+          console.error('Fetch error:', err);
           showStatusAlert(err.message || 'Request failed', 'danger');
         } finally {
-          markReturnedBtn.disabled = false;
-          markReturnedBtn.textContent = originalTxt;
+          saveStatusBtn.disabled = false;
+          saveStatusBtn.textContent = originalTxt;
         }
       });
     }
@@ -1723,7 +1293,429 @@ if (!$brStmt) {
       }
     }
 
+    // Calendar functionality
+    let currentDate = new Date();
+    let currentView = 'week'; // Default to week view
+    let borrowsData = <?= json_encode($borrows, JSON_HEX_TAG) ?>;
 
+    function formatDateForDisplay(dateStr) {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function getWeekStart(date) {
+      const d = new Date(date);
+      const day = d.getDay();
+      const diff = d.getDate() - day;
+      return new Date(d.setDate(diff));
+    }
+
+    function getWeekEnd(date) {
+      const d = new Date(date);
+      const day = d.getDay();
+      const diff = d.getDate() - day + 6;
+      return new Date(d.setDate(diff));
+    }
+
+    function generateWeekView(date) {
+      const weekStart = getWeekStart(new Date(date));
+      const weekEnd = getWeekEnd(new Date(date));
+      
+      document.getElementById('currentPeriod').textContent = 
+        `${formatDateForDisplay(weekStart.toISOString().split('T')[0])} - ${formatDateForDisplay(weekEnd.toISOString().split('T')[0])}`;
+      
+      const calendarBody = document.getElementById('calendarBody');
+      calendarBody.innerHTML = '';
+      
+      // Create single row for week view
+      const row = document.createElement('tr');
+      
+      for (let i = 0; i < 7; i++) {
+        const currentDay = new Date(weekStart);
+        currentDay.setDate(weekStart.getDate() + i);
+        
+        const cell = document.createElement('td');
+        cell.className = 'p-2 align-top border';
+        cell.style.height = '200px'; // Increased height for detailed cards
+        cell.style.minWidth = '120px';
+        
+        const today = new Date();
+        const isToday = (
+          currentDay.getFullYear() === today.getFullYear() &&
+          currentDay.getMonth() === today.getMonth() &&
+          currentDay.getDate() === today.getDate()
+        );
+        
+        const dateDiv = document.createElement('div');
+        if (isToday) {
+          dateDiv.className = 'fw-bold text-white bg-secondary rounded-circle d-inline-flex align-items-center justify-content-center mb-1';
+          dateDiv.style.width = '24px';
+          dateDiv.style.height = '24px';
+          dateDiv.style.fontSize = '0.8rem';
+        } else {
+          dateDiv.className = 'fw-bold mb-1';
+          dateDiv.style.fontSize = '0.9rem';
+        }
+        dateDiv.textContent = currentDay.getDate();
+        cell.appendChild(dateDiv);
+        
+        // Add day name
+        const dayNameDiv = document.createElement('div');
+        dayNameDiv.className = 'text-muted mb-1';
+        dayNameDiv.style.fontSize = '0.7rem';
+        dayNameDiv.textContent = currentDay.toLocaleDateString('en-US', { weekday: 'short' });
+        cell.appendChild(dayNameDiv);
+        
+        // Add borrow events for this date
+        const currentDateStr = currentDay.toISOString().split('T')[0];
+        addBorrowEvents(cell, currentDateStr);
+        
+        row.appendChild(cell);
+      }
+      
+      calendarBody.appendChild(row);
+    }
+
+    function generateMonthView(year, month) {
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const daysInMonth = lastDay.getDate();
+      const startingDayOfWeek = firstDay.getDay();
+      
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                        'July', 'August', 'September', 'October', 'November', 'December'];
+      
+      document.getElementById('currentPeriod').textContent = `${monthNames[month]} ${year}`;
+      
+      const calendarBody = document.getElementById('calendarBody');
+      calendarBody.innerHTML = '';
+      
+      let date = 1;
+      
+      // Create 6 rows (weeks) for the calendar
+      for (let week = 0; week < 6; week++) {
+        const row = document.createElement('tr');
+        
+        // Create 7 days for each week
+        for (let day = 0; day < 7; day++) {
+          const cell = document.createElement('td');
+          cell.className = 'p-1 align-top border';
+          cell.style.height = '120px';
+          cell.style.minWidth = '120px';
+          
+          if (week === 0 && day < startingDayOfWeek) {
+            // Previous month's days
+            const prevMonth = month === 0 ? 11 : month - 1;
+            const prevYear = month === 0 ? year - 1 : year;
+            const prevMonthLastDay = new Date(prevYear, prevMonth + 1, 0).getDate();
+            const prevDate = prevMonthLastDay - startingDayOfWeek + day + 1;
+            
+            const dateDiv = document.createElement('div');
+            dateDiv.className = 'fw-bold text-muted mb-1';
+            dateDiv.style.fontSize = '0.9rem';
+            dateDiv.textContent = prevDate;
+            cell.appendChild(dateDiv);
+          } else if (date > daysInMonth) {
+            // Next month's days
+            const nextDate = date - daysInMonth;
+            const dateDiv = document.createElement('div');
+            dateDiv.className = 'fw-bold text-muted mb-1';
+            dateDiv.style.fontSize = '0.9rem';
+            dateDiv.textContent = nextDate;
+            cell.appendChild(dateDiv);
+            date++;
+          } else {
+            // Current month's days
+            const today = new Date();
+            const isToday = (year === today.getFullYear() && month === today.getMonth() && date === today.getDate());
+            
+            const dateDiv = document.createElement('div');
+            if (isToday) {
+              dateDiv.className = 'fw-bold text-white bg-secondary rounded-circle d-inline-flex align-items-center justify-content-center mb-1';
+              dateDiv.style.width = '24px';
+              dateDiv.style.height = '24px';
+              dateDiv.style.fontSize = '0.8rem';
+            } else {
+              dateDiv.className = 'fw-bold mb-1';
+              dateDiv.style.fontSize = '0.9rem';
+            }
+            dateDiv.textContent = date;
+            cell.appendChild(dateDiv);
+            
+            // Add borrow events for this date
+            const currentDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+            addBorrowEvents(cell, currentDateStr);
+            
+            date++;
+          }
+          
+          row.appendChild(cell);
+        }
+        
+        calendarBody.appendChild(row);
+        
+        // Break if we've filled all days of the month and don't need more weeks
+        if (date > daysInMonth) break;
+      }
+    }
+
+    function addBorrowEvents(cell, dateStr) {
+      const dayEvents = borrowsData.filter(borrow => {
+        const fromDate = borrow.borrow_date_from;
+        const toDate = borrow.borrow_date_to;
+        return dateStr >= fromDate && dateStr <= toDate;
+      });
+      
+      if (currentView === 'week') {
+        // Week view - show simplified cards
+        dayEvents.forEach(event => {
+          const eventCard = document.createElement('div');
+          eventCard.className = 'card mb-2';
+          eventCard.style.fontSize = '0.75rem';
+          eventCard.style.cursor = 'pointer';
+          
+          const status = (event.status || 'pending').toLowerCase();
+          let statusClass = 'bg-secondary';
+          switch(status) {
+            case 'pending': statusClass = 'bg-warning text-dark'; break;
+            case 'borrowed': statusClass = 'bg-primary'; break;
+            case 'returned': statusClass = 'bg-success'; break;
+            case 'rejected': statusClass = 'bg-danger'; break;
+          }
+          
+          eventCard.innerHTML = `
+            <div class="card-body p-2">
+              <div class="mb-2">
+                <div class="badge ${statusClass} d-flex justify-content-between align-items-center w-100" style="font-size: 0.65rem;">
+                  <span>${event.equipment_name || event.equipment_sn || 'Unknown'}</span>
+                  <span>${event.qty}pcs</span>
+                </div>
+              </div>
+              <div class="mb-1" style="font-size: 0.7rem; font-weight: 500;">
+                ${event.transaction_id || '—'}
+              </div>
+              <div class="mb-2" style="font-size: 0.7rem;">
+                ${event.resident_name || '—'}
+              </div>
+              <div class="d-flex justify-content-end">
+                <button class="btn btn-secondary btn-sm edit-event-btn" style="font-size: 0.6rem; padding: 2px 6px;" data-id="${event.id}">
+                  <span class="material-symbols-outlined" style="font-size: 0.7rem;">edit</span>
+                </button>
+              </div>
+            </div>
+          `;
+          
+          cell.appendChild(eventCard);
+        });
+        
+      } else {
+        // Month view - show compact list with status-colored backgrounds
+        const visibleEvents = dayEvents.slice(0, 3);
+        const hiddenEvents = dayEvents.slice(3);
+        
+        visibleEvents.forEach(event => {
+          const eventDiv = document.createElement('div');
+          eventDiv.className = 'mb-1 p-1 rounded';
+          eventDiv.style.fontSize = '0.65rem';
+          eventDiv.style.cursor = 'pointer';
+          
+          const status = (event.status || 'pending').toLowerCase();
+          let backgroundColor = '#6c757d'; // secondary/default
+          let textColor = 'white';
+          
+          switch(status) {
+            case 'pending': 
+              backgroundColor = '#ffc107'; // warning yellow
+              textColor = 'black';
+              break;
+            case 'borrowed': 
+              backgroundColor = '#0d6efd'; // primary blue
+              textColor = 'white';
+              break;
+            case 'returned': 
+              backgroundColor = '#198754'; // success green
+              textColor = 'white';
+              break;
+            case 'rejected': 
+              backgroundColor = '#dc3545'; // danger red
+              textColor = 'white';
+              break;
+          }
+          
+          eventDiv.style.backgroundColor = backgroundColor;
+          eventDiv.style.color = textColor;
+          
+          eventDiv.innerHTML = `
+            <div class="fw-bold">${event.resident_name || 'Unknown'}</div>
+            <div style="opacity: 0.9;">${event.equipment_name || event.equipment_sn || 'Unknown'}</div>
+          `;
+          
+          eventDiv.addEventListener('click', () => {
+            // Populate edit modal with event data
+            document.getElementById('editBorrowId').value = event.id;
+            document.getElementById('editTransaction').textContent = event.transaction_id || '—';
+            document.getElementById('editResident').textContent = event.resident_name || '—';
+            document.getElementById('editEquipment').textContent = event.equipment_name || event.equipment_sn || '—';
+            document.getElementById('editQty').textContent = event.qty || '—';
+            document.getElementById('editLocation').textContent = event.location || '—';
+            document.getElementById('editUsedFor').textContent = event.used_for || '—';
+            
+            const from = event.borrow_date_from || '';
+            const to = event.borrow_date_to || '';
+            document.getElementById('editDates').textContent = (from && to)
+              ? (from === to ? formatDateForDisplay(from) : formatDateForDisplay(from) + ' — ' + formatDateForDisplay(to))
+              : '—';
+            
+            document.getElementById('editPudo').textContent = event.pudo || '—';
+            document.getElementById('editStatus').value = event.status || 'Pending';
+            
+            // Show edit modal instead of view modal
+            const modal = new bootstrap.Modal(document.getElementById('editBorrowModal'));
+            modal.show();
+          });
+          cell.appendChild(eventDiv);
+        });
+        
+        // Add "..." dropdown for additional events
+        if (hiddenEvents.length > 0) {
+          const moreDiv = document.createElement('div');
+          moreDiv.className = 'dropdown';
+          moreDiv.innerHTML = `
+            <button class="btn btn-link p-0 text-muted dropdown-toggle" type="button" data-bs-toggle="dropdown" style="font-size: 0.7rem; text-decoration: none;">
+              ...
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" style="font-size: 0.65rem; min-width: 180px;">
+              ${hiddenEvents.map(event => `
+                <li><a class="dropdown-item show-details-item" href="#" data-event='${JSON.stringify(event)}'>
+                  <div class="fw-bold">${event.resident_name || 'Unknown'}</div>
+                  <div class="text-muted">${event.equipment_name || event.equipment_sn || 'Unknown'}</div>
+                </a></li>
+              `).join('')}
+            </ul>
+          `;
+          
+          // Add click handlers for dropdown items
+          const dropdownItems = moreDiv.querySelectorAll('.show-details-item');
+          dropdownItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+              e.preventDefault();
+              const eventData = JSON.parse(item.dataset.event);
+              
+              // Populate edit modal with event data
+              document.getElementById('editBorrowId').value = eventData.id;
+              document.getElementById('editTransaction').textContent = eventData.transaction_id || '—';
+              document.getElementById('editResident').textContent = eventData.resident_name || '—';
+              document.getElementById('editEquipment').textContent = eventData.equipment_name || eventData.equipment_sn || '—';
+              document.getElementById('editQty').textContent = eventData.qty || '—';
+              document.getElementById('editLocation').textContent = eventData.location || '—';
+              document.getElementById('editUsedFor').textContent = eventData.used_for || '—';
+              
+              const from = eventData.borrow_date_from || '';
+              const to = eventData.borrow_date_to || '';
+              document.getElementById('editDates').textContent = (from && to)
+                ? (from === to ? formatDateForDisplay(from) : formatDateForDisplay(from) + ' — ' + formatDateForDisplay(to))
+                : '—';
+              
+              document.getElementById('editPudo').textContent = eventData.pudo || '—';
+              document.getElementById('editStatus').value = eventData.status || 'Pending';
+              
+              // Show edit modal
+              const modal = new bootstrap.Modal(document.getElementById('editBorrowModal'));
+              modal.show();
+            });
+          });
+          
+          cell.appendChild(moreDiv);
+        }
+      }
+    }
+
+    function updateCalendar() {
+      if (currentView === 'week') {
+        generateWeekView(currentDate);
+      } else {
+        generateMonthView(currentDate.getFullYear(), currentDate.getMonth());
+      }
+    }
+
+    // Event delegation for dynamically created edit buttons
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('.edit-event-btn')) {
+        const btn = e.target.closest('.edit-event-btn');
+        const eventId = btn.dataset.id;
+        const event = borrowsData.find(b => b.id == eventId);
+        if (event) {
+          // Populate edit modal with event data
+          document.getElementById('editBorrowId').value = event.id;
+          document.getElementById('editTransaction').textContent = event.transaction_id || '—';
+          document.getElementById('editResident').textContent = event.resident_name || '—';
+          document.getElementById('editEquipment').textContent = event.equipment_name || event.equipment_sn || '—';
+          document.getElementById('editQty').textContent = event.qty || '—';
+          document.getElementById('editLocation').textContent = event.location || '—';
+          document.getElementById('editUsedFor').textContent = event.used_for || '—';
+          
+          const from = event.borrow_date_from || '';
+          const to = event.borrow_date_to || '';
+          document.getElementById('editDates').textContent = (from && to)
+            ? (from === to ? formatDateForDisplay(from) : formatDateForDisplay(from) + ' — ' + formatDateForDisplay(to))
+            : '—';
+          
+          document.getElementById('editPudo').textContent = event.pudo || '—';
+          document.getElementById('editStatus').value = event.status || 'Pending';
+          
+          // Show modal
+          const modal = new bootstrap.Modal(document.getElementById('editBorrowModal'));
+          modal.show();
+        }
+      }
+    });
+
+    // View type change handlers
+    document.getElementById('weekView').addEventListener('change', function() {
+      if (this.checked) {
+        currentView = 'week';
+        updateCalendar();
+      }
+    });
+
+    document.getElementById('monthView').addEventListener('change', function() {
+      if (this.checked) {
+        currentView = 'month';
+        updateCalendar();
+      }
+    });
+
+    // Navigation handlers
+    document.getElementById('prevPeriod').addEventListener('click', () => {
+      if (currentView === 'week') {
+        currentDate.setDate(currentDate.getDate() - 7);
+      } else {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+      }
+      updateCalendar();
+    });
+
+    document.getElementById('nextPeriod').addEventListener('click', () => {
+      if (currentView === 'week') {
+        currentDate.setDate(currentDate.getDate() + 7);
+      } else {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+      }
+      updateCalendar();
+    });
+
+    // Initialize calendar when borrow requests tab is shown
+    document.getElementById('tab-borrows-btn').addEventListener('click', () => {
+      setTimeout(() => {
+        updateCalendar();
+      }, 100);
+    });
+
+    // Initialize calendar if borrow requests tab is active on page load
+    if ((<?= json_encode($_GET['tab'] ?? '') ?>) === 'borrows') {
+      updateCalendar();
+    }
   });
 </script>
 <?php

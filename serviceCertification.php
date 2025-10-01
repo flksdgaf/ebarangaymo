@@ -490,7 +490,7 @@ if (!empty($existingRequestRow)) {
                     <!-- Footer note -->
                     <p class="submission-footer">
                         To check if your permit is ready for release,<br>
-                        please visit the <strong>My Requests</strong> page and enter your transaction reference number.
+                        please visit the <strong>My Requests</strong> page and view your latest submitted request.
                     </p>
 
                 </div>

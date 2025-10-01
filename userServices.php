@@ -35,6 +35,10 @@ function getEquipmentIcon($name) {
         str_contains($name, 'speaker') => 'speaker',
         str_contains($name, 'microphone') => 'mic',
         str_contains($name, 'light') => 'highlight',
+        str_contains($name, 'sound') => 'volume_up',
+        str_contains($name, 'projector') => 'movie',
+        str_contains($name, 'camera') => 'photo_camera',
+        str_contains($name, 'generator') => 'power',
         default => 'inventory_2',
     };
 }
@@ -58,109 +62,178 @@ $stmt->close();
 
 <!-- Inline CSS for Equipment Cards -->
 <style>
-/* === PAGE BACKGROUND FIX (ADDED) ===
-   Ensure full-page background is #efefef and avoid inner containers creating a white split.
-   Only these rules were added/adjusted to fix the visual split you described.
-*/
 html, body {
   height: 100%;
   background-color: #efefef !important;
 }
-
-/* make sure your top-level wrapper and the two main containers are transparent *
-   so the body background shows through (avoids white bands caused by nested blocks) */
 .container.py-4,
 .services-container,
 #servicesMainContainer,
 #equipmentContainer {
   background: transparent !important;
 }
-
-/* Slight spacing safety for equipment container so the green cards don't butt up against the edges */
 #equipmentContainer { padding-top: 3rem; padding-bottom: 3rem; }
-
 /* Entrance animation */
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(30px); }
   to { opacity: 1; transform: translateY(0); }
 }
-/* Base card style */
+
+@keyframes slideInUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(60px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Updated Equipment Card Styling */
 .equipment-card {
-  border-radius: 1rem;
-  background: #28a745;
-  width: 300px;
-  height: 300px;
+  border-radius: 0.8rem;
+  background: linear-gradient(135deg, #1e7e34 0%, #28a745 100%);
+  width: 280px;
+  height: 350px;
   color: #fff;
   position: relative;
   overflow: hidden;
-  padding: 2rem 1rem;
+  padding: 2rem 1.5rem;
   text-align: center;
-  animation: fadeInUp 0.5s forwards;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  animation: slideInUp 0.6s ease-out forwards;
+  transition: all 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
   cursor: pointer;
+  box-shadow: 0 8px 25px rgba(30, 126, 52, 0.3);
+  border: none;
 }
-.equipment-card:hover {
-  transform: scale(1.03);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+
+/* Icon styling - positioned at top */
+.equipment-icon {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  transition: all 0.3s ease;
 }
-/* Icon styling */
+
+.equipment-card:hover .equipment-icon {
+  background: rgba(255, 255, 255, 0.3);
+  animation: pulse 1s infinite;
+}
+
 .icon-main {
-  font-size: 3rem;
+  font-size: 2.5rem;
   color: #fff;
-  margin-bottom: 0.5rem;
-  transition: color 0.3s;
 }
+
 /* Equipment title */
-.card-title {
-  font-size: 1.1rem;
+.equipment-title {
+  font-size: 1.4rem;
   font-weight: 700;
   color: #fff;
+  margin-bottom: 1rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
-/* Hover panel */
-.availability-panel {
-  background: #fff;
-  color: #145214;
-  border-radius: 0.75rem;
-  padding: 1rem 0.5rem;
-  position: absolute;
-  bottom: -150px;
-  left: 10%;
-  width: 80%;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-  opacity: 0;
-  transition: all 0.4s ease;
+
+/* Availability text */
+.availability-section {
+  margin-bottom: 1.5rem;
+  border: 2px solid;
+  border-radius: 10px;
+  padding-right: 10px;
+  padding-left: 10px;
 }
-.equipment-card:hover .availability-panel {
-  bottom: 10px;
-  opacity: 1;
+
+.availability-text {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.3;
+  text-align: left;
+  flex: 1;
+  margin-right: 1rem;
 }
-/* Quantity styling */
-.qty {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #28a745;
-  margin-top: 0.25rem;
+
+.quantity-display {
+  font-size: 3rem;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+  animation: fadeInUp 0.8s ease-out;
+  flex-shrink: 0;
 }
+
 /* Borrow button styling */
 .btn-borrow {
-  background: linear-gradient(to right, #28a745, #145214);
-  border: none;
-  color: #fff;
-  padding: 0.4rem 1.5rem;
-  font-size: 0.9rem;
-  font-weight: 600;
-  border-radius: 0.375rem;
-  transition: background 0.3s ease, transform 0.2s;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid transparent;
+  color: #28a745;
+  padding: 0.7rem 2rem;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: 2rem;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 140px;
 }
+
 .btn-borrow:hover {
-  background: linear-gradient(to right, #145214, #28a745);
-  transform: translateY(-2px);
+  background: #fff;
+  border-color: #fff;
+  color: #28a745;
+  transform: translateX(-50%) translateY(-3px);
+  box-shadow: 0 5px 15px rgba(255, 255, 255, 0.4);
 }
-/* Responsive tweak */
+
+.btn-borrow:active {
+  transform: translateX(-50%) translateY(-1px);
+}
+
+/* Responsive adjustments */
 @media (max-width: 576px) {
-  .equipment-card { padding: 1.5rem 1rem; }
-  .availability-panel { left: 5%; width: 90%; }
+  .equipment-card { 
+    width: 260px; 
+    height: 330px;
+    padding: 1.5rem 1rem; 
+  }
+  .equipment-icon {
+    width: 70px;
+    height: 70px;
+  }
+  .icon-main {
+    font-size: 2rem;
+  }
+  .equipment-title {
+    font-size: 1.2rem;
+  }
+  .quantity-display {
+    font-size: 2.5rem;
+  }
 }
+
+/* Grid animation stagger */
+.equipment-card:nth-child(1) { animation-delay: 0.1s; }
+.equipment-card:nth-child(2) { animation-delay: 0.25s; }
+.equipment-card:nth-child(3) { animation-delay: 0.4s; }
+.equipment-card:nth-child(4) { animation-delay: 0.55s; }
+.equipment-card:nth-child(5) { animation-delay: 0.7s; }
+.equipment-card:nth-child(6) { animation-delay: 0.85s; }
+.equipment-card:nth-child(n+7) { animation-delay: 1s; }
 </style>
 
 <div class="container py-4">
@@ -219,38 +292,49 @@ html, body {
   </div>
 
   <!-- Equipment Borrowing Container -->
-    <div id="equipmentContainer" class="container py-5" style="display: none;">
+  <div id="equipmentContainer" class="container py-5" style="display: none;">
         <div class="d-flex align-items-center justify-content-center mb-5 position-relative">
             <!-- Back Icon -->
             <button id="backToServicesBtn" class="btn btn-link text-success position-absolute start-0" style="font-size: 2rem; text-decoration: none;">
                 <span class="material-icons" style="font-size: 50px;">chevron_left</span>
             </button>
             <!-- Heading -->
-            <h1 class="text-success fw-bold mb-0 text-center">Barangay Equipment Borrowing</h1>
+            <h1 class="text-center gradient-text text-uppercase">Barangay Equipment Borrowing</h1>
         </div>
 
-        <div class="row g-5 justify-content-center">
+        <div class="row g-4 justify-content-center">
             <?php foreach ($equipments as $i => $eq): ?>
-                <div class="col-sm-6 col-md-4 col-lg-3 text-center">
-                    <div class="card shadow-sm equipment-card" style="animation-delay: <?= $i * 0.1 ?>s">
-                        <div class="card-body text-center">
-                            <i class="material-icons display-3 icon-main mx-auto d-block mb-2">
+                <div class="col-sm-6 col-md-4 col-lg-3 d-flex justify-content-center">
+                    <div class="equipment-card">
+                        <!-- Equipment Icon at Top -->
+                        <div class="equipment-icon">
+                            <i class="material-icons icon-main">
                                 <?= getEquipmentIcon($eq['name']) ?>
                             </i>
-                            <h5 class="card-title fw-bold mb-0">
-                                <?= htmlspecialchars($eq['name']) ?>
-                            </h5>
                         </div>
-                        <div class="availability-panel text-center">
-                            <p class="mb-1 small">Today’s available<br><strong><?= htmlspecialchars($eq['name']) ?></strong> for borrowing:</p>
-                            <div class="qty"><?= (int)$eq['available_qty'] ?></div>
-                            
-                            <!-- Borrow form -->
-                            <form action="userPanel.php?page=serviceEquipmentBorrowing" method="POST" style="margin-top: 0.5rem;">
-                                <input type="hidden" name="equipment_sn" value="<?= htmlspecialchars($eq['equipment_sn']) ?>">
-                                <button type="submit" class="btn btn-borrow">Borrow</button>
-                            </form>
+                        
+                        <!-- Equipment Title -->
+                        <h5 class="equipment-title">
+                            <?= htmlspecialchars($eq['name']) ?>
+                        </h5>
+                        
+                        <!-- Number of Available -->
+                        <div class="availability-section d-flex align-items-center justify-content-between mb-4">
+                            <p class="availability-text mb-0">
+                                Today's available<br>
+                                <strong><?= htmlspecialchars($eq['name']) ?></strong><br>
+                                for borrowing:
+                            </p>
+                            <div class="quantity-display">
+                                <?= (int)$eq['available_qty'] ?>
+                            </div>
                         </div>
+                        
+                        <!-- Borrow Button -->
+                        <form action="userPanel.php?page=serviceEquipmentBorrowing" method="POST">
+                            <input type="hidden" name="equipment_sn" value="<?= htmlspecialchars($eq['equipment_sn']) ?>">
+                            <button type="submit" class="btn btn-borrow">Borrow</button>
+                        </form>
                     </div>
                 </div>
             <?php endforeach; ?>
@@ -281,8 +365,8 @@ html, body {
     const userRemark = <?= json_encode($userRemark) ?>;
     const blockedRemarks = {
         'on hold': 'Your account is currently on hold and cannot request services.',
-        'transferred': 'Your record shows a “transferred” status. You cannot request services here.',
-        'deceased': 'Our records show your account as “deceased.” No service requests are allowed.'
+        'transferred': 'Your record shows a "transferred" status. You cannot request services here.',
+        'deceased': 'Our records show your account as "deceased." No service requests are allowed.'
     };
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -307,6 +391,17 @@ html, body {
         document.getElementById('backToServicesBtn').addEventListener('click', () => {
             document.getElementById('equipmentContainer').style.display = 'none';
             document.getElementById('servicesMainContainer').style.display = 'block';
+        });
+
+        // Add equipment card interaction animations
+        document.querySelectorAll('.equipment-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-8px) scale(1.02)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
         });
     });
 </script>

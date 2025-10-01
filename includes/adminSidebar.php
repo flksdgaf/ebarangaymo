@@ -14,7 +14,7 @@ $logoUrl = 'images/' . $info['logo'];
 
   // 2. how many account‐verification requests pending?
   //    (assumes you have a table like `account_requests` or `user_accounts`
-  //     with status='Pending' for new sign‑ups)
+  //     with status='Pending' for new sign-ups)
   $newAcctReqs = (int)$conn->query(
     "SELECT COUNT(*) FROM pending_accounts
      WHERE time_creation > NOW() - INTERVAL 1 DAY"
@@ -36,6 +36,7 @@ $logoUrl = 'images/' . $info['logo'];
     // leave the others at zero until you add them:
     'adminEquipmentBorrowing' => 0,
     'adminDeviceStatus' => 0,
+    'adminCollections' => 0, // <-- added for Collection tab
     // etc.
   ];
 
@@ -90,6 +91,16 @@ $menuItems = [
     'href' => 'adminHistory.php',
     'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad'] //,'Brgy Treasurer'
   ],
+
+  // <-- NEW Collection tab
+  [
+    'id' => 'adminCollections',
+    'label' => 'Collection',
+    'icon' => 'receipt', // material icon name; change to preferred icon if you want
+    'href' => 'adminCollections.php',
+    'roles' => ['Brgy Treasurer','Brgy Bookkeeper'] // limited access as requested
+  ],
+
   [
     'id' => 'adminTransactions',
     'label' => 'Generate Reports',

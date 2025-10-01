@@ -194,107 +194,134 @@ $stmt->close();
 
       <!-- Add New Blotter Modal -->
       <div class="modal fade" id="addBlotterModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="addBlotterModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width:90vw;">
+        <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable" style="max-width:90vw; max-height:90vh;">
           <div class="modal-content">
             <div class="modal-header text-white" style="background-color: #13411F;">
               <h5 class="modal-title" id="addBlotterModalLabel">New Blotter Record</h5>
               <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="addBlotterForm" method="POST" action="functions/process_new_blotter.php">
-              <div class="modal-body">
+              <div class="modal-body" style="max-height: calc(90vh - 180px); overflow-y: auto;">
                 <input type="hidden" name="account_id" value="<?= $userId ?>">
                 
-                <div class="row gy-2">
-                  <!-- Client Details -->
-                  <div class="col-12">
-                    <h6 class="fw-bold fs-5" style="color: #13411F;">Client Details</h6>
-                    <hr class="my-2">
+                <!-- Client Information Section -->
+                <div class="card mb-3">
+                  <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+                    <h6 class="mb-0 fw-bold" style="color: #13411F;">Client Information</h6>
+                    <button type="button" id="addMoreClientsBtn" class="btn btn-outline-success btn-sm">
+                      <span class="material-symbols-outlined me-1" style="font-size:0.9rem; vertical-align:middle;">add</span>
+                      Add Client
+                    </button>
                   </div>
-
-                  <div class="col-12 col-md-3">
-                    <label class="form-label fw-bold">First Name</label>
-                    <input name="client_first_name" type="text" class="form-control form-control-sm" required>
-                  </div>
-                  <div class="col-12 col-md-3">
-                    <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
-                    <input name="client_middle_name" type="text" class="form-control form-control-sm">
-                  </div>
-                  <div class="col-12 col-md-3">
-                    <label class="form-label fw-bold">Last Name</label>
-                    <input name="client_last_name" type="text" class="form-control form-control-sm" required>
-                  </div>
-                  <div class="col-12 col-md-3">
-                    <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
-                    <input name="client_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <label class="form-label fw-bold">Client Address</label>
-                    <input name="client_address" type="text" class="form-control form-control-sm" required>
-                  </div>
-
-                  <!-- Respondent Details Header + Toggle -->
-                  <div class="col-12 mt-3 d-flex align-items-center">
-                     <div class="form-check d-inline-block">
-                       <input class="form-check-input" type="checkbox" id="hasRespondentCheck" name="has_respondent" checked>
-                       <label class="form-check-label fs-6" for="hasRespondentCheck"></label>
-                     </div>
-                     <h6 class="fw-bold mb-0 fs-5" style="color: #13411F;">Respondent Details</h6>
-                   </div>
-
-                  <!-- horizontal rule covers the entire 12 columns -->
-                  <div class="col-12"><hr class="my-2"></div>
-
-                  <!-- Wrap all respondent fields here — note the `row` class -->
-                  <div id="respondentSection" class="row gy-2 col-12">
-                    <div class="col-12 col-md-3">
-                      <label class="form-label fw-bold">First Name</label>
-                      <input name="respondent_first_name" type="text" class="form-control form-control-sm" required>
-                    </div>
-                    <div class="col-12 col-md-3">
-                      <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
-                      <input name="respondent_middle_name" type="text" class="form-control form-control-sm">
-                    </div>
-                    <div class="col-12 col-md-3">
-                      <label class="form-label fw-bold">Last Name</label>
-                      <input name="respondent_last_name" type="text" class="form-control form-control-sm" required>
-                    </div>
-                    <div class="col-12 col-md-3">
-                      <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
-                      <input name="respondent_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
-                    </div>
-                    <div class="col-12 col-md-6">
-                      <label class="form-label fw-bold">Respondent Address</label>
-                      <input name="respondent_address" type="text" class="form-control form-control-sm" required>
+                  <div class="card-body p-2">
+                    <div id="clientsContainer">
+                      <!-- First client (always present) -->
+                      <div class="client-entry border rounded p-2 mb-2" data-client-index="0">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                          <small class="fw-bold text-muted">Client #1</small>
+                        </div>
+                        <div class="row g-2">
+                          <div class="col-md-3">
+                            <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">First Name</label>
+                            <input name="clients[0][first_name]" type="text" class="form-control form-control-sm" required>
+                          </div>
+                          <div class="col-md-3">
+                            <label class="form-label mb-1" style="font-size:0.85rem;">Middle Name <small class="text-muted">(optional)</small></label>
+                            <input name="clients[0][middle_name]" type="text" class="form-control form-control-sm">
+                          </div>
+                          <div class="col-md-3">
+                            <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">Last Name</label>
+                            <input name="clients[0][last_name]" type="text" class="form-control form-control-sm" required>
+                          </div>
+                          <div class="col-md-3">
+                            <label class="form-label mb-1" style="font-size:0.85rem;">Suffix <small class="text-muted">(optional)</small></label>
+                            <input name="clients[0][suffix]" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
+                          </div>
+                          <div class="col-12">
+                            <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">Address</label>
+                            <input name="clients[0][address]" type="text" class="form-control form-control-sm" required>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
+                </div>
 
-                  <!-- Complaint Details -->
-                  <div class="col-12 mt-3">
-                    <h6 class="fw-bold fs-5" style="color: #13411F;">Complaint Details</h6>
-                    <hr class="my-2">
+                <!-- Respondent Information Section -->
+                <div class="card mb-3">
+                  <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+                    <h6 class="mb-0 fw-bold" style="color: #13411F;">Respondent Information</h6>
+                    <button type="button" id="addMoreRespondentsBtn" class="btn btn-outline-success btn-sm">
+                      <span class="material-symbols-outlined me-1" style="font-size:0.9rem; vertical-align:middle;">add</span>
+                      Add Respondent
+                    </button>
                   </div>
-                  <div class="col-12 col-md-6 me-1">
-                    <label class="form-label fw-bold">Complaint / Incident Type</label>
-                    <input name="incident_type" type="text" class="form-control form-control-sm" required>
+                  <div class="card-body p-2">
+                    <div id="respondentsContainer">
+                      <!-- First respondent (always present) -->
+                      <div class="respondent-entry border rounded p-2 mb-2" data-respondent-index="0">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                          <small class="fw-bold text-muted">Respondent #1</small>
+                        </div>
+                        <div class="row g-2">
+                          <div class="col-md-3">
+                            <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">First Name</label>
+                            <input name="respondents[0][first_name]" type="text" class="form-control form-control-sm" required>
+                          </div>
+                          <div class="col-md-3">
+                            <label class="form-label mb-1" style="font-size:0.85rem;">Middle Name <small class="text-muted">(optional)</small></label>
+                            <input name="respondents[0][middle_name]" type="text" class="form-control form-control-sm">
+                          </div>
+                          <div class="col-md-3">
+                            <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">Last Name</label>
+                            <input name="respondents[0][last_name]" type="text" class="form-control form-control-sm" required>
+                          </div>
+                          <div class="col-md-3">
+                            <label class="form-label mb-1" style="font-size:0.85rem;">Suffix <small class="text-muted">(optional)</small></label>
+                            <input name="respondents[0][suffix]" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
+                          </div>
+                          <div class="col-12">
+                            <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">Address</label>
+                            <input name="respondents[0][address]" type="text" class="form-control form-control-sm" required>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div class="col-12 col-md-6">
-                    <label class="form-label fw-bold">Incident Place</label>
-                    <input name="incident_place" type="text" class="form-control form-control-sm" required>
+                </div>
+
+                <!-- Incident Details Section -->
+                <div class="card">
+                  <div class="card-header bg-light py-2">
+                    <h6 class="mb-0 fw-bold" style="color: #13411F;">Incident Details</h6>
                   </div>
-                  <div class="col-12 col-md-3">
-                    <label class="form-label fw-bold">Date Occurred</label>
-                    <input name="incident_date" type="date" class="form-control form-control-sm" required>
-                  </div>
-                  <div class="col-12 col-md-3">
-                    <label class="form-label fw-bold">Time Occurred</label>
-                    <input name="incident_time" type="time" class="form-control form-control-sm" required>
-                  </div>
-                  <div class="col-12">
-                    <label class="form-label fw-bold">Incident Description</label>
-                    <textarea name="incident_description" class="form-control form-control-sm" rows="3" required></textarea>
+                  <div class="card-body p-3">
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <label class="form-label fw-bold">Complaint / Incident Type</label>
+                        <input name="incident_type" type="text" class="form-control form-control-sm" required>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label fw-bold">Incident Place</label>
+                        <input name="incident_place" type="text" class="form-control form-control-sm" required>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label fw-bold">Date Occurred</label>
+                        <input name="incident_date" type="date" class="form-control form-control-sm" required>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label fw-bold">Time Occurred</label>
+                        <input name="incident_time" type="time" class="form-control form-control-sm" required>
+                      </div>
+                      <div class="col-12">
+                        <label class="form-label fw-bold">Incident Description</label>
+                        <textarea name="incident_description" class="form-control form-control-sm" rows="4" required></textarea>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
+              
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="submit" class="btn btn-success">Create Record</button>
@@ -486,7 +513,7 @@ $stmt->close();
             <th class="text-nowrap">Client</th>
             <th class="text-nowrap">Respondent</th>
             <th class="text-nowrap">Complaint Nature</th>
-            <th class="text-nowrap">Date Occurred</th>
+            <th class="text-nowrap">Date & Time Occurred</th>
             <th class="text-nowrap text-center">Action</th>
           </tr>
         </thead>
@@ -593,26 +620,193 @@ document.addEventListener('DOMContentLoaded', () => {
     form.submit();
   });
 
-  // ADD-BLOTTER modal reset
+  // ADD-BLOTTER modal functionality
   const blotterModalEl = document.getElementById('addBlotterModal');
-  const blotterForm = document.getElementById('addBlotterForm');
-  blotterModalEl.addEventListener('hidden.bs.modal', () => {
-    blotterForm.reset();
-    blotter_toggleRespondent();
-  });
   const blotterModal = new bootstrap.Modal(blotterModalEl);
   document.getElementById('addBlotterBtn').addEventListener('click', () => blotterModal.show());
+  const blotterForm = document.getElementById('addBlotterForm');
+  const clientsContainer = document.getElementById('clientsContainer');
+  const addMoreClientsBtn = document.getElementById('addMoreClientsBtn');
 
-  // ADD-BLOTTER respondent toggle
-  const respCheck = document.getElementById('hasRespondentCheck');
-  const respSection = document.getElementById('respondentSection');
-  function blotter_toggleRespondent() {
-    const show = respCheck.checked;
-    respSection.style.display = show ? '' : 'none';
-    respSection.querySelectorAll('input, select, textarea').forEach(el => el.disabled = !show);
+  let clientCount = 1; // Start with 1 since we have the first client
+
+  // Modal reset functionality
+  blotterModalEl.addEventListener('hidden.bs.modal', () => {
+    blotterForm.reset();
+    
+    // Remove all additional client entries (keep only the first one)
+    const allClientEntries = document.querySelectorAll('.client-entry');
+    allClientEntries.forEach((entry, index) => {
+      if (index > 0) { // Keep the first one (index 0)
+        entry.remove();
+      }
+    });
+    
+    clientCount = 1;
+
+    // Remove all additional respondent entries (keep only the first one)
+    const allRespondentEntries = document.querySelectorAll('.respondent-entry');
+    allRespondentEntries.forEach((entry, index) => {
+      if (index > 0) { // Keep the first one (index 0)
+        entry.remove();
+      }
+    });
+    
+    respondentCount = 1;
+  });
+
+  // RESPONDENT functionality
+  const respondentsContainer = document.getElementById('respondentsContainer');
+  const addMoreRespondentsBtn = document.getElementById('addMoreRespondentsBtn');
+
+  let respondentCount = 1; // Start with 1 since we have the first respondent
+
+  // Function to create a new respondent entry
+  function createRespondentEntry(index) {
+    const respondentEntry = document.createElement('div');
+    respondentEntry.className = 'respondent-entry border rounded p-2 mb-2';
+    respondentEntry.setAttribute('data-respondent-index', index);
+    
+    respondentEntry.innerHTML = `
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <small class="fw-bold text-muted">Respondent #${index + 1}</small>
+        <button type="button" class="btn btn-sm btn-outline-danger remove-respondent-btn" style="padding: 0.1rem 0.3rem; font-size: 0.75rem;">
+          <span class="material-symbols-outlined" style="font-size: 14px;">close</span>
+        </button>
+      </div>
+      
+      <div class="row g-2">
+        <div class="col-md-3">
+          <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">First Name</label>
+          <input name="respondents[${index}][first_name]" type="text" class="form-control form-control-sm" required>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label mb-1" style="font-size:0.85rem;">Middle Name <small class="text-muted">(optional)</small></label>
+          <input name="respondents[${index}][middle_name]" type="text" class="form-control form-control-sm">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">Last Name</label>
+          <input name="respondents[${index}][last_name]" type="text" class="form-control form-control-sm" required>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label mb-1" style="font-size:0.85rem;">Suffix <small class="text-muted">(optional)</small></label>
+          <input name="respondents[${index}][suffix]" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
+        </div>
+        <div class="col-12">
+          <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">Address</label>
+          <input name="respondents[${index}][address]" type="text" class="form-control form-control-sm" required>
+        </div>
+      </div>
+    `;
+    
+    return respondentEntry;
   }
-  respCheck.addEventListener('change', blotter_toggleRespondent);
-  blotter_toggleRespondent();
+
+  // Add more respondents button functionality
+  addMoreRespondentsBtn.addEventListener('click', () => {
+    const newRespondentEntry = createRespondentEntry(respondentCount);
+    respondentsContainer.appendChild(newRespondentEntry);
+    
+    // Add remove functionality to the new entry
+    const removeBtn = newRespondentEntry.querySelector('.remove-respondent-btn');
+    removeBtn.addEventListener('click', () => {
+      newRespondentEntry.remove();
+      updateRespondentNumbers();
+    });
+    
+    respondentCount++;
+  });
+
+  // Function to update respondent numbers after removal
+  function updateRespondentNumbers() {
+    const respondentEntries = document.querySelectorAll('.respondent-entry');
+    respondentEntries.forEach((entry, index) => {
+      const header = entry.querySelector('h6');
+      header.textContent = `Respondent #${index + 1}`;
+      entry.setAttribute('data-respondent-index', index);
+    });
+  }
+
+  // Function to create a new client entry
+  function createClientEntry(index) {
+    const clientEntry = document.createElement('div');
+    clientEntry.className = 'client-entry border rounded p-2 mb-2';
+    clientEntry.setAttribute('data-client-index', index);
+    
+    clientEntry.innerHTML = `
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <small class="fw-bold text-muted">Client #${index + 1}</small>
+        <button type="button" class="btn btn-sm btn-outline-danger remove-client-btn" style="padding: 0.1rem 0.3rem; font-size: 0.75rem;">
+          <span class="material-symbols-outlined" style="font-size: 14px;">close</span>
+        </button>
+      </div>
+      
+      <div class="row g-2">
+        <div class="col-md-3">
+          <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">First Name</label>
+          <input name="clients[${index}][first_name]" type="text" class="form-control form-control-sm" required>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label mb-1" style="font-size:0.85rem;">Middle Name <small class="text-muted">(optional)</small></label>
+          <input name="clients[${index}][middle_name]" type="text" class="form-control form-control-sm">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">Last Name</label>
+          <input name="clients[${index}][last_name]" type="text" class="form-control form-control-sm" required>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label mb-1" style="font-size:0.85rem;">Suffix <small class="text-muted">(optional)</small></label>
+          <input name="clients[${index}][suffix]" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
+        </div>
+        <div class="col-12">
+          <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">Address</label>
+          <input name="clients[${index}][address]" type="text" class="form-control form-control-sm" required>
+        </div>
+      </div>
+    `;
+    
+    return clientEntry;
+  }
+
+  // Add more clients button functionality
+  addMoreClientsBtn.addEventListener('click', () => {
+    const newClientEntry = createClientEntry(clientCount);
+    clientsContainer.appendChild(newClientEntry);
+    
+    // Add remove functionality to the new entry
+    const removeBtn = newClientEntry.querySelector('.remove-client-btn');
+    removeBtn.addEventListener('click', () => {
+      newClientEntry.remove();
+      updateClientNumbers();
+    });
+    
+    clientCount++;
+  });
+
+  // Function to update client numbers after removal
+  function updateClientNumbers() {
+    const clientEntries = document.querySelectorAll('.client-entry');
+    clientEntries.forEach((entry, index) => {
+      const header = entry.querySelector('h6');
+      header.textContent = `Client #${index + 1}`;
+      entry.setAttribute('data-client-index', index);
+    });
+  }
+
+  // Modal reset functionality
+  blotterModalEl.addEventListener('hidden.bs.modal', () => {
+    blotterForm.reset();
+    
+    // Remove all additional client entries (keep only the first one)
+    const allClientEntries = document.querySelectorAll('.client-entry');
+    allClientEntries.forEach((entry, index) => {
+      if (index > 0) { // Keep the first one (index 0)
+        entry.remove();
+      }
+    });
+    
+    clientCount = 1;
+  });
 
   // EDIT-BLOTTER modal wiring
   const editModalEl = document.getElementById('editBlotterModal');

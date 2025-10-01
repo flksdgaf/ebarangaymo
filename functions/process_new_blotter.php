@@ -10,37 +10,58 @@ if (!isset($_SESSION['auth']) || $_SESSION['auth'] !== true) {
 
 $userId = (int)$_SESSION['loggedInUserID'];
 
-// 2) COLLECT + SANITIZE
-// Client name parts
-$cf = trim($_POST['client_first_name'] ?? '');
-$cm = trim($_POST['client_middle_name'] ?? '');
-$cl = trim($_POST['client_last_name'] ?? '');
-$cs = trim($_POST['client_suffix'] ?? '');
-$middlePart = $cm ? " {$cm}" : '';
-$suffixPart = $cs ? " {$cs}" : '';
-$clientName = "{$cl}{$suffixPart}, {$cf}{$middlePart}";
-$clientAddress = trim($_POST['client_address'] ?? '');
+// 2) COLLECT + SANITIZE - Handle multiple clients
+$clients = $_POST['clients'] ?? [];
+$clientNames = [];
+$clientAddresses = [];
 
-// Respondent (only if checkbox was checked, otherwise fields disabled)
-$respondentName = null;
-$respondentAddress = null;
-if (!empty($_POST['respondent_first_name'])) {
-    $rf = trim($_POST['respondent_first_name']);
-    $rm = trim($_POST['respondent_middle_name'] ?? '');
-    $rl = trim($_POST['respondent_last_name']);
-    $rs = trim($_POST['respondent_suffix'] ?? '');
-    $rMiddle = $rm ? " {$rm}" : '';
-    $rSuffix = $rs ? " {$rs}" : '';
-    $respondentName = "{$rl}{$rSuffix}, {$rf}{$rMiddle}";
-    $respondentAddress = trim($_POST['respondent_address'] ?? '');
+foreach ($clients as $client) {
+    $cf = trim($client['first_name'] ?? '');
+    $cm = trim($client['middle_name'] ?? '');
+    $cl = trim($client['last_name'] ?? '');
+    $cs = trim($client['suffix'] ?? '');
+    
+    if ($cf && $cl) { // Only process if at least first and last name exist
+        $middlePart = $cm ? " {$cm}" : '';
+        $suffixPart = $cs ? " {$cs}" : '';
+        $clientNames[] = "{$cl}{$suffixPart}, {$cf}{$middlePart}";
+        $clientAddresses[] = trim($client['address'] ?? '');
+    }
 }
+
+// Join multiple clients with " & " or " and "
+$clientName = implode(' & ', $clientNames);
+$clientAddress = implode('; ', $clientAddresses); // Separate addresses with semicolon
+
+// Handle multiple respondents
+$respondents = $_POST['respondents'] ?? [];
+$respondentNames = [];
+$respondentAddresses = [];
+
+foreach ($respondents as $respondent) {
+    $rf = trim($respondent['first_name'] ?? '');
+    $rm = trim($respondent['middle_name'] ?? '');
+    $rl = trim($respondent['last_name'] ?? '');
+    $rs = trim($respondent['suffix'] ?? '');
+    
+    if ($rf && $rl) { // Only process if at least first and last name exist
+        $rMiddle = $rm ? " {$rm}" : '';
+        $rSuffix = $rs ? " {$rs}" : '';
+        $respondentNames[] = "{$rl}{$rSuffix}, {$rf}{$rMiddle}";
+        $respondentAddresses[] = trim($respondent['address'] ?? '');
+    }
+}
+
+// Join multiple respondents, or set to NULL if none
+$respondentName = !empty($respondentNames) ? implode(' & ', $respondentNames) : null;
+$respondentAddress = !empty($respondentAddresses) ? implode('; ', $respondentAddresses) : null;
 
 // Incident details
 $incidentType = trim($_POST['incident_type'] ?? '');
 $incidentDesc = trim($_POST['incident_description'] ?? '');
 $incidentPlace = trim($_POST['incident_place'] ?? '');
-$incidentDate = $_POST['incident_date'] ?? null; // YYYY-MM-DD
-$incidentTime = $_POST['incident_time'] ?? null; // HH:MM
+$incidentDate = $_POST['incident_date'] ?? null;
+$incidentTime = $_POST['incident_time'] ?? null;
 
 // 3) GENERATE NEXT TRANSACTION_ID
 $stmt = $conn->prepare("SELECT transaction_id FROM blotter_records ORDER BY id DESC LIMIT 1");
@@ -48,7 +69,6 @@ $stmt->execute();
 $res = $stmt->get_result();
 if ($res && $res->num_rows === 1) {
     $lastTid = $res->fetch_assoc()['transaction_id'];
-    // strip prefix "BLTR-" and increment
     $num = intval(substr($lastTid, 5)) + 1;
 } else {
     $num = 1;
@@ -58,7 +78,7 @@ $stmt->close();
 
 // 4) INSERT INTO blotter_records
 $ins = $conn->prepare("INSERT INTO blotter_records (account_id, transaction_id, client_name, client_address, respondent_name, respondent_address, incident_type, incident_description, incident_place, incident_date, incident_time) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
-$ins->bind_param('issssssssss',$userId, $transactionId,$clientName, $clientAddress,$respondentName, $respondentAddress, $incidentType, $incidentDesc, $incidentPlace,$incidentDate, $incidentTime);
+$ins->bind_param('issssssssss', $userId, $transactionId, $clientName, $clientAddress, $respondentName, $respondentAddress, $incidentType, $incidentDesc, $incidentPlace, $incidentDate, $incidentTime);
 $ins->execute();
 $ins->close();
 

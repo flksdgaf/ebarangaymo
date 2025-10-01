@@ -445,13 +445,17 @@ $pageTitle = $filterMap[$filter] ?? 'My Requests';
 <div class="container py-3">
     <div class="card shadow-sm p-3">
         <div class="requests-header">
-            <div class="d-flex align-items-center gap-2">
-                <div class="requests-title">
+            <div class="header-controls">
+                <!-- Enhanced Dropdown Filter -->
+                <div class="filter-dropdown-container">
                     <div class="dropdown">
-                        <button class="dropdown-toggle btn-title d-flex align-items-center" type="button" id="requestsFilter" data-bs-toggle="dropdown" aria-expanded="false">
-                            <h4 class="gradient-title mb-0"><?= htmlspecialchars($pageTitle) ?></h4>
+                        <button class="filter-dropdown-btn" type="button" id="requestsFilter" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="filter-title"><?= htmlspecialchars($pageTitle) ?></span>
+                            <svg class="dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6,9 12,15 18,9"></polyline>
+                            </svg>
                         </button>
-                        <ul class="dropdown-menu" aria-labelledby="requestsFilter">
+                        <ul class="dropdown-menu enhanced-dropdown" aria-labelledby="requestsFilter">
                             <?php foreach ($filterMap as $key => $label):
                                 $active = $filter === $key ? ' active' : '';
                                 $url = '?page=userRequest&filter=' . urlencode($key) . '&search=' . urlencode($search);
@@ -460,26 +464,27 @@ $pageTitle = $filterMap[$filter] ?? 'My Requests';
                         </ul>
                     </div>
                 </div>
-            </div>
 
-            <div>
-                <form class="d-flex" method="get" style="gap:.5rem; align-items:center;">
-                    <input type="hidden" name="page" value="userRequest">
-                    <input type="hidden" name="filter" value="<?= htmlspecialchars($filter) ?>">
-                    <div class="input-group">
-                        <input type="search" name="search" class="form-control" placeholder="Search" value="<?= htmlspecialchars($search) ?>" aria-label="Search">
-                        <button class="search-icon-btn" type="submit" aria-label="Search">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <circle cx="11" cy="11" r="6"></circle>
-                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                            </svg>
-                        </button>
-                    </div>
-                </form>
+                <!-- Enhanced Search Bar -->
+                <div class="search-container">
+                    <form class="search-form" method="get">
+                        <input type="hidden" name="page" value="userRequest">
+                        <input type="hidden" name="filter" value="<?= htmlspecialchars($filter) ?>">
+                        <div class="search-input-wrapper">
+                            <input type="search" name="search" class="search-input" placeholder="Search" value="<?= htmlspecialchars($search) ?>" aria-label="Search">
+                            <button class="search-btn" type="submit" aria-label="Search">
+                                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
 
-        <div class="list-wrapper" style="height: 800px;">
+        <div class="list-wrapper" style="height: 480px;">
             <?php
             if ($result->num_rows):
                 $rows = [];
@@ -518,7 +523,7 @@ $pageTitle = $filterMap[$filter] ?? 'My Requests';
         </div>
 
         <?php if ($totalPages > 1): ?>
-            <nav aria-label="Page navigation" style="margin-top: 15px;">
+            <nav aria-label="Page navigation">
                 <ul class="pagination pagination-circle" role="navigation" aria-label="Pagination">
                     <?php
                     $range = 2; $ell = false;

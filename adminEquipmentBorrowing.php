@@ -838,6 +838,53 @@ if (!$brStmt) {
     </div>
   </div>
 
+  <!-- View Borrow Modal (Read-only) -->
+  <div class="modal fade" id="viewBorrowModal" tabindex="-1" aria-labelledby="viewBorrowLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header text-white" style="background-color: #13411F;">
+          <h5 class="modal-title" id="viewBorrowLabel">Borrow Request Details</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          <dl class="row mb-0">
+            <dt class="col-sm-3">Transaction ID</dt>
+            <dd class="col-sm-9" id="viewTransaction"></dd>
+
+            <dt class="col-sm-3">Resident's Name</dt>
+            <dd class="col-sm-9" id="viewResident"></dd>
+
+            <dt class="col-sm-3">Equipment</dt>
+            <dd class="col-sm-9" id="viewEquipment"></dd>
+
+            <dt class="col-sm-3">Quantity</dt>
+            <dd class="col-sm-9" id="viewQty"></dd>
+
+            <dt class="col-sm-3">Location</dt>
+            <dd class="col-sm-9" id="viewLocation"></dd>
+
+            <dt class="col-sm-3">Used For</dt>
+            <dd class="col-sm-9" id="viewUsedFor"></dd>
+
+            <dt class="col-sm-3">Borrow Date</dt>
+            <dd class="col-sm-9" id="viewDates"></dd>
+
+            <dt class="col-sm-3">Pick-Up / Drop-Off</dt>
+            <dd class="col-sm-9" id="viewPudo"></dd>
+
+            <dt class="col-sm-3">Status</dt>
+            <dd class="col-sm-9" id="viewStatus"></dd>
+          </dl>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -1244,6 +1291,43 @@ if (!$brStmt) {
               }
             }
 
+            // *** NEW: Update equipment availability in real-time ***
+            if (json.equipment_sn && json.new_available_qty !== undefined) {
+              // Update the equipment table if visible
+              const equipmentRows = document.querySelectorAll('.avail-qty');
+              equipmentRows.forEach(cell => {
+                const row = cell.closest('tr');
+                if (row) {
+                  const esnCell = row.querySelector('td:first-child');
+                  if (esnCell && esnCell.textContent.trim() === json.equipment_sn) {
+                    // Update the availability display
+                    cell.textContent = json.new_available_qty;
+                    
+                    // Optional: Add a brief highlight animation
+                    cell.style.transition = 'background-color 0.5s';
+                    cell.style.backgroundColor = '#d4edda'; // light green
+                    setTimeout(() => {
+                      cell.style.backgroundColor = '';
+                    }, 1500);
+                  }
+                }
+              });
+              
+              // Update the esnMap for borrow form validation
+              if (esnMap[json.equipment_sn] !== undefined) {
+                esnMap[json.equipment_sn] = json.new_available_qty;
+              }
+              
+              // Update the equipment dropdown in Add Borrow modal
+              const equipSelect = document.getElementById('borrowedEquipment');
+              if (equipSelect) {
+                const option = equipSelect.querySelector(`option[value="${json.equipment_sn}"]`);
+                if (option) {
+                  option.setAttribute('data-avail', json.new_available_qty);
+                }
+              }
+            }
+
             // Refresh calendar to show updated status
             updateCalendar();
 
@@ -1367,8 +1451,11 @@ if (!$brStmt) {
         dayNameDiv.textContent = currentDay.toLocaleDateString('en-US', { weekday: 'short' });
         cell.appendChild(dayNameDiv);
         
-        // Add borrow events for this date
-        const currentDateStr = currentDay.toISOString().split('T')[0];
+        // Add borrow events for this date - use local date string to avoid timezone issues
+        const year = currentDay.getFullYear();
+        const month = String(currentDay.getMonth() + 1).padStart(2, '0');
+        const day = String(currentDay.getDate()).padStart(2, '0');
+        const currentDateStr = `${year}-${month}-${day}`;
         addBorrowEvents(cell, currentDateStr);
         
         row.appendChild(cell);
@@ -1499,9 +1586,15 @@ if (!$brStmt) {
                 ${event.resident_name || '—'}
               </div>
               <div class="d-flex justify-content-end">
-                <button class="btn btn-secondary btn-sm edit-event-btn" style="font-size: 0.6rem; padding: 2px 6px;" data-id="${event.id}">
-                  <span class="material-symbols-outlined" style="font-size: 0.7rem;">edit</span>
-                </button>
+                ${event.status === 'Returned' || event.status === 'Rejected' ? `
+                  <button class="btn btn-info btn-sm view-event-btn" style="font-size: 0.6rem; padding: 2px 6px;" data-id="${event.id}">
+                    <span class="material-symbols-outlined" style="font-size: 0.7rem;">visibility</span>
+                  </button>
+                ` : `
+                  <button class="btn btn-secondary btn-sm edit-event-btn" style="font-size: 0.6rem; padding: 2px 6px;" data-id="${event.id}">
+                    <span class="material-symbols-outlined" style="font-size: 0.7rem;">edit</span>
+                  </button>
+                `}
               </div>
             </div>
           `;
@@ -1547,32 +1640,58 @@ if (!$brStmt) {
           eventDiv.style.color = textColor;
           
           eventDiv.innerHTML = `
+            <div class="fw-bold" style="opacity: 0.8; font-size: 0.6rem;">${event.transaction_id || 'No ID'}</div>
             <div class="fw-bold">${event.resident_name || 'Unknown'}</div>
-            <div style="opacity: 0.9;">${event.equipment_name || event.equipment_sn || 'Unknown'}</div>
+            <div style="opacity: 0.9;">${event.equipment_name || event.equipment_sn || 'Unknown'} (${event.qty}pcs)</div>
           `;
           
           eventDiv.addEventListener('click', () => {
-            // Populate edit modal with event data
-            document.getElementById('editBorrowId').value = event.id;
-            document.getElementById('editTransaction').textContent = event.transaction_id || '—';
-            document.getElementById('editResident').textContent = event.resident_name || '—';
-            document.getElementById('editEquipment').textContent = event.equipment_name || event.equipment_sn || '—';
-            document.getElementById('editQty').textContent = event.qty || '—';
-            document.getElementById('editLocation').textContent = event.location || '—';
-            document.getElementById('editUsedFor').textContent = event.used_for || '—';
+            const isViewOnly = event.status === 'Returned' || event.status === 'Rejected';
             
-            const from = event.borrow_date_from || '';
-            const to = event.borrow_date_to || '';
-            document.getElementById('editDates').textContent = (from && to)
-              ? (from === to ? formatDateForDisplay(from) : formatDateForDisplay(from) + ' — ' + formatDateForDisplay(to))
-              : '—';
-            
-            document.getElementById('editPudo').textContent = event.pudo || '—';
-            document.getElementById('editStatus').value = event.status || 'Pending';
-            
-            // Show edit modal instead of view modal
-            const modal = new bootstrap.Modal(document.getElementById('editBorrowModal'));
-            modal.show();
+            if (isViewOnly) {
+              // Populate view-only modal
+              document.getElementById('viewTransaction').textContent = event.transaction_id || '—';
+              document.getElementById('viewResident').textContent = event.resident_name || '—';
+              document.getElementById('viewEquipment').textContent = event.equipment_name || event.equipment_sn || '—';
+              document.getElementById('viewQty').textContent = event.qty || '—';
+              document.getElementById('viewLocation').textContent = event.location || '—';
+              document.getElementById('viewUsedFor').textContent = event.used_for || '—';
+              
+              const from = event.borrow_date_from || '';
+              const to = event.borrow_date_to || '';
+              document.getElementById('viewDates').textContent = (from && to)
+                ? (from === to ? formatDateForDisplay(from) : formatDateForDisplay(from) + ' — ' + formatDateForDisplay(to))
+                : '—';
+              
+              document.getElementById('viewPudo').textContent = event.pudo || '—';
+              document.getElementById('viewStatus').textContent = event.status || 'Pending';
+              
+              // Show view-only modal
+              const modal = new bootstrap.Modal(document.getElementById('viewBorrowModal'));
+              modal.show();
+            } else {
+              // Populate editable modal
+              document.getElementById('editBorrowId').value = event.id;
+              document.getElementById('editTransaction').textContent = event.transaction_id || '—';
+              document.getElementById('editResident').textContent = event.resident_name || '—';
+              document.getElementById('editEquipment').textContent = event.equipment_name || event.equipment_sn || '—';
+              document.getElementById('editQty').textContent = event.qty || '—';
+              document.getElementById('editLocation').textContent = event.location || '—';
+              document.getElementById('editUsedFor').textContent = event.used_for || '—';
+              
+              const from = event.borrow_date_from || '';
+              const to = event.borrow_date_to || '';
+              document.getElementById('editDates').textContent = (from && to)
+                ? (from === to ? formatDateForDisplay(from) : formatDateForDisplay(from) + ' — ' + formatDateForDisplay(to))
+                : '—';
+              
+              document.getElementById('editPudo').textContent = event.pudo || '—';
+              document.getElementById('editStatus').value = event.status || 'Pending';
+              
+              // Show edit modal
+              const modal = new bootstrap.Modal(document.getElementById('editBorrowModal'));
+              modal.show();
+            }
           });
           cell.appendChild(eventDiv);
         });
@@ -1580,18 +1699,44 @@ if (!$brStmt) {
         // Add "..." dropdown for additional events
         if (hiddenEvents.length > 0) {
           const moreDiv = document.createElement('div');
-          moreDiv.className = 'dropdown';
+          moreDiv.className = 'dropdown d-flex justify-content-end';  // Added d-flex and justify-content-end
           moreDiv.innerHTML = `
             <button class="btn btn-link p-0 text-muted dropdown-toggle" type="button" data-bs-toggle="dropdown" style="font-size: 0.7rem; text-decoration: none;">
               ...
             </button>
             <ul class="dropdown-menu dropdown-menu-end" style="font-size: 0.65rem; min-width: 180px;">
-              ${hiddenEvents.map(event => `
-                <li><a class="dropdown-item show-details-item" href="#" data-event='${JSON.stringify(event)}'>
-                  <div class="fw-bold">${event.resident_name || 'Unknown'}</div>
-                  <div class="text-muted">${event.equipment_name || event.equipment_sn || 'Unknown'}</div>
-                </a></li>
-              `).join('')}
+              ${hiddenEvents.map(event => {
+                // Determine status color
+                const status = (event.status || 'pending').toLowerCase();
+                let bgColor = '#6c757d'; // secondary/default
+                let textColor = 'white';
+                
+                switch(status) {
+                  case 'pending': 
+                    bgColor = '#ffc107'; // warning yellow
+                    textColor = 'black';
+                    break;
+                  case 'borrowed': 
+                    bgColor = '#0d6efd'; // primary blue
+                    textColor = 'white';
+                    break;
+                  case 'returned': 
+                    bgColor = '#198754'; // success green
+                    textColor = 'white';
+                    break;
+                  case 'rejected': 
+                    bgColor = '#dc3545'; // danger red
+                    textColor = 'white';
+                    break;
+                }
+                
+                return `
+                  <li><a class="dropdown-item show-details-item" href="#" data-event='${JSON.stringify(event)}' style="background-color: ${bgColor}; color: ${textColor}; margin-bottom: 2px;">
+                    <div class="fw-bold">${event.resident_name || 'Unknown'}</div>
+                    <div style="opacity: 0.9;">${event.equipment_name || event.equipment_sn || 'Unknown'} (${event.qty}pcs)</div>
+                  </a></li>
+                `;
+              }).join('')}
             </ul>
           `;
           
@@ -1602,27 +1747,52 @@ if (!$brStmt) {
               e.preventDefault();
               const eventData = JSON.parse(item.dataset.event);
               
-              // Populate edit modal with event data
-              document.getElementById('editBorrowId').value = eventData.id;
-              document.getElementById('editTransaction').textContent = eventData.transaction_id || '—';
-              document.getElementById('editResident').textContent = eventData.resident_name || '—';
-              document.getElementById('editEquipment').textContent = eventData.equipment_name || eventData.equipment_sn || '—';
-              document.getElementById('editQty').textContent = eventData.qty || '—';
-              document.getElementById('editLocation').textContent = eventData.location || '—';
-              document.getElementById('editUsedFor').textContent = eventData.used_for || '—';
+              const isViewOnly = eventData.status === 'Returned' || eventData.status === 'Rejected';
               
-              const from = eventData.borrow_date_from || '';
-              const to = eventData.borrow_date_to || '';
-              document.getElementById('editDates').textContent = (from && to)
-                ? (from === to ? formatDateForDisplay(from) : formatDateForDisplay(from) + ' — ' + formatDateForDisplay(to))
-                : '—';
-              
-              document.getElementById('editPudo').textContent = eventData.pudo || '—';
-              document.getElementById('editStatus').value = eventData.status || 'Pending';
-              
-              // Show edit modal
-              const modal = new bootstrap.Modal(document.getElementById('editBorrowModal'));
-              modal.show();
+              if (isViewOnly) {
+                // Populate view-only modal
+                document.getElementById('viewTransaction').textContent = eventData.transaction_id || '—';
+                document.getElementById('viewResident').textContent = eventData.resident_name || '—';
+                document.getElementById('viewEquipment').textContent = eventData.equipment_name || eventData.equipment_sn || '—';
+                document.getElementById('viewQty').textContent = eventData.qty || '—';
+                document.getElementById('viewLocation').textContent = eventData.location || '—';
+                document.getElementById('viewUsedFor').textContent = eventData.used_for || '—';
+                
+                const from = eventData.borrow_date_from || '';
+                const to = eventData.borrow_date_to || '';
+                document.getElementById('viewDates').textContent = (from && to)
+                  ? (from === to ? formatDateForDisplay(from) : formatDateForDisplay(from) + ' — ' + formatDateForDisplay(to))
+                  : '—';
+                
+                document.getElementById('viewPudo').textContent = eventData.pudo || '—';
+                document.getElementById('viewStatus').textContent = eventData.status || 'Pending';
+                
+                // Show view-only modal
+                const modal = new bootstrap.Modal(document.getElementById('viewBorrowModal'));
+                modal.show();
+              } else {
+                // Populate editable modal
+                document.getElementById('editBorrowId').value = eventData.id;
+                document.getElementById('editTransaction').textContent = eventData.transaction_id || '—';
+                document.getElementById('editResident').textContent = eventData.resident_name || '—';
+                document.getElementById('editEquipment').textContent = eventData.equipment_name || eventData.equipment_sn || '—';
+                document.getElementById('editQty').textContent = eventData.qty || '—';
+                document.getElementById('editLocation').textContent = eventData.location || '—';
+                document.getElementById('editUsedFor').textContent = eventData.used_for || '—';
+                
+                const from = eventData.borrow_date_from || '';
+                const to = eventData.borrow_date_to || '';
+                document.getElementById('editDates').textContent = (from && to)
+                  ? (from === to ? formatDateForDisplay(from) : formatDateForDisplay(from) + ' — ' + formatDateForDisplay(to))
+                  : '—';
+                
+                document.getElementById('editPudo').textContent = eventData.pudo || '—';
+                document.getElementById('editStatus').value = eventData.status || 'Pending';
+                
+                // Show edit modal
+                const modal = new bootstrap.Modal(document.getElementById('editBorrowModal'));
+                modal.show();
+              }
             });
           });
           
@@ -1639,8 +1809,9 @@ if (!$brStmt) {
       }
     }
 
-    // Event delegation for dynamically created edit buttons
+    // Event delegation for dynamically created edit and view buttons
     document.addEventListener('click', function(e) {
+      // Handle edit button
       if (e.target.closest('.edit-event-btn')) {
         const btn = e.target.closest('.edit-event-btn');
         const eventId = btn.dataset.id;
@@ -1666,6 +1837,35 @@ if (!$brStmt) {
           
           // Show modal
           const modal = new bootstrap.Modal(document.getElementById('editBorrowModal'));
+          modal.show();
+        }
+      }
+      
+      // Handle view button
+      if (e.target.closest('.view-event-btn')) {
+        const btn = e.target.closest('.view-event-btn');
+        const eventId = btn.dataset.id;
+        const event = borrowsData.find(b => b.id == eventId);
+        if (event) {
+          // Populate view-only modal with event data
+          document.getElementById('viewTransaction').textContent = event.transaction_id || '—';
+          document.getElementById('viewResident').textContent = event.resident_name || '—';
+          document.getElementById('viewEquipment').textContent = event.equipment_name || event.equipment_sn || '—';
+          document.getElementById('viewQty').textContent = event.qty || '—';
+          document.getElementById('viewLocation').textContent = event.location || '—';
+          document.getElementById('viewUsedFor').textContent = event.used_for || '—';
+          
+          const from = event.borrow_date_from || '';
+          const to = event.borrow_date_to || '';
+          document.getElementById('viewDates').textContent = (from && to)
+            ? (from === to ? formatDateForDisplay(from) : formatDateForDisplay(from) + ' — ' + formatDateForDisplay(to))
+            : '—';
+          
+          document.getElementById('viewPudo').textContent = event.pudo || '—';
+          document.getElementById('viewStatus').textContent = event.status || 'Pending';
+          
+          // Show view-only modal
+          const modal = new bootstrap.Modal(document.getElementById('viewBorrowModal'));
           modal.show();
         }
       }

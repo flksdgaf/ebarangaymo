@@ -1,121 +1,88 @@
 <?php
 // functions/borrow_update_status.php
-require __DIR__ . '/dbconn.php';
-header('Content-Type: application/json; charset=utf-8');
+require 'dbconn.php';
+header('Content-Type: application/json');
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'error' => 'Invalid request method']);
-    exit;
+$id = $_POST['id'] ?? '';
+$new_status = $_POST['new_status'] ?? '';
+$old_status = $_POST['old_status'] ?? '';
+
+if (!$id || !$new_status) {
+  echo json_encode(['success' => false, 'error' => 'Missing required fields']);
+  exit;
 }
 
-$id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
-$newStatus = isset($_POST['new_status']) ? trim($_POST['new_status']) : '';
-$oldStatus = isset($_POST['old_status']) ? trim($_POST['old_status']) : '';
-
-if ($id <= 0) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Missing or invalid id']);
-    exit;
-}
-
-if (!in_array($newStatus, ['Pending', 'Borrowed', 'Returned', 'Rejected'], true)) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Invalid status']);
-    exit;
-}
+// Start transaction
+$conn->begin_transaction();
 
 try {
-    $conn->begin_transaction();
-
-    // Lock the borrow_requests row
-    $sel = $conn->prepare("SELECT id, status, equipment_sn, qty FROM borrow_requests WHERE id = ? FOR UPDATE");
-    if (!$sel) throw new Exception('Prepare failed (select borrow_requests): ' . $conn->error);
-    $sel->bind_param('i', $id);
-    if (!$sel->execute()) throw new Exception('Execute failed (select borrow_requests): ' . $sel->error);
-
-    $sel->bind_result($sel_id, $sel_status, $sel_esn, $sel_qty);
-    if (!$sel->fetch()) {
-        $sel->close();
-        throw new Exception('Borrow request not found');
+  // Get the borrow request details
+  $stmt = $conn->prepare("SELECT equipment_sn, qty FROM borrow_requests WHERE id = ?");
+  $stmt->bind_param('i', $id);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  $borrow = $result->fetch_assoc();
+  $stmt->close();
+  
+  if (!$borrow) {
+    throw new Exception('Borrow request not found');
+  }
+  
+  $equipment_sn = $borrow['equipment_sn'];
+  $qty = (int)$borrow['qty'];
+  
+  // Update the borrow request status
+  $stmt = $conn->prepare("UPDATE borrow_requests SET status = ? WHERE id = ?");
+  $stmt->bind_param('si', $new_status, $id);
+  
+  if (!$stmt->execute()) {
+    throw new Exception('Failed to update borrow status: ' . $stmt->error);
+  }
+  $stmt->close();
+  
+  // Update equipment availability based on status changes
+  if ($old_status !== 'Returned' && $new_status === 'Returned') {
+    // Returning equipment - increase available_qty
+    $stmt = $conn->prepare("UPDATE equipment_list SET available_qty = available_qty + ? WHERE equipment_sn = ?");
+    $stmt->bind_param('is', $qty, $equipment_sn);
+    
+    if (!$stmt->execute()) {
+      throw new Exception('Failed to update equipment availability: ' . $stmt->error);
     }
-    $sel->close();
-
-    $currentStatus = $sel_status ?? '';
-    $equipment_sn = trim($sel_esn ?? '');
-    $qty = (int)($sel_qty ?? 0);
-
-    // Validate status transition
-    if ($currentStatus === $newStatus) {
-        throw new Exception('Status is already ' . $newStatus);
+    $stmt->close();
+  } elseif ($old_status === 'Returned' && $new_status !== 'Returned') {
+    // Un-returning equipment - decrease available_qty
+    $stmt = $conn->prepare("UPDATE equipment_list SET available_qty = available_qty - ? WHERE equipment_sn = ?");
+    $stmt->bind_param('is', $qty, $equipment_sn);
+    
+    if (!$stmt->execute()) {
+      throw new Exception('Failed to update equipment availability: ' . $stmt->error);
     }
-
-    // Handle quantity adjustments based on status transitions
-    $needsQtyAdjustment = false;
-    $qtyChange = 0;
-
-    // Status transitions that affect quantity:
-    // Pending/Borrowed -> Returned: restore qty (+qty)
-    // Pending/Borrowed -> Rejected: restore qty (+qty)
-    // Returned/Rejected -> Pending/Borrowed: decrease qty (-qty)
-
-    if (($currentStatus === 'Pending' || $currentStatus === 'Borrowed') && 
-        ($newStatus === 'Returned' || $newStatus === 'Rejected')) {
-        // Restore quantity
-        $needsQtyAdjustment = true;
-        $qtyChange = $qty; // positive = increase
-    } elseif (($currentStatus === 'Returned' || $currentStatus === 'Rejected') && 
-              ($newStatus === 'Pending' || $newStatus === 'Borrowed')) {
-        // Decrease quantity
-        $needsQtyAdjustment = true;
-        $qtyChange = -$qty; // negative = decrease
-    }
-
-    // Apply quantity adjustment if needed
-    if ($needsQtyAdjustment) {
-        if ($qtyChange > 0) {
-            // Restore quantity (cap at total_qty)
-            $updEq = $conn->prepare("UPDATE equipment_list SET available_qty = LEAST(IFNULL(available_qty,0) + ?, total_qty) WHERE equipment_sn = ?");
-        } else {
-            // Decrease quantity
-            $updEq = $conn->prepare("UPDATE equipment_list SET available_qty = available_qty - ? WHERE equipment_sn = ?");
-            $qtyChange = abs($qtyChange);
-        }
-        
-        if (!$updEq) throw new Exception('Prepare failed (update equipment): ' . $conn->error);
-        $updEq->bind_param('is', $qtyChange, $equipment_sn);
-        if (!$updEq->execute()) throw new Exception('Failed to update equipment quantity: ' . $updEq->error);
-        $updEq->close();
-    }
-
-    // Update borrow_requests status
-    $timestamp_col = '';
-    if ($newStatus === 'Returned') {
-        $timestamp_col = ', returned_at = NOW()';
-    } elseif ($newStatus === 'Rejected') {
-        $timestamp_col = ', rejected_at = NOW()';
-    }
-
-    $updBr = $conn->prepare("UPDATE borrow_requests SET status = ? {$timestamp_col} WHERE id = ?");
-    if (!$updBr) throw new Exception('Prepare failed (update borrow_requests): ' . $conn->error);
-    $updBr->bind_param('si', $newStatus, $id);
-    if (!$updBr->execute()) throw new Exception('Failed to update borrow request: ' . $updBr->error);
-    $updBr->close();
-
-    $conn->commit();
-    echo json_encode(['success' => true, 'message' => 'Status updated successfully']);
-    exit;
-
+    $stmt->close();
+  }
+  
+  // Get the new available_qty
+  $stmt = $conn->prepare("SELECT available_qty FROM equipment_list WHERE equipment_sn = ?");
+  $stmt->bind_param('s', $equipment_sn);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  $equipment = $result->fetch_assoc();
+  $new_available_qty = $equipment ? (int)$equipment['available_qty'] : 0;
+  $stmt->close();
+  
+  // Commit transaction
+  $conn->commit();
+  
+  echo json_encode([
+    'success' => true,
+    'equipment_sn' => $equipment_sn,
+    'new_available_qty' => $new_available_qty
+  ]);
+  
 } catch (Exception $e) {
-    $conn->rollback();
-    http_response_code(400);
-    error_log('borrow_update_status error: ' . $e->getMessage());
-    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
-    exit;
-} finally {
-    if ($conn) $conn->close();
+  $conn->rollback();
+  echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }
 
-echo json_encode(['success' => false, 'error' => 'Unknown error']);
-exit;
+$conn->close();
 ?>

@@ -29,9 +29,9 @@ foreach ($clients as $client) {
     }
 }
 
-// Join multiple clients with " & " or " and "
-$clientName = implode(' & ', $clientNames);
-$clientAddress = implode('; ', $clientAddresses); // Separate addresses with semicolon
+// Join multiple clients with "at"
+$clientName = implode(' at ', $clientNames);
+$clientAddress = implode('; ', $clientAddresses);
 
 // Handle multiple respondents
 $respondents = $_POST['respondents'] ?? [];
@@ -53,7 +53,7 @@ foreach ($respondents as $respondent) {
 }
 
 // Join multiple respondents, or set to NULL if none
-$respondentName = !empty($respondentNames) ? implode(' & ', $respondentNames) : null;
+$respondentName = !empty($respondentNames) ? implode(' at ', $respondentNames) : null;
 $respondentAddress = !empty($respondentAddresses) ? implode('; ', $respondentAddresses) : null;
 
 // Incident details

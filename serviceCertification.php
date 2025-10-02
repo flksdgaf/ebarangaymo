@@ -46,6 +46,7 @@ $map = [
   'Good Moral'   => ['table'=>'good_moral_requests',   'prefix'=>'GM-' ],
   'Solo Parent'  => ['table'=>'solo_parent_requests',  'prefix'=>'SP-' ],
   'Guardianship' => ['table'=>'guardianship_requests', 'prefix'=>'GUA-'],
+  'First Time Job Seeker' => ['table' => 'job_seeker_requests', 'prefix' => 'JS-'],
 ];
 
 $chosenPayment = '';
@@ -82,8 +83,27 @@ if ($transactionId) {
     }
 }
 
-// === NEW: compute the default fee label to display in the fee box ===
-$feeLabelDefault = $existingCertType ? ($existingCertType . ' Certificate Fee') : 'Barangay ID Fee';
+// === NEW: map certificate types -> friendly fee label ===
+$feeLabelMap = [
+    'Residency'    => 'Certificate of Residency Fee',
+    'Good Moral'   => 'Good Moral Certificate Fee',
+    'Solo Parent'  => 'Solo Parent Certificate Fee',
+    'Guardianship' => 'Certificate of Guardianship Fee',
+    'Indigency'    => 'Indigency Certificate Fee',
+    // fallback for other/unknown types:
+];
+
+// --- Define certificates that do NOT require payment (3-step flow) ---
+$noPaymentTypes = ['Indigency', 'First Time Job Seeker'];
+// helpful server flag for the currently loaded transaction (if any)
+$isNoPaymentType = in_array($existingCertType, $noPaymentTypes, true);
+
+// compute default label (use map if available; otherwise fall back to reasonable text)
+if ($existingCertType) {
+    $feeLabelDefault = $feeLabelMap[$existingCertType] ?? ($existingCertType . ' Certificate Fee');
+} else {
+    $feeLabelDefault = 'Barangay ID Fee';
+}
 
 /**
  * Business-day generator
@@ -294,13 +314,13 @@ if (!empty($existingRequestRow)) {
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-6">
+                    <div id="requestForGroup" class="col-md-6" <?php echo ($isNoPaymentType ? 'style="display:none;"' : ''); ?>>
                         <div class="row">
                             <label for="forSelect" class="col-sm-3 text-start fw-bold">Request For</label>
                             <div class="col-sm-9">
                                 <select id="forSelect" name="request_for" class="form-select">
-                                <option value="myself" selected>Myself</option>
-                                <option value="other">Other Individual</option>
+                                    <option value="myself" selected>Myself</option>
+                                    <option value="other">Other Individual</option>
                                 </select>
                             </div>
                         </div>
@@ -564,6 +584,9 @@ if (!empty($existingRequestRow)) {
     // NEW: expose existing parent sex & address so client-side can prefill the parent sex dropdown and show previously-entered address
     window.existingParentSex = <?php echo json_encode($existingParentSex, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
     window.existingParentAddress = <?php echo json_encode($existingParentAddress, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
+
+    window.noPaymentTypes = <?php echo json_encode($noPaymentTypes, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
+    window.isNoPaymentType = <?php echo json_encode($isNoPaymentType ? true : false); ?>;
 </script>
 
 <!-- Claim handling script (keeps logic local so external JS can remain unchanged) -->
@@ -663,6 +686,111 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // read exports from PHP
+    const noPaymentTypes = window.noPaymentTypes || [];
+    const isNoPaymentType = !!window.isNoPaymentType;
+
+    // utility: normalize typed cert name for comparison
+    function normalizeCertName(s) {
+        return (s || '').toString().trim().toLowerCase();
+    }
+
+    // apply the no-payment flow (hide payment step, renumber)
+    function applyNoPaymentFlow(enable) {
+        // hide or show payment content
+        const paymentStepDiv = document.getElementById('paymentStep');
+        const payProgDom = document.querySelector('.payment-progress-step');
+        if (enable) {
+            if (paymentStepDiv) paymentStepDiv.style.display = 'none';
+            if (payProgDom) {
+                payProgDom.style.display = 'none';
+                payProgDom.classList.add('hidden-step'); // optional marker
+            }
+        } else {
+            if (paymentStepDiv) paymentStepDiv.style.display = '';
+            // If payProgDom was removed previously, we cannot restore it reliably from here.
+            // (The normal full-page load will include it.) If you need dynamic restore, consider keeping a hidden template.
+        }
+
+        // Renumber the visible progress steps (.steps within .stepss)
+        const progressSteps = Array.from(document.querySelectorAll('.stepss .steps'));
+        // Only keep steps that are in DOM (payment step removed if enabled)
+        progressSteps.forEach((el, idx) => {
+            const newIndex = idx + 1;
+            el.dataset.step = newIndex;
+            const circle = el.querySelector('.circle');
+            if (circle) circle.textContent = newIndex;
+            // also update step-label styling (no changes needed to text itself)
+        });
+
+        // Renumber .step content blocks to match visible flow (skip hidden ones)
+        const stepContents = Array.from(document.querySelectorAll('.card .step, .step')); // broad selection
+        // Filter visible ones (style display !== 'none')
+        const visibleContents = stepContents.filter(el => {
+            // ignore those that are explicitly display:none (e.g., paymentStep)
+            return !(el.style && el.style.display === 'none');
+        });
+        visibleContents.forEach((el, idx) => {
+            el.dataset.step = (idx + 1);
+        });
+
+        // Adjust progressFill width if a transaction was already submitted
+        const progressFill = document.getElementById('progressFill');
+        if (progressFill) {
+            // when transaction exists (initially step=4), keep full width; otherwise reset to 0
+            if (window.initialStep && Number(window.initialStep) > 1) {
+                // if final already, keep 100%
+                if (Number(window.initialStep) >= visibleContents.length) {
+                    progressFill.style.width = '100%';
+                } else {
+                    progressFill.style.width = ( (Number(window.initialStep) / visibleContents.length) * 100 ) + '%';
+                }
+            } else {
+                progressFill.style.width = '';
+            }
+        }
+    }
+
+    // hide "Request For" group for First Time Job Seeker and Indigency (optional: only if exact match)
+    function applyRequestForVisibility(certName) {
+        const normalized = normalizeCertName(certName);
+        const reqGroup = document.getElementById('requestForGroup');
+        if (!reqGroup) return;
+        // hide when certificate is exactly one of noPaymentTypes (e.g., 'indigency' or 'first time job seeker')
+        const shouldHide = noPaymentTypes.some(x => normalizeCertName(x) === normalized);
+        reqGroup.style.display = shouldHide ? 'none' : '';
+    }
+
+    // on initial load, if current selection is known (e.g., server provided existingCertType or input value), apply rules
+    const certInput = document.getElementById('certType');
+    const initialCert = (certInput && certInput.value) ? certInput.value.trim() : (window.existingCertType || '');
+    const initialIsNoPayment = noPaymentTypes.some(x => normalizeCertName(x) === normalizeCertName(initialCert)) || isNoPaymentType;
+    applyNoPaymentFlow(initialIsNoPayment);
+    applyRequestForVisibility(initialCert);
+
+    // watch for user changes to certType (typeahead / select). whenever it changes, adjust UI
+    // Note: certType is a free text input in your markup; adjust event depending on how your serviceCertification.js updates it.
+    if (certInput) {
+        certInput.addEventListener('change', function (e) {
+            const val = e.target.value || '';
+            const isNoPay = noPaymentTypes.some(x => normalizeCertName(x) === normalizeCertName(val));
+            applyNoPaymentFlow(isNoPay);
+            applyRequestForVisibility(val);
+        });
+        // also listen to input events so click-choose or typeahead triggers change
+        certInput.addEventListener('input', function (e) {
+            const val = e.target.value || '';
+            const isNoPay = noPaymentTypes.some(x => normalizeCertName(x) === normalizeCertName(val));
+            applyRequestForVisibility(val);
+            // we don't repeatedly remove/pay prog if already removed; applyNoPaymentFlow is idempotent enough
+            applyNoPaymentFlow(isNoPay);
+        });
+    }
+});
+</script>
+
 <script src="js/serviceCertification.js"></script>
 
 <!--
@@ -679,15 +807,25 @@ document.addEventListener('DOMContentLoaded', function () {
         const forSelect = document.getElementById('forSelect');
         const container = document.getElementById('summaryContainer');
 
-        const type = (certInput?.value || '').trim().toLowerCase();
+        const typeRaw = (certInput?.value || '').trim();
+        const type = typeRaw.toLowerCase();
+
+        // helper to know if this type is a no-payment type
+        const isNoPayment = (window.noPaymentTypes || []).some(x => ((x||'').toString().trim().toLowerCase() === type));
+
         const rows = [
             ['Type of Certification:', certInput?.value || '—'],
-            ['Requesting For:', forSelect?.value === 'myself' ? 'Myself' : 'Others'],
+            // NOTE: Requesting For is added conditionally below (omitted for no-payment types)
             ['Full Name:', (document.querySelector('[name="full_name"]')?.value) || '—'],
             ['Age:', (document.querySelector('[name="age"]')?.value) || '—'],
             ['Civil Status:', (document.querySelector('[name="civil_status"]')?.value) || '—'],
             ['Purok:', (document.querySelector('[name="purok"]')?.value) || '—']
         ];
+
+        // Add Requesting For only if NOT a no-payment type
+        if (!isNoPayment) {
+            rows.splice(1, 0, ['Requesting For:', forSelect?.value === 'myself' ? 'Myself' : 'Others']);
+        }
 
         // NEW: Good Moral -> include Parent Sex and optional Parent Address
         if (type === 'good moral') {
@@ -730,12 +868,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Common fields for all types
-        // Note: summary reads hidden claim_date field populated by the claim widget above
         const claimDateVal = document.querySelector('[name="claim_date"]')?.value;
         const claimTimeVal = document.querySelector('[name="claim_time"]')?.value;
         let claimDisplay = '—';
         if (claimDateVal && claimTimeVal) {
-            // try to find friendly label from window._claimOptions
             if (window._claimOptions && Array.isArray(window._claimOptions)) {
                 const found = window._claimOptions.find(c => c.date === claimDateVal);
                 const dateLabel = found ? found.label : claimDateVal;
@@ -746,40 +882,38 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
         rows.push(['Claim Date:', claimDisplay]);
-        rows.push(['Purpose:', document.querySelector('[name="purpose"]')?.value || '—']);
 
-        // Payment details — different rules for Indigency vs others
+        // Purpose: show it only for types that use it (if you want to hide for FTJS remove below)
+        if (!isNoPayment) {
+            rows.push(['Purpose:', document.querySelector('[name="purpose"]')?.value || '—']);
+        }
+
+        // Payment details — different rules for Indigency & other no-payment types
         const paymentAmountEl = document.getElementById('paymentAmount');
         const paymentStatusEl = document.getElementById('paymentStatus');
 
         const clientAmount = paymentAmountEl?.value?.trim();
         const clientStatus = paymentStatusEl?.value?.trim();
 
-        // prefer client-side hidden inputs, fallback to server values exposed on window
         const amountVal = clientAmount || window.existingPaymentAmount || '';
         const statusVal = clientStatus || window.existingPaymentStatus || '';
 
-        if (type === 'indigency') {
-            // show payment_status for indigency (default to "Free of Charge")
+        if (type === 'indigency' || isNoPayment) {
+            // show payment_status (default to "Free of Charge" for no-payment types)
             rows.push(['Payment Status:', statusVal || 'Free of Charge']);
         } else {
             // for other certificates, include amount and payment_status.
-            // Format amount nicely if numeric
             let amtDisplay = '—';
             if (amountVal !== null && String(amountVal).trim() !== '') {
-                // if numeric, prefix peso sign
                 if (!isNaN(Number(String(amountVal).replace(/[^0-9.-]+/g, '')))) {
                     amtDisplay = '₱' + Number(String(amountVal).replace(/[^0-9.-]+/g, '')).toFixed(2);
                 } else {
                     amtDisplay = String(amountVal);
                 }
             } else {
-                // fallback default amount (use 130 as your standard fee)
                 amtDisplay = '₱130.00';
             }
             rows.push(['Amount:', amtDisplay]);
-
-            // payment status - prefer server-existing, otherwise show 'Pending' as friendly default
             rows.push(['Payment Status:', statusVal || 'Pending']);
         }
 
@@ -815,7 +949,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Also, if user views an existing transaction, populate now so the summary shows immediately
     if (window.initialStep && Number(window.initialStep) >= 3) {
-        // slight timeout to ensure DOM elements are present
         setTimeout(() => {
             if (typeof window.populateSummary === 'function') window.populateSummary();
         }, 120);

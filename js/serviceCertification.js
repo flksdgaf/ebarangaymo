@@ -1,3 +1,6 @@
+// (entire file — updated populateSummary behavior for First Time Job Seeker)
+// Replace your current js file with this exact content.
+
 document.addEventListener("DOMContentLoaded", function () {
     let steps = document.querySelectorAll(".step");
     let circleSteps = document.querySelectorAll('.circle');
@@ -127,7 +130,8 @@ document.addEventListener("DOMContentLoaded", function () {
             "Indigency",
             "Good Moral",
             "Solo Parent",
-            "Guardianship"
+            "Guardianship",
+            "First Time Job Seeker"
         ];
         const input = certInput;
         const list  = document.getElementById('certTypeList');
@@ -379,6 +383,13 @@ document.addEventListener("DOMContentLoaded", function () {
             { id: 'age',             label: 'Age',             type: 'number',   disabled: true },
             { id: 'civil_status',    label: 'Civil Status',    type: 'select',   options: ['Single','Married','Widowed','Separated','Divorced','Unknown']   },
             { id: 'purok',           label: 'Purok',           type: 'select',   options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6']     }
+        ],
+        'first time job seeker': [
+            { id: 'full_name',    label: 'Full Name',    type: 'text',   disabled: true },
+            { id: 'age',          label: 'Age',          type: 'number', disabled: true },
+            { id: 'civil_status', label: 'Civil Status', type: 'select', options: ['Single','Married','Widowed','Separated','Divorced','Unknown'] },
+            { id: 'purok',        label: 'Purok',        type: 'select', options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6'] },
+            { id: 'claim_date',   label: 'Claim Date',   type: 'claim' }
         ]
     };
 
@@ -627,7 +638,8 @@ document.addEventListener("DOMContentLoaded", function () {
             certFieldsHolder.appendChild(authRow);
         }
 
-        if (key === 'indigency') {
+        // Hide payment for indigency and First Time Job Seeker (no-payment flow)
+        if (key === 'indigency' || key === 'first time job seeker') {
             if (hiddenPaymentInput) hiddenPaymentInput.value = '';
             if (hiddenPaymentAmount) hiddenPaymentAmount.value = '';
             if (hiddenPaymentStatus) {
@@ -740,8 +752,10 @@ document.addEventListener("DOMContentLoaded", function () {
         const summaryIndex = getSummaryStepIndex();
         const submissionIndex = getSubmissionStepIndex();
 
+        // If user is on the summary step, show confirmation modal (but treat no-payment types similarly)
         if (summaryIndex > 0 && currentStep === summaryIndex) {
-            if ((certInput.value || '').trim().toLowerCase() === 'indigency') {
+            const lowType = (certInput.value || '').trim().toLowerCase();
+            if (lowType === 'indigency' || lowType === 'first time job seeker') {
                 if (hiddenPaymentInput) hiddenPaymentInput.value = '';
                 if (hiddenPaymentAmount) hiddenPaymentAmount.value = '';
                 if (hiddenPaymentStatus) {
@@ -760,13 +774,21 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
+        // MOVE to next visible step (handles removed payment step gracefully)
         if (currentStep < tSteps) {
             const prevIdx = currentStep - 1;
             if (circleSteps[prevIdx]) circleSteps[prevIdx].classList.add('completed');
             if (stepLabels[prevIdx]) stepLabels[prevIdx].classList.add('completed');
             if (steps[prevIdx]) steps[prevIdx].classList.remove('active-step');
 
+            // increment step
             currentStep++;
+
+            // If the newly targeted step element doesn't exist (e.g., payment was removed), clamp
+            if (!steps[currentStep - 1]) {
+                currentStep = Math.min(tSteps, currentStep);
+            }
+
             const newIdx = currentStep - 1;
             if (steps[newIdx]) steps[newIdx].classList.add('active-step');
             if (circleSteps[newIdx]) circleSteps[newIdx].classList.add('active');
@@ -816,7 +838,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (confirmSubmitBtn) {
         confirmSubmitBtn.addEventListener('click', () => {
-            if ((certInput.value || '').trim().toLowerCase() === 'indigency') {
+            const lowType = (certInput.value || '').trim().toLowerCase();
+            if (lowType === 'indigency' || lowType === 'first time job seeker') {
                 if (hiddenPaymentInput) hiddenPaymentInput.value = '';
                 if (hiddenPaymentAmount) hiddenPaymentAmount.value = '';
                 if (hiddenPaymentStatus) {
@@ -892,14 +915,18 @@ document.addEventListener("DOMContentLoaded", function () {
         const type = (certInput.value || '').trim().toLowerCase();
         const container = document.getElementById('summaryContainer');
 
-        const rows = [
-            ['Type of Certification:', certInput.value || '—'],
-            ['Requesting For:', forSelect.value === 'myself' ? 'Myself' : 'Others'],
-            ['Full Name:', (document.querySelector('[name="full_name"]')?.value) || '—'],
-            ['Age:', (document.querySelector('[name="age"]')?.value) || '—'],
-            ['Civil Status:', (document.querySelector('[name="civil_status"]')?.value) || '—'],
-            ['Purok:', (document.querySelector('[name="purok"]')?.value) || '—']
-        ];
+        // Build rows differently if First Time Job Seeker: *DO NOT* include Requesting For or Purpose
+        const rows = [];
+        rows.push(['Type of Certification:', certInput.value || '—']);
+
+        if (type !== 'first time job seeker') {
+            rows.push(['Requesting For:', forSelect.value === 'myself' ? 'Myself' : 'Others']);
+        }
+
+        rows.push(['Full Name:', (document.querySelector('[name="full_name"]')?.value) || '—']);
+        rows.push(['Age:', (document.querySelector('[name="age"]')?.value) || '—']);
+        rows.push(['Civil Status:', (document.querySelector('[name="civil_status"]')?.value) || '—']);
+        rows.push(['Purok:', (document.querySelector('[name="purok"]')?.value) || '—']);
 
         if (type === 'good moral') {
             const parentSexGM = document.querySelector('[name="parent_sex"]')?.value || window.existingParentSex || window.currentUser.sex || '—';
@@ -955,7 +982,11 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         rows.push(['Claim Date:', claimLabel]);
-        rows.push(['Purpose:', document.querySelector('[name="purpose"]')?.value || '—']);
+
+        // Add Purpose only when NOT FTJS
+        if (type !== 'first time job seeker') {
+            rows.push(['Purpose:', document.querySelector('[name="purpose"]')?.value || '—']);
+        }
 
         const clientAmount = (hiddenPaymentAmount?.value || '').toString().trim();
         const clientStatus = (hiddenPaymentStatus?.value || '').toString().trim();
@@ -965,7 +996,8 @@ document.addEventListener("DOMContentLoaded", function () {
         const amountVal = clientAmount || serverAmount || '';
         const statusVal = clientStatus || serverStatus || '';
 
-        if (type === 'indigency') {
+        // Treat Indigency and First Time Job Seeker as no-payment types in summary
+        if (type === 'indigency' || type === 'first time job seeker') {
             rows.push(['Payment Status:', statusVal || 'Free of Charge']);
         } else {
             let amtDisplay = '—';
@@ -1013,7 +1045,8 @@ document.addEventListener("DOMContentLoaded", function () {
         ensureHiddenPaymentFields();
 
         const val = (certInput.value || '').trim().toLowerCase();
-        if (val === 'indigency') {
+        // treat both indigency and first time job seeker as no-payment
+        if (val === 'indigency' || val === 'first time job seeker') {
             if (hiddenPaymentInput) hiddenPaymentInput.value = '';
             if (hiddenPaymentAmount) hiddenPaymentAmount.value = '';
             if (hiddenPaymentStatus) {
@@ -1024,11 +1057,14 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             }
 
+            // HIDE payment step and progress — do NOT remove nodes from DOM
             const pStep = document.getElementById('paymentStep');
-            if (pStep && pStep.parentNode) pStep.parentNode.removeChild(pStep);
-            const pProgress = document.querySelector('.payment-progress-step');
-            if (pProgress && pProgress.parentNode) pProgress.parentNode.removeChild(pProgress);
+            if (pStep && pStep.style) pStep.style.display = 'none';
 
+            const pProgress = document.querySelector('.payment-progress-step');
+            if (pProgress && pProgress.style) pProgress.style.display = 'none';
+
+            // hide the visual payment boxes/buttons/instructions, but keep DOM nodes
             const feeBoxes = document.querySelectorAll('.payment-container, .fee-box, #payment-instructions, .payment-instruction, .payment-btn');
             feeBoxes.forEach(el => { if (el && el.style) el.style.display = 'none'; });
 
@@ -1038,20 +1074,39 @@ document.addEventListener("DOMContentLoaded", function () {
             populateSummary();
 
             if (progressFill) {
+                // mark progress as complete for no-payment flow
                 progressFill.style.width = '100%';
                 progressFill.setAttribute('aria-valuenow', '100');
             }
         } else {
-            if (!document.getElementById('paymentStep')) {
-                location.reload();
-            } else {
-                if (hiddenPaymentInput && !hiddenPaymentInput.value) hiddenPaymentInput.value = (window.existingPaymentMethod || 'Brgy Payment Device');
-                if (hiddenPaymentAmount && !hiddenPaymentAmount.value) hiddenPaymentAmount.value = (window.existingPaymentAmount || String(DEFAULT_AMOUNT));
-                if (hiddenPaymentStatus && !hiddenPaymentStatus.value) hiddenPaymentStatus.value = (window.existingPaymentStatus || 'Pending');
-            }
+            // RESTORE payment step & progress visibility if they were hidden earlier
+            const pStep = document.getElementById('paymentStep');
+            if (pStep && pStep.style && pStep.style.display === 'none') pStep.style.display = '';
+
+            const pProgress = document.querySelector('.payment-progress-step');
+            if (pProgress && pProgress.style && pProgress.style.display === 'none') pProgress.style.display = '';
+
+            // un-hide the payment UI elements that were hidden earlier
+            const feeBoxes = document.querySelectorAll('.payment-container, .fee-box, #payment-instructions, .payment-instruction, .payment-btn');
+            feeBoxes.forEach(el => { if (el && el.style) el.style.display = ''; });
+
+            // Make sure hidden fields have sensible defaults (do not reload the page)
+            if (hiddenPaymentInput && !hiddenPaymentInput.value) hiddenPaymentInput.value = (window.existingPaymentMethod || 'Brgy Payment Device');
+            if (hiddenPaymentAmount && !hiddenPaymentAmount.value) hiddenPaymentAmount.value = (window.existingPaymentAmount || String(DEFAULT_AMOUNT));
+            if (hiddenPaymentStatus && !hiddenPaymentStatus.value) hiddenPaymentStatus.value = (window.existingPaymentStatus || 'Pending');
+
+            // Re-initialize payment controls (ensures buttons & instruction panels sync)
+            try { setupPaymentControls(); } catch (e) { /* fail-safe */ }
 
             refreshStepCollections();
             updateNavigation();
+
+            // Reset progressFill to the normal percent for current step
+            if (progressFill) {
+                const pct = computeProgressPercent(currentStep, totalSteps());
+                progressFill.style.width = pct + '%';
+                progressFill.setAttribute('aria-valuenow', String(pct));
+            }
         }
     }
 
@@ -1072,9 +1127,11 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         setupPaymentControls();
 
-        if ((window.existingCertType || '').toString().toLowerCase() === 'indigency') {
-            certInput.value = 'Indigency';
-            renderCertFields('Indigency', forSelect.value);
+        // If server provided an existing cert type that is a no-payment type, treat same as indigency
+        const existingLow = (window.existingCertType || '').toString().toLowerCase();
+        if (existingLow === 'indigency' || existingLow === 'first time job seeker') {
+            certInput.value = window.existingCertType || 'Indigency';
+            renderCertFields(window.existingCertType || 'Indigency', forSelect.value);
             if (hiddenPaymentStatus && (!hiddenPaymentStatus.value || !hiddenPaymentStatus.value.trim())) {
                 hiddenPaymentStatus.value = 'Free of Charge';
             }

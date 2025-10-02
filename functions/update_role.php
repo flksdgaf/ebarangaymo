@@ -9,18 +9,18 @@ function json_out($data, $code = 200) {
   echo json_encode($data);
   exit;
 }
+
 function json_err($msg, $code = 400) {
   json_out(['success' => false, 'error' => $msg], $code);
 }
 
-// helper: find full_name for an account_id scanning purok tables 1..6
+// Helper: find full_name for an account_id scanning purok tables 1..6
 function findFullNameForAccount($conn, int $account_id) : ?string {
   for ($p = 1; $p <= 6; $p++) {
     $tbl = "purok{$p}_rbi";
-    // guard against SQL injection on table name by using fixed loop
     $sql = "SELECT full_name FROM `{$tbl}` WHERE account_ID = ? LIMIT 1";
     $st = $conn->prepare($sql);
-    if ($st === false) continue; // if table missing, skip
+    if ($st === false) continue;
     $st->bind_param('i', $account_id);
     $st->execute();
     $res = $st->get_result();
@@ -33,17 +33,20 @@ function findFullNameForAccount($conn, int $account_id) : ?string {
   return null;
 }
 
+// Validate request method
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
   json_err('Invalid method', 405);
 }
 
-$acct = isset($_POST['account_id']) ? (int)$_POST['account_id'] : 0;
-$role = isset($_POST['role']) ? trim($_POST['role']) : '';
-// optional: client may pass purok; we don't rely on it
-$purok = isset($_POST['purok']) ? (int)$_POST['purok'] : null;
+// Get parameters
+$targetAccountId = isset($_POST['account_id']) ? (int)$_POST['account_id'] : 0;
+$newRole = isset($_POST['role']) ? trim($_POST['role']) : '';
 
-if (!$acct || $role === '') json_err('Missing parameters', 400);
+if (!$targetAccountId || $newRole === '') {
+  json_err('Missing parameters', 400);
+}
 
+// Validate role
 $validRoles = [
   'Resident',
   'Brgy Captain',
@@ -53,48 +56,82 @@ $validRoles = [
   'Brgy Treasurer',
   'Lupon Tagapamayapa'
 ];
-if (!in_array($role, $validRoles, true)) json_err('Invalid role', 400);
+if (!in_array($newRole, $validRoles, true)) {
+  json_err('Invalid role', 400);
+}
 
-// who is changing roles?
+// Get logged-in user info
 $performerRole = $_SESSION['loggedInUserRole'] ?? '';
-$performerId   = (int)($_SESSION['loggedInUserID'] ?? 0);
+$performerId = (int)($_SESSION['loggedInUserID'] ?? 0);
 
+if (!$performerId) {
+  json_err('You must be logged in to perform this action', 401);
+}
+
+// CHECK 1: Only Brgy Captain, Brgy Bookkeeper, and Brgy Secretary can change roles
 $allowedChangers = ['Brgy Captain', 'Brgy Bookkeeper', 'Brgy Secretary'];
 if (!in_array($performerRole, $allowedChangers, true)) {
   json_err('You do not have permission to change roles', 403);
 }
 
-// ensure the target account exists and read its previous role
+// CHECK 2: Prevent users from updating their own role
+if ($performerId === $targetAccountId) {
+  json_err('You cannot update your own role', 403);
+}
+
+// Get target account info (check if exists and get current role)
 $checkStmt = $conn->prepare("SELECT role FROM user_accounts WHERE account_id = ? LIMIT 1");
-if ($checkStmt === false) json_err('Database error (prepare existence check): ' . $conn->error, 500);
-$checkStmt->bind_param('i', $acct);
+if ($checkStmt === false) {
+  json_err('Database error (prepare existence check): ' . $conn->error, 500);
+}
+$checkStmt->bind_param('i', $targetAccountId);
 $checkStmt->execute();
 $checkRes = $checkStmt->get_result();
 if (!$row = $checkRes->fetch_assoc()) {
   $checkStmt->close();
   json_err('Target account not found', 404);
 }
-$prevRole = $row['role'] ?? '';
+$currentRole = $row['role'] ?? '';
 $checkStmt->close();
 
-// find the full name (optional) for better messages
-$fullName = findFullNameForAccount($conn, $acct);
-$whoLabel = $fullName ? "{$fullName} (Account No:{$acct})" : "Account #{$acct}";
+// CHECK 3: Brgy Bookkeeper and Brgy Secretary cannot update Brgy Captain's role
+if (in_array($performerRole, ['Brgy Bookkeeper', 'Brgy Secretary'])) {
+  if ($currentRole === 'Brgy Captain') {
+    json_err('You do not have permission to change the Brgy Captain\'s role', 403);
+  }
+}
 
-// role limits
+// Get full name for better messages
+$fullName = findFullNameForAccount($conn, $targetAccountId);
+$whoLabel = $fullName ? "{$fullName} (Account No:{$targetAccountId})" : "Account #{$targetAccountId}";
+
+// CHECK 4: If changing to the same role, return early (no-op)
+if ($currentRole === $newRole) {
+  json_out([
+    'success' => true, 
+    'message' => "<strong>{$fullName}</strong> already has the role <strong>{$newRole}</strong>. No changes made.", 
+    'account_id' => $targetAccountId, 
+    'full_name' => $fullName
+  ], 200);
+}
+
+// CHECK 5: Role limits - ensure we don't exceed maximum allowed for each role
 $limits = [
   'Brgy Captain' => 1,
   'Brgy Secretary' => 1,
   'Brgy Treasurer' => 1,
+  'Brgy Bookkeeper' => 1,
   'Brgy Kagawad' => 7,
   'Lupon Tagapamayapa' => 8
 ];
 
-// if target role has a limit, ensure we won't exceed it
-if (isset($limits[$role])) {
+if (isset($limits[$newRole])) {
+  // Count current holders of this role (excluding the target account)
   $countStmt = $conn->prepare("SELECT account_id FROM user_accounts WHERE role = ? AND account_id <> ?");
-  if ($countStmt === false) json_err('Database error (prepare count): ' . $conn->error, 500);
-  $countStmt->bind_param('si', $role, $acct);
+  if ($countStmt === false) {
+    json_err('Database error (prepare count): ' . $conn->error, 500);
+  }
+  $countStmt->bind_param('si', $newRole, $targetAccountId);
   $countStmt->execute();
   $res = $countStmt->get_result();
   $holders = [];
@@ -103,27 +140,36 @@ if (isset($limits[$role])) {
   }
   $countStmt->close();
 
-  if (count($holders) >= $limits[$role]) {
-    // translate holder account ids into names (first few)
+  if (count($holders) >= $limits[$newRole]) {
+    // Get names of current holders (limit to 3 for cleaner message)
     $names = [];
-    foreach (array_slice($holders, 0, 10) as $hid) {
+    foreach (array_slice($holders, 0, 3) as $hid) {
       $n = findFullNameForAccount($conn, $hid);
-      $names[] = $n ? "{$n} (acct #{$hid})" : "acct #{$hid}";
+      $names[] = $n ? $n : "Account #{$hid}";
     }
+    
+    $holderCount = count($holders);
     $holderList = implode(', ', $names);
-    json_err("Cannot assign role '{$role}': limit of {$limits[$role]} reached. Current holder(s): {$holderList}", 409);
+    
+    // Add "and X more" if there are more than 3 holders
+    if ($holderCount > 3) {
+      $remaining = $holderCount - 3;
+      $holderList .= " and {$remaining} more";
+    }
+    
+    $errorMessage = "The role <strong>{$newRole}</strong> has reached its maximum limit of <strong>{$limits[$newRole]}</strong>. ";
+    $errorMessage .= "Current holder" . ($holderCount > 1 ? "s" : "") . ": {$holderList}.";
+    
+    json_err($errorMessage, 409);
   }
 }
 
-// If changing to the same role, return a clear message (no-op)
-if ($prevRole === $role) {
-  json_out(['success' => true, 'message' => "No change: {$whoLabel} already has role '{$role}'", 'account_id' => $acct, 'full_name' => $fullName], 200);
-}
-
-// perform the update
+// Perform the update
 $upd = $conn->prepare("UPDATE user_accounts SET role = ? WHERE account_id = ?");
-if ($upd === false) json_err('Database error (prepare update): ' . $conn->error, 500);
-$upd->bind_param('si', $role, $acct);
+if ($upd === false) {
+  json_err('Database error (prepare update): ' . $conn->error, 500);
+}
+$upd->bind_param('si', $newRole, $targetAccountId);
 $ok = $upd->execute();
 if ($ok === false) {
   $upd->close();
@@ -135,57 +181,21 @@ $upd->close();
 if ($affected) {
   json_out([
     'success' => true,
-    'message' => "Role updated to '{$role}' for {$whoLabel}",
-    'account_id' => $acct,
-    'full_name'  => $fullName,
-    'previous_role' => $prevRole,
-    'new_role' => $role
+    'message' => "Role successfully updated to <strong>{$newRole}</strong> for <strong>{$fullName}</strong>.",
+    'account_id' => $targetAccountId,
+    'full_name' => $fullName,
+    'previous_role' => $currentRole,
+    'new_role' => $newRole
   ], 200);
 } else {
-  // unlikely: update ran but 0 rows affected
+  // Unlikely: update ran but 0 rows affected
   json_out([
     'success' => true,
-    'message' => "No change (nothing to update) for {$whoLabel}",
-    'account_id' => $acct,
+    'message' => "No changes were made for <strong>{$fullName}</strong>.",
+    'account_id' => $targetAccountId,
     'full_name' => $fullName,
-    'previous_role' => $prevRole,
-    'new_role' => $role
+    'previous_role' => $currentRole,
+    'new_role' => $newRole
   ], 200);
 }
-
-// // functions/update_role.php
-// require_once 'dbconn.php';
-
-// if ($_SERVER['REQUEST_METHOD']!=='POST'
-//  || empty($_POST['account_id'])
-//  || empty($_POST['role'])
-// ) {
-//   http_response_code(400);
-//   exit('Invalid');
-// }
-
-// $acct = (int)$_POST['account_id'];
-// $role = trim($_POST['role']);
-// $purok= (int)$_POST['purok'];
-
-// // validate role
-// $valid = ['Resident','Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Treasurer', 'Lupon Tagapamayapa'];
-// if (!in_array($role,$valid,true)) {
-//   http_response_code(400);
-//   exit('Bad role');
-// }
-
-// // update user_accounts
-// $stmt = $conn->prepare("
-//   UPDATE user_accounts
-//     SET role = ?
-//   WHERE account_id = ?
-// ");
-// $stmt->bind_param("si",$role,$acct);
-// $stmt->execute();
-// $stmt->close();
-
-// // return JSON
-// echo json_encode(['success'=>true]);
-// exit;
 ?>

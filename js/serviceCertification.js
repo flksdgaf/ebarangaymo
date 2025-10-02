@@ -21,6 +21,11 @@ document.addEventListener("DOMContentLoaded", function () {
     let hiddenClaimDate = document.querySelector('input[name="claim_date"]');
     let hiddenClaimTime = document.querySelector('input[name="claim_time"]');
 
+    // Purpose controls (may be present from server-side PHP)
+    const purposeSelect = document.getElementById('purposeSelect');
+    const purposeOther  = document.getElementById('purposeOther');
+    const purposeHidden = document.getElementById('purposeHidden');
+
     const confirmationModalEl = document.getElementById("confirmationModal");
     const confirmationModal = confirmationModalEl ? new bootstrap.Modal(confirmationModalEl) : null;
     const confirmSubmitBtn = document.getElementById("confirmSubmitBtn");
@@ -31,6 +36,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const forSelect = document.getElementById('forSelect');
     const certInput = document.getElementById('certType');
     const certFieldsHolder = document.getElementById('certFields');
+    const purposeContainer = document.getElementById('purposeContainer'); // may be null if not rendered
 
     const DEFAULT_AMOUNT = 130;
 
@@ -123,6 +129,80 @@ document.addEventListener("DOMContentLoaded", function () {
             if (hiddenPaymentStatus) hiddenPaymentStatus.value = String(window.existingPaymentStatus);
         }
     };
+
+    // -------------------------
+    // Purpose controls (minimal adaptation from serviceBarangayClearance.js)
+    // -------------------------
+    function setupPurposeControls() {
+        // Only run if the server rendered the purposeSelect & hidden purpose input
+        const sel = document.getElementById('purposeSelect');
+        const other = document.getElementById('purposeOther');
+        const hidden = document.getElementById('purposeHidden');
+        const purposeContainer = document.getElementById('purposeContainer') || null;
+
+        // If server didn't render the global purpose UI, nothing to do here.
+        if (!sel || !hidden) return;
+
+        // Purpose exclusion list from server (fallback if not present)
+        const purposeExcluded = Array.isArray(window.purposeExcluded) ? window.purposeExcluded : ['First Time Job Seeker'];
+
+        function normalize(s){ return (s||'').toString().trim().toLowerCase(); }
+        function isExcludedForCert(certName){
+            if(!certName) return false;
+            return purposeExcluded.some(x => normalize(x) === normalize(certName));
+        }
+
+        // Decide visibility based on current certificate selection or server value
+        const currentCertName = (document.getElementById('certType')?.value || window.existingCertType || '').toString();
+        if (isExcludedForCert(currentCertName)) {
+            // hide the purpose UI and clear the hidden storage so it won't be submitted accidentally
+            if (purposeContainer) purposeContainer.style.display = 'none';
+            hidden.value = '';
+            // still return so we don't wire change handlers for the hidden UI
+            return;
+        } else {
+            // make sure it's visible if not excluded
+            if (purposeContainer) purposeContainer.style.display = '';
+        }
+
+        // initialize based on hidden value if present
+        if (hidden.value) {
+            const hiddenVal = hidden.value.trim();
+            const match = Array.from(sel.options).some(o => o.value === hiddenVal);
+            if (!match) {
+                const othersOpt = Array.from(sel.options).find(o => o.value === 'Others' || o.text === 'Others');
+                if (othersOpt) { othersOpt.selected = true; if (other) other.value = hiddenVal; }
+            } else sel.value = hiddenVal;
+        } else {
+            // ensure hidden has initial select value when possible
+            hidden.value = sel.value || hidden.value || '';
+        }
+
+        const toggle = () => {
+            if (sel.value === 'Others') {
+                if (other) { other.classList.remove('d-none'); other.required = true; if (!other.value && hidden.value && hidden.value !== 'Others') other.value = hidden.value; }
+                if (other && other.value.trim()) hidden.value = other.value.trim();
+                else hidden.value = 'Others';
+            } else {
+                if (other) { other.classList.add('d-none'); other.required = false; other.classList.remove('is-invalid'); }
+                hidden.value = sel.value;
+            }
+            if (typeof populateSummary === 'function') populateSummary();
+        };
+
+        sel.addEventListener('change', function() { toggle(); });
+        if (other) other.addEventListener('input', function() {
+            hidden.value = other.value.trim() || 'Others';
+            if (typeof populateSummary === 'function') populateSummary();
+        });
+
+        // initial toggle
+        toggle();
+    }
+
+    // -------------------------
+    // End purpose controls
+    // -------------------------
 
     (function(){
         const options = [
@@ -415,79 +495,114 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (type === 'guardianship') {
             wrapper.innerHTML += `
-            <div id="guardianChildren"></div>
-            <button type="button" id="addGuardianChild" class="btn btn-sm btn-outline-primary mb-3"> + Add Child </button>
+                <div id="guardianChildren"></div>
 
-            <div id="guardianClaimContainer" class="row mb-3">
-                <label class="col-sm-2 fw-bold">Claim Date:</label>
-                <div class="col-sm-10" id="guardianClaimHolder"></div>
-            </div>
-
-            <div class="row mb-3">
-                <label class="col-sm-2 fw-bold">Purpose:</label>
-                <div class="col-sm-10">
-                <input type="text" name="purpose" class="form-control" required>
+                <div id="guardianClaimContainer" class="row mb-3">
+                    <label class="col-sm-2 fw-bold">Claim Date:</label>
+                    <div class="col-sm-10" id="guardianClaimHolder"></div>
                 </div>
-            </div>
             `;
             certFieldsHolder.appendChild(wrapper);
 
             const container = wrapper.querySelector('#guardianChildren');
-            const addBtn    = wrapper.querySelector('#addGuardianChild');
 
+            // Each child row includes both DELETE and + Add Child buttons aligned on the right
             function addChild() {
                 const row = document.createElement('div');
-                row.className = 'row mb-3';
+                row.className = 'row mb-3 align-items-center';
+
                 row.innerHTML = `
                     <label class="col-sm-2 col-form-label fw-bold">Child's Name:</label>
-                    <div class="col-sm-9">
+                    <div class="col-sm-7">
                         <input type="text" name="child_name[]" class="form-control" required>
                     </div>
-                    <div class="col-sm-1">
+                    <div class="col-sm-3 d-flex justify-content-end gap-2">
                         <button type="button" class="btn btn-outline-danger btn-sm remove-child">DELETE</button>
-                    </div>`;
+                        <button type="button" class="btn btn-sm btn-outline-primary add-child-local">+ Add Child</button>
+                    </div>
+                `;
+
                 container.appendChild(row);
-                row.querySelector('.remove-child').onclick = () => row.remove();
+
+                const removeBtn = row.querySelector('.remove-child');
+                const addBtnLocal = row.querySelector('.add-child-local');
+
+                removeBtn.onclick = () => {
+                    // Count number of child rows (fields)
+                    const rows = container.querySelectorAll('input[name="child_name[]"]');
+                    if (rows.length <= 1) {
+                        // prevent deletion of last field
+                        // visual feedback: briefly add a bootstrap 'shake' style (if available) or fallback to alert
+                        try {
+                            // add a quick outline to show invalid action
+                            removeBtn.classList.add('disabled');
+                            removeBtn.setAttribute('aria-disabled', 'true');
+                            setTimeout(() => {
+                                removeBtn.classList.remove('disabled');
+                                removeBtn.removeAttribute('aria-disabled');
+                            }, 600);
+                        } catch (e) {}
+                        // fallback message
+                        alert('At least one Child Name is required for Guardianship and cannot be removed.');
+                        return;
+                    }
+                    // Otherwise allow removal
+                    row.remove();
+                };
+
+                addBtnLocal.onclick = () => {
+                    // append a new child row and focus its input
+                    addChild();
+                    const inputs = container.querySelectorAll('input[name="child_name[]"]');
+                    if (inputs.length) inputs[inputs.length - 1].focus();
+                };
             }
 
-            addBtn.onclick = addChild;
+            // create one initial row
             addChild();
+
+            // Insert purposeContainer (if present) directly after guardianChildren
+            try {
+                if (purposeContainer) {
+                    if (!purposeContainer.parentNode || purposeContainer.parentNode !== wrapper) {
+                        const guardianChildrenEl = wrapper.querySelector('#guardianChildren');
+                        if (guardianChildrenEl && guardianChildrenEl.parentNode) {
+                            guardianChildrenEl.parentNode.insertBefore(purposeContainer, guardianChildrenEl.nextSibling);
+                            purposeContainer.style.display = '';
+                        }
+                    }
+                }
+            } catch (e) { /* ignore insertion errors */ }
 
             buildClaimOptionsInto(wrapper.querySelector('#guardianClaimHolder'));
         } else if (type === 'solo parent') {
             wrapper.innerHTML += `
-            <div id="soloChildren"></div>
-            <button type="button" id="addSoloChild" class="btn btn-sm btn-outline-primary mb-3"> + Add Child </button>
-
-            <div class="row mb-3">
-                <label class="col-sm-2 fw-bold">Years as Solo Parent:</label>
-                <div class="col-sm-10">
-                <input type="number" name="years_solo_parent" class="form-control" required>
+                <div id="soloChildren"></div>
+                <!-- per-row Add button replaces the global add button -->
+                <div class="row mb-3">
+                    <label class="col-sm-2 fw-bold">Years as Solo Parent:</label>
+                    <div class="col-sm-10">
+                        <input type="number" name="years_solo_parent" class="form-control" required>
+                    </div>
                 </div>
-            </div>
 
-            <div id="soloClaimContainer" class="row mb-3">
-                <label class="col-sm-2 fw-bold">Claim Date:</label>
-                <div class="col-sm-10" id="soloClaimHolder"></div>
-            </div>
-
-            <div class="row mb-3">
-                <label class="col-sm-2 fw-bold">Purpose:</label>
-                <div class="col-sm-10">
-                <input type="text" name="purpose" class="form-control" required>
+                <div id="soloClaimContainer" class="row mb-3">
+                    <label class="col-sm-2 fw-bold">Claim Date:</label>
+                    <div class="col-sm-10" id="soloClaimHolder"></div>
                 </div>
-            </div>
             `;
             certFieldsHolder.appendChild(wrapper);
 
             const container = wrapper.querySelector('#soloChildren');
-            const addBtn    = wrapper.querySelector('#addSoloChild');
+
             function addChild() {
                 const row = document.createElement('div');
-                row.className = 'row mb-3';
+                row.className = 'row mb-3 align-items-center';
+
                 row.innerHTML = `
-                    <label class="col-sm-2 col-form-label fw-bold"> Child's Name:</label>
-                    <div class="col-sm-4">
+                    <label class="col-sm-2 col-form-label fw-bold">Child's Name:</label>
+
+                    <div class="col-sm-3">
                         <input type="text" name="child_name[]" class="form-control" required>
                     </div>
 
@@ -506,14 +621,58 @@ document.addEventListener("DOMContentLoaded", function () {
                         </select>
                     </div>
 
-                    <div class="col-sm-1">
+                    <div class="col-sm-2 d-flex justify-content-end gap-2">
                         <button type="button" class="btn btn-outline-danger btn-sm remove-child">DELETE</button>
-                    </div>`;
+                        <button type="button" class="btn btn-sm btn-outline-primary add-child-local">+ Add Child</button>
+                    </div>
+                `;
+
                 container.appendChild(row);
-                row.querySelector('.remove-child').onclick = () => row.remove();
+
+                const removeBtn = row.querySelector('.remove-child');
+                const addBtnLocal = row.querySelector('.add-child-local');
+
+                removeBtn.onclick = () => {
+                    // Count number of child name inputs
+                    const rows = container.querySelectorAll('input[name="child_name[]"]');
+                    if (rows.length <= 1) {
+                        // prevent deletion of last field
+                        try {
+                            removeBtn.classList.add('disabled');
+                            removeBtn.setAttribute('aria-disabled', 'true');
+                            setTimeout(() => {
+                                removeBtn.classList.remove('disabled');
+                                removeBtn.removeAttribute('aria-disabled');
+                            }, 600);
+                        } catch (e) {}
+                        alert('At least one Child Name is required for Solo Parent and cannot be removed.');
+                        return;
+                    }
+                    // otherwise allow removal
+                    row.remove();
+                };
+
+                addBtnLocal.onclick = () => {
+                    addChild();
+                    const inputs = container.querySelectorAll('input[name="child_name[]"]');
+                    if (inputs.length) inputs[inputs.length - 1].focus();
+                };
             }
-            addBtn.onclick = addChild;
+
+            // create one initial row
             addChild();
+
+            // Insert purposeContainer (if present) after the years row (same logic as before)
+            try {
+                if (purposeContainer) {
+                    const yearsInput = wrapper.querySelector('input[name="years_solo_parent"]');
+                    const yearsRow = yearsInput ? yearsInput.closest('.row') : null;
+                    if (yearsRow && (!purposeContainer.parentNode || purposeContainer.parentNode !== wrapper)) {
+                        yearsRow.parentNode.insertBefore(purposeContainer, yearsRow.nextSibling);
+                        purposeContainer.style.display = '';
+                    }
+                }
+            } catch (e) { /* ignore insertion errors */ }
 
             buildClaimOptionsInto(wrapper.querySelector('#soloClaimHolder'));
         }
@@ -569,7 +728,24 @@ document.addEventListener("DOMContentLoaded", function () {
         ensureHiddenClaimFields();
         ensureHiddenPaymentFields();
 
+        if (purposeContainer) {
+            // temporarily detach from DOM if it is currently placed somewhere else
+            // Note: remove() only supported in modern browsers; fallback via parentNode if needed
+            try {
+                if (purposeContainer.parentNode) purposeContainer.parentNode.removeChild(purposeContainer);
+            } catch (e) {
+                /* ignore */
+            }
+            purposeContainer.style.display = 'none';
+        }
+
         cfg.forEach(f => {
+            // If the page uses the global purposeSelect (server-rendered), avoid rendering
+            // the inline text 'purpose' field inside certFields to prevent duplication.
+            if (f.id === 'purpose' && document.getElementById('purposeSelect')) {
+                return; // skip rendering this inline purpose field because we have the global select
+            }
+
             let val = '';
             if (mode === 'myself') {
                 if (f.id === 'full_name')      val = invertName(currentUser.full_name);
@@ -611,6 +787,33 @@ document.addEventListener("DOMContentLoaded", function () {
             inner += `</div>`;
             row.innerHTML = inner;
             certFieldsHolder.appendChild(row);
+
+            if (purposeContainer) {
+                // Helper normalized key
+                // `key` variable is defined earlier as: const key = (value || '').trim().toLowerCase();
+                // f.id is the field id being processed
+                const fieldId = f.id;
+                // Residency -> place after 'residing_years'
+                if (key === 'residency' && fieldId === 'residing_years') {
+                    // insert right after the current row
+                    certFieldsHolder.insertBefore(purposeContainer, row.nextSibling);
+                    purposeContainer.style.display = '';
+                }
+                // Indigency -> place after 'purok'
+                else if (key === 'indigency' && fieldId === 'purok') {
+                    certFieldsHolder.insertBefore(purposeContainer, row.nextSibling);
+                    purposeContainer.style.display = '';
+                }
+                // Good Moral -> place after 'purok'
+                else if (key === 'good moral' && fieldId === 'purok') {
+                    certFieldsHolder.insertBefore(purposeContainer, row.nextSibling);
+                    purposeContainer.style.display = '';
+                }
+                // For other types (including 'first time job seeker'), ensure it's hidden/removed
+                else {
+                    purposeContainer.style.display = 'none';
+                }
+            }
         });
 
         if (key === 'guardianship' || key === 'solo parent') {
@@ -689,6 +892,9 @@ document.addEventListener("DOMContentLoaded", function () {
             if (hiddenPaymentStatus && !hiddenPaymentStatus.value) hiddenPaymentStatus.value = 'Pending';
         }
 
+        // Ensure purpose controls are (re)initialized after fields rendered
+        try { setupPurposeControls(); } catch (e) { /* ignore */ }
+
         refreshStepCollections();
         updateNavigation();
         setupPaymentControls();
@@ -704,6 +910,8 @@ document.addEventListener("DOMContentLoaded", function () {
     forSelect.addEventListener('change', refreshFields);
 
     setupPaymentControls();
+    // initialize purpose controls once (renderCertFields also calls it after updates)
+    setupPurposeControls();
 
     nextBtn.addEventListener('click', () => {
         refreshStepCollections();
@@ -985,7 +1193,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Add Purpose only when NOT FTJS
         if (type !== 'first time job seeker') {
-            rows.push(['Purpose:', document.querySelector('[name="purpose"]')?.value || '—']);
+            // prefer hidden purpose value (works whether inline or global select + hidden input)
+            const purposeVal = (document.querySelector('[name="purpose"]')?.value) || (document.getElementById('purposeHidden')?.value) || '—';
+            rows.push(['Purpose:', purposeVal || '—']);
         }
 
         const clientAmount = (hiddenPaymentAmount?.value || '').toString().trim();
@@ -1057,16 +1267,17 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             }
 
-            // HIDE payment step and progress — do NOT remove nodes from DOM
+            // hide payment step and progress (do NOT remove from DOM)
             const pStep = document.getElementById('paymentStep');
             if (pStep && pStep.style) pStep.style.display = 'none';
-
             const pProgress = document.querySelector('.payment-progress-step');
             if (pProgress && pProgress.style) pProgress.style.display = 'none';
 
-            // hide the visual payment boxes/buttons/instructions, but keep DOM nodes
+            // hide any fee/payment related boxes (they may exist)
             const feeBoxes = document.querySelectorAll('.payment-container, .fee-box, #payment-instructions, .payment-instruction, .payment-btn');
             feeBoxes.forEach(el => { if (el && el.style) el.style.display = 'none'; });
+
+            try { setupPurposeControls(); } catch (e) { /* ignore */ }
 
             refreshStepCollections();
             if (currentStep > totalSteps()) currentStep = totalSteps();
@@ -1074,39 +1285,32 @@ document.addEventListener("DOMContentLoaded", function () {
             populateSummary();
 
             if (progressFill) {
-                // mark progress as complete for no-payment flow
                 progressFill.style.width = '100%';
                 progressFill.setAttribute('aria-valuenow', '100');
             }
         } else {
-            // RESTORE payment step & progress visibility if they were hidden earlier
+            // If payment step was previously hidden/removed, restore display instead of reload
             const pStep = document.getElementById('paymentStep');
-            if (pStep && pStep.style && pStep.style.display === 'none') pStep.style.display = '';
-
             const pProgress = document.querySelector('.payment-progress-step');
-            if (pProgress && pProgress.style && pProgress.style.display === 'none') pProgress.style.display = '';
 
-            // un-hide the payment UI elements that were hidden earlier
+            if (pStep && pStep.style && pStep.style.display === 'none') {
+                pStep.style.display = '';
+            }
+            if (pProgress && pProgress.style && pProgress.style.display === 'none') {
+                pProgress.style.display = '';
+            }
+
+            // Also show fee boxes if previously hidden
             const feeBoxes = document.querySelectorAll('.payment-container, .fee-box, #payment-instructions, .payment-instruction, .payment-btn');
             feeBoxes.forEach(el => { if (el && el.style) el.style.display = ''; });
 
-            // Make sure hidden fields have sensible defaults (do not reload the page)
+            // Ensure hidden payment fields have sensible defaults
             if (hiddenPaymentInput && !hiddenPaymentInput.value) hiddenPaymentInput.value = (window.existingPaymentMethod || 'Brgy Payment Device');
             if (hiddenPaymentAmount && !hiddenPaymentAmount.value) hiddenPaymentAmount.value = (window.existingPaymentAmount || String(DEFAULT_AMOUNT));
             if (hiddenPaymentStatus && !hiddenPaymentStatus.value) hiddenPaymentStatus.value = (window.existingPaymentStatus || 'Pending');
 
-            // Re-initialize payment controls (ensures buttons & instruction panels sync)
-            try { setupPaymentControls(); } catch (e) { /* fail-safe */ }
-
             refreshStepCollections();
             updateNavigation();
-
-            // Reset progressFill to the normal percent for current step
-            if (progressFill) {
-                const pct = computeProgressPercent(currentStep, totalSteps());
-                progressFill.style.width = pct + '%';
-                progressFill.setAttribute('aria-valuenow', String(pct));
-            }
         }
     }
 
@@ -1132,6 +1336,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (existingLow === 'indigency' || existingLow === 'first time job seeker') {
             certInput.value = window.existingCertType || 'Indigency';
             renderCertFields(window.existingCertType || 'Indigency', forSelect.value);
+            try { setupPurposeControls(); } catch (e) { /* ignore */ }
             if (hiddenPaymentStatus && (!hiddenPaymentStatus.value || !hiddenPaymentStatus.value.trim())) {
                 hiddenPaymentStatus.value = 'Free of Charge';
             }

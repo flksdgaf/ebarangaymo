@@ -332,6 +332,34 @@ if (!empty($existingRequestRow)) {
                     <div class="col-12"><hr></div>
                 </div>
 
+                <!-- PURPOSE (select + other + hidden final input) -->
+                <div class="row mb-3" id="purposeContainer" style="display:none;">
+                    <label class="col-md-4 text-start fw-bold">Purpose</label>
+                    <div class="col-md-8">
+                        <?php
+                        $purposes = ['Employment','Another Valid ID','School Enrollment','Scholarship','4Ps Application','Business','Others'];
+                        // existing value if editing (may be in $existingRequestRow['purpose'])
+                        $existingPurposeVal = $existingRequestRow['purpose'] ?? '';
+                        $is_prefilled_in_list = in_array($existingPurposeVal, $purposes, true);
+                        $prefill_other_value = $is_prefilled_in_list ? '' : $existingPurposeVal;
+                        ?>
+                        <select id="purposeSelect" name="purpose_select" class="form-control custom-input">
+                            <option value="">Select Purpose</option>
+                            <?php foreach ($purposes as $p): 
+                                $sel = ($is_prefilled_in_list && $existingPurposeVal === $p) ? 'selected' : '';
+                            ?>
+                                <option value="<?php echo htmlspecialchars($p); ?>" <?php echo $sel; ?>><?php echo htmlspecialchars($p); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+
+                        <input type="text" id="purposeOther" name="purpose_other" class="form-control custom-input mt-2 d-none" placeholder="Please specify purpose" value="<?php echo htmlspecialchars($prefill_other_value); ?>">
+
+                        <!-- Hidden final value submitted to server -->
+                        <input type="hidden" id="purposeHidden" name="purpose" value="<?php echo htmlspecialchars($is_prefilled_in_list ? $existingPurposeVal : $prefill_other_value); ?>">
+                    </div>
+                </div>
+
+                <!-- existing placeholder where other certificate-specific fields are injected -->
                 <div id="certFields"></div>
 
             </div>
@@ -584,9 +612,11 @@ if (!empty($existingRequestRow)) {
     // NEW: expose existing parent sex & address so client-side can prefill the parent sex dropdown and show previously-entered address
     window.existingParentSex = <?php echo json_encode($existingParentSex, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
     window.existingParentAddress = <?php echo json_encode($existingParentAddress, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
+    window.existingPurpose = <?php echo json_encode($existingRequestRow['purpose'] ?? '', JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
 
     window.noPaymentTypes = <?php echo json_encode($noPaymentTypes, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
     window.isNoPaymentType = <?php echo json_encode($isNoPaymentType ? true : false); ?>;
+    window.purposeExcluded = <?php echo json_encode(['First Time Job Seeker'], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
 </script>
 
 <!-- Claim handling script (keeps logic local so external JS can remain unchanged) -->
@@ -801,157 +831,101 @@ document.addEventListener('DOMContentLoaded', function () {
 -->
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // safe-guard: only override if serviceCertification.js defined a populateSummary; if not, we'll define it.
-    function newPopulateSummary() {
-        const certInput = document.getElementById('certType');
-        const forSelect = document.getElementById('forSelect');
-        const container = document.getElementById('summaryContainer');
+    const certInput = document.getElementById('certType');
+    const purposeContainer = document.getElementById('purposeContainer');
+    const purposeSelect = document.getElementById('purposeSelect');
+    const purposeOther = document.getElementById('purposeOther');
+    const purposeHidden = document.getElementById('purposeHidden');
 
-        const typeRaw = (certInput?.value || '').trim();
-        const type = typeRaw.toLowerCase();
+    // list of purpose options (mirror the server list)
+    const purposeOptions = ['Employment','Another Valid ID','School Enrollment','Scholarship','4Ps Application','Business','Others'];
 
-        // helper to know if this type is a no-payment type
-        const isNoPayment = (window.noPaymentTypes || []).some(x => ((x||'').toString().trim().toLowerCase() === type));
+    // Helper: show/hide purpose UI
+    function ensurePurposeVisibility() {
+        const hasCert = (certInput && certInput.value && certInput.value.trim() !== '');
+        // Show whenever a cert type exists OR when editing an existing request that had a purpose
+        const shouldShow = hasCert || (window.existingPurpose && String(window.existingPurpose).trim() !== '');
+        if (purposeContainer) purposeContainer.style.display = shouldShow ? '' : 'none';
+    }
 
-        const rows = [
-            ['Type of Certification:', certInput?.value || '—'],
-            // NOTE: Requesting For is added conditionally below (omitted for no-payment types)
-            ['Full Name:', (document.querySelector('[name="full_name"]')?.value) || '—'],
-            ['Age:', (document.querySelector('[name="age"]')?.value) || '—'],
-            ['Civil Status:', (document.querySelector('[name="civil_status"]')?.value) || '—'],
-            ['Purok:', (document.querySelector('[name="purok"]')?.value) || '—']
-        ];
-
-        // Add Requesting For only if NOT a no-payment type
-        if (!isNoPayment) {
-            rows.splice(1, 0, ['Requesting For:', forSelect?.value === 'myself' ? 'Myself' : 'Others']);
-        }
-
-        // NEW: Good Moral -> include Parent Sex and optional Parent Address
-        if (type === 'good moral') {
-            const parentSex = document.querySelector('[name="parent_sex"]')?.value || window.existingParentSex || '—';
-            const parentAddress = document.querySelector('[name="parent_address"]')?.value || window.existingParentAddress || '—';
-            rows.push(['Parent Sex:', parentSex]);
-            rows.push(['Parent Address:', parentAddress]);
-        }
-
-        // Solo Parent: Child details + years
-        if (type === 'solo parent') {
-            const childNames = Array.from(document.querySelectorAll('[name="child_name[]"]')).map(el => el.value.trim()).filter(Boolean);
-            const childAges  = Array.from(document.querySelectorAll('[name="child_age[]"]')).map(el => el.value.trim()).filter(Boolean);
-            const childSexes = Array.from(document.querySelectorAll('[name="child_sex[]"]')).map(el => el.value.trim()).filter(Boolean);
-
-            childNames.forEach((name, i) => {
-                rows.push([`Child ${i + 1} Name:`, name || '—']);
-                rows.push([`Child ${i + 1} Age:`, childAges[i] || '—']);
-                rows.push([`Child ${i + 1} Sex:`, childSexes[i] || '—']);
-            });
-
-            const years = document.querySelector('[name="years_solo_parent"]')?.value || '—';
-            rows.push(['Years as Solo Parent:', years]);
-        }
-
-        // Guardianship: Child names only
-        if (type === 'guardianship') {
-            const childNames = Array.from(document.querySelectorAll('[name="child_name[]"]')).map(el => el.value.trim()).filter(Boolean);
-            childNames.forEach((name, i) => {
-                rows.push([`Child ${i + 1} Name:`, name || '—']);
-            });
-        }
-
-        // Residency specific field
-        if (type === 'residency') {
-            rows.push([
-                'Years Residing:',
-                document.querySelector('[name="residing_years"]')?.value || '—'
-            ]);
-        }
-
-        // Common fields for all types
-        const claimDateVal = document.querySelector('[name="claim_date"]')?.value;
-        const claimTimeVal = document.querySelector('[name="claim_time"]')?.value;
-        let claimDisplay = '—';
-        if (claimDateVal && claimTimeVal) {
-            if (window._claimOptions && Array.isArray(window._claimOptions)) {
-                const found = window._claimOptions.find(c => c.date === claimDateVal);
-                const dateLabel = found ? found.label : claimDateVal;
-                const part = (found && Array.isArray(found.parts)) ? (found.parts.find(p => p.key === claimTimeVal)?.label || claimTimeVal) : claimTimeVal;
-                claimDisplay = `${dateLabel} - ${part}`;
-            } else {
-                claimDisplay = `${claimDateVal} - ${claimTimeVal}`;
-            }
-        }
-        rows.push(['Claim Date:', claimDisplay]);
-
-        // Purpose: show it only for types that use it (if you want to hide for FTJS remove below)
-        if (!isNoPayment) {
-            rows.push(['Purpose:', document.querySelector('[name="purpose"]')?.value || '—']);
-        }
-
-        // Payment details — different rules for Indigency & other no-payment types
-        const paymentAmountEl = document.getElementById('paymentAmount');
-        const paymentStatusEl = document.getElementById('paymentStatus');
-
-        const clientAmount = paymentAmountEl?.value?.trim();
-        const clientStatus = paymentStatusEl?.value?.trim();
-
-        const amountVal = clientAmount || window.existingPaymentAmount || '';
-        const statusVal = clientStatus || window.existingPaymentStatus || '';
-
-        if (type === 'indigency' || isNoPayment) {
-            // show payment_status (default to "Free of Charge" for no-payment types)
-            rows.push(['Payment Status:', statusVal || 'Free of Charge']);
+    // Toggle the "Other" input when "Others" selected
+    function togglePurposeOther() {
+        if (!purposeSelect) return;
+        if (purposeSelect.value === 'Others') {
+            purposeOther.classList.remove('d-none');
+            purposeOther.required = true;
+            // update hidden value from other input (if any)
+            purposeHidden.value = purposeOther.value.trim() || 'Others';
         } else {
-            // for other certificates, include amount and payment_status.
-            let amtDisplay = '—';
-            if (amountVal !== null && String(amountVal).trim() !== '') {
-                if (!isNaN(Number(String(amountVal).replace(/[^0-9.-]+/g, '')))) {
-                    amtDisplay = '₱' + Number(String(amountVal).replace(/[^0-9.-]+/g, '')).toFixed(2);
-                } else {
-                    amtDisplay = String(amountVal);
-                }
-            } else {
-                amtDisplay = '₱130.00';
-            }
-            rows.push(['Amount:', amtDisplay]);
-            rows.push(['Payment Status:', statusVal || 'Pending']);
+            purposeOther.classList.add('d-none');
+            purposeOther.required = false;
+            if (purposeSelect.value) purposeHidden.value = purposeSelect.value;
+            else purposeHidden.value = '';
         }
+        updateSummaryPurpose();
+    }
 
-        // Build HTML
-        let html = `
-            <div class="row justify-content-center">
-                <div class="col-md-10 col-lg-8 col-xl-6">
-                    <div class="summary-container p-4 rounded shadow-sm border">
-                        <ul class="list-group list-group-flush">
-        `;
+    // Keep summary synced (populateSummary already reads [name="purpose"], but update if summary uses custom hooks)
+    function updateSummaryPurpose() {
+        // If you have a summary function that expects a specific update, call it:
+        if (typeof window.populateSummary === 'function') {
+            window.populateSummary();
+            return;
+        }
+        // Otherwise, nothing else to do — the summary builder reads the hidden input.
+    }
 
-        rows.forEach(([label, value]) => {
-            html += `
-                <li class="list-group-item d-flex justify-content-between">
-                    <span class="fw-bold">${label}</span>
-                    <span class="text-success">${value}</span>
-                </li>
-            `;
+    // Prefill selection when editing (window.existingPurpose provided by server)
+    function prefillPurposeFromServer() {
+        const existing = (window.existingPurpose || '').toString().trim();
+        if (!existing) return;
+
+        // If existing matches one of the options, select it; otherwise select "Others" and populate other input
+        const matched = purposeOptions.find(p => p.toLowerCase() === existing.toLowerCase());
+        if (matched) {
+            if (purposeSelect) purposeSelect.value = matched;
+            if (purposeOther) { purposeOther.value = ''; purposeOther.classList.add('d-none'); }
+            if (purposeHidden) purposeHidden.value = matched;
+        } else {
+            if (purposeSelect) purposeSelect.value = 'Others';
+            if (purposeOther) {
+                purposeOther.classList.remove('d-none');
+                purposeOther.value = existing;
+                purposeOther.required = true;
+            }
+            if (purposeHidden) purposeHidden.value = existing;
+        }
+    }
+
+    // Event wiring
+    if (certInput) {
+        // show purpose when user types or chooses certificate
+        certInput.addEventListener('input', ensurePurposeVisibility);
+        certInput.addEventListener('change', ensurePurposeVisibility);
+    }
+
+    if (purposeSelect) purposeSelect.addEventListener('change', togglePurposeOther);
+    if (purposeOther) purposeOther.addEventListener('input', function () {
+        purposeHidden.value = purposeOther.value.trim() || 'Others';
+        updateSummaryPurpose();
+    });
+
+    // Ensure final hidden value set before form submit
+    const form = document.getElementById('certForm');
+    if (form) {
+        form.addEventListener('submit', function () {
+            // if select=Others and other has text, use it; else if select has value use it.
+            if (purposeSelect && purposeSelect.value === 'Others' && purposeOther && purposeOther.value.trim()) {
+                purposeHidden.value = purposeOther.value.trim();
+            } else if (purposeSelect && purposeSelect.value) {
+                purposeHidden.value = purposeSelect.value;
+            }
         });
-
-        html += `
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        container.innerHTML = html;
     }
 
-    // If serviceCertification.js already defined populateSummary, override it
-    window.populateSummary = newPopulateSummary;
-
-    // Also, if user views an existing transaction, populate now so the summary shows immediately
-    if (window.initialStep && Number(window.initialStep) >= 3) {
-        setTimeout(() => {
-            if (typeof window.populateSummary === 'function') window.populateSummary();
-        }, 120);
-    }
+    // Initial run: show/hide + prefill
+    ensurePurposeVisibility();
+    prefillPurposeFromServer();
+    togglePurposeOther(); // sets other visibility & hidden value according to prefill
 });
 </script>

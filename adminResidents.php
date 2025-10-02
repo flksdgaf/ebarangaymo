@@ -172,11 +172,6 @@ $endDisplay   = $offset + $shownCount;                       // 1-based end inde
           <tr>
             <th class="text-nowrap">No.</th>
             <th class="text-nowrap">Full Name</th>
-            <!-- <th class="text-nowrap">Birthdate</th>
-            <th class="text-nowrap">House No.</th>
-            <th class="text-nowrap">Relationship to Head</th>
-            <th class="text-nowrap">Registry No.</th>
-            <th class="text-nowrap">Total Population</th> -->
             <th class="text-nowrap">Account Role</th>
             <th class="text-nowrap">Remarks</th>
           </tr>
@@ -205,11 +200,6 @@ $endDisplay   = $offset + $shownCount;                       // 1-based end inde
                     <small class="text-muted">Account ID: <?= $acctId ?></small>
                   </div>
                 </td>
-                <!-- <td style="<= $cellStyle ?>"><= htmlspecialchars($row['birthdate']) ?></td>
-                <td style="<= $cellStyle ?>"><= htmlspecialchars($row['house_number'] ?? '—') ?></td>
-                <td style="<= $cellStyle ?>"><= htmlspecialchars($row['relationship_to_head'] ?? '—') ?></td>
-                <td style="<= $cellStyle ?>"><= htmlspecialchars($row['registry_number'] ?? '—') ?></td>
-                <td style="<= $cellStyle ?>"><= htmlspecialchars($row['total_population'] ?? '—') ?></td> -->
                 <td style="<?= $cellStyle ?>">
                   <?php if ($row['role'] !== null): ?>
                     <select class="form-select form-select-sm role-select" style="width:137px; background-image: none; padding-right: 0.5rem;">
@@ -401,26 +391,6 @@ $endDisplay   = $offset + $shownCount;                       // 1-based end inde
       Sform.submit();
     });
 
-    // // --- Remarks dropdown handler
-    // document.querySelectorAll('.remarks-select').forEach(sel => {
-    //   sel.addEventListener('change', async function() {
-    //     const row = this.closest('tr');
-    //     const name = row.dataset.name;
-    //     const remark = this.value;
-    //     const color = remarkColor[remark] || '';
-
-    //     // update backgrounds
-    //     row.querySelectorAll('td').forEach(td => td.style.backgroundColor = color);
-
-    //     // persist
-    //     await fetch('functions/update_remarks.php', {
-    //       method: 'POST',
-    //       headers: {'Content-Type':'application/x-www-form-urlencoded'},
-    //       body: new URLSearchParams({ full_name: name, purok: purokNum, remarks: remark })
-    //     });
-    //   });
-    // });
-
     document.querySelectorAll('.remarks-select').forEach(sel => {
       sel.addEventListener('change', async function () {
         const row = this.closest('tr');
@@ -465,16 +435,17 @@ $endDisplay   = $offset + $shownCount;                       // 1-based end inde
         const acct = (tr && tr.dataset && tr.dataset.account) ? tr.dataset.account.trim() : '';
         const newRole = sel.value;
         const oldRole = sel.dataset.original || tr.dataset.role || '';
+        const residentName = tr.dataset.name || 'this resident';
 
         if (!acct) {
-          showBootstrapAlert('Account ID not found for this row', 'danger');
+          showBootstrapAlert('<i class="bi bi-exclamation-triangle-fill"></i> <strong>Error:</strong> Account ID not found for this row.', 'danger');
           sel.value = oldRole;
           return;
         }
 
         if (newRole === oldRole) return;
 
-        // optimistic UI: disable while updating
+        // Disable dropdown while updating
         sel.disabled = true;
 
         try {
@@ -485,24 +456,43 @@ $endDisplay   = $offset + $shownCount;                       // 1-based end inde
           });
 
           let json;
-          try { json = await res.json(); } catch (e) {
+          try { 
+            json = await res.json(); 
+          } catch (e) {
             sel.value = oldRole;
-            showBootstrapAlert('Invalid server response while updating role', 'danger');
+            showBootstrapAlert('<strong>Error:</strong> Invalid server response while updating role.', 'danger');
             return;
           }
 
           if (!json.success) {
             sel.value = oldRole;
-            showBootstrapAlert(json.error || 'Failed to update role', 'danger');
+            
+            // Format error message based on type
+            let errorMsg = json.error || 'Failed to update role';
+            
+            if (errorMsg.includes('permission')) {
+              showBootstrapAlert(`<strong>Permission Denied:</strong> ${errorMsg}`, 'warning');
+            } else if (errorMsg.includes('limit')) {
+              showBootstrapAlert(`<strong>Role Limit Reached:</strong> ${errorMsg}`, 'warning');
+            } else if (errorMsg.includes('cannot update your own role')) {
+              showBootstrapAlert(`<strong>Not Allowed:</strong> You cannot update your own role.`, 'warning');
+            } else if (errorMsg.includes('Brgy Captain')) {
+              showBootstrapAlert(`<strong>Protected Role:</strong> ${errorMsg}`, 'warning');
+            } else {
+              showBootstrapAlert(`<strong>Error:</strong> ${errorMsg}`, 'danger');
+            }
           } else {
-            // success: update dataset & baseline
+            // Success: update dataset & baseline
             tr.dataset.role = newRole;
             sel.dataset.original = newRole;
-            showBootstrapAlert(json.message || 'Role updated', 'success');
+            
+            // Show success message
+            const msg = json.message || `Role updated successfully for <strong>${residentName}</strong>`;
+            showBootstrapAlert(msg, 'success');
           }
         } catch (err) {
           sel.value = oldRole;
-          showBootstrapAlert('Network error while updating role', 'danger');
+          showBootstrapAlert('<strong>Network Error:</strong> Unable to connect to server. Please check your connection and try again.', 'danger');
           console.error(err);
         } finally {
           sel.disabled = false;
@@ -603,101 +593,12 @@ $endDisplay   = $offset + $shownCount;                       // 1-based end inde
       `;
     }
 
-
-    // function buildForm(data) {
-    //   currentData = data;
-    //   isEditing = false;
-    //   editSaveBtn.textContent = 'Edit';
-      
-    //   form.innerHTML = '';
-    //   if (data.profile_picture) {
-    //     const picDiv = document.createElement('div');
-    //     picDiv.className = 'text-center mb-4';
-    //     const img = document.createElement('img');
-    //     img.src = `profilePictures/${data.profile_picture}`;
-    //     img.className = 'rounded-circle';
-    //     img.style = 'width:120px;height:120px;object-fit:cover;';
-    //     picDiv.appendChild(img);
-    //     form.appendChild(picDiv);
-    //   }
-
-    //   const fields = [
-    //     { key:'purok', label:'Purok', type:'select', readonly:true, editable:true, options:['1','2','3','4','5','6'] },
-    //     { key:'account_ID', label:'Account ID', type:'text', readonly:true },
-    //     { key:'full_name', label:'Full Name', type:'text', readonly:true, editable:true },
-    //     { key:'birthdate', label:'Birthdate', type:'date', readonly:true },
-    //     { key:'sex', label:'Sex', type:'select', readonly:true, editable:true, options:['Male','Female','Prefer not to say','Unknown'] },
-    //     { key:'civil_status', label:'Civil Status', type:'select', readonly:true, editable:true, options:['Single','Married','Widowed','Separated','Divorced','Unknown'] },
-    //     { key:'blood_type', label:'Blood Type', type:'select', readonly:true, editable:true, options:['A+','A-','B+','B-','AB+','AB-','O+','O-','Unknown'] },
-    //     { key:'birth_registration_number', label:'Birth Reg. No.', type:'text',   readonly:true, editable:true },
-    //     { key:'highest_educational_attainment', label:'Highest Educational Attainment', type:'select', readonly:true, editable:true, options:['Kindergarten','Elementary','High School','Senior High School','Undergraduate','College Graduate','Post-Graduate','Vocational','None','Unknown'] },
-    //     { key:'occupation', label:'Occupation', type:'text', readonly:true, editable:true },
-    //     { key:'house_number', label:'House No.', type:'number', readonly:true, editable:true },
-    //     { key:'relationship_to_head', label:'Relationship to Head', type:'text', readonly:true, editable:true },
-    //     { key:'registry_number', label:'Registry No.', type:'number', readonly:true, editable:true },
-    //     { key:'total_population', label:'Total Population', type:'number', readonly:true, editable:true },
-    //     { key:'role', label:'Role', type:'text', readonly:true },
-    //     { key:'remarks', label:'Remarks', type:'text', readonly:true }
-    //   ];
-
-    //   fields.forEach(f => {
-    //     const wr = document.createElement('div');
-    //     wr.className = 'mb-3 row';
-
-    //     const lbl = document.createElement('label');
-    //     lbl.className = 'col-sm-5 col-form-label fw-bold';
-    //     lbl.textContent = f.label;
-
-    //     const inner = document.createElement('div');
-    //     inner.className = 'col-sm-7';
-
-    //     let input;
-    //     if (f.type === 'select') {
-    //       input = document.createElement('select');
-    //       input.className = 'form-select';
-    //       f.options.forEach(opt => {
-    //         const o = document.createElement('option');
-    //         o.value = o.textContent = opt;
-    //         if (String(data[f.key]) === opt) o.selected = true;
-    //         input.appendChild(o);
-    //       });
-    //       input.disabled = true;
-    //     } else {
-    //       input = document.createElement('input');
-    //       input.className = 'form-control';
-    //       input.type = f.type;
-    //       input.value = data[f.key] ?? '';
-    //       input.disabled = true;
-
-    //       if (f.key === 'remarks') {
-    //         input.value = data.remarks ? data.remarks : 'None';
-    //       } else {
-    //         input.value = data[f.key] ?? '';
-    //       }
-    //     }
-
-    //     input.id = `field_${f.key}`;
-    //     input.name = f.key;
-
-    //     wr.appendChild(lbl);
-    //     wr.appendChild(inner);
-    //     inner.appendChild(input);
-    //     form.appendChild(wr);
-    //   });
-    // }
-
     // Toggle Edit ↔ Save
     editSaveBtn.addEventListener('click', () => {
       if (!isEditing) {
         // switch to edit mode
         isEditing = true;
         editSaveBtn.textContent = 'Save';
-
-        // unlock only the editable controls
-        // ['full_name','birthdate','house_number','relationship_to_head','registry_number','total_population']
-        //   .forEach(k => document.getElementById(`field_${k}`).readOnly = false);
-        // ['sex','civil_status','blood_type','highest_educational_attainment']
-        //   .forEach(k => document.getElementById(`field_${k}`).disabled = false);
 
         // enable only editable controls
        ['purok','full_name','house_number','relationship_to_head','registry_number','total_population',

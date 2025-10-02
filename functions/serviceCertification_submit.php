@@ -65,6 +65,33 @@ $acct   = (int) ($_SESSION['loggedInUserID'] ?? 0);
 $fields = $certConfigs[$type];
 $data   = [];
 
+// --- Ensure purpose is NOT stored for excluded types (extra server-side safety) ---
+$purposeExcluded = ['First Time Job Seeker']; // Guardianship now allowed to have a purpose
+
+if (in_array($type, $purposeExcluded, true)) {
+    // Remove 'purpose' from $fields if it slipped in
+    $pidx = array_search('purpose', $fields, true);
+    if ($pidx !== false) {
+        array_splice($fields, $pidx, 1);
+    }
+
+    // Ignore any posted purpose — don't allow it to be saved
+    if (isset($_POST['purpose'])) {
+        unset($_POST['purpose']);
+    }
+    // Ensure $data has no purpose value
+    $data['purpose'] = null;
+} else {
+    // For types that allow purpose, normalize it (trim) and prepare to validate later
+    if (isset($_POST['purpose'])) {
+        $data['purpose'] = trim($_POST['purpose']) !== '' ? trim($_POST['purpose']) : null;
+    } else {
+        // ensure a key exists so later code doesn't fail
+        $data['purpose'] = $data['purpose'] ?? null;
+    }
+}
+
+
 $postedClaimDate = isset($_POST['claim_date']) ? trim($_POST['claim_date']) : null;
 $postedClaimTime = isset($_POST['claim_time']) ? trim($_POST['claim_time']) : null;
 $postedClaimSlot = isset($_POST['claim_slot']) ? trim($_POST['claim_slot']) : null;
@@ -397,6 +424,13 @@ $columns = array_merge(
     $fields,
     ['payment_method','amount','payment_status','request_for','authorization_letter','request_source']
 );
+
+// Extra protection: ensure excluded types do not end up with 'purpose' in $columns
+if (in_array($type, $purposeExcluded, true)) {
+    $colIdx = array_search('purpose', $columns, true);
+    if ($colIdx !== false) array_splice($columns, $colIdx, 1);
+}
+
 
 // If table supports created_at/updated_at and they are not already in $columns, add created_at/updated_at
 if (table_has_column($conn, $table, 'created_at') && !in_array('created_at', $columns, true)) $columns[] = 'created_at';

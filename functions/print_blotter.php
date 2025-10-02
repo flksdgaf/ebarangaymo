@@ -92,12 +92,13 @@ $respondentLast = extractLastName($data['respondent_name']);
 $respondentAddress = $data['respondent_address'];
 $incidentDescription = $data['incident_description'];
 
-// Parse multiple clients (separated by " & ")
-$clientNameArray = explode(' & ', $data['client_name']);
+// Parse multiple clients (separated by "at")
+$clientNameArray = explode(' at ', $data['client_name']);
 $clientAddressArray = explode('; ', $data['client_address']);
 
 // Format clients with their addresses inline
 $clientsFormatted = [];
+$clientNamesReformatted = []; // Add this array to store reformatted names
 for ($i = 0; $i < count($clientNameArray); $i++) {
     $name = reformatName(trim($clientNameArray[$i]));
     $address = isset($clientAddressArray[$i]) ? trim($clientAddressArray[$i]) : '';
@@ -105,7 +106,11 @@ for ($i = 0; $i < count($clientNameArray); $i++) {
         'name' => $name,
         'address' => $address
     ];
+    $clientNamesReformatted[] = $name; // Store reformatted name
 }
+
+// Build client names string for the last paragraph
+$clientNamesForSignature = implode(' at ', $clientNamesReformatted);
 
 // Build the client text
 if (count($clientsFormatted) === 1) {
@@ -119,7 +124,7 @@ if (count($clientsFormatted) === 1) {
             $parts[] = "<strong>" . htmlspecialchars($client['name']) . "</strong>, nakatira sa " . htmlspecialchars($client['address']);
         }
     }
-    $clientText = implode('; ', $parts);
+    $clientText = implode(' at ', $parts);
 }
 
 // Build CREATED date/time pieces
@@ -282,9 +287,10 @@ if ($download || $print) {
   </p>
 
   <!-- Signature section -->
-  <p class="no-indent">
+  <p>
     Nilagdaan sa Barangay Magang ngayong ika-<strong><?= $createdDay ?> ng <?= $createdMonthFil ?>, <?= $createdYear ?></strong>
-    sa kahilingan ni G. <?= htmlspecialchars($clientName) ?>.
+    sa kahilingan <?= count($clientsFormatted) === 1 ? 'ni G.' : 'nila' ?> 
+    <strong><?= str_replace(' at ', '</strong> at <strong>', htmlspecialchars($clientNamesForSignature)) ?></strong>.
   </p>
 
   <!-- Signatory Section -->
@@ -408,9 +414,10 @@ if ($download || $print) {
       <?= nl2br(htmlspecialchars($incidentDescription)) ?>
     </p>
 
-    <p class="no-indent">
+    <p>
       Nilagdaan sa Barangay Magang ngayong ika-<strong><?= $createdDay ?> ng <?= $createdMonthFil ?>, <?= $createdYear ?></strong>
-      sa kahilingan ni <?= htmlspecialchars($clientName) ?>.
+      sa kahilingan <?= count($clientsFormatted) === 1 ? 'ni' : 'nila' ?> 
+      <strong><?= str_replace(' at ', '</strong> at <strong>', htmlspecialchars($clientNamesForSignature)) ?></strong>.
     </p>
   
 

@@ -1,6 +1,3 @@
-// (entire file — updated populateSummary behavior for First Time Job Seeker)
-// Replace your current js file with this exact content.
-
 document.addEventListener("DOMContentLoaded", function () {
     let steps = document.querySelectorAll(".step");
     let circleSteps = document.querySelectorAll('.circle');
@@ -21,11 +18,6 @@ document.addEventListener("DOMContentLoaded", function () {
     let hiddenClaimDate = document.querySelector('input[name="claim_date"]');
     let hiddenClaimTime = document.querySelector('input[name="claim_time"]');
 
-    // Purpose controls (may be present from server-side PHP)
-    const purposeSelect = document.getElementById('purposeSelect');
-    const purposeOther  = document.getElementById('purposeOther');
-    const purposeHidden = document.getElementById('purposeHidden');
-
     const confirmationModalEl = document.getElementById("confirmationModal");
     const confirmationModal = confirmationModalEl ? new bootstrap.Modal(confirmationModalEl) : null;
     const confirmSubmitBtn = document.getElementById("confirmSubmitBtn");
@@ -36,7 +28,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const forSelect = document.getElementById('forSelect');
     const certInput = document.getElementById('certType');
     const certFieldsHolder = document.getElementById('certFields');
-    const purposeContainer = document.getElementById('purposeContainer'); // may be null if not rendered
 
     const DEFAULT_AMOUNT = 130;
 
@@ -130,88 +121,13 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     };
 
-    // -------------------------
-    // Purpose controls (minimal adaptation from serviceBarangayClearance.js)
-    // -------------------------
-    function setupPurposeControls() {
-        // Only run if the server rendered the purposeSelect & hidden purpose input
-        const sel = document.getElementById('purposeSelect');
-        const other = document.getElementById('purposeOther');
-        const hidden = document.getElementById('purposeHidden');
-        const purposeContainer = document.getElementById('purposeContainer') || null;
-
-        // If server didn't render the global purpose UI, nothing to do here.
-        if (!sel || !hidden) return;
-
-        // Purpose exclusion list from server (fallback if not present)
-        const purposeExcluded = Array.isArray(window.purposeExcluded) ? window.purposeExcluded : ['First Time Job Seeker'];
-
-        function normalize(s){ return (s||'').toString().trim().toLowerCase(); }
-        function isExcludedForCert(certName){
-            if(!certName) return false;
-            return purposeExcluded.some(x => normalize(x) === normalize(certName));
-        }
-
-        // Decide visibility based on current certificate selection or server value
-        const currentCertName = (document.getElementById('certType')?.value || window.existingCertType || '').toString();
-        if (isExcludedForCert(currentCertName)) {
-            // hide the purpose UI and clear the hidden storage so it won't be submitted accidentally
-            if (purposeContainer) purposeContainer.style.display = 'none';
-            hidden.value = '';
-            // still return so we don't wire change handlers for the hidden UI
-            return;
-        } else {
-            // make sure it's visible if not excluded
-            if (purposeContainer) purposeContainer.style.display = '';
-        }
-
-        // initialize based on hidden value if present
-        if (hidden.value) {
-            const hiddenVal = hidden.value.trim();
-            const match = Array.from(sel.options).some(o => o.value === hiddenVal);
-            if (!match) {
-                const othersOpt = Array.from(sel.options).find(o => o.value === 'Others' || o.text === 'Others');
-                if (othersOpt) { othersOpt.selected = true; if (other) other.value = hiddenVal; }
-            } else sel.value = hiddenVal;
-        } else {
-            // ensure hidden has initial select value when possible
-            hidden.value = sel.value || hidden.value || '';
-        }
-
-        const toggle = () => {
-            if (sel.value === 'Others') {
-                if (other) { other.classList.remove('d-none'); other.required = true; if (!other.value && hidden.value && hidden.value !== 'Others') other.value = hidden.value; }
-                if (other && other.value.trim()) hidden.value = other.value.trim();
-                else hidden.value = 'Others';
-            } else {
-                if (other) { other.classList.add('d-none'); other.required = false; other.classList.remove('is-invalid'); }
-                hidden.value = sel.value;
-            }
-            if (typeof populateSummary === 'function') populateSummary();
-        };
-
-        sel.addEventListener('change', function() { toggle(); });
-        if (other) other.addEventListener('input', function() {
-            hidden.value = other.value.trim() || 'Others';
-            if (typeof populateSummary === 'function') populateSummary();
-        });
-
-        // initial toggle
-        toggle();
-    }
-
-    // -------------------------
-    // End purpose controls
-    // -------------------------
-
     (function(){
         const options = [
             "Residency",
             "Indigency",
             "Good Moral",
             "Solo Parent",
-            "Guardianship",
-            "First Time Job Seeker"
+            "Guardianship"
         ];
         const input = certInput;
         const list  = document.getElementById('certTypeList');
@@ -463,13 +379,6 @@ document.addEventListener("DOMContentLoaded", function () {
             { id: 'age',             label: 'Age',             type: 'number',   disabled: true },
             { id: 'civil_status',    label: 'Civil Status',    type: 'select',   options: ['Single','Married','Widowed','Separated','Divorced','Unknown']   },
             { id: 'purok',           label: 'Purok',           type: 'select',   options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6']     }
-        ],
-        'first time job seeker': [
-            { id: 'full_name',    label: 'Full Name',    type: 'text',   disabled: true },
-            { id: 'age',          label: 'Age',          type: 'number', disabled: true },
-            { id: 'civil_status', label: 'Civil Status', type: 'select', options: ['Single','Married','Widowed','Separated','Divorced','Unknown'] },
-            { id: 'purok',        label: 'Purok',        type: 'select', options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6'] },
-            { id: 'claim_date',   label: 'Claim Date',   type: 'claim' }
         ]
     };
 
@@ -495,114 +404,79 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (type === 'guardianship') {
             wrapper.innerHTML += `
-                <div id="guardianChildren"></div>
+            <div id="guardianChildren"></div>
+            <button type="button" id="addGuardianChild" class="btn btn-sm btn-outline-primary mb-3"> + Add Child </button>
 
-                <div id="guardianClaimContainer" class="row mb-3">
-                    <label class="col-sm-2 fw-bold">Claim Date:</label>
-                    <div class="col-sm-10" id="guardianClaimHolder"></div>
+            <div id="guardianClaimContainer" class="row mb-3">
+                <label class="col-sm-2 fw-bold">Claim Date:</label>
+                <div class="col-sm-10" id="guardianClaimHolder"></div>
+            </div>
+
+            <div class="row mb-3">
+                <label class="col-sm-2 fw-bold">Purpose:</label>
+                <div class="col-sm-10">
+                <input type="text" name="purpose" class="form-control" required>
                 </div>
+            </div>
             `;
             certFieldsHolder.appendChild(wrapper);
 
             const container = wrapper.querySelector('#guardianChildren');
+            const addBtn    = wrapper.querySelector('#addGuardianChild');
 
-            // Each child row includes both DELETE and + Add Child buttons aligned on the right
             function addChild() {
                 const row = document.createElement('div');
-                row.className = 'row mb-3 align-items-center';
-
+                row.className = 'row mb-3';
                 row.innerHTML = `
                     <label class="col-sm-2 col-form-label fw-bold">Child's Name:</label>
-                    <div class="col-sm-7">
+                    <div class="col-sm-9">
                         <input type="text" name="child_name[]" class="form-control" required>
                     </div>
-                    <div class="col-sm-3 d-flex justify-content-end gap-2">
+                    <div class="col-sm-1">
                         <button type="button" class="btn btn-outline-danger btn-sm remove-child">DELETE</button>
-                        <button type="button" class="btn btn-sm btn-outline-primary add-child-local">+ Add Child</button>
-                    </div>
-                `;
-
+                    </div>`;
                 container.appendChild(row);
-
-                const removeBtn = row.querySelector('.remove-child');
-                const addBtnLocal = row.querySelector('.add-child-local');
-
-                removeBtn.onclick = () => {
-                    // Count number of child rows (fields)
-                    const rows = container.querySelectorAll('input[name="child_name[]"]');
-                    if (rows.length <= 1) {
-                        // prevent deletion of last field
-                        // visual feedback: briefly add a bootstrap 'shake' style (if available) or fallback to alert
-                        try {
-                            // add a quick outline to show invalid action
-                            removeBtn.classList.add('disabled');
-                            removeBtn.setAttribute('aria-disabled', 'true');
-                            setTimeout(() => {
-                                removeBtn.classList.remove('disabled');
-                                removeBtn.removeAttribute('aria-disabled');
-                            }, 600);
-                        } catch (e) {}
-                        // fallback message
-                        alert('At least one Child Name is required for Guardianship and cannot be removed.');
-                        return;
-                    }
-                    // Otherwise allow removal
-                    row.remove();
-                };
-
-                addBtnLocal.onclick = () => {
-                    // append a new child row and focus its input
-                    addChild();
-                    const inputs = container.querySelectorAll('input[name="child_name[]"]');
-                    if (inputs.length) inputs[inputs.length - 1].focus();
-                };
+                row.querySelector('.remove-child').onclick = () => row.remove();
             }
 
-            // create one initial row
+            addBtn.onclick = addChild;
             addChild();
-
-            // Insert purposeContainer (if present) directly after guardianChildren
-            try {
-                if (purposeContainer) {
-                    if (!purposeContainer.parentNode || purposeContainer.parentNode !== wrapper) {
-                        const guardianChildrenEl = wrapper.querySelector('#guardianChildren');
-                        if (guardianChildrenEl && guardianChildrenEl.parentNode) {
-                            guardianChildrenEl.parentNode.insertBefore(purposeContainer, guardianChildrenEl.nextSibling);
-                            purposeContainer.style.display = '';
-                        }
-                    }
-                }
-            } catch (e) { /* ignore insertion errors */ }
 
             buildClaimOptionsInto(wrapper.querySelector('#guardianClaimHolder'));
         } else if (type === 'solo parent') {
             wrapper.innerHTML += `
-                <div id="soloChildren"></div>
-                <!-- per-row Add button replaces the global add button -->
-                <div class="row mb-3">
-                    <label class="col-sm-2 fw-bold">Years as Solo Parent:</label>
-                    <div class="col-sm-10">
-                        <input type="number" name="years_solo_parent" class="form-control" required>
-                    </div>
-                </div>
+            <div id="soloChildren"></div>
+            <button type="button" id="addSoloChild" class="btn btn-sm btn-outline-primary mb-3"> + Add Child </button>
 
-                <div id="soloClaimContainer" class="row mb-3">
-                    <label class="col-sm-2 fw-bold">Claim Date:</label>
-                    <div class="col-sm-10" id="soloClaimHolder"></div>
+            <div class="row mb-3">
+                <label class="col-sm-2 fw-bold">Years as Solo Parent:</label>
+                <div class="col-sm-10">
+                <input type="number" name="years_solo_parent" class="form-control" required>
                 </div>
+            </div>
+
+            <div id="soloClaimContainer" class="row mb-3">
+                <label class="col-sm-2 fw-bold">Claim Date:</label>
+                <div class="col-sm-10" id="soloClaimHolder"></div>
+            </div>
+
+            <div class="row mb-3">
+                <label class="col-sm-2 fw-bold">Purpose:</label>
+                <div class="col-sm-10">
+                <input type="text" name="purpose" class="form-control" required>
+                </div>
+            </div>
             `;
             certFieldsHolder.appendChild(wrapper);
 
             const container = wrapper.querySelector('#soloChildren');
-
+            const addBtn    = wrapper.querySelector('#addSoloChild');
             function addChild() {
                 const row = document.createElement('div');
-                row.className = 'row mb-3 align-items-center';
-
+                row.className = 'row mb-3';
                 row.innerHTML = `
-                    <label class="col-sm-2 col-form-label fw-bold">Child's Name:</label>
-
-                    <div class="col-sm-3">
+                    <label class="col-sm-2 col-form-label fw-bold"> Child's Name:</label>
+                    <div class="col-sm-4">
                         <input type="text" name="child_name[]" class="form-control" required>
                     </div>
 
@@ -621,58 +495,14 @@ document.addEventListener("DOMContentLoaded", function () {
                         </select>
                     </div>
 
-                    <div class="col-sm-2 d-flex justify-content-end gap-2">
+                    <div class="col-sm-1">
                         <button type="button" class="btn btn-outline-danger btn-sm remove-child">DELETE</button>
-                        <button type="button" class="btn btn-sm btn-outline-primary add-child-local">+ Add Child</button>
-                    </div>
-                `;
-
+                    </div>`;
                 container.appendChild(row);
-
-                const removeBtn = row.querySelector('.remove-child');
-                const addBtnLocal = row.querySelector('.add-child-local');
-
-                removeBtn.onclick = () => {
-                    // Count number of child name inputs
-                    const rows = container.querySelectorAll('input[name="child_name[]"]');
-                    if (rows.length <= 1) {
-                        // prevent deletion of last field
-                        try {
-                            removeBtn.classList.add('disabled');
-                            removeBtn.setAttribute('aria-disabled', 'true');
-                            setTimeout(() => {
-                                removeBtn.classList.remove('disabled');
-                                removeBtn.removeAttribute('aria-disabled');
-                            }, 600);
-                        } catch (e) {}
-                        alert('At least one Child Name is required for Solo Parent and cannot be removed.');
-                        return;
-                    }
-                    // otherwise allow removal
-                    row.remove();
-                };
-
-                addBtnLocal.onclick = () => {
-                    addChild();
-                    const inputs = container.querySelectorAll('input[name="child_name[]"]');
-                    if (inputs.length) inputs[inputs.length - 1].focus();
-                };
+                row.querySelector('.remove-child').onclick = () => row.remove();
             }
-
-            // create one initial row
+            addBtn.onclick = addChild;
             addChild();
-
-            // Insert purposeContainer (if present) after the years row (same logic as before)
-            try {
-                if (purposeContainer) {
-                    const yearsInput = wrapper.querySelector('input[name="years_solo_parent"]');
-                    const yearsRow = yearsInput ? yearsInput.closest('.row') : null;
-                    if (yearsRow && (!purposeContainer.parentNode || purposeContainer.parentNode !== wrapper)) {
-                        yearsRow.parentNode.insertBefore(purposeContainer, yearsRow.nextSibling);
-                        purposeContainer.style.display = '';
-                    }
-                }
-            } catch (e) { /* ignore insertion errors */ }
 
             buildClaimOptionsInto(wrapper.querySelector('#soloClaimHolder'));
         }
@@ -728,24 +558,7 @@ document.addEventListener("DOMContentLoaded", function () {
         ensureHiddenClaimFields();
         ensureHiddenPaymentFields();
 
-        if (purposeContainer) {
-            // temporarily detach from DOM if it is currently placed somewhere else
-            // Note: remove() only supported in modern browsers; fallback via parentNode if needed
-            try {
-                if (purposeContainer.parentNode) purposeContainer.parentNode.removeChild(purposeContainer);
-            } catch (e) {
-                /* ignore */
-            }
-            purposeContainer.style.display = 'none';
-        }
-
         cfg.forEach(f => {
-            // If the page uses the global purposeSelect (server-rendered), avoid rendering
-            // the inline text 'purpose' field inside certFields to prevent duplication.
-            if (f.id === 'purpose' && document.getElementById('purposeSelect')) {
-                return; // skip rendering this inline purpose field because we have the global select
-            }
-
             let val = '';
             if (mode === 'myself') {
                 if (f.id === 'full_name')      val = invertName(currentUser.full_name);
@@ -787,33 +600,6 @@ document.addEventListener("DOMContentLoaded", function () {
             inner += `</div>`;
             row.innerHTML = inner;
             certFieldsHolder.appendChild(row);
-
-            if (purposeContainer) {
-                // Helper normalized key
-                // `key` variable is defined earlier as: const key = (value || '').trim().toLowerCase();
-                // f.id is the field id being processed
-                const fieldId = f.id;
-                // Residency -> place after 'residing_years'
-                if (key === 'residency' && fieldId === 'residing_years') {
-                    // insert right after the current row
-                    certFieldsHolder.insertBefore(purposeContainer, row.nextSibling);
-                    purposeContainer.style.display = '';
-                }
-                // Indigency -> place after 'purok'
-                else if (key === 'indigency' && fieldId === 'purok') {
-                    certFieldsHolder.insertBefore(purposeContainer, row.nextSibling);
-                    purposeContainer.style.display = '';
-                }
-                // Good Moral -> place after 'purok'
-                else if (key === 'good moral' && fieldId === 'purok') {
-                    certFieldsHolder.insertBefore(purposeContainer, row.nextSibling);
-                    purposeContainer.style.display = '';
-                }
-                // For other types (including 'first time job seeker'), ensure it's hidden/removed
-                else {
-                    purposeContainer.style.display = 'none';
-                }
-            }
         });
 
         if (key === 'guardianship' || key === 'solo parent') {
@@ -841,8 +627,7 @@ document.addEventListener("DOMContentLoaded", function () {
             certFieldsHolder.appendChild(authRow);
         }
 
-        // Hide payment for indigency and First Time Job Seeker (no-payment flow)
-        if (key === 'indigency' || key === 'first time job seeker') {
+        if (key === 'indigency') {
             if (hiddenPaymentInput) hiddenPaymentInput.value = '';
             if (hiddenPaymentAmount) hiddenPaymentAmount.value = '';
             if (hiddenPaymentStatus) {
@@ -892,9 +677,6 @@ document.addEventListener("DOMContentLoaded", function () {
             if (hiddenPaymentStatus && !hiddenPaymentStatus.value) hiddenPaymentStatus.value = 'Pending';
         }
 
-        // Ensure purpose controls are (re)initialized after fields rendered
-        try { setupPurposeControls(); } catch (e) { /* ignore */ }
-
         refreshStepCollections();
         updateNavigation();
         setupPaymentControls();
@@ -910,8 +692,6 @@ document.addEventListener("DOMContentLoaded", function () {
     forSelect.addEventListener('change', refreshFields);
 
     setupPaymentControls();
-    // initialize purpose controls once (renderCertFields also calls it after updates)
-    setupPurposeControls();
 
     nextBtn.addEventListener('click', () => {
         refreshStepCollections();
@@ -960,10 +740,8 @@ document.addEventListener("DOMContentLoaded", function () {
         const summaryIndex = getSummaryStepIndex();
         const submissionIndex = getSubmissionStepIndex();
 
-        // If user is on the summary step, show confirmation modal (but treat no-payment types similarly)
         if (summaryIndex > 0 && currentStep === summaryIndex) {
-            const lowType = (certInput.value || '').trim().toLowerCase();
-            if (lowType === 'indigency' || lowType === 'first time job seeker') {
+            if ((certInput.value || '').trim().toLowerCase() === 'indigency') {
                 if (hiddenPaymentInput) hiddenPaymentInput.value = '';
                 if (hiddenPaymentAmount) hiddenPaymentAmount.value = '';
                 if (hiddenPaymentStatus) {
@@ -982,21 +760,13 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        // MOVE to next visible step (handles removed payment step gracefully)
         if (currentStep < tSteps) {
             const prevIdx = currentStep - 1;
             if (circleSteps[prevIdx]) circleSteps[prevIdx].classList.add('completed');
             if (stepLabels[prevIdx]) stepLabels[prevIdx].classList.add('completed');
             if (steps[prevIdx]) steps[prevIdx].classList.remove('active-step');
 
-            // increment step
             currentStep++;
-
-            // If the newly targeted step element doesn't exist (e.g., payment was removed), clamp
-            if (!steps[currentStep - 1]) {
-                currentStep = Math.min(tSteps, currentStep);
-            }
-
             const newIdx = currentStep - 1;
             if (steps[newIdx]) steps[newIdx].classList.add('active-step');
             if (circleSteps[newIdx]) circleSteps[newIdx].classList.add('active');
@@ -1046,8 +816,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (confirmSubmitBtn) {
         confirmSubmitBtn.addEventListener('click', () => {
-            const lowType = (certInput.value || '').trim().toLowerCase();
-            if (lowType === 'indigency' || lowType === 'first time job seeker') {
+            if ((certInput.value || '').trim().toLowerCase() === 'indigency') {
                 if (hiddenPaymentInput) hiddenPaymentInput.value = '';
                 if (hiddenPaymentAmount) hiddenPaymentAmount.value = '';
                 if (hiddenPaymentStatus) {
@@ -1123,18 +892,14 @@ document.addEventListener("DOMContentLoaded", function () {
         const type = (certInput.value || '').trim().toLowerCase();
         const container = document.getElementById('summaryContainer');
 
-        // Build rows differently if First Time Job Seeker: *DO NOT* include Requesting For or Purpose
-        const rows = [];
-        rows.push(['Type of Certification:', certInput.value || '—']);
-
-        if (type !== 'first time job seeker') {
-            rows.push(['Requesting For:', forSelect.value === 'myself' ? 'Myself' : 'Others']);
-        }
-
-        rows.push(['Full Name:', (document.querySelector('[name="full_name"]')?.value) || '—']);
-        rows.push(['Age:', (document.querySelector('[name="age"]')?.value) || '—']);
-        rows.push(['Civil Status:', (document.querySelector('[name="civil_status"]')?.value) || '—']);
-        rows.push(['Purok:', (document.querySelector('[name="purok"]')?.value) || '—']);
+        const rows = [
+            ['Type of Certification:', certInput.value || '—'],
+            ['Requesting For:', forSelect.value === 'myself' ? 'Myself' : 'Others'],
+            ['Full Name:', (document.querySelector('[name="full_name"]')?.value) || '—'],
+            ['Age:', (document.querySelector('[name="age"]')?.value) || '—'],
+            ['Civil Status:', (document.querySelector('[name="civil_status"]')?.value) || '—'],
+            ['Purok:', (document.querySelector('[name="purok"]')?.value) || '—']
+        ];
 
         if (type === 'good moral') {
             const parentSexGM = document.querySelector('[name="parent_sex"]')?.value || window.existingParentSex || window.currentUser.sex || '—';
@@ -1190,13 +955,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         rows.push(['Claim Date:', claimLabel]);
-
-        // Add Purpose only when NOT FTJS
-        if (type !== 'first time job seeker') {
-            // prefer hidden purpose value (works whether inline or global select + hidden input)
-            const purposeVal = (document.querySelector('[name="purpose"]')?.value) || (document.getElementById('purposeHidden')?.value) || '—';
-            rows.push(['Purpose:', purposeVal || '—']);
-        }
+        rows.push(['Purpose:', document.querySelector('[name="purpose"]')?.value || '—']);
 
         const clientAmount = (hiddenPaymentAmount?.value || '').toString().trim();
         const clientStatus = (hiddenPaymentStatus?.value || '').toString().trim();
@@ -1206,8 +965,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const amountVal = clientAmount || serverAmount || '';
         const statusVal = clientStatus || serverStatus || '';
 
-        // Treat Indigency and First Time Job Seeker as no-payment types in summary
-        if (type === 'indigency' || type === 'first time job seeker') {
+        if (type === 'indigency') {
             rows.push(['Payment Status:', statusVal || 'Free of Charge']);
         } else {
             let amtDisplay = '—';
@@ -1255,8 +1013,7 @@ document.addEventListener("DOMContentLoaded", function () {
         ensureHiddenPaymentFields();
 
         const val = (certInput.value || '').trim().toLowerCase();
-        // treat both indigency and first time job seeker as no-payment
-        if (val === 'indigency' || val === 'first time job seeker') {
+        if (val === 'indigency') {
             if (hiddenPaymentInput) hiddenPaymentInput.value = '';
             if (hiddenPaymentAmount) hiddenPaymentAmount.value = '';
             if (hiddenPaymentStatus) {
@@ -1267,17 +1024,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             }
 
-            // hide payment step and progress (do NOT remove from DOM)
             const pStep = document.getElementById('paymentStep');
-            if (pStep && pStep.style) pStep.style.display = 'none';
+            if (pStep && pStep.parentNode) pStep.parentNode.removeChild(pStep);
             const pProgress = document.querySelector('.payment-progress-step');
-            if (pProgress && pProgress.style) pProgress.style.display = 'none';
+            if (pProgress && pProgress.parentNode) pProgress.parentNode.removeChild(pProgress);
 
-            // hide any fee/payment related boxes (they may exist)
             const feeBoxes = document.querySelectorAll('.payment-container, .fee-box, #payment-instructions, .payment-instruction, .payment-btn');
             feeBoxes.forEach(el => { if (el && el.style) el.style.display = 'none'; });
-
-            try { setupPurposeControls(); } catch (e) { /* ignore */ }
 
             refreshStepCollections();
             if (currentStep > totalSteps()) currentStep = totalSteps();
@@ -1289,25 +1042,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 progressFill.setAttribute('aria-valuenow', '100');
             }
         } else {
-            // If payment step was previously hidden/removed, restore display instead of reload
-            const pStep = document.getElementById('paymentStep');
-            const pProgress = document.querySelector('.payment-progress-step');
-
-            if (pStep && pStep.style && pStep.style.display === 'none') {
-                pStep.style.display = '';
+            if (!document.getElementById('paymentStep')) {
+                location.reload();
+            } else {
+                if (hiddenPaymentInput && !hiddenPaymentInput.value) hiddenPaymentInput.value = (window.existingPaymentMethod || 'Brgy Payment Device');
+                if (hiddenPaymentAmount && !hiddenPaymentAmount.value) hiddenPaymentAmount.value = (window.existingPaymentAmount || String(DEFAULT_AMOUNT));
+                if (hiddenPaymentStatus && !hiddenPaymentStatus.value) hiddenPaymentStatus.value = (window.existingPaymentStatus || 'Pending');
             }
-            if (pProgress && pProgress.style && pProgress.style.display === 'none') {
-                pProgress.style.display = '';
-            }
-
-            // Also show fee boxes if previously hidden
-            const feeBoxes = document.querySelectorAll('.payment-container, .fee-box, #payment-instructions, .payment-instruction, .payment-btn');
-            feeBoxes.forEach(el => { if (el && el.style) el.style.display = ''; });
-
-            // Ensure hidden payment fields have sensible defaults
-            if (hiddenPaymentInput && !hiddenPaymentInput.value) hiddenPaymentInput.value = (window.existingPaymentMethod || 'Brgy Payment Device');
-            if (hiddenPaymentAmount && !hiddenPaymentAmount.value) hiddenPaymentAmount.value = (window.existingPaymentAmount || String(DEFAULT_AMOUNT));
-            if (hiddenPaymentStatus && !hiddenPaymentStatus.value) hiddenPaymentStatus.value = (window.existingPaymentStatus || 'Pending');
 
             refreshStepCollections();
             updateNavigation();
@@ -1331,12 +1072,9 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         setupPaymentControls();
 
-        // If server provided an existing cert type that is a no-payment type, treat same as indigency
-        const existingLow = (window.existingCertType || '').toString().toLowerCase();
-        if (existingLow === 'indigency' || existingLow === 'first time job seeker') {
-            certInput.value = window.existingCertType || 'Indigency';
-            renderCertFields(window.existingCertType || 'Indigency', forSelect.value);
-            try { setupPurposeControls(); } catch (e) { /* ignore */ }
+        if ((window.existingCertType || '').toString().toLowerCase() === 'indigency') {
+            certInput.value = 'Indigency';
+            renderCertFields('Indigency', forSelect.value);
             if (hiddenPaymentStatus && (!hiddenPaymentStatus.value || !hiddenPaymentStatus.value.trim())) {
                 hiddenPaymentStatus.value = 'Free of Charge';
             }

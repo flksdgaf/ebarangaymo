@@ -46,6 +46,7 @@ $map = [
   'Good Moral'   => ['table'=>'good_moral_requests',   'prefix'=>'GM-' ],
   'Solo Parent'  => ['table'=>'solo_parent_requests',  'prefix'=>'SP-' ],
   'Guardianship' => ['table'=>'guardianship_requests', 'prefix'=>'GUA-'],
+  'First Time Job Seeker' => ['table' => 'job_seeker_requests', 'prefix' => 'JS-'],
 ];
 
 $chosenPayment = '';
@@ -82,8 +83,27 @@ if ($transactionId) {
     }
 }
 
-// === NEW: compute the default fee label to display in the fee box ===
-$feeLabelDefault = $existingCertType ? ($existingCertType . ' Certificate Fee') : 'Barangay ID Fee';
+// === NEW: map certificate types -> friendly fee label ===
+$feeLabelMap = [
+    'Residency'    => 'Certificate of Residency Fee',
+    'Good Moral'   => 'Good Moral Certificate Fee',
+    'Solo Parent'  => 'Solo Parent Certificate Fee',
+    'Guardianship' => 'Certificate of Guardianship Fee',
+    'Indigency'    => 'Indigency Certificate Fee',
+    // fallback for other/unknown types:
+];
+
+// --- Define certificates that do NOT require payment (3-step flow) ---
+$noPaymentTypes = ['Indigency', 'First Time Job Seeker'];
+// helpful server flag for the currently loaded transaction (if any)
+$isNoPaymentType = in_array($existingCertType, $noPaymentTypes, true);
+
+// compute default label (use map if available; otherwise fall back to reasonable text)
+if ($existingCertType) {
+    $feeLabelDefault = $feeLabelMap[$existingCertType] ?? ($existingCertType . ' Certificate Fee');
+} else {
+    $feeLabelDefault = 'Barangay ID Fee';
+}
 
 /**
  * Business-day generator
@@ -294,13 +314,13 @@ if (!empty($existingRequestRow)) {
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-6">
+                    <div id="requestForGroup" class="col-md-6" <?php echo ($isNoPaymentType ? 'style="display:none;"' : ''); ?>>
                         <div class="row">
                             <label for="forSelect" class="col-sm-3 text-start fw-bold">Request For</label>
                             <div class="col-sm-9">
                                 <select id="forSelect" name="request_for" class="form-select">
-                                <option value="myself" selected>Myself</option>
-                                <option value="other">Other Individual</option>
+                                    <option value="myself" selected>Myself</option>
+                                    <option value="other">Other Individual</option>
                                 </select>
                             </div>
                         </div>
@@ -312,6 +332,34 @@ if (!empty($existingRequestRow)) {
                     <div class="col-12"><hr></div>
                 </div>
 
+                <!-- PURPOSE (select + other + hidden final input) -->
+                <div class="row mb-3" id="purposeContainer" style="display:none;">
+                    <label class="col-md-4 text-start fw-bold">Purpose</label>
+                    <div class="col-md-8">
+                        <?php
+                        $purposes = ['Employment','Another Valid ID','School Enrollment','Scholarship','4Ps Application','Business','Others'];
+                        // existing value if editing (may be in $existingRequestRow['purpose'])
+                        $existingPurposeVal = $existingRequestRow['purpose'] ?? '';
+                        $is_prefilled_in_list = in_array($existingPurposeVal, $purposes, true);
+                        $prefill_other_value = $is_prefilled_in_list ? '' : $existingPurposeVal;
+                        ?>
+                        <select id="purposeSelect" name="purpose_select" class="form-control custom-input">
+                            <option value="">Select Purpose</option>
+                            <?php foreach ($purposes as $p): 
+                                $sel = ($is_prefilled_in_list && $existingPurposeVal === $p) ? 'selected' : '';
+                            ?>
+                                <option value="<?php echo htmlspecialchars($p); ?>" <?php echo $sel; ?>><?php echo htmlspecialchars($p); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+
+                        <input type="text" id="purposeOther" name="purpose_other" class="form-control custom-input mt-2 d-none" placeholder="Please specify purpose" value="<?php echo htmlspecialchars($prefill_other_value); ?>">
+
+                        <!-- Hidden final value submitted to server -->
+                        <input type="hidden" id="purposeHidden" name="purpose" value="<?php echo htmlspecialchars($is_prefilled_in_list ? $existingPurposeVal : $prefill_other_value); ?>">
+                    </div>
+                </div>
+
+                <!-- existing placeholder where other certificate-specific fields are injected -->
                 <div id="certFields"></div>
 
             </div>
@@ -564,6 +612,11 @@ if (!empty($existingRequestRow)) {
     // NEW: expose existing parent sex & address so client-side can prefill the parent sex dropdown and show previously-entered address
     window.existingParentSex = <?php echo json_encode($existingParentSex, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
     window.existingParentAddress = <?php echo json_encode($existingParentAddress, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
+    window.existingPurpose = <?php echo json_encode($existingRequestRow['purpose'] ?? '', JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
+
+    window.noPaymentTypes = <?php echo json_encode($noPaymentTypes, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
+    window.isNoPaymentType = <?php echo json_encode($isNoPaymentType ? true : false); ?>;
+    window.purposeExcluded = <?php echo json_encode(['First Time Job Seeker'], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
 </script>
 
 <!-- Claim handling script (keeps logic local so external JS can remain unchanged) -->
@@ -663,6 +716,111 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // read exports from PHP
+    const noPaymentTypes = window.noPaymentTypes || [];
+    const isNoPaymentType = !!window.isNoPaymentType;
+
+    // utility: normalize typed cert name for comparison
+    function normalizeCertName(s) {
+        return (s || '').toString().trim().toLowerCase();
+    }
+
+    // apply the no-payment flow (hide payment step, renumber)
+    function applyNoPaymentFlow(enable) {
+        // hide or show payment content
+        const paymentStepDiv = document.getElementById('paymentStep');
+        const payProgDom = document.querySelector('.payment-progress-step');
+        if (enable) {
+            if (paymentStepDiv) paymentStepDiv.style.display = 'none';
+            if (payProgDom) {
+                payProgDom.style.display = 'none';
+                payProgDom.classList.add('hidden-step'); // optional marker
+            }
+        } else {
+            if (paymentStepDiv) paymentStepDiv.style.display = '';
+            // If payProgDom was removed previously, we cannot restore it reliably from here.
+            // (The normal full-page load will include it.) If you need dynamic restore, consider keeping a hidden template.
+        }
+
+        // Renumber the visible progress steps (.steps within .stepss)
+        const progressSteps = Array.from(document.querySelectorAll('.stepss .steps'));
+        // Only keep steps that are in DOM (payment step removed if enabled)
+        progressSteps.forEach((el, idx) => {
+            const newIndex = idx + 1;
+            el.dataset.step = newIndex;
+            const circle = el.querySelector('.circle');
+            if (circle) circle.textContent = newIndex;
+            // also update step-label styling (no changes needed to text itself)
+        });
+
+        // Renumber .step content blocks to match visible flow (skip hidden ones)
+        const stepContents = Array.from(document.querySelectorAll('.card .step, .step')); // broad selection
+        // Filter visible ones (style display !== 'none')
+        const visibleContents = stepContents.filter(el => {
+            // ignore those that are explicitly display:none (e.g., paymentStep)
+            return !(el.style && el.style.display === 'none');
+        });
+        visibleContents.forEach((el, idx) => {
+            el.dataset.step = (idx + 1);
+        });
+
+        // Adjust progressFill width if a transaction was already submitted
+        const progressFill = document.getElementById('progressFill');
+        if (progressFill) {
+            // when transaction exists (initially step=4), keep full width; otherwise reset to 0
+            if (window.initialStep && Number(window.initialStep) > 1) {
+                // if final already, keep 100%
+                if (Number(window.initialStep) >= visibleContents.length) {
+                    progressFill.style.width = '100%';
+                } else {
+                    progressFill.style.width = ( (Number(window.initialStep) / visibleContents.length) * 100 ) + '%';
+                }
+            } else {
+                progressFill.style.width = '';
+            }
+        }
+    }
+
+    // hide "Request For" group for First Time Job Seeker and Indigency (optional: only if exact match)
+    function applyRequestForVisibility(certName) {
+        const normalized = normalizeCertName(certName);
+        const reqGroup = document.getElementById('requestForGroup');
+        if (!reqGroup) return;
+        // hide when certificate is exactly one of noPaymentTypes (e.g., 'indigency' or 'first time job seeker')
+        const shouldHide = noPaymentTypes.some(x => normalizeCertName(x) === normalized);
+        reqGroup.style.display = shouldHide ? 'none' : '';
+    }
+
+    // on initial load, if current selection is known (e.g., server provided existingCertType or input value), apply rules
+    const certInput = document.getElementById('certType');
+    const initialCert = (certInput && certInput.value) ? certInput.value.trim() : (window.existingCertType || '');
+    const initialIsNoPayment = noPaymentTypes.some(x => normalizeCertName(x) === normalizeCertName(initialCert)) || isNoPaymentType;
+    applyNoPaymentFlow(initialIsNoPayment);
+    applyRequestForVisibility(initialCert);
+
+    // watch for user changes to certType (typeahead / select). whenever it changes, adjust UI
+    // Note: certType is a free text input in your markup; adjust event depending on how your serviceCertification.js updates it.
+    if (certInput) {
+        certInput.addEventListener('change', function (e) {
+            const val = e.target.value || '';
+            const isNoPay = noPaymentTypes.some(x => normalizeCertName(x) === normalizeCertName(val));
+            applyNoPaymentFlow(isNoPay);
+            applyRequestForVisibility(val);
+        });
+        // also listen to input events so click-choose or typeahead triggers change
+        certInput.addEventListener('input', function (e) {
+            const val = e.target.value || '';
+            const isNoPay = noPaymentTypes.some(x => normalizeCertName(x) === normalizeCertName(val));
+            applyRequestForVisibility(val);
+            // we don't repeatedly remove/pay prog if already removed; applyNoPaymentFlow is idempotent enough
+            applyNoPaymentFlow(isNoPay);
+        });
+    }
+});
+</script>
+
 <script src="js/serviceCertification.js"></script>
 
 <!--
@@ -673,152 +831,101 @@ document.addEventListener('DOMContentLoaded', function () {
 -->
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // safe-guard: only override if serviceCertification.js defined a populateSummary; if not, we'll define it.
-    function newPopulateSummary() {
-        const certInput = document.getElementById('certType');
-        const forSelect = document.getElementById('forSelect');
-        const container = document.getElementById('summaryContainer');
+    const certInput = document.getElementById('certType');
+    const purposeContainer = document.getElementById('purposeContainer');
+    const purposeSelect = document.getElementById('purposeSelect');
+    const purposeOther = document.getElementById('purposeOther');
+    const purposeHidden = document.getElementById('purposeHidden');
 
-        const type = (certInput?.value || '').trim().toLowerCase();
-        const rows = [
-            ['Type of Certification:', certInput?.value || '—'],
-            ['Requesting For:', forSelect?.value === 'myself' ? 'Myself' : 'Others'],
-            ['Full Name:', (document.querySelector('[name="full_name"]')?.value) || '—'],
-            ['Age:', (document.querySelector('[name="age"]')?.value) || '—'],
-            ['Civil Status:', (document.querySelector('[name="civil_status"]')?.value) || '—'],
-            ['Purok:', (document.querySelector('[name="purok"]')?.value) || '—']
-        ];
+    // list of purpose options (mirror the server list)
+    const purposeOptions = ['Employment','Another Valid ID','School Enrollment','Scholarship','4Ps Application','Business','Others'];
 
-        // NEW: Good Moral -> include Parent Sex and optional Parent Address
-        if (type === 'good moral') {
-            const parentSex = document.querySelector('[name="parent_sex"]')?.value || window.existingParentSex || '—';
-            const parentAddress = document.querySelector('[name="parent_address"]')?.value || window.existingParentAddress || '—';
-            rows.push(['Parent Sex:', parentSex]);
-            rows.push(['Parent Address:', parentAddress]);
-        }
+    // Helper: show/hide purpose UI
+    function ensurePurposeVisibility() {
+        const hasCert = (certInput && certInput.value && certInput.value.trim() !== '');
+        // Show whenever a cert type exists OR when editing an existing request that had a purpose
+        const shouldShow = hasCert || (window.existingPurpose && String(window.existingPurpose).trim() !== '');
+        if (purposeContainer) purposeContainer.style.display = shouldShow ? '' : 'none';
+    }
 
-        // Solo Parent: Child details + years
-        if (type === 'solo parent') {
-            const childNames = Array.from(document.querySelectorAll('[name="child_name[]"]')).map(el => el.value.trim()).filter(Boolean);
-            const childAges  = Array.from(document.querySelectorAll('[name="child_age[]"]')).map(el => el.value.trim()).filter(Boolean);
-            const childSexes = Array.from(document.querySelectorAll('[name="child_sex[]"]')).map(el => el.value.trim()).filter(Boolean);
-
-            childNames.forEach((name, i) => {
-                rows.push([`Child ${i + 1} Name:`, name || '—']);
-                rows.push([`Child ${i + 1} Age:`, childAges[i] || '—']);
-                rows.push([`Child ${i + 1} Sex:`, childSexes[i] || '—']);
-            });
-
-            const years = document.querySelector('[name="years_solo_parent"]')?.value || '—';
-            rows.push(['Years as Solo Parent:', years]);
-        }
-
-        // Guardianship: Child names only
-        if (type === 'guardianship') {
-            const childNames = Array.from(document.querySelectorAll('[name="child_name[]"]')).map(el => el.value.trim()).filter(Boolean);
-            childNames.forEach((name, i) => {
-                rows.push([`Child ${i + 1} Name:`, name || '—']);
-            });
-        }
-
-        // Residency specific field
-        if (type === 'residency') {
-            rows.push([
-                'Years Residing:',
-                document.querySelector('[name="residing_years"]')?.value || '—'
-            ]);
-        }
-
-        // Common fields for all types
-        // Note: summary reads hidden claim_date field populated by the claim widget above
-        const claimDateVal = document.querySelector('[name="claim_date"]')?.value;
-        const claimTimeVal = document.querySelector('[name="claim_time"]')?.value;
-        let claimDisplay = '—';
-        if (claimDateVal && claimTimeVal) {
-            // try to find friendly label from window._claimOptions
-            if (window._claimOptions && Array.isArray(window._claimOptions)) {
-                const found = window._claimOptions.find(c => c.date === claimDateVal);
-                const dateLabel = found ? found.label : claimDateVal;
-                const part = (found && Array.isArray(found.parts)) ? (found.parts.find(p => p.key === claimTimeVal)?.label || claimTimeVal) : claimTimeVal;
-                claimDisplay = `${dateLabel} - ${part}`;
-            } else {
-                claimDisplay = `${claimDateVal} - ${claimTimeVal}`;
-            }
-        }
-        rows.push(['Claim Date:', claimDisplay]);
-        rows.push(['Purpose:', document.querySelector('[name="purpose"]')?.value || '—']);
-
-        // Payment details — different rules for Indigency vs others
-        const paymentAmountEl = document.getElementById('paymentAmount');
-        const paymentStatusEl = document.getElementById('paymentStatus');
-
-        const clientAmount = paymentAmountEl?.value?.trim();
-        const clientStatus = paymentStatusEl?.value?.trim();
-
-        // prefer client-side hidden inputs, fallback to server values exposed on window
-        const amountVal = clientAmount || window.existingPaymentAmount || '';
-        const statusVal = clientStatus || window.existingPaymentStatus || '';
-
-        if (type === 'indigency') {
-            // show payment_status for indigency (default to "Free of Charge")
-            rows.push(['Payment Status:', statusVal || 'Free of Charge']);
+    // Toggle the "Other" input when "Others" selected
+    function togglePurposeOther() {
+        if (!purposeSelect) return;
+        if (purposeSelect.value === 'Others') {
+            purposeOther.classList.remove('d-none');
+            purposeOther.required = true;
+            // update hidden value from other input (if any)
+            purposeHidden.value = purposeOther.value.trim() || 'Others';
         } else {
-            // for other certificates, include amount and payment_status.
-            // Format amount nicely if numeric
-            let amtDisplay = '—';
-            if (amountVal !== null && String(amountVal).trim() !== '') {
-                // if numeric, prefix peso sign
-                if (!isNaN(Number(String(amountVal).replace(/[^0-9.-]+/g, '')))) {
-                    amtDisplay = '₱' + Number(String(amountVal).replace(/[^0-9.-]+/g, '')).toFixed(2);
-                } else {
-                    amtDisplay = String(amountVal);
-                }
-            } else {
-                // fallback default amount (use 130 as your standard fee)
-                amtDisplay = '₱130.00';
-            }
-            rows.push(['Amount:', amtDisplay]);
-
-            // payment status - prefer server-existing, otherwise show 'Pending' as friendly default
-            rows.push(['Payment Status:', statusVal || 'Pending']);
+            purposeOther.classList.add('d-none');
+            purposeOther.required = false;
+            if (purposeSelect.value) purposeHidden.value = purposeSelect.value;
+            else purposeHidden.value = '';
         }
+        updateSummaryPurpose();
+    }
 
-        // Build HTML
-        let html = `
-            <div class="row justify-content-center">
-                <div class="col-md-10 col-lg-8 col-xl-6">
-                    <div class="summary-container p-4 rounded shadow-sm border">
-                        <ul class="list-group list-group-flush">
-        `;
+    // Keep summary synced (populateSummary already reads [name="purpose"], but update if summary uses custom hooks)
+    function updateSummaryPurpose() {
+        // If you have a summary function that expects a specific update, call it:
+        if (typeof window.populateSummary === 'function') {
+            window.populateSummary();
+            return;
+        }
+        // Otherwise, nothing else to do — the summary builder reads the hidden input.
+    }
 
-        rows.forEach(([label, value]) => {
-            html += `
-                <li class="list-group-item d-flex justify-content-between">
-                    <span class="fw-bold">${label}</span>
-                    <span class="text-success">${value}</span>
-                </li>
-            `;
+    // Prefill selection when editing (window.existingPurpose provided by server)
+    function prefillPurposeFromServer() {
+        const existing = (window.existingPurpose || '').toString().trim();
+        if (!existing) return;
+
+        // If existing matches one of the options, select it; otherwise select "Others" and populate other input
+        const matched = purposeOptions.find(p => p.toLowerCase() === existing.toLowerCase());
+        if (matched) {
+            if (purposeSelect) purposeSelect.value = matched;
+            if (purposeOther) { purposeOther.value = ''; purposeOther.classList.add('d-none'); }
+            if (purposeHidden) purposeHidden.value = matched;
+        } else {
+            if (purposeSelect) purposeSelect.value = 'Others';
+            if (purposeOther) {
+                purposeOther.classList.remove('d-none');
+                purposeOther.value = existing;
+                purposeOther.required = true;
+            }
+            if (purposeHidden) purposeHidden.value = existing;
+        }
+    }
+
+    // Event wiring
+    if (certInput) {
+        // show purpose when user types or chooses certificate
+        certInput.addEventListener('input', ensurePurposeVisibility);
+        certInput.addEventListener('change', ensurePurposeVisibility);
+    }
+
+    if (purposeSelect) purposeSelect.addEventListener('change', togglePurposeOther);
+    if (purposeOther) purposeOther.addEventListener('input', function () {
+        purposeHidden.value = purposeOther.value.trim() || 'Others';
+        updateSummaryPurpose();
+    });
+
+    // Ensure final hidden value set before form submit
+    const form = document.getElementById('certForm');
+    if (form) {
+        form.addEventListener('submit', function () {
+            // if select=Others and other has text, use it; else if select has value use it.
+            if (purposeSelect && purposeSelect.value === 'Others' && purposeOther && purposeOther.value.trim()) {
+                purposeHidden.value = purposeOther.value.trim();
+            } else if (purposeSelect && purposeSelect.value) {
+                purposeHidden.value = purposeSelect.value;
+            }
         });
-
-        html += `
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        container.innerHTML = html;
     }
 
-    // If serviceCertification.js already defined populateSummary, override it
-    window.populateSummary = newPopulateSummary;
-
-    // Also, if user views an existing transaction, populate now so the summary shows immediately
-    if (window.initialStep && Number(window.initialStep) >= 3) {
-        // slight timeout to ensure DOM elements are present
-        setTimeout(() => {
-            if (typeof window.populateSummary === 'function') window.populateSummary();
-        }, 120);
-    }
+    // Initial run: show/hide + prefill
+    ensurePurposeVisibility();
+    prefillPurposeFromServer();
+    togglePurposeOther(); // sets other visibility & hidden value according to prefill
 });
 </script>

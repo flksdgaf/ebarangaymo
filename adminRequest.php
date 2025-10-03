@@ -344,7 +344,7 @@ $result = $st->get_result();
       <li class="nav-item">
         <a href="?<?= http_build_query(array_merge($_GET, ['request_source'=>'Released','request_page'=>1])) ?>"
           class="nav-link <?= $processing_type==='Released' ? 'active' : '' ?>">
-          Released Records
+          Document Records
         </a>
       </li>
     <?php endif; ?>
@@ -1080,6 +1080,11 @@ $result = $st->get_result();
                 <div class="col-12 col-md-6">
                   <label class="form-label fw-bold">Full Name</label>
                   <input name="child_full_name" type="text" class="form-control form-control-sm" required>
+                </div>
+
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-bold">Relationship to Child <small class="fw-normal">(optional)</small></label>
+                  <input name="child_relationship" type="text" class="form-control form-control-sm" placeholder="e.g., Son, Daughter, Nephew">
                 </div>
 
                 <!-- Row 3: Purpose -->

@@ -44,7 +44,7 @@ $payment_status = $_GET['payment_status'] ?? '';
 $document_status = $_GET['document_status'] ?? '';
 
 // Sources
-$validSources = ['Walk-In','Online','Brgy Payment Device','Official Receipt Logs'];
+$validSources = ['Walk-In','Online','Brgy Payment Device','Official Receipt Logs','Released'];
 $processing_type = $_GET['request_source'] ?? 'Walk-In';
 if (! in_array($processing_type, $validSources, true)) {
   $processing_type = 'Walk-In';
@@ -54,8 +54,13 @@ $whereClauses = [];
 $bindTypes = '';
 $bindParams = [];
 
-// by default hide finished requests
-$whereClauses[] = "r.document_status NOT IN ('Released','Rejected')";
+// Show released records only in the "Released" tab
+if ($processing_type === 'Released') {
+    $whereClauses[] = "r.document_status = 'Released'";
+} else {
+    // Hide released/rejected from other tabs
+    $whereClauses[] = "r.document_status NOT IN ('Released','Rejected')";
+}
 
 // GLOBAL SEARCH
 $search = trim($_GET['search'] ?? '');
@@ -333,6 +338,15 @@ $result = $st->get_result();
           </a>
         </li>
       <?php endif; ?>
+    <?php endif; ?>
+    <!-- Add this as a new tab option for Captain/Secretary/Bookkeeper -->
+    <?php if (in_array($currentRole, ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper'], true)): ?>
+      <li class="nav-item">
+        <a href="?<?= http_build_query(array_merge($_GET, ['request_source'=>'Released','request_page'=>1])) ?>"
+          class="nav-link <?= $processing_type==='Released' ? 'active' : '' ?>">
+          Released Records
+        </a>
+      </li>
     <?php endif; ?>
   </ul>
 
@@ -2441,7 +2455,7 @@ document.addEventListener('DOMContentLoaded', () => {
             confirmBtn.disabled = false;
             confirmModal.hide();
             if (response === 'success') {
-              if (pendingRow) pendingRow.remove();
+              // Show success message and reload
               const alertsDiv = document.getElementById('pageAlerts');
               if (alertsDiv) {
                 const html = `
@@ -2452,6 +2466,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
                 alertsDiv.insertAdjacentHTML('beforeend', html);
               }
+              
+              // Reload to update the view (record will be hidden from current tab)
+              setTimeout(() => location.reload(), 1500);
             } else {
               alert('Failed to update status: ' + response);
             }

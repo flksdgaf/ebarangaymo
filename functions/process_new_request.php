@@ -335,28 +335,17 @@ switch($requestType) {
     $middlePart = $mn ? " {$mn}" : '';
     $suffixPart = $sn ? " {$sn}" : '';
     $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
-    // $fullName = trim($_POST['full_name'] ?? '');
 
-    // $civilStatus = $_POST['guardian_civil_status'] ?? '';
     $civilStatus = $_POST['guardianship_civil_status'] ?? '';
-    // $age = (int)($_POST['guardian_age'] ?? 0);
     $age = (int)($_POST['guardianship_age'] ?? 0);
-    // $purok = $_POST['guardian_purok'] ?? '';
     $purok = $_POST['guardianship_purok'] ?? '';
 
-    // Child's Name
-    // $fnChild = trim($_POST['child_first_name'] ?? '');
-    // $mnChild = trim($_POST['child_middle_name'] ?? '');
-    // $lnChild = trim($_POST['child_last_name'] ?? '');
-    // $snChild = trim($_POST['child_suffix'] ?? '');
-    // $middlePartChild = $mnChild ? " {$mnChild}" : '';
-    // $suffixPartChild = $snChild ? " {$snChild}" : '';
-    // $fullNameChild = "{$lnChild}{$suffixPartChild}, {$fnChild}{$middlePartChild}";
+    // Child's Details
     $childName = trim($_POST['child_full_name'] ?? '');
+    $childRelationship = trim($_POST['child_relationship'] ?? ''); // NEW FIELD
 
     $purpose = trim($_POST['guardianship_purpose'] ?? '');
     $paymentMethod = 'Over-the-Counter';
-    // $documentStatus = 'Processing';
     $documentStatus = 'For Verification';
 
     // 2) Generate next transaction_id
@@ -372,10 +361,10 @@ switch($requestType) {
     $transactionId = sprintf('GUA-%07d', $num);
     $stmt->close();
     
-    // 3) Insert into guardianship_request
-    $sql = "INSERT INTO guardianship_requests (account_id, transaction_id, full_name, civil_status, age, purok, child_name, purpose, claim_date, payment_method, document_status) VALUES (?,?,?,?,?,?,?,?,NULL,?,?)";
+    // 3) Insert into guardianship_requests (updated to include child_relationship)
+    $sql = "INSERT INTO guardianship_requests (account_id, transaction_id, full_name, civil_status, age, purok, child_name, child_relationship, purpose, claim_date, payment_method, document_status) VALUES (?,?,?,?,?,?,?,?,?,NULL,?,?)";
     $ins = $conn->prepare($sql);
-    $ins->bind_param('isssisssss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $childName, $purpose, $paymentMethod, $documentStatus);
+    $ins->bind_param('isssissssss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $childName, $childRelationship, $purpose, $paymentMethod, $documentStatus);
     $ins->execute();
     $ins->close();
 

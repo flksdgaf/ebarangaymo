@@ -84,13 +84,13 @@ $menuItems = [
     'href' => 'adminVerifications.php',
     'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad']
   ],
-  [
-    'id' => 'adminHistory',
-    'label' => 'Transaction History',
-    'icon' => 'history',
-    'href' => 'adminHistory.php',
-    'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad'] //,'Brgy Treasurer'
-  ],
+  // [
+  //   'id' => 'adminHistory',
+  //   'label' => 'Transaction History',
+  //   'icon' => 'history',
+  //   'href' => 'adminHistory.php',
+  //   'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad'] //,'Brgy Treasurer'
+  // ],
 
   // <-- NEW Collection tab
   [

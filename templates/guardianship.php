@@ -67,10 +67,11 @@ function reformatName($name) {
 $fullNameFormatted = reformatName($fullName);
 $childNameFormatted = reformatName($childName);
 
-// Build relationship text
-$relationshipText = !empty(trim($childRelationship)) 
-    ? ', ' . htmlspecialchars($childRelationship) . ','
-    : '';
+// Build relationship text - if relationship exists, use it instead of "legal guardian"
+$hasCustomRelationship = !empty(trim($childRelationship));
+$guardianshipRole = $hasCustomRelationship 
+    ? htmlspecialchars(strtoupper($childRelationship))
+    : 'legal guardian';
 
 // Format date with suffix
 function formatWithSuffix($dateStr) {
@@ -205,8 +206,8 @@ if ($download || $print) {
         </p>
 
         <p>
-          This is to certify further that said person is the legal guardian of
-          <strong><?= htmlspecialchars(strtoupper($childNameFormatted)) ?></strong><?= $relationshipText ?>.
+          This is to certify further that said person is the <?= $hasCustomRelationship ? '<strong>' . $guardianshipRole . '</strong>' : $guardianshipRole ?> of
+          <strong><?= htmlspecialchars(strtoupper($childNameFormatted)) ?></strong>.
         </p>
 
         <p>
@@ -333,8 +334,8 @@ if ($download || $print) {
       </p>
 
       <p>
-        This is to certify further that said person is the legal guardian of
-        <strong><?= htmlspecialchars(strtoupper($childNameFormatted)) ?></strong><?= $relationshipText ?>.
+        This is to certify further that said person is the <?= $hasCustomRelationship ? '<strong>' . $guardianshipRole . '</strong>' : $guardianshipRole ?> of
+        <strong><?= htmlspecialchars(strtoupper($childNameFormatted)) ?></strong>.
       </p>
 
       <p>

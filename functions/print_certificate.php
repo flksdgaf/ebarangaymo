@@ -49,7 +49,7 @@ $requestFields = [
     'purpose', 'payment_method', 'amount', 'created_at'
   ],
   'guardianship_requests' => [
-    'transaction_id', 'request_type', 'full_name', 'civil_status', 'age', 'purok', 'child_name', 'purpose', 
+    'transaction_id', 'request_type', 'full_name', 'civil_status', 'age', 'purok', 'child_name', 'child_relationship', 'purpose', 
     'payment_method', 'amount', 'created_at'
   ],
   'indigency_requests' => [

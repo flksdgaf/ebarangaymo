@@ -55,7 +55,7 @@ $logoUrl = 'images/' . $info['logo'];
               <i class="fa fa-eye-slash"></i>
             </span>
           </div>
-          <a href="#" class="forgot-pass"><strong><br>Forgot Password?</strong></a>
+          <a href="forgot_password.php" class="forgot-pass"><strong><br>Forgot Password?</strong></a>
         </div>
 
         <div class="text-center">

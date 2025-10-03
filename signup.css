@@ -2,89 +2,154 @@
 body {
     background: url('images/bg_nothover.png') no-repeat center center fixed;
     background-size: cover;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Arial, sans-serif;
 }
 
 /* Form Container */
 .form-container {
-    max-width: 600px;
-    width: 100%;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(3px);
+    border-radius: 48px;
+    border: 2px solid #0D2C15;
+    width: 90vw;
+    max-width: 750px;
+    padding: 3rem 4rem;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
 }
 
 /* Gradient Header */
 h1 {
-    background: linear-gradient(to bottom, #2A9245, #0D2C15);
+    background: linear-gradient(30deg, #0D2C15, #2A9245);
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    font-weight: bold;
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
 }
 
 /* Subheader */
 h5 {
-    font-size: 15px;
-    margin-bottom: 40px;
+    color: #0D2C15;
+    font-size: 14px;
+    margin-bottom: 2rem;
+    font-weight: normal;
 }
 
+/* Labels */
 label {
-    padding-top: 5px;
+    color: #0D2C15;
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 0.3rem;
 }
 
 /* Input Styling */
 .custom-input {
     background-color: #d3d3d3 !important;
-    color: black !important;
+    color: #000 !important;
     border: none;
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    font-size: 14px;
+}
+
+.custom-input:focus {
+    box-shadow: 0 0 0 0.2rem rgba(42, 146, 69, 0.25);
+    outline: none;
 }
 
 /* Placeholder */
 .custom-input::placeholder {
-    color: #000;
+    color: #666;
+    font-size: 13px;
+}
+
+/* Password Toggle Icon */
+.position-relative {
+    position: relative;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 16px;
+    color: #666;
+}
+
+.toggle-password:hover {
+    color: #333;
+}
+
+.password-field {
+    padding-right: 40px;
 }
 
 /* Navigation Dots */
+.dots-container {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 2rem 0 1.5rem 0;
+}
+
 .dot {
     height: 10px;
     width: 10px;
-    background-color: #61AD41;
+    background-color: #B8D4B8;
     border-radius: 50%;
-    display: inline-block;
-    margin: 5px;
-    transition: 0.3s;
-    margin-top: 40px;
+    transition: all 0.3s ease;
 }
 
 .active-dot {
-    width: 14px;
-    height: 14px;
-    background-color: #13411F;
+    width: 12px;
+    height: 12px;
+    background-color: #0D2C15;
 }
 
 /* Buttons */
+.btn-container {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
 .btn {
-    border-radius: 30px;
-    padding: 10px 30px;
-    font-size: 16px;
-    font-weight: bold;
-    margin: 0 10px;
-}
-
-/* Cancel Button */
-.cancel-btn {
-    color: #13411F;
-    border-color: #61AD41;
-    font-weight: bold;
     border-radius: 100px;
-    border-width: 3px;
-    width: 190px;
+    padding: 0.6rem 2.5rem;
+    font-size: 15px;
+    font-weight: 600;
+    min-width: 140px;
+    transition: all 0.3s ease;
 }
 
-/* Next Button */
+.cancel-btn {
+    background-color: transparent;
+    color: #0D2C15;
+    border: 3px solid #2A9245;
+}
+
+.cancel-btn:hover {
+    background-color: rgba(42, 146, 69, 0.1);
+}
+
 .next-btn {
     background: linear-gradient(to right, #0D2C15, #2A9245);
     color: white;
     border: none;
-    font-weight: bold;
-    border-radius: 100px;
-    width: 190px;
+}
+
+.next-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
 }
 
 /* Hide Steps by Default */
@@ -98,127 +163,124 @@ label {
 
 /* Password validation rules */
 .password-rules {
-    margin-left: 33.333%; /* Aligns with the password field */
+    margin-top: 0.5rem;
 }
 
 .rule {
+    display: flex;
     align-items: center;
-    color: red;
+    color: #dc3545;
     font-size: 12px;
-    transition: 0.3s;
+    margin: 0.3rem 0;
+    transition: color 0.3s;
 }
 
 .rule::before {
-    content: "❌";
-    margin-right: 5px;
-    color: red;
+    content: "✗";
+    margin-right: 6px;
+    font-weight: bold;
 }
 
 .rule.valid {
-    color: green;
+    color: #28a745;
 }
 
 .rule.valid::before {
-    content: "✔";
-    color: green;
+    content: "✓";
 }
 
-.text-danger {
-    margin-left: 33.333%; /* Aligns with the password field */
+/* Alert Messages */
+.text-danger, .text-success {
     font-size: 13px;
-    margin-top: 10px;
+    margin-top: 0.5rem;
 }
 
-.text-success {
-    margin-left: 33.333%; /* Aligns with the password field */
+/* Sign in link at bottom */
+.signin-link {
+    text-align: center;
+    margin-top: 2rem;
+    color: #0D2C15;
     font-size: 13px;
-    margin-top: 10px;
 }
 
-/* Position the password toggle icon inside the input field */
-.position-relative {
-    position: relative;
+.signin-link a {
+    color: #0D2C15;
+    font-weight: 600;
+    text-decoration: none;
 }
 
-.toggle-password {
-    position: absolute;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
-    font-size: 16px;
-    color: #666;
-}
-
-.toggle-password:hover {
-    color: #333;
-}
-
-.summary-container span {
+.signin-link a:hover {
     text-decoration: underline;
 }
 
-/* Style for input field */
-.password-field {
-    padding-right: 35px; /* Ensure text doesn't overlap with the icon */
+/* Invalid input styling */
+.is-invalid {
+    border: 2px solid #dc3545 !important;
 }
 
-/* Summary card styling */
-.summary-card {
-  border-radius: 20px;
-  overflow: hidden;
-  background-color: rgba(211,211,211, 0.2); /* light transparent gray */
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+/* Modal customization */
+.modal-content {
+    border-radius: 20px;
+    border: 2px solid #0D2C15;
 }
 
-/* Gradient header like your H1 text */
-.summary-card .card-header {
-  background: linear-gradient(to right, #0D2C15, #2A9245);
-  color: white;
-  font-size: 1.2rem;
-  padding: 0.75rem;
+.modal-header {
+    background: linear-gradient(to right, #0D2C15, #2A9245);
+    color: white;
+    border-radius: 18px 18px 0 0;
 }
 
-/* List-group flush but with subtle separators */
-.summary-card .list-group-item {
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid rgba(255,255,255,0.2);
-  padding: 0.75rem 1.25rem;
+.modal-title {
+    font-weight: 600;
 }
 
-/* Last item shouldn’t need a bottom border */
-.summary-card .list-group-item:last-child {
-  border-bottom: none;
-}
-
-/* Right-aligned values underlined (like your old span style) */
-.summary-card #summaryFullName,
-.summary-card #summaryBirthdate,
-.summary-card #summarySex,
-.summary-card #summaryCivilStatus,
-.summary-card #summaryBloodType,
-.summary-card #summaryBirthReg,
-.summary-card #summaryEducation,
-.summary-card #summaryOccupation,
-.summary-card #summaryPurok,
-.summary-card #summaryValidID,
-.summary-card #summaryProfilePic,
-.summary-card #summaryUsername {
-  text-decoration: underline;
-  color: white; /* or whatever contrasts best on your bg */
-}
-
-@media screen and (max-width: 767px) {
-    .password-rules {
-        margin-left: 0px; /* Aligns with the password field */
+/* Responsive Design */
+@media (max-width: 768px) {
+    .form-container {
+        width: 95vw;
+        padding: 2rem 1.5rem;
+        border-radius: 30px;
     }
 
-    .text-danger {
-        margin-left: 0px; /* Aligns with the password field */
+    h1 {
+        font-size: 1.8rem;
     }
-    
-    .text-success {
-        margin-left: 0px; /* Aligns with the password field */
+
+    h5 {
+        font-size: 12px;
+        margin-bottom: 1.5rem;
+    }
+
+    .btn {
+        padding: 0.5rem 1.5rem;
+        font-size: 14px;
+        min-width: 120px;
+    }
+
+    .custom-input {
+        font-size: 13px;
+    }
+
+    label {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+    .form-container {
+        padding: 1.5rem 1rem;
+    }
+
+    h1 {
+        font-size: 1.5rem;
+    }
+
+    .btn-container {
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+
+    .btn {
+        width: 100%;
     }
 }

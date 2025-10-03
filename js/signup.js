@@ -6,63 +6,77 @@ document.addEventListener("DOMContentLoaded", function () {
     const cancelBtn = document.querySelector(".cancel-btn");
     const nextBtn = document.querySelector(".next-btn");
 
-    // New function to validate the active step
+    // Validation function for active step
     function validateActiveStep() {
         let valid = true;
         let errorMessages = [];
 
-        // Perform validations for Step 1 (Personal Information)
+        // Step 1: Personal Information
         if (currentStep === 0) {
-            // Retrieve values from inputs
             const firstName = document.getElementById("firstname").value.trim();
             const middleName = document.getElementById("middlename").value.trim();
             const lastName = document.getElementById("lastname").value.trim();
             const suffix = document.getElementById("suffix").value.trim();
 
+            const nameRegex = /^[A-Za-z\s.]+$/;
 
-            // Regex rules
-            const nameRegex = /^[A-Za-z ]+$/; // letters and space
-            const suffixRegex = /^[A-Za-z\.]+$/; // letters and period
-
-            // Validate First Name
             if (!nameRegex.test(firstName)) {
                 valid = false;
-                errorMessages.push("First Name can only contain alphabet characters.");
+                errorMessages.push("First Name can only contain letters, spaces, and periods.");
                 document.getElementById("firstname").classList.add("is-invalid");
             } else {
                 document.getElementById("firstname").classList.remove("is-invalid");
             }
 
-            // Validate Middle Name if filled
             if (middleName !== "" && !nameRegex.test(middleName)) {
                 valid = false;
-                errorMessages.push("Middle Name can only contain alphabet characters.");
+                errorMessages.push("Middle Name can only contain letters, spaces, and periods.");
                 document.getElementById("middlename").classList.add("is-invalid");
             } else {
                 document.getElementById("middlename").classList.remove("is-invalid");
             }
 
-            // Validate Last Name
             if (!nameRegex.test(lastName)) {
                 valid = false;
-                errorMessages.push("Last Name can only contain alphabet characters.");
+                errorMessages.push("Last Name can only contain letters, spaces, and periods.");
                 document.getElementById("lastname").classList.add("is-invalid");
             } else {
                 document.getElementById("lastname").classList.remove("is-invalid");
             }
 
-            // Validate Suffix if filled
-            if (suffix !== "" && !suffixRegex.test(suffix)) {
+            if (suffix !== "" && !nameRegex.test(suffix)) {
                 valid = false;
-                errorMessages.push("Suffix can only contain alphabet characters and a period.");
+                errorMessages.push("Suffix can only contain letters and periods.");
                 document.getElementById("suffix").classList.add("is-invalid");
             } else {
                 document.getElementById("suffix").classList.remove("is-invalid");
             }
         }
-        // Additional validations for other steps can be added here if necessary
 
-        // If validation fails, update the modal message with the errors
+        // Step 2: Credentials
+        if (currentStep === 1) {
+            const password = document.getElementById("password").value;
+            const rules = {
+                length: /.{8,15}/,
+                uppercase: /(?=.*[a-z])(?=.*[A-Z])/,
+                number: /(?=.*\d)/,
+                specialChar: /(?=.*[!@#$%^&*])/
+            };
+
+            let allRulesValid = true;
+            for (const rule in rules) {
+                if (!rules[rule].test(password)) {
+                    allRulesValid = false;
+                    break;
+                }
+            }
+
+            if (!allRulesValid) {
+                valid = false;
+                errorMessages.push("Password does not meet all requirements.");
+            }
+        }
+
         if (!valid) {
             const modalBody = document.querySelector("#validationModal .modal-body");
             modalBody.textContent = errorMessages.join(" ");
@@ -71,11 +85,11 @@ document.addEventListener("DOMContentLoaded", function () {
         return valid;
     }
 
-    // Next button event for multi-step form
+    // Next button event
     nextBtn.addEventListener("click", function () {
         let isValid = true;
 
-        // First, check that all required fields in the active step are filled.
+        // Check required fields
         document.querySelectorAll(".step.active-step input[required], .step.active-step select[required]").forEach(field => {
             if (!field.value.trim()) {
                 isValid = false;
@@ -85,49 +99,39 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 
-        // If required fields are missing, show the modal and stop.
         if (!isValid) {
             let validationModal = new bootstrap.Modal(document.getElementById("validationModal"));
             validationModal.show();
             return;
         }
 
-        // Now, perform the custom validation based on the step.
+        // Custom validation
         if (!validateActiveStep()) {
             let validationModal = new bootstrap.Modal(document.getElementById("validationModal"));
             validationModal.show();
             return;
         }
 
-        // if (currentStep === 0) {
-        //     // auto-fill Unknown for step-2 birth reg
-        //     const br = document.getElementById("birthreg");
-        //     if (!br.value.trim()) {
-        //     br.value = "Unknown";
-        //     }
-        // }
-
-        // If on the final review step (Step 5)
-        if (currentStep === 3) {
-            // Show the confirmation modal
+        // If on final review step
+        if (currentStep === 2) {
             let confirmModal = new bootstrap.Modal(document.getElementById("confirmationModal"));
             confirmModal.show();
         } else {
-            // Navigate to the next step normally
+            // Go to next step
             steps[currentStep].classList.remove("active-step");
             dots[currentStep].classList.remove("active-dot");
             currentStep++;
             steps[currentStep].classList.add("active-step");
             dots[currentStep].classList.add("active-dot");
 
-            if (currentStep === 3) {
+            if (currentStep === 2) {
                 populateSummary();
             }
             updateNavigation();
-        }   
+        }
     });
 
-    // Back/Cancel button event
+    // Cancel/Back button event
     cancelBtn.addEventListener("click", function () {
         if (currentStep > 0) {
             steps[currentStep].classList.remove("active-step");
@@ -135,56 +139,42 @@ document.addEventListener("DOMContentLoaded", function () {
             currentStep--;
             steps[currentStep].classList.add("active-step");
             dots[currentStep].classList.add("active-dot");
-
-            // Update sub-header and button text
             updateNavigation();
         } else {
-            window.location.href = "index.php"; // Redirect to home
+            window.location.href = "index.php";
         }
     });
 
-    // Function to update navigation labels
+    // Update navigation
     function updateNavigation() {
         if (currentStep === 0) {
-            subHeader.textContent = "Fill out personal information.";
-            cancelBtn.textContent = "Cancel";
-            nextBtn.textContent = "Next";
-        }  else if (currentStep === 1) {
-            subHeader.textContent = "Upload any of your available valid ID.";
-            cancelBtn.textContent = "Back";
-            nextBtn.textContent = "Next";
+            subHeader.textContent = "Fill out all needed information";
+            cancelBtn.textContent = "CANCEL";
+            nextBtn.textContent = "NEXT";
+        } else if (currentStep === 1) {
+            subHeader.textContent = "Provide your sign in credentials.";
+            cancelBtn.textContent = "PREVIOUS";
+            nextBtn.textContent = "NEXT";
         } else if (currentStep === 2) {
-            subHeader.textContent = "Upload a profile picture and set up unique credentials to secure your account.";
-            cancelBtn.textContent = "Back";
-            nextBtn.textContent = "Next";
-        } else if (currentStep === 3) {
-            subHeader.textContent = "Review your filled-out information.";
-            cancelBtn.textContent = "Back";
-            nextBtn.textContent = "Finish";
+            subHeader.textContent = "Review all provided details in the previous pages.";
+            cancelBtn.textContent = "CANCEL";
+            nextBtn.textContent = "SUBMIT";
         }
-        // Future steps can be handled here
     }
 
-    // When Confirm is clicked in the confirmation modal, trigger form submission.
+    // Confirm submission
     const confirmSubmitBtn = document.getElementById("confirmSubmitBtn");
     confirmSubmitBtn.addEventListener("click", function () {
-        // Hide the confirmation modal
         let confirmModalEl = document.getElementById("confirmationModal");
         let confirmModal = bootstrap.Modal.getInstance(confirmModalEl);
         if (confirmModal) {
             confirmModal.hide();
         }
-
         document.getElementById("registrationForm").submit();
     });
 
-});
-
-document.addEventListener("DOMContentLoaded", function () {
+    // Password validation
     const passwordInput = document.getElementById("password");
-    const confirmPasswordInput = document.getElementById("confirmPassword");
-    const confirmMessage = document.getElementById("confirmMessage");
-
     const rules = {
         lengthRule: /.{8,15}/,
         uppercaseRule: /(?=.*[a-z])(?=.*[A-Z])/,
@@ -193,40 +183,30 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     const ruleElements = {
-        lengthRule: document.getElementById("lengthRule"),
-        uppercaseRule: document.getElementById("uppercaseRule"),
-        numberRule: document.getElementById("numberRule"),
-        specialCharRule: document.getElementById("specialCharRule")
+        lengthRule: document.getElementById("uppercaseRule"),
+        uppercaseRule: document.getElementById("numberRule"),
+        numberRule: document.getElementById("specialCharRule"),
+        specialCharRule: document.getElementById("specialCharRule2")
     };
 
     passwordInput.addEventListener("input", function () {
-        let valid = true;
+        const rulesArray = [
+            { regex: /.{8,15}/, element: document.getElementById("uppercaseRule") },
+            { regex: /(?=.*[a-z])(?=.*[A-Z])/, element: document.getElementById("numberRule") },
+            { regex: /(?=.*\d)/, element: document.getElementById("specialCharRule") },
+            { regex: /(?=.*[!@#$%^&*])/, element: document.getElementById("specialCharRule2") }
+        ];
 
-        for (const rule in rules) {
-            if (rules[rule].test(passwordInput.value)) {
-                ruleElements[rule].classList.add("valid");
+        rulesArray.forEach(rule => {
+            if (rule.regex.test(passwordInput.value)) {
+                rule.element.classList.add("valid");
             } else {
-                ruleElements[rule].classList.remove("valid");
-                valid = false;
+                rule.element.classList.remove("valid");
             }
-        }
-
-        confirmPasswordInput.disabled = !valid;
+        });
     });
 
-    confirmPasswordInput.addEventListener("input", function () {
-        if (confirmPasswordInput.value === passwordInput.value) {
-            confirmMessage.textContent = "Passwords match!";
-            confirmMessage.classList.remove("text-danger");
-            confirmMessage.classList.add("text-success");
-        } else {
-            confirmMessage.textContent = "Passwords do not match!";
-            confirmMessage.classList.remove("text-success");
-            confirmMessage.classList.add("text-danger");
-        }
-    });
-
-    // Toggle Password Visibility
+    // Toggle password visibility
     window.togglePassword = function (id) {
         let input = document.getElementById(id);
         let icon = input.nextElementSibling.querySelector("i");
@@ -241,70 +221,24 @@ document.addEventListener("DOMContentLoaded", function () {
             icon.classList.add("fa-eye-slash");
         }
     };
+
+    // Populate summary
+    function populateSummary() {
+        const fn = document.getElementById("firstname").value.trim();
+        const mn = document.getElementById("middlename").value.trim();
+        const ln = document.getElementById("lastname").value.trim();
+        const sn = document.getElementById("suffix").value.trim();
+        const bd = document.getElementById("birthdate").value;
+        const pu = document.getElementById("purok").value;
+        const em = document.getElementById("email").value.trim();
+
+        const suffixPart = sn ? ` ${sn}` : "";
+        const middlePart = mn ? ` ${mn}` : "";
+        const fullName = `${ln}, ${fn}${middlePart}${suffixPart}`;
+
+        document.getElementById("summaryFullName").value = fullName;
+        document.getElementById("summaryBirthdate").value = bd;
+        document.getElementById("summaryPurok").value = `Purok ${pu}`;
+        document.getElementById("summaryEmail").value = em;
+    }
 });
-
-function populateSummary() {
-  // Step 1
-  const fn = document.getElementById("firstname").value.trim();
-  const mn = document.getElementById("middlename").value.trim();
-  const ln = document.getElementById("lastname").value.trim();
-  const sn = document.getElementById("suffix").value.trim();
-  const bd = document.getElementById("birthdate").value;
-  //   const sx = document.getElementById("sex").value;
-  // Build the optional pieces
-  const suffixPart = sn ? ` ${sn}` : "";
-  const middlePart = mn ? ` ${mn}` : "";
-
-  // Always put the comma *after* last name (or last name + suffix), then a space
-  const fullName = `${ln}, ${fn}${middlePart}${suffixPart}`;
-
-  // Step 2
-//   const cs = document.getElementById("civilstatus").value;
-//   const bt = document.getElementById("bloodtype").value;
-//   let br = document.getElementById("birthreg").value.trim();
-//   if (!br) br = "Unknown";
-//   const ed = document.getElementById("educationalattainment").value;
-//   const oc = document.getElementById("occupation").value;
-  const pu = document.getElementById("purok").value;
-
-  // Inject into the review
-  document.getElementById("summaryFullName").value       = fullName;
-  document.getElementById("summaryBirthdate").value      = bd;
-//   document.getElementById("summarySex").value            = sx;
-//   document.getElementById("summaryCivilStatus").value    = cs;
-//   document.getElementById("summaryBloodType").value      = bt;
-//   document.getElementById("summaryBirthReg").value       = br;
-//   document.getElementById("summaryEducation").value      = ed;
-//   document.getElementById("summaryOccupation").value     = oc;
-  document.getElementById("summaryPurok").value          = pu;
-
-}
-
-
-function submitRegistration() {
-    const form = document.getElementById("registrationForm");
-    const formData = new FormData(form);
-
-    fetch("new_acc_signup.php", {
-        method: "POST",
-        body: formData
-    })
-    .then(response => response.text())
-    .then(text => {
-        console.log("Response text:", text);
-        return JSON.parse(text);
-    })
-    .then(data => {
-        if (data.success) {
-            alert("Registration successful!");
-            window.location.href = "signinup.php";
-        } else {
-            alert("Registration failed: " + data.error);
-        }
-    })
-    .catch(error => {
-        console.error("Error:", error);
-    });
-}
-
-

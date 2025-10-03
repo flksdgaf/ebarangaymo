@@ -17,7 +17,6 @@ $fn = trim($_POST['firstname']   ?? '');
 $mn = trim($_POST['middlename']  ?? '');
 $ln = trim($_POST['lastname']    ?? '');
 $sn = trim($_POST['suffix']      ?? '');
-// $sx = $_POST['sex']              ?? '';
 $bd = $_POST['birthdate']        ?? '';
 
 // Build the optional pieces
@@ -28,21 +27,18 @@ $middlePart = $mn ? " {$mn}" : '';
 $full_name = "{$suffixPart}{$ln}, {$fn}{$middlePart}";
 
 // Step 2 inputs
-// $cs = $_POST['civilstatus']          ?? '';
-// $bt = $_POST['bloodtype']            ?? '';
-// $br = trim($_POST['birthreg']        ?? '');
-// if ($br === '') {
-//     $br = 'Unknown';
-// }
-// $ed = $_POST['educationalattainment']?? '';
-// $oc = trim($_POST['occupation']      ?? '');
 $pu = $_POST['purok']                ?? '';
 
-// Step 3 & 4 file fields
+// Email from credentials step
+$email = trim($_POST['email'] ?? '');
+
+// Step 3 file fields (front & back ID only)
 $validID  = $_POST['validID']                ?? '';
 $front    = $_FILES['frontID']   ?? null;
 $back     = $_FILES['backID']    ?? null;
-$profile  = $_FILES['profilePic']?? null;
+
+// Use default profile picture
+$profileName = 'default_profile_pic.png';
 
 // Step 4 creds
 $username = trim($_POST['username'] ?? '');
@@ -52,21 +48,18 @@ $pwd_hash = password_hash($pwd_plain, PASSWORD_DEFAULT);
 // Directories (ensure they exist & are writable)
 $dirs = [
   'front'   => '../frontID/',
-  'back'    => '../backID/',
-  'profile' => '../profilePictures/'
+  'back'    => '../backID/'
 ];
 
-// Build unique filenames
+// Build unique filenames for ID uploads only
 $time = time();
 $frontName   = $time . "_front_"  . basename($front['name']);
 $backName    = $time . "_back_"   . basename($back['name']);
-$profileName = $time . "_prof_"   . basename($profile['name']);
 $now = date('Y-m-d H:i:s');
 
 if (
   move_uploaded_file($front['tmp_name'],   $dirs['front']   . $frontName)  &&
-  move_uploaded_file($back['tmp_name'],    $dirs['back']    . $backName)   &&
-  move_uploaded_file($profile['tmp_name'], $dirs['profile'] . $profileName)
+  move_uploaded_file($back['tmp_name'],    $dirs['back']    . $backName)
 ) {
   // Pending table insert
   $stmt1 = $conn->prepare("
@@ -78,14 +71,14 @@ if (
     $account_id, $full_name, $bd, $pu, $validID, $frontName, $backName, $profileName, $now
    );
 
-  // User-accounts insert
+  // User-accounts insert (now includes email)
   $stmt2 = $conn->prepare("
-    INSERT INTO user_accounts (account_id, username, password)
-    VALUES (?,?,?)
+    INSERT INTO user_accounts (account_id, username, password, email)
+    VALUES (?,?,?,?)
   ");
   $stmt2->bind_param(
-    "iss", 
-    $account_id, $username, $pwd_hash
+    "isss", 
+    $account_id, $username, $pwd_hash, $email
   );
 
   if ($stmt1->execute() && $stmt2->execute()) {

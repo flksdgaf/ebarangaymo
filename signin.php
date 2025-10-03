@@ -55,13 +55,13 @@ $logoUrl = 'images/' . $info['logo'];
               <i class="fa fa-eye-slash"></i>
             </span>
           </div>
-          <a href="#" class="forgot-pass"><strong><br>Forgot Password?</strong></a>
+          <a href="forgot_password.php" class="forgot-pass"><strong><br>Forgot Password?</strong></a>
         </div>
 
         <div class="text-center">
           <button type="submit" class="btn btn-gradient w-50 py-2 mb-3">Login</button>
           <p>Don't have an account yet?   
-            <a href="signup_try.php" class="signup-now">Sign Up Now</a>
+            <a href="signup.php" class="signup-now">Sign Up Now</a>
           </p>
         </div>
       </form>

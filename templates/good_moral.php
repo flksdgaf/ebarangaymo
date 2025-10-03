@@ -4,11 +4,42 @@ require_once __DIR__ . '/../vendor/autoload.php';
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
-// Prepare logos as Base64 (if needed later)
+// Prepare logos as Base64
 $govLogo  = realpath(__DIR__ . '/../images/good_governance_logo.png');
 $brgyLogo = realpath(__DIR__ . '/../images/magang_logo.png');
 $srcGov   = 'data:image/png;base64,' . base64_encode(file_get_contents($govLogo));
 $srcBrgy  = 'data:image/png;base64,' . base64_encode(file_get_contents($brgyLogo));
+
+// Fetch Barangay Captain name from user_accounts and purok tables
+$captainStmt = $conn->prepare("SELECT account_id FROM user_accounts WHERE role = 'Brgy Captain' LIMIT 1");
+$captainStmt->execute();
+$captainResult = $captainStmt->get_result();
+$captainName = '';
+
+if ($captainResult && $captainResult->num_rows > 0) {
+    $captainData = $captainResult->fetch_assoc();
+    $captainAccountId = $captainData['account_id'];
+    
+    // Search through all purok tables
+    $purokTables = ['purok1_rbi', 'purok2_rbi', 'purok3_rbi', 'purok4_rbi', 'purok5_rbi', 'purok6_rbi'];
+    
+    foreach ($purokTables as $table) {
+        $nameStmt = $conn->prepare("SELECT full_name FROM {$table} WHERE account_ID = ? LIMIT 1");
+        $nameStmt->bind_param('i', $captainAccountId);
+        $nameStmt->execute();
+        $nameResult = $nameStmt->get_result();
+        
+        if ($nameResult && $nameResult->num_rows > 0) {
+            $nameData = $nameResult->fetch_assoc();
+            // Reformat the captain's name
+            $captainName = reformatName($nameData['full_name']);
+            $nameStmt->close();
+            break;
+        }
+        $nameStmt->close();
+    }
+}
+$captainStmt->close();
 
 // Fetch data
 $transactionId = $data['transaction_id'] ?? '';
@@ -18,12 +49,35 @@ $civilStatus   = $data['civil_status'] ?? '';
 $sex           = $data['sex'] ?? '';
 $age           = $data['age'] ?? '';
 $purok         = $data['purok'] ?? '';
-$address   = $data['address'] ?? '';
+$address       = $data['address'] ?? '';
 $purpose       = $data['purpose'] ?? '';
 $paymentMethod = $data['payment_method'] ?? '';
 $amount        = $data['amount'] ?? '';
 $createdAt     = $data['created_at'] ?? '';
 $issuedDate    = date('Y-m-d');
+
+// Helper to reformat name from "Last, First Middle" to "First Middle Last"
+function reformatName($name) {
+    $parts = explode(',', $name);
+    if (count($parts) === 2) {
+        return trim($parts[1]) . ' ' . trim($parts[0]);
+    }
+    return $name;
+}
+
+// Reformat the full name
+$fullNameFormatted = reformatName($fullName);
+
+// Build address string conditionally
+$addressParts = [];
+if (!empty(trim($address))) {
+    $addressParts[] = htmlspecialchars($address);
+}
+if (!empty(trim($purok))) {
+    $addressParts[] = htmlspecialchars($purok);
+}
+$addressParts[] = 'Barangay Magang, Daet, Camarines Norte';
+$fullAddress = implode(', ', $addressParts);
 
 // Format date with suffix
 function formatWithSuffix($dateStr) {
@@ -39,7 +93,7 @@ function formatWithSuffix($dateStr) {
     return $day . '<sup>' . $suffix . '</sup>';
 }
 
-// DOMPDF / preview toggles (match other templates)
+// DOMPDF / preview toggles
 $download = isset($_GET['download']) && $_GET['download'] === '1';
 $print = isset($_GET['print']) && $_GET['print'] === '1';
 $includeHeader = isset($_GET['includeHeader']) && $_GET['includeHeader'] === '1';
@@ -92,7 +146,13 @@ if ($download || $print) {
           text-decoration:underline;
           margin-bottom:50px;
         }
-        .content { text-align: justify; width:100%; }
+        .content { 
+          text-align: justify; 
+          width:100%;
+        }
+        .content.no-header {
+          margin-top: 200px;
+        }
         p {
           text-indent:50px;
           margin-bottom:20px;
@@ -103,9 +163,24 @@ if ($download || $print) {
           font-size:13pt;
           margin-bottom:40px;
         }
+        .signatory {
+          margin-top: 60px;
+          text-align: right;
+          padding-right: 50px;
+        }
+
+        .signatory-name {
+          font-weight: bold;
+          text-transform: uppercase;
+          margin-bottom: 5px;
+        }
+
+        .signatory-title {
+          font-size: 12pt;
+        }
       </style>
     </head>
-    <body>
+    <body<?php if (!$includeHeader): ?> style="padding-top: 150px;"<?php endif; ?>>
       <?php if ($includeHeader): ?>
         <table class="header-table">
           <tr>
@@ -135,12 +210,10 @@ if ($download || $print) {
 
         <p>
           This is to certify that
-          <strong><u><?= htmlspecialchars(strtoupper($fullName)) ?></u></strong>,
+          <strong><?= htmlspecialchars(strtoupper($fullNameFormatted)) ?></strong>,
           <strong><?= htmlspecialchars($age) ?></strong> years old,
           <?= htmlspecialchars(strtoupper($civilStatus)) ?>,
-          is a resident of <?= htmlspecialchars($address) ?>,
-          <?= htmlspecialchars($purok) ?>,
-          Barangay Magang, Daet, Camarines Norte.
+          is a resident of <?= $fullAddress ?>.
         </p>
 
         <p>
@@ -168,6 +241,14 @@ if ($download || $print) {
           at Barangay Magang, Daet, Camarines Norte.
         </p>
       </div>
+
+      <?php if ($includeHeader): ?>
+        <!-- Signatory Section -->
+        <div class="signatory">
+          <div class="signatory-name"><?= htmlspecialchars($captainName) ?></div>
+          <div class="signatory-title">Punong Barangay</div>
+        </div>
+      <?php endif; ?>
     </body>
     </html>
     <?php
@@ -202,6 +283,9 @@ if ($download || $print) {
       padding:30px 40px; box-shadow:0 0 10px rgba(0,0,0,0.2);
       box-sizing:border-box; margin:20px 0;
     }
+    .paper.no-header {
+      padding-top: 180px;
+    }
     .header-table { width:100%; border-collapse:collapse; margin-bottom:20px; }
     .header-table td { text-align:center; vertical-align:middle; }
     .header-table img { height:120px; width:auto; }
@@ -220,10 +304,25 @@ if ($download || $print) {
       line-height:1.6; font-size:14pt; color:#000;
     }
     .no-indent{ text-indent:0; font-size:14pt; margin-bottom:20px; }
+    .signatory {
+      margin-top: 60px;
+      text-align: right;
+      padding-right: 50px;
+    }
+
+    .signatory-name {
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    .signatory-title {
+      font-size: 12pt;
+    }
   </style>
 </head>
 <body>
-  <div class="paper">
+  <div class="paper<?php if (!$includeHeader): ?> no-header<?php endif; ?>">
     <?php if ($includeHeader): ?>
       <table class="header-table">
         <tr>
@@ -253,12 +352,10 @@ if ($download || $print) {
 
       <p>
         This is to certify that
-        <strong><u><?= htmlspecialchars(strtoupper($fullName)) ?></u></strong>,
+        <strong><?= htmlspecialchars(strtoupper($fullNameFormatted)) ?></strong>,
         <strong><?= htmlspecialchars($age) ?></strong> years old,
         <?= htmlspecialchars(strtoupper($civilStatus)) ?>,
-        is a resident of <?= htmlspecialchars($address) ?>,
-        <?= htmlspecialchars($purok) ?>,
-        Barangay Magang, Daet, Camarines Norte.
+        is a resident of <?= $fullAddress ?>.
       </p>
 
       <p>
@@ -286,6 +383,14 @@ if ($download || $print) {
         at Barangay Magang, Daet, Camarines Norte.
       </p>
     </div>
+
+    <?php if ($includeHeader): ?>
+      <!-- Signatory Section -->
+      <div class="signatory">
+        <div class="signatory-name"><?= htmlspecialchars($captainName) ?></div>
+        <div class="signatory-title">Punong Barangay</div>
+      </div>
+    <?php endif; ?>
   </div>
 </body>
 </html>

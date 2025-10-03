@@ -1522,7 +1522,7 @@ $result = $st->get_result();
                     <input type="text" class="form-control form-control-sm" id="paymentMethodRecord" disabled>
                   </div>
                   <div class="col-md-6">
-                    <label for="amountPaidRecord" class="form-label fw-bold">Amount Paid</label>
+                    <label for="amountPaidRecord" class="form-label fw-bold">Amount to Pay</label>
                     <input type="number" step="0.01" class="form-control form-control-sm" id="amountPaidRecord" name="amount_paid" disabled>
                   </div>
 
@@ -2326,11 +2326,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Optional: show alert + reload as your previous code did
+    // Close the modal and reload the page to reflect status change
+    viewReqModal.hide();
     setTimeout(() => {
-      // If you want the page to reload after printing, uncomment the next line:
-      // location.reload();
-    }, 300);
+      location.reload();
+    }, 500);
   });
 
   // Download action
@@ -2341,11 +2341,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.open(href, '_blank');
 
-    // Optional: alert and reload after short delay (preserve your original behavior)
+    // Close the modal and reload the page to reflect status change
+    viewReqModal.hide();
     setTimeout(() => {
-      // alert(`Saved as PDF successfully`);
-      // location.reload(); // uncomment if you want to reload after download
-    }, 300);
+      location.reload();
+    }, 500);
   });
 
   // Clear iframe and reset state when modal hides

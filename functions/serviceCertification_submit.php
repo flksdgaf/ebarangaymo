@@ -8,7 +8,9 @@ if (!($_SESSION['auth'] ?? false)) {
 }
 
 $requestFor = $_POST['request_for'] ?? '';
-if (strtolower($requestFor) === 'myself') {
+if (strtolower($_POST['certification_type'] ?? '') === 'first time job seeker') {
+    $requestFor = 'Myself';
+} elseif (strtolower($requestFor) === 'myself') {
     $requestFor = 'Myself';
 } elseif (strtolower($requestFor) === 'other') {
     $requestFor = 'Others';
@@ -36,6 +38,7 @@ $certConfigs = [
     'Good Moral'   => ['full_name','age','civil_status','purok','claim_date','purpose'],
     'Solo Parent'  => ['full_name','age','civil_status','purok','claim_date','purpose'],
     'Guardianship' => ['full_name','age','civil_status','purok','claim_date','purpose'],
+    'First Time Job Seeker' => ['full_name','age','civil_status','purok','claim_date'],  
 ];
 
 $map = [
@@ -44,6 +47,7 @@ $map = [
     'Good Moral'   => ['table'=>'good_moral_requests',  'prefix'=>'GM-',  'amount'=>130],
     'Solo Parent'  => ['table'=>'solo_parent_requests', 'prefix'=>'SP-',  'amount'=>130],
     'Guardianship' => ['table'=>'guardianship_requests','prefix'=>'GUA-', 'amount'=>130],
+    'First Time Job Seeker' => ['table'=>'job_seeker_requests', 'prefix'=>'FTJS-', 'amount'=>130],
 ];
 
 $type = $_POST['certification_type'] ?? '';
@@ -186,7 +190,7 @@ $postPaymentMethod = isset($_POST['paymentMethod']) ? trim($_POST['paymentMethod
 $postPaymentAmount = isset($_POST['paymentAmount']) ? trim($_POST['paymentAmount']) : null;
 $postPaymentStatus = isset($_POST['paymentStatus']) ? trim($_POST['paymentStatus']) : null;
 
-if (strtolower($type) === 'indigency') {
+if (strtolower($type) === 'indigency' || strtolower($type) === 'first time job seeker') {
     $postPaymentMethod = null;
     $postPaymentAmount = null;
     $postPaymentStatus = 'Free of Charge';
@@ -217,11 +221,30 @@ if ($claimTimeColumn) {
 }
 
 $requestSource = 'Online';
-$columns = array_merge(
-    ['account_id','transaction_id'],
-    $fields,
-    ['payment_method','amount','payment_status','request_for','authorization_letter','request_source']
-);
+
+// Build columns array based on certificate type
+if (strtolower($type) === 'first time job seeker') {
+    // First Time Job Seeker: no payment fields, no request_for, no authorization_letter
+    $columns = array_merge(
+        ['account_id','transaction_id'],
+        $fields,
+        ['request_source']
+    );
+} elseif (strtolower($type) === 'indigency') {
+    // Indigency: no payment fields, but has request_for and authorization_letter
+    $columns = array_merge(
+        ['account_id','transaction_id'],
+        $fields,
+        ['request_for','authorization_letter','request_source']
+    );
+} else {
+    // All other certificates: include payment fields, request_for, and authorization_letter
+    $columns = array_merge(
+        ['account_id','transaction_id'],
+        $fields,
+        ['payment_method','amount','payment_status','request_for','authorization_letter','request_source']
+    );
+}
 
 $res = $conn->query("SELECT transaction_id FROM `$table` ORDER BY id DESC LIMIT 1");
 if ($res && $res->num_rows) {
@@ -260,42 +283,47 @@ foreach ($fields as $f) {
     }
 }
 
-if ($postPaymentMethod === null || $postPaymentMethod === '') {
-    $placeholders[] = 'NULL';
-} else {
-    $placeholders[] = '?';
-    $params[] = $postPaymentMethod;
-    $paramTypes[] = 's';
-}
-
-if ($postPaymentAmount === null || $postPaymentAmount === '') {
-    $placeholders[] = 'NULL';
-} else {
-    $placeholders[] = '?';
-    if (is_numeric(str_replace(',', '', $postPaymentAmount))) {
-        $params[] = (float) str_replace(',', '', $postPaymentAmount);
-        $paramTypes[] = 'd';
+// Only add payment fields for non-free certificates
+if (!(strtolower($type) === 'indigency' || strtolower($type) === 'first time job seeker')) {
+    if ($postPaymentMethod === null || $postPaymentMethod === '') {
+        $placeholders[] = 'NULL';
     } else {
-        $params[] = $postPaymentAmount;
+        $placeholders[] = '?';
+        $params[] = $postPaymentMethod;
         $paramTypes[] = 's';
     }
+
+    if ($postPaymentAmount === null || $postPaymentAmount === '') {
+        $placeholders[] = 'NULL';
+    } else {
+        $placeholders[] = '?';
+        if (is_numeric(str_replace(',', '', $postPaymentAmount))) {
+            $params[] = (float) str_replace(',', '', $postPaymentAmount);
+            $paramTypes[] = 'd';
+        } else {
+            $params[] = $postPaymentAmount;
+            $paramTypes[] = 's';
+        }
+    }
+
+    $placeholders[] = '?';
+    $params[]       = $postPaymentStatus;
+    $paramTypes[]   = 's';
 }
 
-// always insert payment_status (force default earlier if missing)
-$placeholders[] = '?';
-$params[]       = $postPaymentStatus;
-$paramTypes[]   = 's';
-
-$placeholders[] = '?';
-$params[] = $requestFor;
-$paramTypes[] = 's';
-
-if ($authFilename === null || $authFilename === '') {
-    $placeholders[] = 'NULL';
-} else {
+// request_for field (for all types)
+if (strtolower($type) !== 'first time job seeker') {
     $placeholders[] = '?';
-    $params[] = $authFilename;
+    $params[] = $requestFor;
     $paramTypes[] = 's';
+
+    if ($authFilename === null || $authFilename === '') {
+        $placeholders[] = 'NULL';
+    } else {
+        $placeholders[] = '?';
+        $params[] = $authFilename;
+        $paramTypes[] = 's';
+    }
 }
 
 $placeholders[] = '?';

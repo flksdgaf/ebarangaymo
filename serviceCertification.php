@@ -46,6 +46,7 @@ $map = [
   'Good Moral'   => ['table'=>'good_moral_requests',   'prefix'=>'GM-' ],
   'Solo Parent'  => ['table'=>'solo_parent_requests',  'prefix'=>'SP-' ],
   'Guardianship' => ['table'=>'guardianship_requests', 'prefix'=>'GUA-'],
+  'First Time Job Seeker' => ['table'=>'job_seeker_requests', 'prefix'=>'FTJS-'],
 ];
 
 $chosenPayment = '';
@@ -84,9 +85,12 @@ if ($transactionId) {
 
 // === NEW: compute the default fee label to display in the fee box ===
 if ($existingCertType) {
-    // Prefer "Certificate of X Fee" phrasing so a Residency request becomes:
-    // "Certificate of Residency Fee" (matches user's example)
-    $feeLabelDefault = 'Certificate of ' . $existingCertType . ' Fee';
+    // Special case for First Time Job Seeker - use exact name instead of "Certificate of"
+    if ($existingCertType === 'First Time Job Seeker') {
+        $feeLabelDefault = 'First Time Job Seeker Fee';
+    } else {
+        $feeLabelDefault = 'Certificate of ' . $existingCertType . ' Fee';
+    }
 } else {
     $feeLabelDefault = 'Barangay ID Fee';
 }

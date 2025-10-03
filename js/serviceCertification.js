@@ -127,7 +127,8 @@ document.addEventListener("DOMContentLoaded", function () {
             "Indigency",
             "Good Moral",
             "Solo Parent",
-            "Guardianship"
+            "Guardianship",
+            "First Time Job Seeker"
         ];
         const input = certInput;
         const list  = document.getElementById('certTypeList');
@@ -358,6 +359,13 @@ document.addEventListener("DOMContentLoaded", function () {
             { id: 'civil_status',    label: 'Civil Status',    type: 'select',   options: ['Single','Married','Widowed','Separated','Divorced','Unknown']   },
             { id: 'purok',           label: 'Purok',           type: 'select',   options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6']     },
             { id: 'purpose',         label: 'Purpose',         type: 'text' },
+            { id: 'claim_date',      label: 'Claim Date',      type: 'claim' }
+        ],
+        'first time job seeker': [
+            { id: 'full_name',       label: 'Full Name',       type: 'text',     disabled: true },
+            { id: 'age',             label: 'Age',             type: 'number',   disabled: true },
+            { id: 'civil_status',    label: 'Marital Status',  type: 'select',   options: ['Single','Married','Widowed','Separated','Divorced','Unknown']   },
+            { id: 'purok',           label: 'Purok',           type: 'select',   options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6']     },
             { id: 'claim_date',      label: 'Claim Date',      type: 'claim' }
         ],
         'good moral': [
@@ -627,7 +635,7 @@ document.addEventListener("DOMContentLoaded", function () {
             certFieldsHolder.appendChild(authRow);
         }
 
-        if (key === 'indigency') {
+        if (key === 'indigency' || key === 'first time job seeker') {
             if (hiddenPaymentInput) hiddenPaymentInput.value = '';
             if (hiddenPaymentAmount) hiddenPaymentAmount.value = '';
             if (hiddenPaymentStatus) {
@@ -675,6 +683,14 @@ document.addEventListener("DOMContentLoaded", function () {
             if (hiddenPaymentInput && !hiddenPaymentInput.value) hiddenPaymentInput.value = 'Brgy Payment Device';
             if (hiddenPaymentAmount && !hiddenPaymentAmount.value) hiddenPaymentAmount.value = String(DEFAULT_AMOUNT);
             if (hiddenPaymentStatus && !hiddenPaymentStatus.value) hiddenPaymentStatus.value = 'Pending';
+        }
+
+        const forSelectRow = forSelect.closest('.row');
+        if (key === 'first time job seeker') {
+            if (forSelectRow) forSelectRow.style.display = 'none';
+            forSelect.value = 'myself'; // Force to "myself"
+        } else {
+            if (forSelectRow) forSelectRow.style.display = '';
         }
 
         refreshStepCollections();
@@ -1013,7 +1029,7 @@ document.addEventListener("DOMContentLoaded", function () {
         ensureHiddenPaymentFields();
 
         const val = (certInput.value || '').trim().toLowerCase();
-        if (val === 'indigency') {
+        if (val === 'indigency' || val === 'first time job seeker') {
             if (hiddenPaymentInput) hiddenPaymentInput.value = '';
             if (hiddenPaymentAmount) hiddenPaymentAmount.value = '';
             if (hiddenPaymentStatus) {
@@ -1072,9 +1088,10 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         setupPaymentControls();
 
-        if ((window.existingCertType || '').toString().toLowerCase() === 'indigency') {
-            certInput.value = 'Indigency';
-            renderCertFields('Indigency', forSelect.value);
+        if ((window.existingCertType || '').toString().toLowerCase() === 'indigency' || 
+            (window.existingCertType || '').toString().toLowerCase() === 'first time job seeker') {
+            certInput.value = window.existingCertType;
+            renderCertFields(window.existingCertType, forSelect.value);
             if (hiddenPaymentStatus && (!hiddenPaymentStatus.value || !hiddenPaymentStatus.value.trim())) {
                 hiddenPaymentStatus.value = 'Free of Charge';
             }

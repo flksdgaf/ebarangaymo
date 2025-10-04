@@ -44,7 +44,7 @@ $payment_status = $_GET['payment_status'] ?? '';
 $document_status = $_GET['document_status'] ?? '';
 
 // Sources
-$validSources = ['Walk-In','Online','Brgy Payment Device','Official Receipt Logs','Released'];
+$validSources = ['Walk-In','Online','Brgy Payment Device','Official Receipt Logs','Document Records'];
 $processing_type = $_GET['request_source'] ?? 'Walk-In';
 if (! in_array($processing_type, $validSources, true)) {
   $processing_type = 'Walk-In';
@@ -54,9 +54,9 @@ $whereClauses = [];
 $bindTypes = '';
 $bindParams = [];
 
-// Show released records only in the "Released" tab
-if ($processing_type === 'Released') {
-    $whereClauses[] = "r.document_status = 'Released'";
+// Show released and rejected records in the "Document Records" tab
+if ($processing_type === 'Document Records') {
+    $whereClauses[] = "r.document_status IN ('Released', 'Rejected')";
 } else {
     // Hide released/rejected from other tabs
     $whereClauses[] = "r.document_status NOT IN ('Released','Rejected')";
@@ -342,8 +342,8 @@ $result = $st->get_result();
     <!-- Add this as a new tab option for Captain/Secretary/Bookkeeper -->
     <?php if (in_array($currentRole, ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper'], true)): ?>
       <li class="nav-item">
-        <a href="?<?= http_build_query(array_merge($_GET, ['request_source'=>'Released','request_page'=>1])) ?>"
-          class="nav-link <?= $processing_type==='Released' ? 'active' : '' ?>">
+        <a href="?<?= http_build_query(array_merge($_GET, ['request_source'=>'Document Records','request_page'=>1])) ?>"
+          class="nav-link <?= $processing_type==='Document Records' ? 'active' : '' ?>">
           Document Records
         </a>
       </li>
@@ -456,7 +456,7 @@ $result = $st->get_result();
       <?php if ($processing_type !== ''): ?>
         <div class="<?= $processing_type === 'Official Receipt Logs' ? 'align-self-center' : 'ms-3 align-self-center' ?>">
           <small class="text-muted">
-            Showing <strong><?= htmlspecialchars($processing_type) ?></strong> Requests
+            Showing <strong><?= htmlspecialchars($processing_type) ?></strong><?= $processing_type !== 'Document Records' ? ' Requests' : '' ?>
           </small>
         </div>
       <?php endif; ?>
@@ -1665,10 +1665,14 @@ $result = $st->get_result();
               <th class="text-nowrap">Transaction No.</th>
               <th class="text-nowrap">Name</th>
               <th class="text-nowrap">Request</th>
-              <th class="text-nowrap">Payment Status</th>
-              <th class="text-nowrap">Document Status</th>
+              <?php if ($processing_type !== 'Document Records'): ?>
+                <th class="text-nowrap">Payment Status</th>
+                <th class="text-nowrap">Document Status</th>
+              <?php else: ?>
+                <th class="text-nowrap">Status</th>
+              <?php endif; ?>
               <th class="text-nowrap">Date Created</th>
-              <?php if ($currentRole !== 'Brgy Kagawad'): ?>
+              <?php if ($currentRole !== 'Brgy Kagawad' && $processing_type !== 'Document Records'): ?>
                 <th class="text-nowrap text-center">Action</th>
               <?php endif; ?>
             </tr>
@@ -1701,113 +1705,93 @@ $result = $st->get_result();
                 if (isset($currentRole) && $currentRole === 'Brgy Treasurer') {
                   $docStatus = trim((string)($row['document_status'] ?? ''));
                   if (strcasecmp($docStatus, 'Processing') !== 0) {
-                    // skip rendering this row for Brgy Treasurer
                     continue;
                   }
                 }
-
               ?>
                 <tr data-id="<?= $tid ?>">
                   <td><?= $tid ?></td>
                   <td><?= htmlspecialchars($row['full_name']) ?></td>
                   <td><?= htmlspecialchars($row['request_type']) ?></td>
-                  <td><span class="badge <?= $c ?>"><?= htmlspecialchars($ps ?: '—') ?></span></td>
-                  <td><span class="badge <?= $d ?>"><?= htmlspecialchars($ds) ?></span></td>
-                  <td><?= htmlspecialchars($row['formatted_date']) ?></td>
-                  <?php if ($currentRole !== 'Brgy Treasurer'): ?>
-                    <td class="text-nowrap text-center">
-                      <?php if (in_array($currentRole, ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper'], true) && (($row['document_status'] ?? '') === 'For Verification')): ?>
-                        <!-- VIEW (unchanged) -->
-                        <button class="btn btn-sm btn-primary btn-view-request" data-id="<?= $tid ?>" title="View">
-                          <span class="material-symbols-outlined" style="font-size:12px;">visibility</span>
-                        </button>
-
-                        <!-- ACCEPT (unchanged) -->
-                        <button class="btn btn-sm btn-success btn-accept-request" data-id="<?= $tid ?>" data-action="Processing" title="Accept">
-                          <span class="material-symbols-outlined" style="font-size:12px;">check</span>
-                        </button>
-
-                        <!-- REJECT (unchanged) -->
-                        <button class="btn btn-sm btn-danger btn-reject-request" data-id="<?= $tid ?>" data-action="Rejected" title="Reject">
-                          <span class="material-symbols-outlined" style="font-size:12px;">close</span>
-                        </button>
-
-                      <?php elseif (in_array($currentRole, ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper'], true) && (($row['document_status'] ?? '') === 'Processing' || ($row['document_status'] ?? '') === 'Ready to Release')): ?>
-                        <!-- AFTER ACCEPTED: show View, Edit, Proceed -->
-                        <!-- VIEW (reuse same view handler) -->
-                        <button type="button" class="btn btn-sm btn-warning request-btn-view" data-id="<?= $tid ?>" title="View <?= $tid ?>" data-payment-status="<?= htmlspecialchars($row['payment_status'] ?? '') ?>" data-request-type="<?= htmlspecialchars($row['request_type'] ?? '') ?>">
-                          <span class="material-symbols-outlined" style="font-size:13px">visibility</span>
-                        </button>
-
-                        <!-- EDIT (new) -->
-                        <button type="button" class="btn btn-sm btn-primary request-btn-edit" title="Edit <?= $tid ?>">
-                          <span class="material-symbols-outlined" style="font-size:13px">stylus</span>
-                        </button>
-
-                        <!-- PROCEED / RELEASE (new) -->
-                        <?php $releaseDisabled = (($row['document_status'] ?? '') !== 'Ready to Release') ? 'disabled' : ''; ?>
-                        <button type="button" class="btn btn-sm btn-success request-btn-release" title="Release <?= $tid ?>" data-transaction-id="<?= htmlspecialchars($row['transaction_id']) ?>" data-request-type="<?= htmlspecialchars($row['request_type']) ?>" <?= $releaseDisabled ?>>
-                          <span class="material-symbols-outlined" style="font-size:13px">check</span>
-                        </button>
-
-                      <!-- <php else: ?> -->
-                        <!-- other states: keep VIEW available (no disabling) -->
-                        <!-- <button class="btn btn-sm btn-primary btn-view-request" data-id="<= $tid ?>" title="View">
-                          <span class="material-symbols-outlined" style="font-size:12px;">visibility</span>
-                        </button> -->
-                      <?php endif; ?>
-                    </td>
+                  <?php if ($processing_type !== 'Document Records'): ?>
+                    <td><span class="badge <?= $c ?>"><?= htmlspecialchars($ps ?: '—') ?></span></td>
+                    <td><span class="badge <?= $d ?>"><?= htmlspecialchars($ds) ?></span></td>
                   <?php else: ?>
-                    <!-- For Brgy Treasurer: show Receipt only after accepted -->
-                    <td class="text-nowrap text-center">
-                      <?php
-                        $docStatus = $row['document_status'] ?? '';
-                        $payMethod = $row['payment_method'] ?? '';
-                        $payStatus = $row['payment_status'] ?? '';
-                        $accepted = in_array($docStatus, ['Processing','Ready to Release'], true);
-                      ?>
-
-                      <?php if (! $accepted): ?>
-                        <!-- Not accepted yet: treasurer sees nothing here -->
-                        <span class="text-muted small">—</span>
-
-                      <?php else: ?>
-                        <!-- Record is accepted. Show action button per payment method rules. -->
-                        <?php if ($payMethod === 'Over-the-Counter' || $payMethod === null || $payMethod === ''): ?>
-                          <!-- OTC: show button so treasurer can record the OR -->
-                          <button type="button" class="btn btn-sm btn-info request-record-btn"
-                                  data-id="<?= htmlspecialchars($row['transaction_id']) ?>"
-                                  data-payment-method="Over-the-Counter"
-                                  data-amount-paid="<?= htmlspecialchars($row['amount'] ?? '') ?>"
-                                  title="Record Receipt <?= htmlspecialchars($row['transaction_id']) ?>">
-                            <span class="material-symbols-outlined" style="font-size: 13px;">receipt</span>
+                    <td><span class="badge <?= $d ?>"><?= htmlspecialchars($ds) ?></span></td>
+                  <?php endif; ?>
+                  <td><?= htmlspecialchars($row['formatted_date']) ?></td>
+                  <?php if ($processing_type !== 'Document Records'): ?>
+                    <?php if ($currentRole !== 'Brgy Treasurer'): ?>
+                      <td class="text-nowrap text-center">
+                        <!-- Action buttons remain the same -->
+                        <?php if (in_array($currentRole, ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper'], true) && (($row['document_status'] ?? '') === 'For Verification')): ?>
+                          <!-- Existing For Verification buttons -->
+                          <button class="btn btn-sm btn-primary btn-view-request" data-id="<?= $tid ?>" title="View">
+                            <span class="material-symbols-outlined" style="font-size:12px;">visibility</span>
                           </button>
-
-                        <?php elseif (in_array($payMethod, ['GCash','Brgy Payment Device'], true)): ?>
-                          <!-- GCash / Brgy Payment Device: only show button when payment_status is Paid -->
-                          <?php if ($payStatus === 'Paid'): ?>
+                          <button class="btn btn-sm btn-success btn-accept-request" data-id="<?= $tid ?>" data-action="Processing" title="Accept">
+                            <span class="material-symbols-outlined" style="font-size:12px;">check</span>
+                          </button>
+                          <button class="btn btn-sm btn-danger btn-reject-request" data-id="<?= $tid ?>" data-action="Rejected" title="Reject">
+                            <span class="material-symbols-outlined" style="font-size:12px;">close</span>
+                          </button>
+                        <?php elseif (in_array($currentRole, ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper'], true) && (($row['document_status'] ?? '') === 'Processing' || ($row['document_status'] ?? '') === 'Ready to Release')): ?>
+                          <!-- Existing Processing/Ready to Release buttons -->
+                          <button type="button" class="btn btn-sm btn-warning request-btn-view" data-id="<?= $tid ?>" title="View <?= $tid ?>" data-payment-status="<?= htmlspecialchars($row['payment_status'] ?? '') ?>" data-request-type="<?= htmlspecialchars($row['request_type'] ?? '') ?>">
+                            <span class="material-symbols-outlined" style="font-size:13px">visibility</span>
+                          </button>
+                          <button type="button" class="btn btn-sm btn-primary request-btn-edit" title="Edit <?= $tid ?>">
+                            <span class="material-symbols-outlined" style="font-size:13px">stylus</span>
+                          </button>
+                          <?php $releaseDisabled = (($row['document_status'] ?? '') !== 'Ready to Release') ? 'disabled' : ''; ?>
+                          <button type="button" class="btn btn-sm btn-success request-btn-release" title="Release <?= $tid ?>" data-transaction-id="<?= htmlspecialchars($row['transaction_id']) ?>" data-request-type="<?= htmlspecialchars($row['request_type']) ?>" <?= $releaseDisabled ?>>
+                            <span class="material-symbols-outlined" style="font-size:13px">check</span>
+                          </button>
+                        <?php endif; ?>
+                      </td>
+                    <?php else: ?>
+                      <!-- Treasurer actions remain the same -->
+                      <td class="text-nowrap text-center">
+                        <?php
+                          $docStatus = $row['document_status'] ?? '';
+                          $payMethod = $row['payment_method'] ?? '';
+                          $payStatus = $row['payment_status'] ?? '';
+                          $accepted = in_array($docStatus, ['Processing','Ready to Release'], true);
+                        ?>
+                        <?php if (! $accepted): ?>
+                          <span class="text-muted small">—</span>
+                        <?php else: ?>
+                          <?php if ($payMethod === 'Over-the-Counter' || $payMethod === null || $payMethod === ''): ?>
                             <button type="button" class="btn btn-sm btn-info request-record-btn"
                                     data-id="<?= htmlspecialchars($row['transaction_id']) ?>"
-                                    data-payment-method="<?= htmlspecialchars($payMethod) ?>"
+                                    data-payment-method="Over-the-Counter"
                                     data-amount-paid="<?= htmlspecialchars($row['amount'] ?? '') ?>"
                                     title="Record Receipt <?= htmlspecialchars($row['transaction_id']) ?>">
                               <span class="material-symbols-outlined" style="font-size: 13px;">receipt</span>
                             </button>
+                          <?php elseif (in_array($payMethod, ['GCash','Brgy Payment Device'], true)): ?>
+                            <?php if ($payStatus === 'Paid'): ?>
+                              <button type="button" class="btn btn-sm btn-info request-record-btn"
+                                      data-id="<?= htmlspecialchars($row['transaction_id']) ?>"
+                                      data-payment-method="<?= htmlspecialchars($payMethod) ?>"
+                                      data-amount-paid="<?= htmlspecialchars($row['amount'] ?? '') ?>"
+                                      title="Record Receipt <?= htmlspecialchars($row['transaction_id']) ?>">
+                                <span class="material-symbols-outlined" style="font-size: 13px;">receipt</span>
+                              </button>
+                            <?php else: ?>
+                              <span class="text-muted small">—</span>
+                            <?php endif; ?>
                           <?php else: ?>
                             <span class="text-muted small">—</span>
                           <?php endif; ?>
-
-                        <?php else: ?>
-                          <span class="text-muted small">—</span>
                         <?php endif; ?>
-                      <?php endif; ?>
-                    </td>
+                      </td>
+                    <?php endif; ?>
                   <?php endif; ?>
-
                 </tr>
               <?php endwhile; ?>
             <?php else: ?>
-              <tr><td colspan="7" class="text-center">No Document Requests Found.</td></tr>
+              <tr><td colspan="<?= $processing_type !== 'Document Records' ? '7' : '5' ?>" class="text-center">No Document Requests Found.</td></tr>
             <?php endif; ?>
           </tbody>
         </table>

@@ -37,6 +37,13 @@ document.addEventListener("DOMContentLoaded", function () {
         stepLabels = document.querySelectorAll('.step-label');
     }
 
+    function renumberSteps() {
+        refreshStepCollections();
+        circleSteps.forEach((circle, index) => {
+            circle.textContent = index + 1;
+        });
+    }
+
     function ensureHiddenPaymentFields() {
         const form = document.getElementById('certForm');
         if (!form) return;
@@ -1044,6 +1051,8 @@ document.addEventListener("DOMContentLoaded", function () {
             if (pStep && pStep.parentNode) pStep.parentNode.removeChild(pStep);
             const pProgress = document.querySelector('.payment-progress-step');
             if (pProgress && pProgress.parentNode) pProgress.parentNode.removeChild(pProgress);
+
+            renumberSteps();
 
             const feeBoxes = document.querySelectorAll('.payment-container, .fee-box, #payment-instructions, .payment-instruction, .payment-btn');
             feeBoxes.forEach(el => { if (el && el.style) el.style.display = 'none'; });

@@ -288,15 +288,14 @@ if (!empty($existingRequestRow)) {
                     <div class="col-md-6">
                         <div class="row">
                             <label for="certType" class="col-sm-5 text-start fw-bold">Type of Certification</label>
-                            <div class="col-sm-7 position-relative"> <!-- position-relative to contain the dropdown -->
+                            <div class="col-sm-7 position-relative">
                                 <input type="text" id="certType" name="certification_type" class="form-control" placeholder="Click to select or type" autocomplete="off" required>
                                 <ul id="certTypeList" class="list-group position-absolute w-100 shadow-sm bg-white" style="max-height: 150px; overflow-y: auto; display: none; z-index: 1000;">
-                                <!-- JS will populate these <li> items -->
                                 </ul>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-6" id="requestForContainer" style="display: none;">
                         <div class="row">
                             <label for="forSelect" class="col-sm-3 text-start fw-bold">Request For</label>
                             <div class="col-sm-9">
@@ -737,7 +736,6 @@ document.addEventListener('DOMContentLoaded', function () {
             ['Purok:', (document.querySelector('[name="purok"]')?.value) || '—']
         ];
 
-        // NEW: Good Moral -> include Parent Sex and optional Parent Address
         if (type === 'good moral') {
             const parentSex = document.querySelector('[name="parent_sex"]')?.value || window.existingParentSex || '—';
             const parentAddress = document.querySelector('[name="parent_address"]')?.value || window.existingParentAddress || '—';
@@ -745,8 +743,10 @@ document.addEventListener('DOMContentLoaded', function () {
             rows.push(['Parent Address:', parentAddress]);
         }
 
-        // Solo Parent: Child details + years
+        // Solo Parent: include Parent Sex, Child details + years
         if (type === 'solo parent') {
+            const parentSex = document.querySelector('[name="parent_sex"]')?.value || window.existingParentSex || '—';
+            rows.push(['Parent Sex:', parentSex]);
             const childNames = Array.from(document.querySelectorAll('[name="child_name[]"]')).map(el => el.value.trim()).filter(Boolean);
             const childAges  = Array.from(document.querySelectorAll('[name="child_age[]"]')).map(el => el.value.trim()).filter(Boolean);
             const childSexes = Array.from(document.querySelectorAll('[name="child_sex[]"]')).map(el => el.value.trim()).filter(Boolean);
@@ -794,7 +794,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
         rows.push(['Claim Date:', claimDisplay]);
-        rows.push(['Purpose:', document.querySelector('[name="purpose"]')?.value || '—']);
+        const purposeHiddenEl = document.querySelector('[name="purpose"]');
+        const purposeDisplay = purposeHiddenEl?.value || '—';
+        rows.push(['Purpose:', purposeDisplay]);
 
         // Payment details — different rules for Indigency vs others
         const paymentAmountEl = document.getElementById('paymentAmount');

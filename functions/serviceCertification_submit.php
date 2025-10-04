@@ -146,6 +146,21 @@ foreach ($fields as $field) {
         $data['claim_date'] = $claimDate;
         continue;
     }
+    
+    // Special handling for purpose field - check hidden input
+    if ($field === 'purpose') {
+        $purposeValue = '';
+        if (isset($_POST['purpose']) && trim($_POST['purpose']) !== '') {
+            $purposeValue = trim($_POST['purpose']);
+        } elseif (isset($_POST['purpose_other']) && trim($_POST['purpose_other']) !== '') {
+            $purposeValue = trim($_POST['purpose_other']);
+        } elseif (isset($_POST['purpose_select']) && trim($_POST['purpose_select']) !== '') {
+            $purposeValue = trim($_POST['purpose_select']);
+        }
+        $data['purpose'] = $purposeValue ?: null;
+        continue;
+    }
+    
     if (!isset($_POST[$field]) && $field !== 'residing_years') {
         header("HTTP/1.1 400 Bad Request");
         exit("Missing field $field");
@@ -165,9 +180,7 @@ if ($type === 'Solo Parent') {
     $data['child_sex']  = implode(', ', array_map('trim', $_POST['child_sex']  ?? []));
     $data['years_solo_parent'] = $_POST['years_solo_parent'] ?? null;
     $fields = array_merge($fields, ['child_name','child_age','child_sex','years_solo_parent']);
-}
 
-if ($type === 'Guardianship' || $type === 'Solo Parent') {
     $ps = isset($_POST['parent_sex']) ? trim($_POST['parent_sex']) : null;
     if ($ps === '') $ps = null;
     $data['parent_sex'] = $ps;

@@ -1,4 +1,15 @@
 document.addEventListener("DOMContentLoaded", function () {
+    const pendingCert = sessionStorage.getItem('pendingCertType');
+    if (pendingCert) {
+        sessionStorage.removeItem('pendingCertType');
+        setTimeout(() => {
+            const certInput = document.getElementById('certType');
+            if (certInput) {
+                certInput.value = pendingCert;
+                certInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }, 100);
+    }
     let steps = document.querySelectorAll(".step");
     let circleSteps = document.querySelectorAll('.circle');
     let stepLabels = document.querySelectorAll('.step-label');
@@ -357,7 +368,7 @@ document.addEventListener("DOMContentLoaded", function () {
             { id: 'civil_status',    label: 'Civil Status',    type: 'select',   options: ['Single','Married','Widowed','Separated','Divorced','Unknown']   },
             { id: 'purok',           label: 'Purok',           type: 'select',   options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6']     },
             { id: 'residing_years',  label: 'Years Residing',  type: 'number' },
-            { id: 'purpose',         label: 'Purpose',         type: 'text'   },
+            { id: 'purpose',         label: 'Purpose',         type: 'purpose_select' },
             { id: 'claim_date',      label: 'Claim Date',      type: 'claim'   }
         ],
         indigency: [
@@ -365,7 +376,7 @@ document.addEventListener("DOMContentLoaded", function () {
             { id: 'age',             label: 'Age',             type: 'number',   disabled: true },
             { id: 'civil_status',    label: 'Civil Status',    type: 'select',   options: ['Single','Married','Widowed','Separated','Divorced','Unknown']   },
             { id: 'purok',           label: 'Purok',           type: 'select',   options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6']     },
-            { id: 'purpose',         label: 'Purpose',         type: 'text' },
+            { id: 'purpose',         label: 'Purpose',         type: 'purpose_select' },
             { id: 'claim_date',      label: 'Claim Date',      type: 'claim' }
         ],
         'first time job seeker': [
@@ -380,7 +391,7 @@ document.addEventListener("DOMContentLoaded", function () {
             { id: 'age',             label: 'Age',             type: 'number',   disabled: true },
             { id: 'civil_status',    label: 'Civil Status',    type: 'select',   options: ['Single','Married','Widowed','Separated','Divorced','Unknown']   },
             { id: 'purok',           label: 'Purok',           type: 'select',   options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6']     },
-            { id: 'purpose',         label: 'Purpose',         type: 'text' },
+            { id: 'purpose',         label: 'Purpose',         type: 'purpose_select' },
             { id: 'claim_date',      label: 'Claim Date',      type: 'claim' }
         ],
         'solo parent': [
@@ -401,22 +412,6 @@ document.addEventListener("DOMContentLoaded", function () {
         const wrapper = document.createElement('div');
         wrapper.id = 'childSection';
 
-        const parentSexVal = (window.existingParentSex || window.currentUser?.sex || '').toString();
-        const parentSexHtml = `
-            <div class="row mb-3">
-                <label class="col-sm-2 col-form-label fw-bold">Parent Sex:</label>
-                <div class="col-sm-4">
-                    <select name="parent_sex" class="form-select">
-                        <option value="" ${parentSexVal === '' ? 'selected' : ''}>-- Select --</option>
-                        <option value="Male" ${parentSexVal === 'Male' ? 'selected' : ''}>Male</option>
-                        <option value="Female" ${parentSexVal === 'Female' ? 'selected' : ''}>Female</option>
-                        <option value="Other" ${parentSexVal && parentSexVal !== 'Male' && parentSexVal !== 'Female' ? 'selected' : ''}>Other</option>
-                    </select>
-                </div>
-            </div>
-        `;
-        wrapper.innerHTML = parentSexHtml;
-
         if (type === 'guardianship') {
             wrapper.innerHTML += `
             <div id="guardianChildren"></div>
@@ -427,12 +422,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 <div class="col-sm-10" id="guardianClaimHolder"></div>
             </div>
 
-            <div class="row mb-3">
-                <label class="col-sm-2 fw-bold">Purpose:</label>
-                <div class="col-sm-10">
-                <input type="text" name="purpose" class="form-control" required>
-                </div>
-            </div>
+            <div class="row mb-3" id="purposeContainer_soloparent"></div>
             `;
             certFieldsHolder.appendChild(wrapper);
 
@@ -459,6 +449,22 @@ document.addEventListener("DOMContentLoaded", function () {
 
             buildClaimOptionsInto(wrapper.querySelector('#guardianClaimHolder'));
         } else if (type === 'solo parent') {
+            const parentSexVal = (window.existingParentSex || window.currentUser?.sex || '').toString();
+            const parentSexHtml = `
+                <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label fw-bold">Parent Sex:</label>
+                    <div class="col-sm-4">
+                        <select name="parent_sex" class="form-select">
+                            <option value="" ${parentSexVal === '' ? 'selected' : ''}>-- Select --</option>
+                            <option value="Male" ${parentSexVal === 'Male' ? 'selected' : ''}>Male</option>
+                            <option value="Female" ${parentSexVal === 'Female' ? 'selected' : ''}>Female</option>
+                            <option value="Other" ${parentSexVal && parentSexVal !== 'Male' && parentSexVal !== 'Female' ? 'selected' : ''}>Other</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+            wrapper.innerHTML = parentSexHtml;
+            
             wrapper.innerHTML += `
             <div id="soloChildren"></div>
             <button type="button" id="addSoloChild" class="btn btn-sm btn-outline-primary mb-3"> + Add Child </button>
@@ -475,12 +481,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 <div class="col-sm-10" id="soloClaimHolder"></div>
             </div>
 
-            <div class="row mb-3">
-                <label class="col-sm-2 fw-bold">Purpose:</label>
-                <div class="col-sm-10">
-                <input type="text" name="purpose" class="form-control" required>
-                </div>
-            </div>
+            <div class="row mb-3" id="purposeContainer_soloparent"></div>
             `;
             certFieldsHolder.appendChild(wrapper);
 
@@ -520,6 +521,59 @@ document.addEventListener("DOMContentLoaded", function () {
             addChild();
 
             buildClaimOptionsInto(wrapper.querySelector('#soloClaimHolder'));
+        }
+
+        const purposeFieldConfig = { id: 'purpose', label: 'Purpose', type: 'purpose_select' };
+        const purposeRow = document.createElement('div');
+        purposeRow.className = 'row mb-3';
+        purposeRow.innerHTML = `
+            <label class="col-sm-2 col-form-label fw-bold">${purposeFieldConfig.label}:</label>
+            <div class="col-sm-10" id="purposeFieldContainer_${type}"></div>
+        `;
+
+        // Insert before claim container
+        const claimContainer = type === 'guardianship' 
+            ? document.getElementById('guardianClaimContainer') 
+            : document.getElementById('soloClaimContainer');
+            
+        if (claimContainer && claimContainer.parentNode) {
+            claimContainer.parentNode.insertBefore(purposeRow, claimContainer);
+        }
+
+        // Render the purpose select
+        const purposeContainer = document.getElementById(`purposeFieldContainer_${type}`);
+        if (purposeContainer) {
+            const purposes = ['Employment','Another Valid ID','School Enrollment','Passport','Scholarship','4Ps Application','Others'];
+            purposeContainer.innerHTML = `
+                <select id="purposeSelect_purpose_${type}" name="purpose_select" class="form-control" required>
+                    <option value="">Select Purpose</option>
+                    ${purposes.map(p => `<option value="${p}">${p}</option>`).join('')}
+                </select>
+                <input type="text" id="purposeOther_purpose_${type}" name="purpose_other" 
+                    class="form-control mt-2 d-none" placeholder="Please specify purpose">
+                <input type="hidden" id="purposeHidden_purpose_${type}" name="purpose" value="">
+            `;
+            
+            // Attach event listeners
+            const selectEl = document.getElementById(`purposeSelect_purpose_${type}`);
+            const otherEl = document.getElementById(`purposeOther_purpose_${type}`);
+            const hiddenEl = document.getElementById(`purposeHidden_purpose_${type}`);
+            
+            selectEl?.addEventListener('change', function() {
+                if (this.value === 'Others') {
+                    otherEl?.classList.remove('d-none');
+                    if (otherEl) otherEl.required = true;
+                    hiddenEl.value = otherEl?.value || 'Others';
+                } else {
+                    otherEl?.classList.add('d-none');
+                    if (otherEl) otherEl.required = false;
+                    hiddenEl.value = this.value;
+                }
+            });
+            
+            otherEl?.addEventListener('input', function() {
+                hiddenEl.value = this.value.trim() || 'Others';
+            });
         }
     }
 
@@ -600,6 +654,49 @@ document.addEventListener("DOMContentLoaded", function () {
                 const existingDate = hiddenClaimDate?.value || null;
                 const existingPart = hiddenClaimTime?.value || null;
                 buildClaimOptionsInto(container, existingDate, existingPart);
+                return;
+            }
+
+            if (f.type === 'purpose_select') {
+                const purposes = ['Employment','Another Valid ID','School Enrollment','Passport','Scholarship','4Ps Application','Others'];
+                const existingPurpose = ''; // Will be populated from existing data if available
+                const isInList = purposes.includes(existingPurpose);
+                const otherValue = isInList ? '' : existingPurpose;
+                
+                inner += `
+                    <select id="purposeSelect_${f.id}" name="purpose_select" class="form-control" required>
+                        <option value="">Select Purpose</option>
+                        ${purposes.map(p => `<option value="${p}">${p}</option>`).join('')}
+                    </select>
+                    <input type="text" id="purposeOther_${f.id}" name="purpose_other" 
+                        class="form-control mt-2 d-none" placeholder="Please specify purpose">
+                    <input type="hidden" id="purposeHidden_${f.id}" name="purpose" value="">
+                `;
+                inner += `</div>`;
+                row.innerHTML = inner;
+                certFieldsHolder.appendChild(row);
+                
+                // Attach purpose toggle logic
+                const selectEl = document.getElementById(`purposeSelect_${f.id}`);
+                const otherEl = document.getElementById(`purposeOther_${f.id}`);
+                const hiddenEl = document.getElementById(`purposeHidden_${f.id}`);
+                
+                selectEl?.addEventListener('change', function() {
+                    if (this.value === 'Others') {
+                        otherEl?.classList.remove('d-none');
+                        if (otherEl) otherEl.required = true;
+                        hiddenEl.value = otherEl?.value || 'Others';
+                    } else {
+                        otherEl?.classList.add('d-none');
+                        if (otherEl) otherEl.required = false;
+                        hiddenEl.value = this.value;
+                    }
+                });
+                
+                otherEl?.addEventListener('input', function() {
+                    hiddenEl.value = this.value.trim() || 'Others';
+                });
+                
                 return;
             }
 
@@ -692,12 +789,12 @@ document.addEventListener("DOMContentLoaded", function () {
             if (hiddenPaymentStatus && !hiddenPaymentStatus.value) hiddenPaymentStatus.value = 'Pending';
         }
 
-        const forSelectRow = forSelect.closest('.row');
+        const requestForContainer = document.getElementById('requestForContainer');
         if (key === 'first time job seeker') {
-            if (forSelectRow) forSelectRow.style.display = 'none';
+            if (requestForContainer) requestForContainer.style.display = 'none';
             forSelect.value = 'myself'; // Force to "myself"
         } else {
-            if (forSelectRow) forSelectRow.style.display = '';
+            if (requestForContainer) requestForContainer.style.display = '';
         }
 
         refreshStepCollections();
@@ -709,9 +806,39 @@ document.addEventListener("DOMContentLoaded", function () {
 
     refreshFields();
 
-    certInput.addEventListener('input', refreshFields);
-    certInput.addEventListener('change', refreshFields);
-    certInput.addEventListener('blur', refreshFields);
+    function toggleRequestForVisibility() {
+        const requestForContainer = document.getElementById('requestForContainer');
+        const certValue = (certInput.value || '').trim().toLowerCase();
+        
+        if (!certValue) {
+            // No cert type selected - hide Request For
+            if (requestForContainer) requestForContainer.style.display = 'none';
+        } else if (certValue === 'first time job seeker') {
+            // First Time Job Seeker - hide Request For
+            if (requestForContainer) requestForContainer.style.display = 'none';
+            forSelect.value = 'myself';
+        } else {
+            // Other cert types - show Request For
+            if (requestForContainer) requestForContainer.style.display = '';
+        }
+    }
+
+    // Call on page load
+    toggleRequestForVisibility();
+
+    certInput.addEventListener('input', () => {
+        refreshFields();
+        toggleRequestForVisibility();
+    });
+    certInput.addEventListener('change', () => {
+        refreshFields();
+        toggleRequestForVisibility();
+        onCertTypeChange();
+    });
+    certInput.addEventListener('blur', () => {
+        refreshFields();
+        toggleRequestForVisibility();
+    });
     forSelect.addEventListener('change', refreshFields);
 
     setupPaymentControls();
@@ -931,7 +1058,7 @@ document.addEventListener("DOMContentLoaded", function () {
             rows.push(['Parent Address:', parentAddressGM || '—']);
         }
 
-        if (type === 'solo parent' || type === 'guardianship') {
+        if (type === 'solo parent') {
             const parentSex = document.querySelector('[name="parent_sex"]')?.value || (window.existingParentSex || '') || '—';
             rows.push(['Parent Sex:', parentSex || '—']);
         }
@@ -978,7 +1105,9 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         rows.push(['Claim Date:', claimLabel]);
-        rows.push(['Purpose:', document.querySelector('[name="purpose"]')?.value || '—']);
+        const purposeHiddenEl = document.querySelector('[name="purpose"]');
+        const purposeDisplay = purposeHiddenEl?.value || '—';
+        rows.push(['Purpose:', purposeDisplay]);
 
         const clientAmount = (hiddenPaymentAmount?.value || '').toString().trim();
         const clientStatus = (hiddenPaymentStatus?.value || '').toString().trim();
@@ -1068,6 +1197,8 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         } else {
             if (!document.getElementById('paymentStep')) {
+                // Store the current selection before reload
+                sessionStorage.setItem('pendingCertType', certInput.value);
                 location.reload();
             } else {
                 if (hiddenPaymentInput && !hiddenPaymentInput.value) hiddenPaymentInput.value = (window.existingPaymentMethod || 'Brgy Payment Device');
@@ -1080,8 +1211,8 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    certInput.addEventListener('change', onCertTypeChange);
-    certInput.addEventListener('input', onCertTypeChange);
+    // certInput.addEventListener('change', onCertTypeChange);
+    // certInput.addEventListener('input', onCertTypeChange);
 
     (function initFromServer() {
         ensureHiddenPaymentFields();

@@ -1132,6 +1132,29 @@ document.addEventListener('DOMContentLoaded', function () {
             timeline.appendChild(item);
         });
     }
+
+    (function autoOpenModal() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const openTx = urlParams.get('open_tx');
+        
+        if (openTx) {
+            // Wait for page to fully load
+            setTimeout(() => {
+                // Find the card with matching transaction ID
+                const targetCard = document.querySelector(`.request-card[data-tx="${openTx}"]`);
+                
+                if (targetCard) {
+                    // Trigger click on the card to open modal
+                    targetCard.click();
+                    
+                    // Clean up URL (remove the open_tx parameter)
+                    const newUrl = new URL(window.location);
+                    newUrl.searchParams.delete('open_tx');
+                    window.history.replaceState({}, '', newUrl);
+                }
+            }, 300); // Small delay to ensure modal handlers are ready
+        }
+    })();
 </script>
 
 <?php

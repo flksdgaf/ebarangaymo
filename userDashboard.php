@@ -468,7 +468,7 @@ if (is_numeric($userId) && intval($userId) > 0) {
         </div>
 
         <!-- centered circular icon button -->
-        <a href="?page=userRequest" class="view-requests-btn" aria-label="View My Requests">
+        <a href="?page=userRequest&open_tx=<?= urlencode($latestReq['transaction_id']) ?>" class="view-requests-btn" aria-label="View My Requests">
           <span class="material-icons" aria-hidden="true">receipt_long</span>
         </a>
 

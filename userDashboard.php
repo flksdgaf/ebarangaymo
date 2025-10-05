@@ -22,18 +22,22 @@ if ($res) {
 $latestReq = null;
 if (is_numeric($userId) && intval($userId) > 0) {
     $sql = "
-      SELECT id,
-             transaction_id,
-             request_type,
-             payment_method,
-             payment_status,
-             document_status,
-             amount,
-             claim_date,
-             DATE_FORMAT(created_at, '%M %d, %Y %h:%i %p') AS created_at_formatted
-        FROM view_request
-       WHERE account_id = ?
-       ORDER BY created_at DESC
+      SELECT vr.id,
+             vr.transaction_id,
+             vr.request_type,
+             vr.payment_method,
+             vr.payment_status,
+             vr.document_status,
+             vr.amount,
+             vr.claim_date,
+             DATE_FORMAT(vr.created_at, '%M %d, %Y %h:%i %p') AS created_at_formatted,
+             br.borrow_date_from,
+             br.borrow_date_to,
+             br.status AS borrow_status
+        FROM view_request vr
+        LEFT JOIN borrow_requests br ON vr.transaction_id = br.transaction_id
+       WHERE vr.account_id = ?
+       ORDER BY vr.created_at DESC
        LIMIT 1
     ";
     if ($st = $conn->prepare($sql)) {
@@ -43,7 +47,6 @@ if (is_numeric($userId) && intval($userId) > 0) {
         $latestReq = $st->get_result()->fetch_assoc();
         $st->close();
     } else {
-        // prepare failed — optional: log or handle error
         $latestReq = null;
     }
 }
@@ -441,38 +444,95 @@ if (is_numeric($userId) && intval($userId) > 0) {
 
     <div class="d-flex request-pill">
       <?php if ($latestReq): ?>
-        <div class="request-item">
-          <span class="label">Request Type</span>
-          <span class="value"><?= htmlspecialchars($latestReq['request_type']) ?></span>
-        </div>
+        <?php if ($latestReq['request_type'] === 'Equipment Borrowing'): ?>
+          <!-- Equipment Borrowing specific display -->
+          <div class="request-item">
+            <span class="label">Request Type</span>
+            <span class="value"><?= htmlspecialchars($latestReq['request_type']) ?></span>
+          </div>
 
-        <div class="request-item">
-          <span class="label">Claim Date</span>
-          <span class="value">
-            <?= !empty($latestReq['claim_date']) ? date('M d, Y', strtotime($latestReq['claim_date'])) : 'TBD' ?>
-          </span>
-        </div>
-
-        <div class="request-item">
-          <span class="label">Status</span>
-          <?php
-            $status = $latestReq['document_status'] ?? 'Unknown';
-            $status_slug = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $status));
-            $status_class = 'status-' . $status_slug;
-          ?>
-          <span class="value">
-            <span class="status-badge <?= htmlspecialchars($status_class) ?>">
-              <?= htmlspecialchars($status) ?>
+          <div class="request-item">
+            <span class="label">Borrow Date</span>
+            <span class="value">
+              <?php
+                if (!empty($latestReq['borrow_date_from']) && !empty($latestReq['borrow_date_to'])) {
+                  $fromDate = new DateTime($latestReq['borrow_date_from']);
+                  $toDate = new DateTime($latestReq['borrow_date_to']);
+                  
+                  $fromMonth = $fromDate->format('M');
+                  $toMonth = $toDate->format('M');
+                  $fromDay = $fromDate->format('j');
+                  $toDay = $toDate->format('j');
+                  $year = $toDate->format('Y');
+                  
+                  // Check if same month
+                  if ($fromMonth === $toMonth) {
+                    // Same month: "Oct 6-10, 2025"
+                    $dateDisplay = $fromMonth . ' ' . $fromDay . '-' . $toDay . ', ' . $year;
+                  } else {
+                    // Different months: "Oct 30-November 2, 2025"
+                    $toMonthFull = $toDate->format('F'); // Full month name for end date
+                    $dateDisplay = $fromMonth . ' ' . $fromDay . '-' . $toMonthFull . ' ' . $toDay . ', ' . $year;
+                  }
+                  
+                  echo htmlspecialchars($dateDisplay);
+                } else {
+                  echo 'TBD';
+                }
+              ?>
             </span>
-          </span>
-        </div>
+          </div>
 
-        <!-- centered circular icon button -->
+          <div class="request-item">
+            <span class="label">Borrow Status</span>
+            <?php
+              $status = $latestReq['borrow_status'] ?? 'Unknown';
+              $status_slug = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $status));
+              $status_class = 'status-' . $status_slug;
+            ?>
+            <span class="value">
+              <span class="status-badge <?= htmlspecialchars($status_class) ?>">
+                <?= htmlspecialchars($status) ?>
+              </span>
+            </span>
+          </div>
+
+        <?php else: ?>
+          <!-- Default display for other request types -->
+          <div class="request-item">
+            <span class="label">Request Type</span>
+            <span class="value"><?= htmlspecialchars($latestReq['request_type']) ?></span>
+          </div>
+
+          <div class="request-item">
+            <span class="label">Claim Date</span>
+            <span class="value">
+              <?= !empty($latestReq['claim_date']) ? date('M d, Y', strtotime($latestReq['claim_date'])) : 'TBD' ?>
+            </span>
+          </div>
+
+          <div class="request-item">
+            <span class="label">Status</span>
+            <?php
+              $status = $latestReq['document_status'] ?? 'Unknown';
+              $status_slug = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $status));
+              $status_class = 'status-' . $status_slug;
+            ?>
+            <span class="value">
+              <span class="status-badge <?= htmlspecialchars($status_class) ?>">
+                <?= htmlspecialchars($status) ?>
+              </span>
+            </span>
+          </div>
+        <?php endif; ?>
+
+        <!-- centered circular icon button (same for all types) -->
         <a href="?page=userRequest&open_tx=<?= urlencode($latestReq['transaction_id']) ?>" class="view-requests-btn" aria-label="View My Requests">
           <span class="material-icons" aria-hidden="true">receipt_long</span>
         </a>
 
       <?php else: ?>
+        <!-- No requests display -->
         <div style="width:100%; display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap;">
           <div>
             <div class="label" style="color:var(--green-b);">No recent requests</div>

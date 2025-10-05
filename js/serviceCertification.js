@@ -296,6 +296,16 @@ document.addEventListener("DOMContentLoaded", function () {
             claimList.appendChild(rowWrap);
         });
 
+        if (window.showWeekendNote) {
+            const noteDiv = document.createElement('div');
+            noteDiv.className = 'alert alert-info mt-3';
+            noteDiv.style.cssText = 'background-color: #d1ecf1; border: 1px solid #bee5eb; border-radius: 8px; padding: 1rem;';
+            noteDiv.innerHTML = `
+                <strong>Note:</strong> You are submitting this request on a weekend. Available claim slots start on Monday (${window.nextMondayLabel || 'next business day'}) during barangay hours (Mon–Fri, 8:00 AM – 5:00 PM).
+            `;
+            claimList.appendChild(noteDiv);
+        }
+
         container.appendChild(claimList);
 
         claimList.querySelectorAll('label').forEach(lbl => {

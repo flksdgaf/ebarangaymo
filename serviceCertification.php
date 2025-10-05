@@ -122,6 +122,23 @@ function getNextBusinessDays($fromDate, $count = 3) {
     return $results;
 }
 
+function wasSubmittedOnWeekend() {
+    $now = new DateTime('now', new DateTimeZone('Asia/Manila'));
+    $dayOfWeek = (int)$now->format('N'); // 1=Mon, 7=Sun
+    return ($dayOfWeek === 6 || $dayOfWeek === 7);
+}
+
+function getNextMondayDate() {
+    $now = new DateTime('now', new DateTimeZone('Asia/Manila'));
+    $dayOfWeek = (int)$now->format('N');
+    if ($dayOfWeek === 6) { // Saturday
+        $now->modify('+2 days');
+    } elseif ($dayOfWeek === 7) { // Sunday
+        $now->modify('+1 day');
+    }
+    return $now->format('F j, Y'); // e.g., "October 6, 2025"
+}
+
 // Build claim options server-side (3 business days)
 $today = new DateTime('now', new DateTimeZone('Asia/Manila'));
 $businessDays = getNextBusinessDays($today, 3);
@@ -130,6 +147,8 @@ $claimOptions = [];
 foreach ($businessDays as $bd) {
     $dateStr = $bd->format('Y-m-d'); // machine
     $label = $bd->format('F j, Y'); // human readable
+    $showWeekendNote = wasSubmittedOnWeekend();
+    $nextMondayLabel = getNextMondayDate();
     $claimOptions[] = [
         'date' => $dateStr,
         'label' => $label,
@@ -664,6 +683,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 });
+</script>
+
+<script>
+    window.showWeekendNote = <?php echo json_encode($showWeekendNote); ?>;
+    window.nextMondayLabel = <?php echo json_encode($nextMondayLabel); ?>;
 </script>
 
 <script src="js/serviceCertification.js"></script>

@@ -116,7 +116,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 const note = document.createElement('div');
                 note.id = 'claim-weekend-notice';
                 note.className = 'alert alert-info small mt-2';
-                note.textContent = `Note: You submitted this request on a weekend. Available claim slots start on Monday (${friendly}) during barangay hours (Mon–Fri, 8:00 AM – 5:00 PM).`;
+                note.textContent = `Note: You are submitting this request on a weekend. Available claim slots start on Monday (${friendly}) during barangay hours (Mon–Fri, 8:00 AM – 5:00 PM).`;
                 container.appendChild(note);
             }
         } catch (e) {

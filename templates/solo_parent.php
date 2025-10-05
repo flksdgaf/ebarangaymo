@@ -69,7 +69,7 @@ $pronoun = ($parentSex === 'male') ? 'his' : 'her';
 // Fetch children data from JSON column
 $children = [];
 $genderCount = ['Male' => 0, 'Female' => 0];
-$childDescriptions = [];
+$childrenByGender = ['Male' => [], 'Female' => []];
 
 if (!empty($transactionId)) {
     $stmt = $conn->prepare("SELECT children_data FROM solo_parent_requests WHERE transaction_id = ?");
@@ -88,10 +88,12 @@ if (!empty($transactionId)) {
                     $childAge = htmlspecialchars($child['age'] ?? '');
                     $childSex = $child['sex'] ?? 'Male';
                     
-                    $childDescriptions[] = "<strong>$childName</strong>, $childAge years old";
-                    
                     if (isset($genderCount[$childSex])) {
                         $genderCount[$childSex]++;
+                        $childrenByGender[$childSex][] = [
+                            'name' => $childName,
+                            'age' => $childAge
+                        ];
                     }
                 }
             }
@@ -102,20 +104,48 @@ if (!empty($transactionId)) {
 
 $childCount = count($children);
 
-// Format number to words like: nine (9)
+// Format number to words
 $numberText = new NumberFormatter("en", NumberFormatter::SPELLOUT);
-$yearsWord = $yearsSoloParent ? $numberText->format($yearsSoloParent) . ' (' . $yearsSoloParent . ') year' . ($yearsSoloParent > 1 ? 's' : '') : '';
+$yearsWord = $yearsSoloParent ? $numberText->format($yearsSoloParent) . ' (' . $yearsSoloParent . ') years' : '';
 
-$genderSummaryParts = [];
-if ($genderCount['Female'] > 0) {
-    $fem = $genderCount['Female'];
-    $genderSummaryParts[] = "{$numberText->format($fem)} (" . number_format($fem) . ") " . ($fem > 1 ? 'girls' : 'girl');
+// Build gender summary with children grouped by gender
+$genderParts = [];
+
+// Determine order: lowest count first
+$orderedGenders = [];
+if ($genderCount['Female'] > 0 && $genderCount['Male'] > 0) {
+    if ($genderCount['Female'] <= $genderCount['Male']) {
+        $orderedGenders = ['Female', 'Male'];
+    } else {
+        $orderedGenders = ['Male', 'Female'];
+    }
+} elseif ($genderCount['Female'] > 0) {
+    $orderedGenders = ['Female'];
+} elseif ($genderCount['Male'] > 0) {
+    $orderedGenders = ['Male'];
 }
-if ($genderCount['Male'] > 0) {
-    $mal = $genderCount['Male'];
-    $genderSummaryParts[] = "{$numberText->format($mal)} (" . number_format($mal) . ") " . ($mal > 1 ? 'boys' : 'boy');
+
+// Build parts for each gender
+foreach ($orderedGenders as $gender) {
+    $count = $genderCount[$gender];
+    $label = ($gender === 'Male') ? ($count > 1 ? 'boys' : 'boy') : ($count > 1 ? 'girls' : 'girl');
+    
+    // Build the gender header: "two (2) girls"
+    $genderHeader = "{$numberText->format($count)} ({$count}) {$label}";
+
+    // Build children list for this gender
+    $childList = [];
+    foreach ($childrenByGender[$gender] as $child) {
+        $trimmedName = trim($child['name']); // Remove any trailing/leading spaces
+        $childList[] = "<strong>{$trimmedName}</strong>, {$child['age']} years old";
+    }
+    
+    // Combine: "two (2) girls CHILD NAME, 22 years old, CHILD NAME, 17 years old"
+    $genderParts[] = $genderHeader . ' ' . implode(', ', $childList);
 }
-$genderSummary = implode(' and ', $genderSummaryParts);
+
+// Join with "and": "two (2) girls ... and one (1) boy ..."
+$genderSummary = implode(', and ', $genderParts);
 
 // Determine status term (underlined if separated/widowed)
 if ($civilStatusRaw === 'separated') {
@@ -257,7 +287,7 @@ if ($download || $print) {
 
         <p>
           This is to certify that the said person is a <strong>SOLO PARENT</strong> to <?= $pronoun ?> <?= ($childCount > 1 ? 'children' : 'child') ?>, <?= $genderSummary ?> 
-          <?= implode(', ', $childDescriptions) ?>, and <?= $statusTerm ?>
+          and <?= $statusTerm ?>
         </p>
 
         <p>
@@ -381,7 +411,7 @@ if ($download || $print) {
 
       <p>
         This is to certify that the said person is a <strong>SOLO PARENT</strong> to <?= $pronoun ?> <?= ($childCount > 1 ? 'children' : 'child') ?>, <?= $genderSummary ?> 
-        <?= implode(', ', $childDescriptions) ?>, and <?= $statusTerm ?>
+        and <?= $statusTerm ?>
       </p>
 
       <p>

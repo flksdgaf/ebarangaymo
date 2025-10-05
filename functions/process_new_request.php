@@ -525,36 +525,25 @@ switch($requestType) {
     $middlePart = $mn ? " {$mn}" : '';
     $suffixPart = $sn ? " {$sn}" : '';
     $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
-    // $fullName = trim($_POST['full_name'] ?? '');
 
     // 2) Other form inputs
     $civilStatus = $_POST['solo_parent_civil_status'] ?? '';
     $age = (int) ($_POST['solo_parent_age'] ?? 0);
-    // $barangay = $_POST['barangay'] ?? '';
+    $sex = $_POST['solo_parent_sex'] ?? '';
     $purok = $_POST['solo_parent_purok'] ?? '';
-    // $subdivision = trim($_POST['subdivision'] ?? '');
     $yearsSoloParent = (int) ($_POST['solo_parent_years_solo_parent'] ?? 0);
-
-    // Child Name
-    // $fnChild = trim($_POST['solo_parent_child_first_name'] ?? '');
-    // $mnChild = trim($_POST['solo_parent_child_middle_name'] ?? '');
-    // $lnChild = trim($_POST['solo_parent_child_last_name'] ?? '');
-    // $snChild = trim($_POST['solo_parent_child_suffix'] ?? '');
-    // $middlePartChild = $mnChild ? " {$mnChild}" : '';
-    // $suffixPartChild = $snChild ? " {$snChild}" : '';
-    // $fullNameChild = "{$lnChild}{$suffixPartChild}, {$fnChild}{$middlePartChild}";
-    $childName = trim($_POST['child_full_name'] ?? '');
-
-    $childSex = $_POST['solo_parent_child_sex'] ?? '';
-    // $childAge = (int) ($_POST['child_age'] ?? 0);
-    $childAge = trim($_POST['solo_parent_child_age'] ?? '');
+    
+    // 3) Collect children data (now an array)
+    $childrenData = $_POST['children'] ?? [];
+    
+    // Build JSON string for children
+    $childrenJson = json_encode($childrenData);
+    
     $purpose = trim($_POST['solo_parent_purpose'] ?? '');
     $paymentMethod = 'Over-the-Counter';
-    // $documentStatus = 'Processing';
     $documentStatus = 'For Verification';
-    // $claimDate = $_POST['claim_date'] ?? '';
 
-    // 3) Generate next transaction_id
+    // 4) Generate next transaction_id
     $stmt = $conn->prepare("SELECT transaction_id FROM solo_parent_requests ORDER BY id DESC LIMIT 1");
     $stmt->execute();
     $res = $stmt->get_result();
@@ -567,14 +556,30 @@ switch($requestType) {
     $transactionId = sprintf('SP-%07d', $num);
     $stmt->close();
 
-    // 4) Insert into solo_parent_requests
-    $sql = "INSERT INTO solo_parent_requests (account_id, transaction_id, full_name, civil_status, age, purok, years_solo_parent, child_name, child_age, child_sex, purpose, payment_method, claim_date, document_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,NULL,?)";
+    // 5) Insert into solo_parent_requests with children as JSON
+    // 12 placeholders: account_id, transaction_id, full_name, civil_status, age, sex, purok, years_solo_parent, children_data, purpose, payment_method, document_status
+    $sql = "INSERT INTO solo_parent_requests (account_id, transaction_id, full_name, civil_status, age, sex, purok, years_solo_parent, children_data, purpose, payment_method, claim_date, document_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,NULL,?)";
     $ins = $conn->prepare($sql);
-    $ins->bind_param('isssisisissss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $yearsSoloParent, $childName, $childAge, $childSex, $purpose, $paymentMethod, $documentStatus);
+    // Type string: i=integer, s=string
+    // 12 parameters total: i s s s i s s i s s s s
+    $ins->bind_param('isssississss', 
+        $userId,           // i - account_id
+        $transactionId,    // s - transaction_id
+        $fullName,         // s - full_name
+        $civilStatus,      // s - civil_status
+        $age,              // i - age
+        $sex,              // s - sex
+        $purok,            // s - purok
+        $yearsSoloParent,  // i - years_solo_parent
+        $childrenJson,     // s - children_data
+        $purpose,          // s - purpose
+        $paymentMethod,    // s - payment_method
+        $documentStatus    // s - document_status
+    );
     $ins->execute();
     $ins->close();
 
-    // 5) ACTIVITY LOGGING
+    // 6) ACTIVITY LOGGING
     $admin_roles = ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper', 'Brgy Kagawad', 'Brgy Treasurer', 'Lupon Tagapamayapa'];
     if (in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
       $logStmt = $conn->prepare("INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description) VALUES (?,?,?,?,?,?)");
@@ -590,7 +595,7 @@ switch($requestType) {
       $logStmt->close();
     }
 
-    // 6) Redirect back to superAdminPanel
+    // 7) Redirect back to superAdminPanel
     header("Location: ../{$redirectBase}?page={$redirectPage}&transaction_id={$transactionId}");
     exit();
     break;

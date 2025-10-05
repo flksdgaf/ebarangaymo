@@ -60,8 +60,8 @@ $requestFields = [
     'payment_method', 'amount', 'created_at'
   ],
   'solo_parent_requests' => [
-    'transaction_id', 'request_type', 'full_name', 'civil_status', 'age', 'purok', 'years_solo_parent', 'child_name', 
-    'child_age', 'child_sex', 'purpose', 'payment_method', 'amount', 'created_at'
+    'transaction_id', 'request_type', 'full_name', 'civil_status', 'age', 'sex', 'purok', 'years_solo_parent', 
+    'children_data', 'purpose', 'payment_method', 'amount', 'created_at'
   ],
 ];
 

@@ -1260,10 +1260,18 @@ $result = $st->get_result();
                   <input name="solo_parent_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
                 </div>
 
-                <!-- Row 2: Civil Status & Age -->
+                <!-- Row 2: Age, Sex, Civil Status -->
                 <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">Age</label>
                   <input name="solo_parent_age" type="number" min="0" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Sex</label>
+                  <select name="solo_parent_sex" class="form-select form-select-sm" required>
+                    <option value="">Select…</option>
+                    <option>Male</option>
+                    <option>Female</option>
+                  </select>
                 </div>
                 <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">Civil Status</label>
@@ -1277,20 +1285,18 @@ $result = $st->get_result();
                   </select>
                 </div>
 
-                <!-- Row 3: Full Address & Years as Solo Parent -->
+                <!-- Row 3: Purok & Years as Solo Parent -->
                 <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">Purok</label>
-                  <div class="d-flex gap-2">
-                    <select name="solo_parent_purok" class="form-select form-select-sm" required>
-                      <option value="">Purok…</option>
-                      <option>Purok 1</option>
-                      <option>Purok 2</option>
-                      <option>Purok 3</option>
-                      <option>Purok 4</option>
-                      <option>Purok 5</option>
-                      <option>Purok 6</option>
-                    </select>
-                  </div>
+                  <select name="solo_parent_purok" class="form-select form-select-sm" required>
+                    <option value="">Purok…</option>
+                    <option>Purok 1</option>
+                    <option>Purok 2</option>
+                    <option>Purok 3</option>
+                    <option>Purok 4</option>
+                    <option>Purok 5</option>
+                    <option>Purok 6</option>
+                  </select>
                 </div>
                 <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">Years as Solo Parent</label>
@@ -1298,48 +1304,44 @@ $result = $st->get_result();
                 </div>
 
                 <div class="col-12">
-                  <h6 class="fw-bold fs-5" style="color: #13411F;">Child's Details</h6>
+                  <h6 class="fw-bold fs-5" style="color: #13411F;">Children Details</h6>
                   <hr class="my-2">
                 </div>
 
-                <!-- Row 4: Child’s Name, Sex & Age -->
-                <!-- <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">First Name</label>
-                  <input name="solo_parent_child_first_name" type="text" class="form-control form-control-sm" required>
-                </div>
-                <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
-                  <input name="solo_parent_child_middle_name" type="text" class="form-control form-control-sm">
-                </div>
-                <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Last Name</label>
-                  <input name="solo_parent_child_last_name" type="text" class="form-control form-control-sm" required>
-                </div>
-                <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
-                  <input name="solo_parent_child_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
-                </div> -->
-
-                <div class="col-12 col-md-6">
-                  <label class="form-label fw-bold">Full Name</label>
-                  <input name="child_full_name" type="text" class="form-control form-control-sm" required>
-                </div>
-
-                <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Child’s Sex</label>
-                  <select name="solo_parent_child_sex" class="form-select form-select-sm" required>
-                    <option value="">Select…</option>
-                    <option>Male</option>
-                    <option>Female</option>
-                  </select>
+                <!-- Container for dynamic child fields -->
+                <div class="col-12" id="childrenContainer">
+                  <!-- First child (required) -->
+                  <div class="child-entry border rounded p-3 mb-3" data-child-index="0">
+                    <div class="row gy-2">
+                      <div class="col-12 col-md-6">
+                        <label class="form-label fw-bold">Child's Full Name</label>
+                        <input name="children[0][name]" type="text" class="form-control form-control-sm" required>
+                      </div>
+                      <div class="col-12 col-md-3">
+                        <label class="form-label fw-bold">Sex</label>
+                        <select name="children[0][sex]" class="form-select form-select-sm" required>
+                          <option value="">Select…</option>
+                          <option>Male</option>
+                          <option>Female</option>
+                        </select>
+                      </div>
+                      <div class="col-12 col-md-3">
+                        <label class="form-label fw-bold">Age</label>
+                        <input name="children[0][age]" type="number" min="0" class="form-control form-control-sm" required>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Child’s Age</label>
-                  <input name="solo_parent_child_age" type="number" min="0" class="form-control form-control-sm" required>
+                <!-- Add Child Button -->
+                <div class="col-12">
+                  <button type="button" class="btn btn-sm btn-outline-success" id="addChildBtn">
+                    <span class="material-symbols-outlined" style="font-size:16px; vertical-align:middle;">add</span>
+                    Add Another Child
+                  </button>
                 </div>
 
-                <!-- Row 5: Purpose -->
+                <!-- Purpose -->
                 <div class="col-12">
                   <label class="form-label fw-bold">Purpose</label>
                   <textarea name="solo_parent_purpose" class="form-control form-control-sm" rows="2" placeholder="State the purpose of solo parent" required></textarea>
@@ -2361,6 +2363,54 @@ document.addEventListener('DOMContentLoaded', () => {
     delete printReqBtn.dataset.printUrl;
     delete downloadReqPDF.dataset.href;
     downloadReqPDF.href = '#';
+  });
+
+  // Dynamic child fields for Solo Parent
+  let childCounter = 1;
+
+  document.addEventListener('click', (e) => {
+    // Add child button
+    if (e.target.closest('#addChildBtn')) {
+      const container = document.getElementById('childrenContainer');
+      const newChild = document.createElement('div');
+      newChild.className = 'child-entry border rounded p-3 mb-3 position-relative';
+      newChild.dataset.childIndex = childCounter;
+      newChild.innerHTML = `
+        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2 remove-child-btn" style="z-index:10;">
+          <span class="material-symbols-outlined" style="font-size:14px;">close</span>
+        </button>
+        <div class="row gy-2">
+          <div class="col-12 col-md-6">
+            <label class="form-label fw-bold">Child's Full Name</label>
+            <input name="children[${childCounter}][name]" type="text" class="form-control form-control-sm" required>
+          </div>
+          <div class="col-12 col-md-3">
+            <label class="form-label fw-bold">Sex</label>
+            <select name="children[${childCounter}][sex]" class="form-select form-select-sm" required>
+              <option value="">Select…</option>
+              <option>Male</option>
+              <option>Female</option>
+            </select>
+          </div>
+          <div class="col-12 col-md-3">
+            <label class="form-label fw-bold">Age</label>
+            <input name="children[${childCounter}][age]" type="number" min="0" class="form-control form-control-sm" required>
+          </div>
+        </div>
+      `;
+      container.appendChild(newChild);
+      childCounter++;
+    }
+
+    // Remove child button
+    if (e.target.closest('.remove-child-btn')) {
+      const entry = e.target.closest('.child-entry');
+      if (document.querySelectorAll('.child-entry').length > 1) {
+        entry.remove();
+      } else {
+        alert('At least one child is required.');
+      }
+    }
   });
 
   // --- Record Payment modal handler ---

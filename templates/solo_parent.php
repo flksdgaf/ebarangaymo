@@ -58,7 +58,7 @@ $civilStatus     = $civilStatusRaw;
 $purok           = $data['purok'] ?? '';
 $yearsSoloParent = $data['years_solo_parent'] ?? '';
 $purpose         = $data['purpose'] ?? '';
-$parentSex       = strtolower($data['parent_sex'] ?? 'female');
+$parentSex       = strtolower($data['sex'] ?? 'female');
 $issuedDate      = date('Y-m-d');
 
 // Reformat the full name
@@ -66,22 +66,36 @@ $fullNameFormatted = reformatName($fullName);
 
 $pronoun = ($parentSex === 'male') ? 'his' : 'her';
 
+// Fetch children data from JSON column
 $children = [];
 $genderCount = ['Male' => 0, 'Female' => 0];
 $childDescriptions = [];
 
 if (!empty($transactionId)) {
-    $stmt = $conn->prepare("SELECT child_name, child_age, child_sex FROM solo_parent_requests WHERE transaction_id = ?");
+    $stmt = $conn->prepare("SELECT children_data FROM solo_parent_requests WHERE transaction_id = ?");
     $stmt->bind_param("s", $transactionId);
     $stmt->execute();
     $result = $stmt->get_result();
-
-    while ($row = $result->fetch_assoc()) {
-        $children[] = $row;
-        $childName = strtoupper(htmlspecialchars($row['child_name']));
-        $childAge = htmlspecialchars($row['child_age']);
-        $childDescriptions[] = "<strong>$childName</strong>, $childAge years old";
-        $genderCount[$row['child_sex']]++;
+    
+    if ($row = $result->fetch_assoc()) {
+        $childrenJson = $row['children_data'];
+        if (!empty($childrenJson)) {
+            $children = json_decode($childrenJson, true);
+            
+            if (is_array($children)) {
+                foreach ($children as $child) {
+                    $childName = strtoupper(htmlspecialchars($child['name'] ?? ''));
+                    $childAge = htmlspecialchars($child['age'] ?? '');
+                    $childSex = $child['sex'] ?? 'Male';
+                    
+                    $childDescriptions[] = "<strong>$childName</strong>, $childAge years old";
+                    
+                    if (isset($genderCount[$childSex])) {
+                        $genderCount[$childSex]++;
+                    }
+                }
+            }
+        }
     }
     $stmt->close();
 }
@@ -237,7 +251,7 @@ if ($download || $print) {
 
         <p>
           This is to certify that <strong><?= htmlspecialchars(strtoupper($fullNameFormatted)) ?></strong>, 
-          <strong><?= htmlspecialchars($residentAge) ?></strong> years old, <?= strtoupper($civilStatus === 'WIDOWED' ? 'WIDOW' : $civilStatus) ?>,
+          <strong><?= htmlspecialchars($residentAge) ?></strong> years old, <?= strtoupper($civilStatus === 'widowed' ? 'WIDOW' : $civilStatus) ?>,
           is a resident of <?= htmlspecialchars($purok) ?>, Magang, Daet, Camarines Norte.
         </p>
 
@@ -361,7 +375,7 @@ if ($download || $print) {
 
       <p>
         This is to certify that <strong><?= htmlspecialchars(strtoupper($fullNameFormatted)) ?></strong>, 
-        <strong><?= htmlspecialchars($residentAge) ?></strong> years old, <?= strtoupper($civilStatus === 'WIDOWED' ? 'WIDOW' : $civilStatus) ?>,
+        <strong><?= htmlspecialchars($residentAge) ?></strong> years old, <?= strtoupper($civilStatus === 'widowed' ? 'WIDOW' : $civilStatus) ?>,
         is a resident of <?= htmlspecialchars($purok) ?>, Magang, Daet, Camarines Norte.
       </p>
 

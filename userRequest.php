@@ -553,7 +553,7 @@ $pageTitle = $filterMap[$filter] ?? 'My Requests';
 
 <!-- Modal -->
 <div class="modal fade" id="requestDetailModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
     <div class="modal-content modal-minimal">
       <div class="modal-body">
         <button type="button" class="modal-close-icon" data-bs-dismiss="modal" aria-label="Close">
@@ -574,16 +574,49 @@ $pageTitle = $filterMap[$filter] ?? 'My Requests';
           </div>
         </div>
 
-        <div class="modal-inner" id="requestDetailInner">
-          <div class="text-center text-muted" id="requestDetailLoading">Loading…</div>
-        </div>
-
-        <div class="modal-actions">
-          <div class="modal-bottom-info" id="modalBottomInfo" aria-hidden="true"></div>
-          <div style="display:flex; gap:.5rem; align-items:center;">
-            <button id="modalCancelBtn" class="btn-cancel btn" data-tx="">Cancel Request</button>
+        <!-- Header Info Section -->
+        <div class="modal-header-info">
+          <div class="header-info-grid">
+            <div>
+              <div class="info-label">Transaction ID</div>
+              <div class="info-value" id="modalTransactionId">-</div>
+            </div>
+            <div>
+              <div class="info-label">Request by</div>
+              <div class="info-value" id="modalRequester">-</div>
+            </div>
           </div>
         </div>
+
+        <!-- Two-Column Layout: Details + Status -->
+        <div class="modal-main-grid">
+          
+          <!-- Left Column: Request Details -->
+          <div>
+            <h3 style="color: var(--green-a); font-weight: 700; font-size: 1.15rem; margin-bottom: 12px;">Request Details</h3>
+            
+            <div id="requestDetailInner">
+              <div class="text-center text-muted">Loading…</div>
+            </div>
+          </div>
+
+          <!-- Right Column: Request Status -->
+          <div>
+            <h3 style="color: var(--green-a); font-weight: 700; font-size: 1.25rem; margin-bottom: 16px;">Request Status</h3>
+            
+            <div id="statusTimeline" style="display: flex; flex-direction: column; gap: 12px;">
+              <!-- Status items will be inserted here -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Modal Actions at Bottom -->
+        <div class="modal-actions">
+          <button id="modalCancelBtn" class="btn-cancel" data-tx="">Cancel Request</button>
+        </div>
+        
+        <div class="modal-bottom-info" id="modalBottomInfo" aria-hidden="true" style="display:none;"></div>
       </div>
     </div>
   </div>
@@ -614,13 +647,30 @@ function updateCardStatus(tx, newStatus) {
 
 function createBandIconHtml(rtype) {
     const low = (rtype || '').toString().toLowerCase();
-    let icon = 'description';
-    if (low.includes('equipment') || low.includes('borrow')) icon = 'build';
-    else if (low.includes('barangay') || (low.includes('id') && !low.includes('residency'))) icon = 'badge';
-    else if (low.includes('business') || low.includes('permit') || low.includes('clearance')) icon = 'apartment';
-    else if (low.includes('solo') || low.includes('parent')) icon = 'family_restroom';
-    else if (low.includes('guard') || low.includes('guardianship')) icon = 'security';
-    else if (low.includes('certification') || low.includes('certificate') || low.includes('indigency') || low.includes('residency') || low.includes('good moral')) icon = 'description';
+    let icon = 'description'; // Default: document icon
+    
+    if (low.includes('equipment') || low.includes('borrow')) {
+        icon = 'construction'; // Tools/construction icon
+    } else if (low.includes('barangay id') || (low.includes('id') && !low.includes('residency'))) {
+        icon = 'badge'; // ID badge icon
+    } else if (low.includes('business')) {
+        icon = 'business'; // Business building icon
+    } else if (low.includes('clearance')) {
+        icon = 'verified_user'; // Clearance/verification icon
+    } else if (low.includes('solo') || low.includes('parent')) {
+        icon = 'family_restroom'; // Family icon
+    } else if (low.includes('guard') || low.includes('guardianship')) {
+        icon = 'shield'; // Protection/guardian icon
+    } else if (low.includes('indigency')) {
+        icon = 'volunteer_activism'; // Helping hands icon
+    } else if (low.includes('residency') || low.includes('resident')) {
+        icon = 'home'; // Home/residence icon
+    } else if (low.includes('good moral') || low.includes('moral')) {
+        icon = 'workspace_premium'; // Certificate/award icon
+    } else if (low.includes('certification') || low.includes('certificate')) {
+        icon = 'verified'; // Verified/certified icon
+    }
+    
     return '<span class="material-icons-outlined" aria-hidden="true" style="font-size:28px;line-height:1;display:inline-block;">' + icon + '</span>';
 }
 
@@ -631,7 +681,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const modalBandType = document.getElementById('bandType');
     const modalBandIcon = document.getElementById('bandIcon');
     const bandBadgeHolder = document.getElementById('bandBadge');
-    const loading = document.getElementById('requestDetailLoading');
+    const loading = document.createElement('div');
+    loading.id = 'requestDetailLoading';
+    loading.className = 'text-center text-muted';
+    loading.textContent = 'Loading…';
     const bandSub = document.getElementById('bandSub');
 
     const modalCancelBtn = document.getElementById('modalCancelBtn');
@@ -691,373 +744,205 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(html => {
                 const container = document.createElement('div');
                 container.innerHTML = html;
-                const summary = container.querySelector('.detail-summary');
-                const grid = container.querySelector('.detail-grid');
                 const meta = container.querySelector('.detail-meta');
 
-                modalInner.innerHTML = '';
-
-                const txWrap = document.createElement('div');
-                txWrap.className = 'tx-highlight';
-
-                const txLabel = document.createElement('div');
-                txLabel.className = 'tx-label';
-                txLabel.textContent = 'Transaction ID';
-
-                const txText = document.createElement('div');
-                txText.className = 'tx-id';
-                txText.textContent = tx;
-
-                const txCopyBtn = document.createElement('button');
-                txCopyBtn.className = 'tx-copy';
-                txCopyBtn.title = 'Copy transaction id';
-                txCopyBtn.setAttribute('aria-label','Copy transaction id');
-                txCopyBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px;"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
-
-                txCopyBtn.addEventListener('click', function () {
-                    navigator.clipboard?.writeText(tx).then(()=> {
-                        const prev = txCopyBtn.innerHTML;
-                        txCopyBtn.innerHTML = '✓';
-                        setTimeout(()=> txCopyBtn.innerHTML = prev, 900);
-                    }).catch(()=> alert('Copy failed'));
-                });
-
-                txWrap.appendChild(txLabel);
-                txWrap.appendChild(txText);
-                txWrap.appendChild(txCopyBtn);
-                modalInner.appendChild(txWrap);
-
-                if (summary) modalInner.appendChild(summary.cloneNode(true));
-                if (grid) modalInner.appendChild(grid.cloneNode(true));
-
-                if (!summary && !grid) {
-                    const bodyEl = container.querySelector('body');
-                    modalInner.innerHTML = bodyEl ? bodyEl.innerHTML : container.innerHTML;
+                // Update Transaction ID
+                const txIdEl = document.getElementById('modalTransactionId');
+                if (txIdEl) txIdEl.textContent = tx;
+                
+                // Setup copy button
+                const copyBtn = document.getElementById('txCopyBtn');
+                if (copyBtn) {
+                    copyBtn.onclick = function() {
+                        navigator.clipboard?.writeText(tx).then(()=> {
+                            const prev = copyBtn.innerHTML;
+                            copyBtn.innerHTML = '✓';
+                            setTimeout(()=> copyBtn.innerHTML = prev, 900);
+                        }).catch(()=> alert('Copy failed'));
+                    };
                 }
 
-                const usedMeta = meta || modalInner.querySelector('.detail-meta');
-                const status = (usedMeta && usedMeta.getAttribute('data-status')) ? usedMeta.getAttribute('data-status') : 'Processing';
-
-                let payMeta = null, docMeta = null;
-                if (usedMeta) {
-                    const payPct = usedMeta.getAttribute('data-pay-pct');
-                    const payLabel = usedMeta.getAttribute('data-pay-label');
-                    const payColor = usedMeta.getAttribute('data-pay-color');
-                    if (payPct !== null) payMeta = { pct: Number(payPct), label: payLabel || '', color: payColor || '#6B7280' };
-
-                    const docPct = usedMeta.getAttribute('data-doc-pct');
-                    const docLabel = usedMeta.getAttribute('data-doc-label');
-                    const docColor = usedMeta.getAttribute('data-doc-color');
-                    if (docPct !== null) docMeta = { pct: Number(docPct), label: docLabel || '', color: docColor || '#6B7280' };
+                // Get requester name
+                const summary = container.querySelector('.detail-summary');
+                let requesterName = 'N/A';
+                if (summary) {
+                    const nameDiv = summary.querySelector('.v');
+                    if (nameDiv) requesterName = nameDiv.textContent.trim();
                 }
+                const requesterEl = document.getElementById('modalRequester');
+                if (requesterEl) requesterEl.textContent = requesterName;
 
-                const sLow = (status || '').toLowerCase();
-                if (sLow === 'released' || sLow === 'completed' || sLow === 'cancelled' || sLow === 'rejected') {
-                    modalCancelBtn.disabled = true;
-                } else {
-                    modalCancelBtn.disabled = false;
-                }
+                // Clear and populate detail sections
+                const detailInner = document.getElementById('requestDetailInner');
+                if (!detailInner) return;
+                detailInner.innerHTML = '';
 
-                modalBottomInfo.innerHTML = '';
-
-                const pWrap = document.createElement('div'); pWrap.className = 'seg-wrap';
-                const pTitle = document.createElement('div'); pTitle.className = 'seg-title'; pTitle.textContent = 'Payment';
-                const pBar = document.createElement('div'); pBar.className = 'seg-bar';
-                const pFill = document.createElement('div'); pFill.className = 'seg-fill';
-
-                let pPct = (payMeta && typeof payMeta.pct === 'number' && !isNaN(payMeta.pct)) ? Number(payMeta.pct) : null;
-                let pLabel = (payMeta && payMeta.label) ? String(payMeta.label) : null;
-                let pColor = (payMeta && payMeta.color) ? String(payMeta.color) : null;
-
-                if (pPct === null) {
-                    pPct = 0;
-                    pLabel = pLabel || 'Not set';
-                    pColor = pColor || '#6B7280';
-                    const payAttr = (usedMeta && usedMeta.getAttribute('data-pay')) ? usedMeta.getAttribute('data-pay') : '';
-                    const payL = (payAttr || '').toString().trim().toLowerCase();
-                    if (payL === '' && rtype && rtype.toLowerCase().includes('equipment')) {
-                        pPct = 100; pLabel = 'No Payment Needed'; pColor = '#9CA3AF';
-                    } else if (payL === 'paid') {
-                        pPct = 100; pLabel = 'Paid'; pColor = '#059669';
-                    } else if (payL === 'unpaid' || payL === 'pending') {
-                        pPct = 35; pLabel = payAttr ? (payAttr.charAt(0).toUpperCase() + payAttr.slice(1)) : 'Unpaid'; pColor = '#F59E0B';
-                    } else if (payL !== '') {
-                        pPct = 60; pLabel = (payAttr.charAt(0).toUpperCase() + payAttr.slice(1)); pColor = '#2563EB';
-                    }
-                }
-
-                pPct = Math.max(0, Math.min(100, Number(pPct) || 0));
-                pLabel = pLabel || 'Not set';
-                pColor = pColor || '#6B7280';
-
-                pFill.style.width = '0%';
-                pFill.style.background = pColor;
-                pBar.appendChild(pFill);
-                const pCaption = document.createElement('div'); pCaption.className = 'seg-caption'; pCaption.textContent = pLabel;
-                pWrap.appendChild(pTitle); pWrap.appendChild(pBar); pWrap.appendChild(pCaption);
-
-                const dWrap = document.createElement('div'); dWrap.className = 'seg-wrap';
-                const dTitle = document.createElement('div'); dTitle.className = 'seg-title'; dTitle.textContent = 'Document';
-                const dBar = document.createElement('div'); dBar.className = 'seg-bar';
-                const dFill = document.createElement('div'); dFill.className = 'seg-fill';
-                let dPct = 50, dLabel = 'Processing', dColor = '#F59E0B';
-                if (sLow === 'released' || sLow === 'completed') { dPct = 100; dLabel = status; dColor = '#059669'; }
-                else if (sLow === 'for verification') { dPct = 70; dLabel = 'For Verification'; dColor = '#2563EB'; }
-                else if (sLow === 'processing' || sLow === 'pending' || sLow === '') { dPct = 35; dLabel = 'Processing'; dColor = '#F59E0B'; }
-                else if (sLow === 'ready to release') { dPct = 85; dLabel = 'Ready to Release'; dColor = '#10B981'; }
-                else if (sLow === 'cancelled' || sLow === 'rejected') { dPct = 100; dLabel = status; dColor = '#EF4444'; }
-                dFill.style.width = '0%';
-                dFill.style.background = dColor;
-                dBar.appendChild(dFill);
-                const dCaption = document.createElement('div'); dCaption.className = 'seg-caption'; dCaption.textContent = dLabel;
-                dWrap.appendChild(dTitle); dWrap.appendChild(dBar); dWrap.appendChild(dCaption);
-
-                modalBottomInfo.appendChild(pWrap); modalBottomInfo.appendChild(dWrap);
-                modalBottomInfo.setAttribute('aria-hidden','false');
-
-                setTimeout(()=> {
-                    pFill.style.width = pPct + '%';
-                    dFill.style.width = dPct + '%';
-                }, 40);
-
-                pFill.setAttribute('aria-valuenow', String(Math.round(pPct)));
-                dFill.setAttribute('aria-valuenow', String(Math.round(dPct)));
-
-                (function groupDetails() {
-                    const grid = modalInner.querySelector('.detail-grid');
-                    if (!grid) return;
+                const grid = container.querySelector('.detail-grid');
+                if (grid) {
                     const rows = Array.from(grid.querySelectorAll('.detail-row'));
-                    if (!rows.length) return;
-
-                    if ((rtype || '').toLowerCase().includes('equipment') || tx.startsWith('BRW-')) {
-                        const sectBorrow = document.createElement('div'); sectBorrow.className = 'modal-section';
-                        sectBorrow.innerHTML = '<h5 style="color:var(--green-a);font-weight:700;margin-bottom:8px;">Borrow Details</h5>';
-                        const wrapperBorrow = document.createElement('div');
-                        wrapperBorrow.className = 'detail-grid';
-                        rows.forEach(row => wrapperBorrow.appendChild(row.cloneNode(true)));
-                        modalInner.querySelectorAll('.detail-grid').forEach(n => n.remove());
-                        sectBorrow.appendChild(wrapperBorrow);
-                        modalInner.appendChild(sectBorrow);
-                        return;
-                    }
-
-                    const applicationFields = ['civil status','purpose','claim date','birthdate','birthday','purok','address','resident','name','contact person'];
+                    
+                    const applicationFields = ['civil status','purpose','claim date','birthdate','birthday','purok','address','resident','name','contact person','age','residing years','claim time'];
                     const paymentFields = ['payment method','amount','amount paid','payment status','fee','total','payment','or number'];
-                    const requestFields = ['requested item','request','equipment','equipment sn','service','request type','document status','updated at','created at'];
+                    const otherFields = ['request for','document status','updated at','request source','equipment','authorization'];
 
-                    function pickGroup(labelText) {
-                        const l = labelText.toLowerCase();
-                        if (applicationFields.some(k => l.includes(k))) return 'application';
-                        if (paymentFields.some(k => l.includes(k))) return 'payment';
-                        if (requestFields.some(k => l.includes(k))) return 'other';
-                        return 'application';
-                    }
-
-                    const appRows = [], otherRows = [];
-                    let payRows = [];
+                    const appRows = [], payRows = [], otherRows = [];
 
                     rows.forEach(row => {
-                        const lab = (row.querySelector('.label') && row.querySelector('.label').textContent) ? row.querySelector('.label').textContent : '';
-                        const labNorm = lab.trim().toLowerCase();
+                        const lab = row.querySelector('.label')?.textContent.trim().toLowerCase() || '';
+                        
+                        // Skip duplicates
                         const duplicates = ['name','full name','resident','resident name','request','request type'];
-                        if (duplicates.includes(labNorm)) return;
-                        const g = pickGroup(lab);
-                        if (g === 'application') appRows.push(row.cloneNode(true));
-                        else if (g === 'payment') payRows.push(row.cloneNode(true));
-                        else otherRows.push(row.cloneNode(true));
+                        if (duplicates.includes(lab)) return;
+                        
+                        // Skip empty values
+                        const val = row.querySelector('.value')?.textContent.trim() || '';
+                        if (!val) return;
+
+                        if (applicationFields.some(k => lab.includes(k))) appRows.push(row.cloneNode(true));
+                        else if (paymentFields.some(k => lab.includes(k))) payRows.push(row.cloneNode(true));
+                        else if (otherFields.some(k => lab.includes(k))) otherRows.push(row.cloneNode(true));
+                        else appRows.push(row.cloneNode(true));
                     });
 
-                    if ((rtype || '').toString().toLowerCase().includes('indigency')) {
-                        const forbidden = ['payment method', 'amount'];
-                        payRows = payRows.filter(row => {
-                            const lbl = (row.querySelector('.label') && row.querySelector('.label').textContent) ? row.querySelector('.label').textContent.trim().toLowerCase() : '';
-                            return !forbidden.includes(lbl);
-                        });
-                    }
+                    // Create three-column layout
+                    const cols = document.createElement('div');
+                    cols.style.display = 'grid';
+                    cols.style.gridTemplateColumns = '1fr 1fr 1fr';
+                    cols.style.gap = '20px';
 
-                    modalInner.querySelectorAll('.detail-grid').forEach(n => n.remove());
-
-                    // --- UPDATED: make Residency, Barangay Clearance and Barangay ID use three columns ---
-                    const rtypeLow = (rtype || '').toLowerCase();
-                    const isThreeCol = rtypeLow.includes('barangay') || rtypeLow.includes('residency') || (rtypeLow.includes('id') && !rtypeLow.includes('residency'));
-                    if (isThreeCol) {
-                        const cols = document.createElement('div');
-                        cols.className = 'details-columns';
-                        cols.style.display = 'grid';
-                        cols.style.gridTemplateColumns = '1fr 1fr 1fr';
-                        cols.style.gap = '20px';
-
-                        function makeCol(title, rowsArr) {
-                            const c = document.createElement('div');
-                            const h = document.createElement('h5'); h.textContent = title;
-                            h.style.color = 'var(--green-a)'; h.style.margin = '0 0 10px 0'; h.style.fontWeight = '700';
-                            const body = document.createElement('div'); body.style.display = 'flex'; body.style.flexDirection = 'column'; body.style.gap = '10px';
-                            rowsArr.forEach(r => body.appendChild(r));
-                            c.appendChild(h); c.appendChild(body);
-                            return c;
-                        }
-
-                        cols.appendChild(makeCol('Application Details', appRows));
-                        // If payment rows empty, still include the middle column to keep consistent three-column layout
-                        cols.appendChild(makeCol('Payment Details', payRows.length > 0 ? payRows : []));
-                        cols.appendChild(makeCol('Other Details', otherRows));
-                        modalInner.appendChild(cols);
-                        return;
-                    }
-                    // --------------------------------------------------------------------
-
-                    // fallback / existing behavior for other types
-                    const cols = document.createElement('div'); cols.className = 'details-columns';
                     function makeCol(title, rowsArr) {
                         const c = document.createElement('div');
-                        const h = document.createElement('h5'); h.textContent = title; h.style.color = 'var(--green-a)'; h.style.margin = '0 0 10px 0'; h.style.fontWeight = '700';
-                        const body = document.createElement('div'); body.style.display = 'flex'; body.style.flexDirection = 'column'; body.style.gap = '10px';
+                        const h = document.createElement('h5');
+                        h.textContent = title;
+                        h.style.color = 'var(--green-a)';
+                        h.style.margin = '0 0 8px 0';
+                        h.style.fontWeight = '600';
+                        h.style.fontSize = '0.9rem';
+                        
+                        const body = document.createElement('div');
+                        body.style.display = 'flex';
+                        body.style.flexDirection = 'column';
+                        body.style.gap = '6px';
+                        
                         rowsArr.forEach(r => body.appendChild(r));
-                        c.appendChild(h); c.appendChild(body);
+                        
+                        c.appendChild(h);
+                        c.appendChild(body);
                         return c;
                     }
 
+                    // Determine if we should show Payment Details
+                    const rtypeLower = (rtype || '').toLowerCase();
+                    const hidePayment = rtypeLower.includes('indigency') || 
+                                    rtypeLower.includes('first time job seeker') || 
+                                    rtypeLower.includes('equipment') || 
+                                    rtypeLower.includes('borrow');
+
                     cols.appendChild(makeCol('Application Details', appRows));
-                    if (payRows.length > 0) cols.appendChild(makeCol('Payment Details', payRows));
+
+                    // Only add Payment Details column if it should be shown
+                    if (!hidePayment && payRows.length > 0) {
+                        cols.appendChild(makeCol('Payment Details', payRows));
+                        // Adjust grid to 3 columns
+                        cols.style.gridTemplateColumns = '1fr 1fr 1fr';
+                    } else {
+                        // Adjust grid to 2 columns when Payment Details is hidden
+                        cols.style.gridTemplateColumns = '1.2fr 1fr';
+                    }
+
                     cols.appendChild(makeCol('Other Details', otherRows));
-                    modalInner.appendChild(cols);
-                })();
+                    
+                    detailInner.appendChild(cols);
 
-                // --- REPLACED: Insert QR INTO the Payment Details column if present; fallback to previous behavior ---
-                (function maybeInsertQR() {
-                    try {
-                        // find "Payment Method" or "Payment" row inside the modal
-                        const rows = Array.from(modalInner.querySelectorAll('.detail-row'));
-                        const pmRow = rows.find(r => {
-                            const lbl = r.querySelector('.label')?.textContent?.trim().toLowerCase() || '';
-                            return lbl === 'payment method' || lbl === 'payment';
-                        });
-                        const pmValue = pmRow ? (pmRow.querySelector('.value')?.textContent?.trim() || '') : '';
+                    // Handle QR code for payment
+                    const pmRow = rows.find(r => {
+                        const lbl = r.querySelector('.label')?.textContent?.trim().toLowerCase() || '';
+                        return lbl === 'payment method' || lbl === 'payment';
+                    });
+                    const pmValue = pmRow?.querySelector('.value')?.textContent?.trim() || '';
+                    const pmLow = pmValue.toLowerCase();
 
-                        if (!pmValue) return; // nothing to do
-
-                        const pmLow = pmValue.toLowerCase();
-                        if (!(pmLow.includes('brgy payment') || pmLow.includes('brgy payment device') || pmLow.includes('barangay payment'))) {
-                            return; // only insert QR for Barangay Payment methods
-                        }
-
-                        // QR size (you can change this value to resize)
-                        const qrSize = 160;
-
-                        // Prepare QR section
+                    if (pmLow.includes('brgy payment') || pmLow.includes('barangay payment')) {
+                        const qrSize = 140;
                         const qrSection = document.createElement('div');
-                        qrSection.className = 'modal-section qr-section';
-                        qrSection.style.display = 'flex';
-                        qrSection.style.flexDirection = 'column';
-                        qrSection.style.alignItems = 'left';
-                        qrSection.style.gap = '8px';
-                        // qrSection.style.borderTop = '1px dashed rgba(0,0,0,0.06)';
-                        // added green border, radius and a bit more padding for a cleaner look
+                        qrSection.style.marginTop = '16px';
+                        qrSection.style.padding = '12px';
                         qrSection.style.border = '1px solid #059669';
                         qrSection.style.borderRadius = '8px';
-                        qrSection.style.padding = '15px';
+                        qrSection.style.textAlign = 'center';
 
                         const qrContainer = document.createElement('div');
                         qrContainer.id = 'modal-qrcode';
                         qrContainer.style.width = qrSize + 'px';
                         qrContainer.style.height = qrSize + 'px';
-                        qrContainer.style.margin = '0 auto';
+                        qrContainer.style.margin = '0 auto 8px';
 
                         const downloadBtn = document.createElement('button');
                         downloadBtn.type = 'button';
-                        downloadBtn.className = 'btn download-btn btn-success';
+                        downloadBtn.className = 'btn btn-success btn-sm';
                         downloadBtn.textContent = 'Download QR Code';
-                        downloadBtn.style.marginTop = '6px';
 
                         const hint = document.createElement('div');
-                        hint.className = 'text-muted';
-                        hint.style.fontSize = '0.5rem';
-                        hint.style.textAlign = 'center';
+                        hint.style.fontSize = '0.75rem';
+                        hint.style.color = '#6c757d';
+                        hint.style.marginTop = '6px';
                         hint.textContent = 'Scan this QR code at the Barangay Payment Device.';
 
                         qrSection.appendChild(qrContainer);
                         qrSection.appendChild(downloadBtn);
                         qrSection.appendChild(hint);
 
-                        // Try to locate Payment Details column header (case-insensitive)
-                        let paymentBody = null;
-                        const headers = Array.from(modalInner.querySelectorAll('.details-columns h5'));
-                        const paymentHeader = headers.find(h => h.textContent && h.textContent.trim().toLowerCase() === 'payment details');
-                        if (paymentHeader) {
-                            // the body element is expected to be the next sibling (the body created in makeCol)
-                            paymentBody = paymentHeader.nextElementSibling;
-                        }
+                        // Find payment column and insert QR
+                        const paymentCol = Array.from(cols.querySelectorAll('h5')).find(h => h.textContent === 'Payment Details')?.parentElement;
+                        if (paymentCol) paymentCol.appendChild(qrSection);
 
-                        // If paymentBody exists, append the QR inside it; otherwise fall back to previous insertion point
-                        if (paymentBody) {
-                            paymentBody.appendChild(qrSection);
-                        } else {
-                            // append after the transaction highlight as fallback
-                            const txHighlight = modalInner.querySelector('.tx-highlight');
-                            if (txHighlight && txHighlight.nextSibling) txHighlight.parentNode.insertBefore(qrSection, txHighlight.nextSibling);
-                            else modalInner.appendChild(qrSection);
-                        }
-
+                        // Generate QR
                         function generateQRonce() {
                             if (typeof QRCode !== 'undefined') {
-                                // clear existing children (if any)
                                 qrContainer.innerHTML = '';
-                                new QRCode(qrContainer, {
-                                    text: tx,
-                                    width: qrSize,
-                                    height: qrSize,
-                                });
-
-                                // hook up download action
-                                downloadBtn.addEventListener('click', function () {
-                                    // QRCode.js inserts an <img> or <canvas>
+                                new QRCode(qrContainer, { text: tx, width: qrSize, height: qrSize });
+                                
+                                downloadBtn.onclick = function() {
                                     const img = qrContainer.querySelector('img');
-                                    if (img && img.src) {
+                                    if (img?.src) {
                                         const link = document.createElement('a');
                                         link.href = img.src;
                                         link.download = tx + '.png';
                                         document.body.appendChild(link);
                                         link.click();
                                         document.body.removeChild(link);
-                                        return;
                                     }
-                                    // fallback for canvas
-                                    const canvas = qrContainer.querySelector('canvas');
-                                    if (canvas) {
-                                        const link = document.createElement('a');
-                                        link.href = canvas.toDataURL('image/png');
-                                        link.download = tx + '.png';
-                                        document.body.appendChild(link);
-                                        link.click();
-                                        document.body.removeChild(link);
-                                    }
-                                });
+                                };
                                 return true;
                             }
                             return false;
                         }
 
                         if (!generateQRonce()) {
-                            // dynamically load QRCode.js (CDN) only if not present
                             const script = document.createElement('script');
                             script.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
-                            script.onload = function () { generateQRonce(); };
-                            script.onerror = function () {
-                                // fail silently (or inform user)
-                                hint.textContent = 'Unable to load QR generator. Please try downloading the QR from the submission screen.';
-                            };
+                            script.onload = generateQRonce;
                             document.head.appendChild(script);
                         }
-
-                    } catch (e) {
-                        console.error('QR insert error', e);
                     }
-                })();
+                }
 
+                // Build status timeline
+                const payStatus = meta?.getAttribute('data-pay') || '';
+                const docStatus = meta?.getAttribute('data-status') || 'Processing';
+                
+                buildStatusTimeline(docStatus, payStatus, rtype);
 
+                // Handle cancel button state
+                const sLow = docStatus.toLowerCase();
+                if (modalCancelBtn) {
+                    modalCancelBtn.disabled = (sLow === 'released' || sLow === 'completed' || sLow === 'cancelled' || sLow === 'rejected');
+                    modalCancelBtn.setAttribute('data-tx', tx);
+                }
             })
             .catch(err => {
-                modalInner.innerHTML = '<div class="text-danger p-3">Failed to load details.</div>';
+                const detailInner = document.getElementById('requestDetailInner');
+                if (detailInner) detailInner.innerHTML = '<div class="text-danger p-3">Failed to load details.</div>';
                 console.error(err);
             });
     });
@@ -1071,13 +956,23 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     modalEl.addEventListener('hidden.bs.modal', function () {
-        modalInner.innerHTML = '';
-        bandBadgeHolder.innerHTML = '';
-        modalCancelBtn.removeAttribute('data-tx');
-        modalCancelBtn.disabled = false;
-        modalBottomInfo.innerHTML = '';
-        modalBottomInfo.setAttribute('aria-hidden','true');
-        bandSub.textContent = '';
+        const inner = document.getElementById('requestDetailInner');
+        const badge = document.getElementById('bandBadge');
+        const cancelBtn = document.getElementById('modalCancelBtn');
+        const bottomInfo = document.getElementById('modalBottomInfo');
+        const sub = document.getElementById('bandSub');
+        
+        if (inner) inner.innerHTML = '';
+        if (badge) badge.innerHTML = '';
+        if (cancelBtn) {
+            cancelBtn.removeAttribute('data-tx');
+            cancelBtn.disabled = false;
+        }
+        if (bottomInfo) {
+            bottomInfo.innerHTML = '';
+            bottomInfo.setAttribute('aria-hidden','true');
+        }
+        if (sub) sub.textContent = '';
     });
 
     function createBandIconHtml(rtype) {
@@ -1092,6 +987,125 @@ document.addEventListener('DOMContentLoaded', function () {
         return '<span class="material-icons-outlined" aria-hidden="true" style="font-size:28px;line-height:1;display:inline-block;">' + icon + '</span>';
     }
 });
+
+    function buildStatusTimeline(docStatus, payStatus, requestType) {
+        const timeline = document.getElementById('statusTimeline');
+        timeline.innerHTML = '';
+
+        const rtLow = (requestType || '').toLowerCase();
+        const isIndigency = rtLow.includes('indigency');
+        const isBorrowing = rtLow.includes('equipment') || rtLow.includes('borrow');
+
+        const statuses = [
+            { key: 'submitted', label: 'Request Submitted', icon: 'check_circle' },
+            { key: 'verification', label: 'Request for Verification', icon: 'search' },
+            { key: 'payment', label: 'Payment Paid', icon: 'payments', hideFor: ['indigency', 'borrowing'] },
+            { key: 'processing', label: 'Processing', icon: 'sync' },
+            { key: 'ready', label: 'Ready for Release', icon: 'inventory' },
+            { key: 'released', label: 'Released', icon: 'done_all' }
+        ];
+
+        function getStatusState(key) {
+            const dLow = (docStatus || '').toLowerCase();
+            const pLow = (payStatus || '').toLowerCase();
+
+            if (key === 'submitted') return 'completed';
+            if (key === 'verification') {
+                if (dLow === 'for verification' || dLow === 'processing' || dLow === 'ready to release' || dLow === 'released' || dLow === 'completed') return 'completed';
+                return 'pending';
+            }
+            if (key === 'payment') {
+                if (isIndigency) return 'completed'; // Free
+                if (isBorrowing) return 'skipped';
+                if (pLow === 'paid') return 'completed';
+                if (dLow === 'processing' || dLow === 'ready to release' || dLow === 'released' || dLow === 'completed') return 'active';
+                return 'pending';
+            }
+            if (key === 'processing') {
+                if (dLow === 'processing' || dLow === 'ready to release' || dLow === 'released' || dLow === 'completed') return 'completed';
+                return 'pending';
+            }
+            if (key === 'ready') {
+                if (dLow === 'ready to release' || dLow === 'released' || dLow === 'completed') return 'completed';
+                if (dLow === 'processing') return 'active';
+                return 'pending';
+            }
+            if (key === 'released') {
+                if (dLow === 'released' || dLow === 'completed') return 'completed';
+                if (dLow === 'ready to release') return 'active';
+                return 'pending';
+            }
+            return 'pending';
+        }
+
+        statuses.forEach((status, idx) => {
+            if (status.hideFor) {
+                if (isIndigency && status.hideFor.includes('indigency')) return;
+                if (isBorrowing && status.hideFor.includes('borrowing')) return;
+            }
+
+            const state = getStatusState(status.key);
+            if (state === 'skipped') return;
+
+            const item = document.createElement('div');
+            item.style.display = 'flex';
+            item.style.alignItems = 'flex-start';
+            item.style.gap = '10px';
+            item.style.position = 'relative';
+
+            const iconWrapper = document.createElement('div');
+            iconWrapper.style.width = '32px';
+            iconWrapper.style.height = '32px';
+            iconWrapper.style.borderRadius = '50%';
+            iconWrapper.style.display = 'flex';
+            iconWrapper.style.alignItems = 'center';
+            iconWrapper.style.justifyContent = 'center';
+            iconWrapper.style.flexShrink = '0';
+            iconWrapper.style.zIndex = '1';
+
+            if (state === 'completed') {
+                iconWrapper.style.background = '#059669';
+                iconWrapper.style.color = 'white';
+            } else if (state === 'active') {
+                iconWrapper.style.background = '#F59E0B';
+                iconWrapper.style.color = 'white';
+            } else {
+                iconWrapper.style.background = '#E5E7EB';
+                iconWrapper.style.color = '#9CA3AF';
+            }
+
+            iconWrapper.innerHTML = `<span class="material-icons-outlined" style="font-size:18px;">${status.icon}</span>`;
+
+            const textWrapper = document.createElement('div');
+            textWrapper.style.flex = '1';
+            textWrapper.style.paddingTop = '4px';
+
+            const label = document.createElement('div');
+            label.textContent = status.label;
+            label.style.fontWeight = state === 'active' ? '600' : '500';
+            label.style.fontSize = '0.82rem';
+            label.style.color = state === 'completed' || state === 'active' ? '#059669' : '#6B7280';
+
+            textWrapper.appendChild(label);
+
+            item.appendChild(iconWrapper);
+            item.appendChild(textWrapper);
+
+            // Add connecting line
+            if (idx < statuses.length - 1) {
+                const line = document.createElement('div');
+                line.style.position = 'absolute';
+                line.style.left = '15px';
+                line.style.top = '32px';
+                line.style.bottom = '-12px';
+                line.style.width = '2px';
+                line.style.background = state === 'completed' ? '#059669' : '#E5E7EB';
+                item.appendChild(line);
+            }
+
+            timeline.appendChild(item);
+        });
+    }
 </script>
 
 <?php

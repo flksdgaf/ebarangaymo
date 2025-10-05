@@ -218,28 +218,54 @@ if (isset($_GET['transaction_id'])) {
                 }
 
                 if ($drow) {
-                    $printed = false;
-                    foreach ($drow as $col => $val) {
-                        if (in_array($col, ['id','account_id','transaction_id','created_at'])) continue;
-                        // skip null/empty
-                        if ($val === null || trim((string)$val) === '') continue;
-
-                        $label = ucwords(str_replace('_',' ',$col));
-                        $lowerCol = strtolower($col);
-                        if (in_array($lowerCol, ['authorization','authorized_person','authorized_by','authorization_by','authorized'])) {
-                            $displayVal = (strtolower(trim((string)$val)) === 'myself') ? 'No Authorization Needed' : htmlspecialchars($val);
-                        } else {
-                            $displayVal = htmlspecialchars($val);
+                $printed = false;
+                
+                // Special handling for Solo Parent children_data JSON
+                if ($tbl === 'solo_parent_requests' && !empty($drow['children_data'])) {
+                    $childrenJson = $drow['children_data'];
+                    $childrenArray = json_decode($childrenJson, true);
+                    
+                    if (is_array($childrenArray) && count($childrenArray) > 0) {
+                        foreach ($childrenArray as $index => $child) {
+                            $childNum = $index + 1;
+                            if (!empty($child['name'])) {
+                                echo "<div class=\"detail-row\"><div class=\"label\">Child #{$childNum} Name</div><div class=\"value\">" . htmlspecialchars($child['name']) . "</div></div>";
+                            }
+                            if (!empty($child['age'])) {
+                                echo "<div class=\"detail-row\"><div class=\"label\">Child #{$childNum} Age</div><div class=\"value\">" . htmlspecialchars($child['age']) . "</div></div>";
+                            }
+                            if (!empty($child['sex'])) {
+                                echo "<div class=\"detail-row\"><div class=\"label\">Child #{$childNum} Sex</div><div class=\"value\">" . htmlspecialchars($child['sex']) . "</div></div>";
+                            }
+                            $printed = true;
                         }
-                        echo "<div class=\"detail-row\"><div class=\"label\">{$label}</div><div class=\"value\">{$displayVal}</div></div>";
-                        $printed = true;
                     }
-                    if (!$printed) {
-                        echo "<div class='text-muted p-2'>No additional details</div>";
-                    }
-                } else {
-                    echo "<div class=\"detail-row\"><div class=\"label\">No additional details</div></div>";
                 }
+                
+                foreach ($drow as $col => $val) {
+                    // Skip children_data column since we handled it above
+                    if ($col === 'children_data') continue;
+                    
+                    if (in_array($col, ['id','account_id','transaction_id','created_at'])) continue;
+                    // skip null/empty
+                    if ($val === null || trim((string)$val) === '') continue;
+
+                    $label = ucwords(str_replace('_',' ',$col));
+                    $lowerCol = strtolower($col);
+                    if (in_array($lowerCol, ['authorization','authorized_person','authorized_by','authorization_by','authorized'])) {
+                        $displayVal = (strtolower(trim((string)$val)) === 'myself') ? 'No Authorization Needed' : htmlspecialchars($val);
+                    } else {
+                        $displayVal = htmlspecialchars($val);
+                    }
+                    echo "<div class=\"detail-row\"><div class=\"label\">{$label}</div><div class=\"value\">{$displayVal}</div></div>";
+                    $printed = true;
+                }
+                if (!$printed) {
+                    echo "<div class='text-muted p-2'>No additional details</div>";
+                }
+            } else {
+                echo "<div class=\"detail-row\"><div class=\"label\">No additional details</div></div>";
+            }
             } else {
                 $printed = false;
                 foreach ($vrow as $col => $val) {

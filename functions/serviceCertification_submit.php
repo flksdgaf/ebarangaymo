@@ -175,16 +175,31 @@ if ($type === 'Guardianship') {
 }
 
 if ($type === 'Solo Parent') {
-    $data['child_name'] = implode(', ', array_map('trim', $_POST['child_name'] ?? []));
-    $data['child_age']  = implode(', ', array_map('trim', $_POST['child_age']  ?? []));
-    $data['child_sex']  = implode(', ', array_map('trim', $_POST['child_sex']  ?? []));
+    $childrenArray = [];
+    $childNames = $_POST['child_name'] ?? [];
+    $childAges = $_POST['child_age'] ?? [];
+    $childSexes = $_POST['child_sex'] ?? [];
+    
+    for ($i = 0; $i < count($childNames); $i++) {
+        if (!empty(trim($childNames[$i]))) {
+            $childrenArray[] = [
+                'name' => trim($childNames[$i]),
+                'age' => isset($childAges[$i]) ? trim($childAges[$i]) : '',
+                'sex' => isset($childSexes[$i]) ? trim($childSexes[$i]) : ''
+            ];
+        }
+    }
+    
+    $data['children_data'] = json_encode($childrenArray);
     $data['years_solo_parent'] = $_POST['years_solo_parent'] ?? null;
-    $fields = array_merge($fields, ['child_name','child_age','child_sex','years_solo_parent']);
+    $fields = array_merge($fields, ['children_data', 'years_solo_parent']);
+
+    $fields = array_diff($fields, ['child_name', 'child_age', 'child_sex']);
 
     $ps = isset($_POST['parent_sex']) ? trim($_POST['parent_sex']) : null;
     if ($ps === '') $ps = null;
-    $data['parent_sex'] = $ps;
-    if (!in_array('parent_sex', $fields, true)) $fields[] = 'parent_sex';
+    $data['sex'] = $ps;
+    if (!in_array('sex', $fields, true)) $fields[] = 'sex';
 }
 
 if ($type === 'Good Moral') {

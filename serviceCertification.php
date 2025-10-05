@@ -565,6 +565,8 @@ if (!empty($existingRequestRow)) {
     // NEW: expose existing parent sex & address so client-side can prefill the parent sex dropdown and show previously-entered address
     window.existingParentSex = <?php echo json_encode($existingParentSex, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
     window.existingParentAddress = <?php echo json_encode($existingParentAddress, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
+
+    window.existingChildrenData = <?php echo json_encode($childrenDataJson ?? '', JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
 </script>
 
 <!-- Claim handling script (keeps logic local so external JS can remain unchanged) -->
@@ -759,6 +761,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const years = document.querySelector('[name="years_solo_parent"]')?.value || '—';
             rows.push(['Years as Solo Parent:', years]);
+
+            if (!empty($existingRequestRow['children_data'])) {
+                $childrenDataJson = $existingRequestRow['children_data'];
+            } else {
+                $childrenDataJson = '';
+            }
         }
 
         // Guardianship: Child names only

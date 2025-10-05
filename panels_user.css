@@ -311,13 +311,6 @@ html,body{
   gap: 0.75rem;
 }
 
-/* Ensures any full-width element (like a band with background color) doesn't square the corners */
-#requestDetailModal .modal-band,
-#requestDetailModal .modal-inner,
-#requestDetailModal .modal-actions {
-  /* let them naturally follow the modal-content rounding because overflow is hidden */
-}
-
 /* Small responsive tweak for the dialog itself (optional) */
 #requestDetailModal .modal-dialog {
   max-width: 1200px;

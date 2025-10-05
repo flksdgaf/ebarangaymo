@@ -415,7 +415,6 @@ document.addEventListener("DOMContentLoaded", function () {
         if (type === 'guardianship') {
             wrapper.innerHTML += `
             <div id="guardianChildren"></div>
-            <button type="button" id="addGuardianChild" class="btn btn-sm btn-outline-primary mb-3"> + Add Child </button>
 
             <div id="guardianClaimContainer" class="row mb-3">
                 <label class="col-sm-2 fw-bold">Claim Date:</label>
@@ -427,24 +426,55 @@ document.addEventListener("DOMContentLoaded", function () {
             certFieldsHolder.appendChild(wrapper);
 
             const container = wrapper.querySelector('#guardianChildren');
-            const addBtn    = wrapper.querySelector('#addGuardianChild');
 
-            function addChild() {
+            function addChild(prefillName = '') {
                 const row = document.createElement('div');
-                row.className = 'row mb-3';
+                row.className = 'row mb-3 child-row';
                 row.innerHTML = `
                     <label class="col-sm-2 col-form-label fw-bold">Child's Name:</label>
                     <div class="col-sm-9">
-                        <input type="text" name="child_name[]" class="form-control" required>
+                        <input type="text" name="child_name[]" class="form-control" value="${prefillName}" required>
                     </div>
-                    <div class="col-sm-1">
-                        <button type="button" class="btn btn-outline-danger btn-sm remove-child">DELETE</button>
+                    <div class="col-sm-1 d-flex gap-1">
+                        <button type="button" class="btn btn-outline-danger btn-sm remove-child" style="white-space: nowrap;">DELETE</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm add-child" style="white-space: nowrap;">+ Add</button>
                     </div>`;
                 container.appendChild(row);
-                row.querySelector('.remove-child').onclick = () => row.remove();
+                
+                // Update button visibility
+                updateChildButtons();
+                
+                row.querySelector('.remove-child').onclick = () => {
+                    row.remove();
+                    updateChildButtons();
+                };
+                
+                row.querySelector('.add-child').onclick = () => addChild();
+            }
+            
+            function updateChildButtons() {
+                const allRows = container.querySelectorAll('.child-row');
+                allRows.forEach((row, index) => {
+                    const deleteBtn = row.querySelector('.remove-child');
+                    const addBtn = row.querySelector('.add-child');
+                    
+                    // Hide delete button if only one row
+                    if (allRows.length === 1) {
+                        deleteBtn.style.display = 'none';
+                    } else {
+                        deleteBtn.style.display = '';
+                    }
+                    
+                    // Only show add button on last row
+                    if (index === allRows.length - 1) {
+                        addBtn.style.display = '';
+                    } else {
+                        addBtn.style.display = 'none';
+                    }
+                });
             }
 
-            addBtn.onclick = addChild;
+            // Add one empty child row initially
             addChild();
 
             buildClaimOptionsInto(wrapper.querySelector('#guardianClaimHolder'));
@@ -467,7 +497,6 @@ document.addEventListener("DOMContentLoaded", function () {
             
             wrapper.innerHTML += `
             <div id="soloChildren"></div>
-            <button type="button" id="addSoloChild" class="btn btn-sm btn-outline-primary mb-3"> + Add Child </button>
 
             <div class="row mb-3">
                 <label class="col-sm-2 fw-bold">Years as Solo Parent:</label>
@@ -486,39 +515,87 @@ document.addEventListener("DOMContentLoaded", function () {
             certFieldsHolder.appendChild(wrapper);
 
             const container = wrapper.querySelector('#soloChildren');
-            const addBtn    = wrapper.querySelector('#addSoloChild');
-            function addChild() {
+            
+            function addChild(prefillData = null) {
                 const row = document.createElement('div');
-                row.className = 'row mb-3';
+                row.className = 'row mb-3 child-row';
                 row.innerHTML = `
-                    <label class="col-sm-2 col-form-label fw-bold"> Child's Name:</label>
+                    <label class="col-sm-2 col-form-label fw-bold">Child's Name:</label>
                     <div class="col-sm-4">
-                        <input type="text" name="child_name[]" class="form-control" required>
+                        <input type="text" name="child_name[]" class="form-control" 
+                            value="${prefillData?.name || ''}" required>
                     </div>
 
                     <label class="col-sm-1 col-form-label fw-bold">Age:</label>
                     <div class="col-sm-1">
-                        <input type="number" name="child_age[]" class="form-control" required>
+                        <input type="number" name="child_age[]" class="form-control" 
+                            value="${prefillData?.age || ''}" required>
                     </div>
 
                     <label class="col-sm-1 col-form-label fw-bold">Sex:</label>
                     <div class="col-sm-2">
                         <select name="child_sex[]" class="form-select" required>
-                            <option value="">–</option>
-                            <option>Male</option>
-                            <option>Female</option>
-                            <option>Other</option>
+                            <option value="">—</option>
+                            <option ${prefillData?.sex === 'Male' ? 'selected' : ''}>Male</option>
+                            <option ${prefillData?.sex === 'Female' ? 'selected' : ''}>Female</option>
+                            <option ${prefillData?.sex === 'Other' ? 'selected' : ''}>Other</option>
                         </select>
                     </div>
 
-                    <div class="col-sm-1">
-                        <button type="button" class="btn btn-outline-danger btn-sm remove-child">DELETE</button>
+                    <div class="col-sm-1 d-flex gap-1">
+                        <button type="button" class="btn btn-outline-danger btn-sm remove-child" style="white-space: nowrap;">DELETE</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm add-child" style="white-space: nowrap;">+ Add</button>
                     </div>`;
                 container.appendChild(row);
-                row.querySelector('.remove-child').onclick = () => row.remove();
+                
+                // Update button visibility
+                updateChildButtons();
+                
+                row.querySelector('.remove-child').onclick = () => {
+                    row.remove();
+                    updateChildButtons();
+                };
+                
+                row.querySelector('.add-child').onclick = () => addChild();
             }
-            addBtn.onclick = addChild;
-            addChild();
+            
+            function updateChildButtons() {
+                const allRows = container.querySelectorAll('.child-row');
+                allRows.forEach((row, index) => {
+                    const deleteBtn = row.querySelector('.remove-child');
+                    const addBtn = row.querySelector('.add-child');
+                    
+                    // Hide delete button if only one row
+                    if (allRows.length === 1) {
+                        deleteBtn.style.display = 'none';
+                    } else {
+                        deleteBtn.style.display = '';
+                    }
+                    
+                    // Only show add button on last row
+                    if (index === allRows.length - 1) {
+                        addBtn.style.display = '';
+                    } else {
+                        addBtn.style.display = 'none';
+                    }
+                });
+            }
+            
+            // Parse and populate existing children data OR add one empty row
+            if (window.existingChildrenData && window.existingChildrenData.trim()) {
+                try {
+                    const childrenArray = JSON.parse(window.existingChildrenData);
+                    if (Array.isArray(childrenArray) && childrenArray.length > 0) {
+                        childrenArray.forEach(child => addChild(child));
+                    } else {
+                        addChild(); // Add one empty row if parsing succeeds but array is empty
+                    }
+                } catch (e) {
+                    addChild(); // Add one empty row if parsing fails
+                }
+            } else {
+                addChild(); // Add one empty row for new form
+            }
 
             buildClaimOptionsInto(wrapper.querySelector('#soloClaimHolder'));
         }
@@ -1061,6 +1138,19 @@ document.addEventListener("DOMContentLoaded", function () {
         if (type === 'solo parent') {
             const parentSex = document.querySelector('[name="parent_sex"]')?.value || (window.existingParentSex || '') || '—';
             rows.push(['Parent Sex:', parentSex || '—']);
+
+            const childNames = Array.from(document.querySelectorAll('[name="child_name[]"]')).map(el => el.value.trim()).filter(Boolean);
+            const childAges  = Array.from(document.querySelectorAll('[name="child_age[]"]')).map(el => el.value.trim()).filter(Boolean);
+            const childSexes = Array.from(document.querySelectorAll('[name="child_sex[]"]')).map(el => el.value.trim()).filter(Boolean);
+
+            childNames.forEach((name, i) => {
+                rows.push([`Child ${i + 1} Name:`, name || '—']);
+                rows.push([`Child ${i + 1} Age:`, childAges[i] || '—']);
+                rows.push([`Child ${i + 1} Sex:`, childSexes[i] || '—']);
+            });
+
+            const years = document.querySelector('[name="years_solo_parent"]')?.value || '—';
+            rows.push(['Years as Solo Parent:', years]);
         }
 
         if (type === 'solo parent') {

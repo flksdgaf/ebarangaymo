@@ -303,6 +303,8 @@ if (!$brStmt) {
 }
 ?>
 
+<title>eBarangay Mo | Equipment Borrowing</title>
+
 <div class="container-fluid p-3">
 
   <!-- Alert for add -->

@@ -340,7 +340,7 @@ if ($paymentMethod === 'GCash') {
     require_once __DIR__ . '/gcash_handler.php';
     
     try {
-        $gcashResult = createGCashSource($transactionId, 20);
+        $gcashResult = createGCashSource($transactionId, $amount);
         
         if ($gcashResult['success'] && isset($gcashResult['checkout_url'])) {
             // Store transaction in session for security

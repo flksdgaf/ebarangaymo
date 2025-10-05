@@ -140,44 +140,6 @@
 
 /* END OF FULL CALENDAR */
 
-/* RECENT REQUEST TABLE */
-.for-verification-status {
-  background-color: #ffc107; /* Yellow */
-  color: black;
-}
-
-.rejected-status {
-  background-color: #dc3545; /* Red */
-  color: black;
-}
-
-.paid-status {
-  background-color: #28a745; /* Green */
-  color: black;
-}
-
-.unpaid-status {
-  background-color: #dc3545; /* Red */
-  color: black;
-}
-
-/* Document Status Colors */
-.processing-status {
-  background-color: #ffc107; /* Yellow */
-  color: black;
-}
-
-.ready-to-release-status {
-  background-color: #17a2b8; /* Teal */
-  color: black;
-}
-
-.released-status {
-  background-color: #28a745; /* Green */
-  color: black;
-}
-/* END OF RECENT REQUEST TABLE */
-
 /* REQUEST TAB */
 .admin-table thead th {
   position: sticky;

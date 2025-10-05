@@ -359,15 +359,42 @@ if ($queryString) {
                   $ps = htmlspecialchars($row['payment_status']);
                   $ds = htmlspecialchars($row['document_status']);
                   
-                  // badge classes
-                  $payClass = $ps === 'Paid' ? 'paid-status' : 'unpaid-status';
+                  // Payment status badge color
+                  switch ($ps) {
+                    case 'Paid':
+                    case 'Free of Charge':
+                      $payClass = 'bg-success';
+                      break;
+                    case 'Unpaid':
+                    case 'Failed':
+                      $payClass = 'bg-danger';
+                      break;
+                    case 'Pending':
+                      $payClass = 'bg-warning text-dark';
+                      break;
+                    default:
+                      $payClass = 'bg-secondary';
+                  }
+                  
+                  // Document status badge color
                   switch ($ds) {
-                    case 'For Verification': $docClass = 'for-verification-status'; break;
-                    case 'Processing': $docClass = 'processing-status'; break;
-                    case 'Ready to Release': $docClass = 'ready-to-release-status'; break;
-                    case 'Released': $docClass = 'released-status'; break;
-                    case 'Rejected': $docClass = 'rejected-status'; break;
-                    default: $docClass = ''; break;
+                    case 'For Verification':
+                      $docClass = 'bg-info text-dark';
+                      break;
+                    case 'Processing':
+                      $docClass = 'bg-warning text-dark';
+                      break;
+                    case 'Ready to Release':
+                      $docClass = 'bg-primary';
+                      break;
+                    case 'Released':
+                      $docClass = 'bg-success';
+                      break;
+                    case 'Rejected':
+                      $docClass = 'bg-danger';
+                      break;
+                    default:
+                      $docClass = 'bg-secondary';
                   }
                 ?>
                 <tr>

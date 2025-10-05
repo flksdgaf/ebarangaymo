@@ -590,7 +590,7 @@ if (!empty($existingRequest)) {
 
                     <div class="btn-group btn-group-lg mb-4 flex-wrap justify-content-center" role="group" aria-label="Payment Methods">
                     <!-- GCash -->
-                    <button type="button" class="btn btn-outline-success disabled payment-btn" data-method="GCash">
+                    <button type="button" class="btn btn-outline-success payment-btn" data-method="GCash">
                         <img src="images/gcash_logo.png" alt="GCash" class="mb-2 payment-icon">
                         <span class="label fw-bold">GCash</span>
                     </button>

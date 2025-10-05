@@ -198,7 +198,8 @@ class GCashPaymentHandler {
                         'id' => $sourceId,
                         'type' => 'source'
                     ],
-                    'currency' => 'PHP'
+                    'currency' => 'PHP',
+                    'description' => "Barangay ID - {$transactionId}"
                 ]
             ]
         ];
@@ -208,15 +209,29 @@ class GCashPaymentHandler {
         if ($paymentResponse['success']) {
             $paymentResult = $paymentResponse['data']['data'];
             $paymentId = $paymentResult['id'];
-            $gcashRef = $paymentResult['attributes']['reference_number'] ?? 'GCASH-' . strtoupper(uniqid());
+            $status = $paymentResult['attributes']['status'] ?? 'pending';
+            $gcashRef = $paymentResult['attributes']['source']['id'] ?? 'GCASH-' . strtoupper(uniqid());
             
-            // Update database with payment success
-            $this->updatePaymentSuccess($transactionId, $paymentId, $gcashRef);
+            // Only mark as paid if PayMongo confirms it
+            $finalStatus = ($status === 'paid') ? 'paid' : 'processing';
+            
+            // Update database with payment info
+            $stmt = $this->conn->prepare("
+                UPDATE barangay_id_requests 
+                SET payment_status = ?,
+                    paymongo_payment_id = ?,
+                    gcash_reference = ?,
+                    updated_at = NOW()
+                WHERE transaction_id = ?
+            ");
+            $stmt->bind_param("ssss", $finalStatus, $paymentId, $gcashRef, $transactionId);
+            $stmt->execute();
+            $stmt->close();
             
             // Create audit log
             $this->createAuditLog(
                 'Payment Processed',
-                "GCash payment successful for transaction {$transactionId} (₱" . number_format($sourceData['amount'] / 100, 2) . ")",
+                "GCash payment {$finalStatus} for transaction {$transactionId} (₱" . number_format($sourceData['amount'] / 100, 2) . ")",
                 $transactionData['full_name'],
                 'Payment'
             );
@@ -224,6 +239,7 @@ class GCashPaymentHandler {
             $this->logTransaction('Payment created successfully', [
                 'payment_id' => $paymentId,
                 'reference' => $gcashRef,
+                'status' => $finalStatus,
                 'transaction_id' => $transactionId
             ]);
             
@@ -235,9 +251,16 @@ class GCashPaymentHandler {
             ];
         }
         
+        // Log the actual error from PayMongo
+        $this->logTransaction('Payment creation failed', [
+            'error' => $paymentResponse['error'] ?? 'Unknown error',
+            'http_code' => $paymentResponse['http_code'] ?? 0,
+            'transaction_id' => $transactionId
+        ]);
+        
         return [
             'success' => false,
-            'error' => 'Failed to process payment.'
+            'error' => 'Failed to process payment: ' . ($paymentResponse['error'] ?? 'Unknown error')
         ];
     }
     

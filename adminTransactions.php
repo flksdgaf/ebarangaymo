@@ -198,8 +198,44 @@ $reportTypes = ['All','Barangay ID', 'Business Permit', 'Good Moral', 'Guardians
         <div class="accordion-body p-0">
           <div class="card border-0">
             <div class="card-body">
-              <!-- TODO: Add KP report filters and form here -->
-              <p class="text-muted mb-0">No filters or report options available yet.</p>
+              <form method="post" action="functions/generateKatarunganPambarangayReport.php" target="_blank" id="kpReportForm">
+                <div class="row align-items-end g-3 mb-4">
+                  <div class="col-md-4">
+                    <label for="kpMonth" class="form-label">Month</label>
+                    <select id="kpMonth" name="month" class="form-select" required>
+                      <option value="01">January</option>
+                      <option value="02">February</option>
+                      <option value="03">March</option>
+                      <option value="04">April</option>
+                      <option value="05">May</option>
+                      <option value="06">June</option>
+                      <option value="07">July</option>
+                      <option value="08">August</option>
+                      <option value="09">September</option>
+                      <option value="10">October</option>
+                      <option value="11">November</option>
+                      <option value="12">December</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label for="kpYear" class="form-label">Year</label>
+                    <select id="kpYear" name="year" class="form-select" required>
+                      <?php
+                      $currentYear = date('Y');
+                      for ($y = $currentYear; $y >= $currentYear - 5; $y--) {
+                        echo "<option value=\"$y\">$y</option>";
+                      }
+                      ?>
+                    </select>
+                  </div>
+                  <div class="col-md-4 text-end">
+                    <button type="button" id="previewKPBtn" class="btn btn-outline-success me-2">Preview</button>
+                    <button type="submit" name="format" value="pdf" class="btn btn-success">Print</button>
+                  </div>
+                </div>
+              </form>
+
+              <div id="kpPreviewOutput" class="mt-4"></div>
             </div>
           </div>
         </div>
@@ -352,18 +388,114 @@ $reportTypes = ['All','Barangay ID', 'Business Permit', 'Good Moral', 'Guardians
       }
     })();
 
-    // Official Receipt PDF generation (unchanged)
-    document.getElementById('generateOfficialReceiptPDFBtn').addEventListener('click', function () {
-      const from = document.getElementById('receiptFrom').value;
-      const to = document.getElementById('receiptTo').value;
-      const type = document.getElementById('receiptReportType').value;
+    // Official Receipt PDF generation
+    const officialReceiptBtn = document.getElementById('generateOfficialReceiptPDFBtn');
+    if (officialReceiptBtn) {
+      officialReceiptBtn.addEventListener('click', function () {
+        const from = document.getElementById('receiptFrom').value;
+        const to = document.getElementById('receiptTo').value;
+        const type = document.getElementById('receiptReportType').value;
 
-      if (!from || !to || !type) {
-        alert("Please select FROM, TO, and Report Type.");
-        return;
+        if (!from || !to || !type) {
+          alert("Please select FROM, TO, and Report Type.");
+          return;
+        }
+
+        const url = `functions/generateOfficialReceiptReport.php?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&type=${encodeURIComponent(type)}`;
+        window.open(url, 'OfficialReceiptReportWindow', 'width=1000,height=800,resizable=yes,scrollbars=yes');
+      });
+    }
+
+    // Katarungang Pambarangay Report
+    (function () {
+      const previewBtn = document.getElementById('previewKPBtn');
+      const form = document.getElementById('kpReportForm');
+      const output = document.getElementById('kpPreviewOutput');
+      const collapseEl = document.getElementById('collapseKP');
+
+      // Helper: extract <body> innerHTML if full document returned
+      function extractBody(html) {
+        const match = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+        return (match && match[1]) ? match[1] : html;
       }
 
-      const url = `functions/generateOfficialReceiptReport.php?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&type=${encodeURIComponent(type)}`;
-      window.open(url, 'OfficialReceiptReportWindow', 'width=1000,height=800,resizable=yes,scrollbars=yes');
-    });
+      // Helper: show bootstrap collapse (so preview is visible)
+      function showKPAccordion() {
+        try {
+          if (!collapseEl) return;
+          // Bootstrap 5: get or create instance, then show
+          const bsCollapse = bootstrap.Collapse.getOrCreateInstance(collapseEl);
+          bsCollapse.show();
+        } catch (err) {
+          // If bootstrap not available, ignore (no side-effects)
+          console.warn('Bootstrap collapse show failed:', err);
+        }
+      }
+
+      if (previewBtn) {
+        previewBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+
+          const month = form.querySelector('select[name="month"]').value;
+          const year = form.querySelector('select[name="year"]').value;
+
+          if (!month || !year) {
+            alert('Please select both Month and Year.');
+            return;
+          }
+
+          const fd = new FormData(form);
+          fd.set('format', 'preview');
+
+          // Ensure accordion is open before inserting preview
+          showKPAccordion();
+
+          output.innerHTML = `
+            <div class="text-center py-4">
+              <div class="spinner-border text-success" role="status"><span class="visually-hidden">Loading...</span></div>
+              <p class="mt-2 mb-0">Loading preview...</p>
+            </div>
+          `;
+
+          fetch(form.action, {
+            method: 'POST',
+            body: fd,
+            credentials: 'same-origin'
+          })
+          .then(response => {
+            if (!response.ok) throw new Error('HTTP error! status: ' + response.status);
+            return response.text();
+          })
+          .then(html => {
+            // Extract body if the server returned a full HTML document
+            const inner = extractBody(html).trim();
+            if (!inner) {
+              throw new Error('Empty response from server');
+            }
+            // Insert preview HTML
+            output.innerHTML = inner;
+
+            // Small safety: if preview doesn't include the .preview-container wrapper,
+            // add light wrapping so it looks consistent in accordion
+            if (!output.querySelector('.kp-preview-wrapper') && !output.querySelector('.preview-container')) {
+              const wrapper = document.createElement('div');
+              wrapper.className = 'kp-preview-wrapper';
+              wrapper.style.cssText = 'background:#fff;padding:18px;border:1px solid #dee2e6;border-radius:6px;margin:10px 0;overflow-x:auto;';
+              wrapper.innerHTML = output.innerHTML;
+              output.innerHTML = '';
+              output.appendChild(wrapper);
+            }
+
+            // Smooth-scroll the preview into view
+            output.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          })
+          .catch(err => {
+            console.error('Preview error:', err);
+            output.innerHTML = '<div class="alert alert-danger" role="alert"><strong>Error:</strong> Failed to load preview. ' + err.message + '</div>';
+          });
+        });
+      } else {
+        console.error('Preview button not found!');
+      }
+    })();
   </script>

@@ -148,6 +148,33 @@ include 'includes/header.php';
                             <input type="text" id="summaryEmail" class="form-control custom-input" placeholder="juandelacruz@gmail.com" readonly>
                         </div>
                     </div>
+
+                     <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="accordion" id="privacyAccordion">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="headingPrivacy">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePrivacy" aria-expanded="false" aria-controls="collapsePrivacy">
+                                            Data Privacy Agreement
+                                        </button>
+                                    </h2>
+                                    <div id="collapsePrivacy" class="accordion-collapse collapse" aria-labelledby="headingPrivacy" data-bs-parent="#privacyAccordion">
+                                        <div class="accordion-body">
+                                            <p>eBarangay Mo is operated by the Barangay Local Government Unit to deliver online barangay services. We collect and process <strong>the minimum personal data</strong> necessary to provide your requested services (applications and certificates), for record-keeping, reports, and payment processing.</p>
+                                            <p>Your information will be kept <strong>strictly confidential</strong>, accessible only to authorized personnel with high-level access, and <strong>will not be shared with third parties</strong> except when required by law. We retain data only as long as needed to fulfill these purposes or to meet legal obligations.</p>
+                                            <p>By checking this box you consent to the collection, use, and retention of your personal data for the purposes stated above. If you have questions or wish to access, correct, or withdraw your data, please contact the Barangay Office.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" id="privacyConsent" name="privacyConsent" required>
+                                <label class="form-check-label" for="privacyConsent">
+                                    I have read and agree to the Data Privacy Agreement
+                                </label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Navigation Dots -->

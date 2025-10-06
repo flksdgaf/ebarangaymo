@@ -77,6 +77,17 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
 
+         if (currentStep === 2) {
+            const privacyConsent = document.getElementById("privacyConsent");
+            if (!privacyConsent.checked) {
+                valid = false;
+                errorMessages.push("Please read and agree to the Data Privacy Agreement before proceeding.");
+                privacyConsent.classList.add("is-invalid");
+            } else {
+                privacyConsent.classList.remove("is-invalid");
+            }
+        }
+
         if (!valid) {
             const modalBody = document.querySelector("#validationModal .modal-body");
             modalBody.textContent = errorMessages.join(" ");

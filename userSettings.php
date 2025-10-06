@@ -496,10 +496,12 @@ $profile_birthdate = $profile['birthdate'] ?? '';
           <div class="card shadow-sm">
             <div class="card-body">
               <h5 class="mb-3" style="color:var(--ebg-green)">Data Privacy Policy</h5>
-              <p class="small-muted">eBarangay Mo is operated by the Barangay Local Government Unit to provide online barangay services such as applications, certificates, reports, payment processing, and recordkeeping. We collect and process only the minimum personal data necessary to deliver services...</p>
+              <p class="small-muted">eBarangay Mo is operated by the Barangay Local Government Unit to deliver online barangay services. We collect and process <strong> the minimum personal data</strong> necessary to provide your requested services (applications and certificates), for record-keeping, reports, and payment processing.<br>
+              <br>Your information will be kept <strong>strictly confidential</strong>, accessible only to authorized personnel with high-level access, and <strong>will not be shared with third parties</strong> except when required by law. We retain data only as long as needed to fulfill these purposes or to meet legal obligations.<br>
+              <br>By checking this box you consent to the collection, use, and retention of your personal data for the purposes stated above. If you have questions or wish to access, correct, or withdraw your data, please contact the Barangay Office.</p>
               <div class="form-check mt-3">
                 <input type="checkbox" class="form-check-input" id="agreePolicy">
-                <label for="agreePolicy" class="form-check-label">I have read and agree to the eBarangay Mo Privacy & Data Protection Policy.</label>
+                <label for="agreePolicy" class="form-check-label">I have read and agree to the eBarangay Mo Privacy & Data Privacy Policy.</label>
               </div>
             </div>
           </div>

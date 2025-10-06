@@ -457,16 +457,15 @@ if ($queryString) {
     <?php
     // Get current date ranges
     $today = date('Y-m-d');
-    $monthStart = date('Y-m-01'); // First day of current month
-    $monthEnd = date('Y-m-t');   // Last day of current month
+    $monthStart = date('Y-m-01');
+    $monthEnd = date('Y-m-t');
     
     // TODAY'S COLLECTION
     $todayCollection = 0;
     $todayQuery = "
-        SELECT COALESCE(SUM(amount), 0) as total 
-        FROM view_dashboard 
-        WHERE payment_status = 'Paid' 
-        AND DATE(created_at) = '{$today}'
+        SELECT COALESCE(SUM(amount_paid), 0) as total 
+        FROM official_receipt_records 
+        WHERE DATE(issued_date) = '{$today}'
     ";
     $todayResult = $conn->query($todayQuery);
     if ($todayResult) {
@@ -476,10 +475,9 @@ if ($queryString) {
     // THIS MONTH'S COLLECTION
     $monthCollection = 0;
     $monthQuery = "
-        SELECT COALESCE(SUM(amount), 0) as total 
-        FROM view_dashboard 
-        WHERE payment_status = 'Paid' 
-        AND DATE(created_at) BETWEEN '{$monthStart}' AND '{$monthEnd}'
+        SELECT COALESCE(SUM(amount_paid), 0) as total 
+        FROM official_receipt_records 
+        WHERE DATE(issued_date) BETWEEN '{$monthStart}' AND '{$monthEnd}'
     ";
     $monthResult = $conn->query($monthQuery);
     if ($monthResult) {
@@ -489,52 +487,51 @@ if ($queryString) {
     // TOTAL COLLECTIONS (ALL TIME)
     $totalCollection = 0;
     $totalQuery = "
-        SELECT COALESCE(SUM(amount), 0) as total 
-        FROM view_dashboard 
-        WHERE payment_status = 'Paid'
+        SELECT COALESCE(SUM(amount_paid), 0) as total 
+        FROM official_receipt_records
     ";
     $totalResult = $conn->query($totalQuery);
     if ($totalResult) {
         $totalCollection = $totalResult->fetch_assoc()['total'];
     }
     
-    // PENDING PAYMENTS (Revenue not yet collected)
-    $pendingPayments = 0;
-    $pendingQuery = "
-        SELECT COALESCE(SUM(amount), 0) as total 
-        FROM view_dashboard 
-        WHERE payment_status = 'Unpaid'
+    // CREATED ORs COUNT (NEW)
+    $createdORsCount = 0;
+    $createdORsQuery = "SELECT COUNT(*) as total FROM official_receipt_records";
+    $createdORsResult = $conn->query($createdORsQuery);
+    if ($createdORsResult) {
+        $createdORsCount = $createdORsResult->fetch_assoc()['total'];
+    }
+    
+    // PAYMENT METHOD COUNTS FOR BAR CHART (excluding free services)
+    $paymentMethodCounts = [
+        'GCash' => 0,
+        'Brgy Payment Device' => 0,
+        'Over-the-Counter' => 0
+    ];
+    
+    $paymentMethodQuery = "
+        SELECT payment_method, COUNT(*) as count 
+        FROM official_receipt_records 
+        WHERE payment_method IN ('GCash', 'Brgy Payment Device', 'Over-the-Counter')
+        GROUP BY payment_method
     ";
-    $pendingResult = $conn->query($pendingQuery);
-    if ($pendingResult) {
-        $pendingPayments = $pendingResult->fetch_assoc()['total'];
+    $paymentMethodResult = $conn->query($paymentMethodQuery);
+    if ($paymentMethodResult) {
+        while ($row = $paymentMethodResult->fetch_assoc()) {
+            $paymentMethodCounts[$row['payment_method']] = $row['count'];
+        }
     }
     
-    // DAILY COLLECTIONS FOR LAST 7 DAYS (for line graph)
-    $dailyCollections = [];
-    $collectionDates = [];
-    
-    for ($i = 6; $i >= 0; $i--) {
-        $date = date('Y-m-d', strtotime("-{$i} days"));
-        $collectionDates[] = date('M d', strtotime($date));
-        
-        $dailyQuery = "
-            SELECT COALESCE(SUM(amount), 0) as total 
-            FROM view_dashboard 
-            WHERE payment_status = 'Paid' 
-            AND DATE(created_at) = '{$date}'
-        ";
-        $dailyResult = $conn->query($dailyQuery);
-        $dailyCollections[] = $dailyResult ? $dailyResult->fetch_assoc()['total'] : 0;
-    }
-    
-    // Get pending ORs for table
+    // Get pending ORs for table (exclude Indigency and First Time Job Seeker)
     $pendingORsResult = $conn->query("
-        SELECT transaction_id, full_name, request_type, payment_method, payment_status, amount 
-        FROM view_dashboard 
-        WHERE payment_status = 'Paid' 
-        AND document_status != 'Released' 
-        ORDER BY created_at DESC 
+        SELECT v.transaction_id, v.full_name, v.request_type, v.payment_method, v.payment_status, v.amount 
+        FROM view_dashboard v
+        WHERE v.payment_status = 'Paid' 
+        AND v.document_status = 'Processing'
+        AND v.request_type NOT IN ('Indigency', 'First Time Job Seeker')
+        AND v.transaction_id NOT IN (SELECT transaction_id FROM official_receipt_records)
+        ORDER BY v.created_at DESC 
         LIMIT 10
     ");
     ?>
@@ -542,21 +539,29 @@ if ($queryString) {
     <!-- Treasurer's Dashboard -->
     <div class="row g-4 mb-4">
         <!-- Stats Cards Row -->
-        <!-- <div class="col-md-3 col-sm-6">
+        <div class="col-md-3 col-sm-6">
+            <div class="card shadow-sm text-center p-3">
+                <span class="material-symbols-outlined fs-2 text-success">receipt_long</span>
+                <h2 class="fw-bold"><?= number_format($createdORsCount) ?></h2>
+                <p class="text-muted">Created ORs</p>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6">
             <div class="card shadow-sm text-center p-3">
                 <span class="material-symbols-outlined fs-2 text-success">today</span>
-                <h2 class="fw-bold">₱<= number_format($todayCollection, 2) ?></h2>
+                <h2 class="fw-bold">₱<?= number_format($todayCollection, 2) ?></h2>
                 <p class="text-muted">Today's Collection</p>
             </div>
-        </div> -->
+        </div>
         
-        <!-- <div class="col-md-3 col-sm-6">
+        <div class="col-md-3 col-sm-6">
             <div class="card shadow-sm text-center p-3">
                 <span class="material-symbols-outlined fs-2 text-success">calendar_month</span>
-                <h2 class="fw-bold">₱<= number_format($monthCollection, 2) ?></h2>
+                <h2 class="fw-bold">₱<?= number_format($monthCollection, 2) ?></h2>
                 <p class="text-muted">This Month</p>
             </div>
-        </div> -->
+        </div>
         
         <div class="col-md-3 col-sm-6">
             <div class="card shadow-sm text-center p-3">
@@ -565,34 +570,21 @@ if ($queryString) {
                 <p class="text-muted">Total Collections</p>
             </div>
         </div>
-        
-        <!-- <div class="col-md-3 col-sm-6">
-            <div class="card shadow-sm text-center p-3">
-                <span class="material-symbols-outlined fs-2 text-warning">pending_actions</span>
-                <h2 class="fw-bold">₱<= number_format($pendingPayments, 2) ?></h2>
-                <p class="text-muted">Pending Payments</p>
-            </div>
-        </div> -->
     </div>
     
     <!-- Chart Section -->
-    <div class="row g-4 mb-4">
+    <!-- <div class="row g-4 mb-4">
         <div class="col-12">
             <div class="card shadow-sm p-4">
                 <div class="mb-3">
-                    <h6 class="text-success mb-0" style="font-size: 1.1rem; font-weight: 600;">Recent Payment Methods</h6>
+                    <h6 class="text-success mb-0" style="font-size: 1.1rem; font-weight: 600;">Payment Methods Distribution</h6>
+                    <small class="text-muted">Total ORs created by payment method</small>
                 </div>
                 
-                <!-- Large "LINE GRAPH" text overlay -->
-                <div class="position-relative">
-                    <div class="position-absolute w-100 h-100 d-flex align-items-center justify-content-center" style="z-index: 1; pointer-events: none;">
-                        <h1 class="fw-bold text-success" style="font-size: 4rem; opacity: 0.1; letter-spacing: 0.2em;">LINE GRAPH</h1>
-                    </div>
-                    <canvas id="paymentMethodsChart" style="height: 300px; position: relative; z-index: 2;"></canvas>
-                </div>
+                <canvas id="paymentMethodsChart" style="height: 300px;"></canvas> -->
                 
                 <!-- Legend -->
-                <div class="d-flex justify-content-center mt-3" style="gap: 2rem;">
+                <!-- <div class="d-flex justify-content-center mt-3" style="gap: 2rem;">
                     <div class="d-flex align-items-center">
                         <div style="width: 12px; height: 12px; background-color: #28a745; border-radius: 2px; margin-right: 8px;"></div>
                         <small class="text-muted">GCash</small>
@@ -608,7 +600,7 @@ if ($queryString) {
                 </div>
             </div>
         </div>
-    </div>
+    </div> -->
     
     <!-- Pending ORs Table -->
     <div class="row g-4">
@@ -616,6 +608,7 @@ if ($queryString) {
             <div class="card shadow-sm p-4">
                 <div class="mb-3">
                     <h6 class="text-success mb-0" style="font-size: 1.1rem; font-weight: 600;">Pending ORs</h6>
+                    <small class="text-muted">Paid requests awaiting official receipt</small>
                 </div>
                 
                 <div class="table-responsive">
@@ -626,7 +619,7 @@ if ($queryString) {
                                 <th class="text-muted" style="font-size: 0.875rem; font-weight: 500;">Name</th>
                                 <th class="text-muted" style="font-size: 0.875rem; font-weight: 500;">Request</th>
                                 <th class="text-muted" style="font-size: 0.875rem; font-weight: 500;">Payment Method</th>
-                                <th class="text-muted" style="font-size: 0.875rem; font-weight: 500;">Payment Status</th>
+                                <th class="text-muted" style="font-size: 0.875rem; font-weight: 500;">Amount</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -637,11 +630,7 @@ if ($queryString) {
                                         <td style="font-size: 0.875rem;"><?= htmlspecialchars($row['full_name']) ?></td>
                                         <td style="font-size: 0.875rem;"><?= htmlspecialchars($row['request_type']) ?></td>
                                         <td style="font-size: 0.875rem;"><?= htmlspecialchars($row['payment_method']) ?></td>
-                                        <td>
-                                            <span class="badge" style="background-color: #28a745; color: white; font-size: 0.75rem;">
-                                                <?= htmlspecialchars($row['payment_status']) ?>
-                                            </span>
-                                        </td>
+                                        <td style="font-size: 0.875rem;">₱<?= number_format($row['amount'], 2) ?></td>
                                     </tr>
                                 <?php endwhile; ?>
                             <?php else: ?>
@@ -909,90 +898,68 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Payment Methods Line Chart (Treasurer Dashboard)
+  // Payment Methods Bar Chart (Treasurer Dashboard)
   if (document.getElementById('paymentMethodsChart')) {
-    const lineCtx = document.getElementById('paymentMethodsChart').getContext('2d');
+    const barCtx = document.getElementById('paymentMethodsChart').getContext('2d');
     
-    new Chart(lineCtx, {
-      type: 'line',
-      data: {
-        labels: <?= isset($dates) ? json_encode($dates) : '[]' ?>,
-        datasets: [
-          {
-            label: 'GCash',
-            data: <?= isset($gcashData) ? json_encode($gcashData) : '[]' ?>,
-            borderColor: '#28a745',
-            backgroundColor: 'rgba(40, 167, 69, 0.1)',
-            fill: false,
-            tension: 0.4,
-            pointRadius: 4,
-            pointHoverRadius: 6
-          },
-          {
-            label: 'Payment Device',
-            data: <?= isset($paymentDeviceData) ? json_encode($paymentDeviceData) : '[]' ?>,
-            borderColor: '#20c997',
-            backgroundColor: 'rgba(32, 201, 151, 0.1)',
-            fill: false,
-            tension: 0.4,
-            pointRadius: 4,
-            pointHoverRadius: 6
-          },
-          {
-            label: 'Over-the-Counter',
-            data: <?= isset($overCounterData) ? json_encode($overCounterData) : '[]' ?>,
-            borderColor: '#343a40',
-            backgroundColor: 'rgba(52, 58, 64, 0.1)',
-            fill: false,
-            tension: 0.4,
-            pointRadius: 4,
-            pointHoverRadius: 6
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: false // Using custom legend below
-          },
-          tooltip: {
-            mode: 'index',
-            intersect: false,
-          }
+    new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: ['GCash', 'Brgy Payment Device', 'Over-the-Counter'],
+            datasets: [{
+                label: 'Number of ORs',
+                data: <?= json_encode(array_values($paymentMethodCounts)) ?>,
+                backgroundColor: [
+                    '#28a745',  // GCash - green
+                    '#20c997',  // Payment Device - teal
+                    '#343a40'   // Over-the-Counter - dark
+                ],
+                borderWidth: 0,
+                borderRadius: 6
+            }]
         },
-        scales: {
-          x: {
-            grid: {
-              color: 'rgba(0,0,0,0.1)'
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'ORs Created: ' + context.parsed.y;
+                        }
+                    }
+                }
             },
-            ticks: {
-              color: '#6c757d',
-              font: {
-                size: 12
-              }
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: '#6c757d',
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1,
+                        color: '#6c757d',
+                        font: {
+                            size: 12
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0,0,0,0.1)'
+                    }
+                }
             }
-          },
-          y: {
-            beginAtZero: true,
-            grid: {
-              color: 'rgba(0,0,0,0.1)'
-            },
-            ticks: {
-              color: '#6c757d',
-              font: {
-                size: 12
-              }
-            }
-          }
-        },
-        interaction: {
-          mode: 'nearest',
-          axis: 'x',
-          intersect: false
         }
-      }
     });
   }
 });

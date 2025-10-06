@@ -443,7 +443,7 @@ $result = $st->get_result();
             <!-- <php endif; ?> -->
             
             <ul class="dropdown-menu" aria-labelledby="addRequestDropdown">
-              <?php foreach (['Barangay ID','Barangay Clearance','Business Clearance','Good Moral','Guardianship','Indigency','Residency','Solo Parent'] as $type): ?> <!-- ,'Business Permit' -->
+              <?php foreach (['Barangay ID','Barangay Clearance','Business Clearance','First Time Job Seeker','Good Moral','Guardianship','Indigency','Residency','Solo Parent'] as $type): ?> <!-- ,'Business Permit' -->
                 <li>
                   <button type="button" class="dropdown-item request-trigger" data-type="<?= $type ?>"><?= $type ?></button>
                 </li>

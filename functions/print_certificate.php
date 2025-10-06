@@ -7,6 +7,37 @@ if (!$transactionId) {
     die('Transaction ID is required');
 }
 
+function generateBarangayIdNumber($conn, $transactionId) {
+    $currentYear = date('y');
+    
+    // Extract the numeric part after the hyphen (e.g., BRGYID-0000020 -> 0000020)
+    if (strpos($transactionId, '-') !== false) {
+        $parts = explode('-', $transactionId);
+        $numericPart = end($parts); // Get the last part after hyphen
+        
+        // Take only the last 4 digits
+        $sequence = substr($numericPart, -4);
+    } else {
+        // Fallback if format is different
+        preg_match('/(\d{4,})$/', $transactionId, $matches);
+        $sequence = isset($matches[1]) ? substr($matches[1], -4) : '0000';
+    }
+    
+    $barangayIdNumber = sprintf('%s-%s', $currentYear, $sequence);
+    
+    // Update the record with the generated ID number
+    $updateStmt = $conn->prepare("
+        UPDATE barangay_id_requests 
+        SET barangay_id_number = ? 
+        WHERE transaction_id = ? AND barangay_id_number IS NULL
+    ");
+    $updateStmt->bind_param('ss', $barangayIdNumber, $transactionId);
+    $updateStmt->execute();
+    $updateStmt->close();
+    
+    return $barangayIdNumber;
+}
+
 // 1) Find request type via view_request
 $stmt = $conn->prepare("SELECT request_type FROM view_request WHERE transaction_id = ?");
 $stmt->bind_param('s', $transactionId);
@@ -36,7 +67,7 @@ $table = $typeMap[$requestType];
 // 3) Define, per‑table, which columns to select
 $requestFields = [
   'barangay_id_requests' => [
-    'transaction_id', 'request_type', 'transaction_type', 'full_name', 'purok', 'birth_date', 'birth_place', 
+    'transaction_id', 'barangay_id_number', 'request_type', 'transaction_type', 'full_name', 'purok', 'birth_date', 'birth_place', 
     'civil_status', 'religion', 'height', 'weight', 'emergency_contact_person', 'emergency_contact_address', 
     'formal_picture', 'payment_method', 'amount', 'created_at'
   ],
@@ -80,8 +111,13 @@ $dataRes = $rowStmt->get_result();
 if (!$dataRes || $dataRes->num_rows !== 1) {
     die('Record not found');
 }
+
 $data = $dataRes->fetch_assoc();
 $rowStmt->close();
+
+if ($table === 'barangay_id_requests' && empty($data['barangay_id_number'])) {
+    $data['barangay_id_number'] = generateBarangayIdNumber($conn, $transactionId);
+}
 
 // 4.5) Update document_status to 'Released' (or another appropriate status)
 // $updateStmt = $conn->prepare("UPDATE `$table` SET document_status = 'Ready to Release' WHERE transaction_id = ?");

@@ -1,5 +1,7 @@
 <?php
 require_once 'dbconn.php';
+require_once 'gcash_handler.php';
+
 session_start();
 
 if (!($_SESSION['auth'] ?? false)) {
@@ -383,6 +385,60 @@ if (!empty($params)) {
 if (!$stmt->execute()) exit("Insert failed: " . $stmt->error);
 
 $stmt->close();
+
+// --- GCash Payment Integration (only for paid services) ---
+// Check if this is a paid service AND GCash was selected
+$isPaidService = !(strtolower($type) === 'indigency' || strtolower($type) === 'first time job seeker');
+$isGCashPayment = ($postPaymentMethod === 'GCash');
+
+if ($isPaidService && $isGCashPayment) {
+    try {
+        // Determine the amount to charge
+        $amountToCharge = floatval($postPaymentAmount);
+        if ($amountToCharge < 20) {
+            $amountToCharge = 130; // Default certification fee
+        }
+
+        $temporaryAmount = 20.00;
+        
+        $gcashResult = createGCashSource($transactionId, $temporaryAmount);
+        
+        if ($gcashResult['success'] && isset($gcashResult['checkout_url'])) {
+            // Store transaction info in session for security
+            $_SESSION['pending_gcash_transaction'] = $transactionId;
+            $_SESSION['gcash_cert_type'] = $type;
+            
+            // Close connection before redirect
+            $conn->close();
+            
+            // Redirect to GCash checkout
+            header("Location: " . $gcashResult['checkout_url']);
+            exit();
+        } else {
+            // GCash initialization failed
+            $errorMsg = $gcashResult['error'] ?? 'Failed to initialize GCash payment.';
+            $_SESSION['svc_error'] = $errorMsg . ' Please try another payment method.';
+            
+            // Update payment status to failed
+            $stmtFail = $conn->prepare("UPDATE `$table` SET payment_status = 'failed' WHERE transaction_id = ?");
+            $stmtFail->bind_param("s", $transactionId);
+            $stmtFail->execute();
+            $stmtFail->close();
+            
+            $conn->close();
+            header("Location: ../serviceCertification.php");
+            exit();
+        }
+    } catch (Exception $e) {
+        error_log("GCash Integration Error for {$type}: " . $e->getMessage());
+        $_SESSION['svc_error'] = 'Payment system error. Please try another payment method.';
+        $conn->close();
+        header("Location: ../serviceCertification.php");
+        exit();
+    }
+}
+
+// For free services or non-GCash payments, proceed normally
 $conn->close();
 
 header("Location: ../userPanel.php?page=serviceCertification&tid=" . urlencode($transactionId));

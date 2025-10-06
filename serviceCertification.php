@@ -359,7 +359,7 @@ if (!empty($existingRequestRow)) {
 
                         <div class="btn-group btn-group-lg mb-4 flex-wrap justify-content-center" role="group" aria-label="Payment Methods">
                         <!-- GCash -->
-                        <button type="button" class="btn btn-outline-success disabled payment-btn" data-method="GCash">
+                        <button type="button" class="btn btn-outline-success payment-btn" data-method="GCash">
                             <img src="images/gcash_logo.png" alt="GCash" class="mb-2 payment-icon">
                             <span class="label fw-bold">GCash</span>
                         </button>
@@ -385,8 +385,8 @@ if (!empty($existingRequestRow)) {
                             <li>Once redirected to GCash, send exactly <strong>₱130.00</strong>.</li>
                             <li>Confirm your payment.</li>
                             <li>Download or screenshot the confirmation receipt.</li>
-                            <li>After being redirected back to the website, upload the receipt.</li>
-                            <li>Claim your ID at the barangay on your selected claim date.</li>
+                            <li>After being redirected back, your payment will be automatically verified.</li>
+                            <li>Claim your certificate at the barangay on your selected claim date.</li>
                             </ol>
                         </div>
 

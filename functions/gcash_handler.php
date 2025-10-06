@@ -33,9 +33,16 @@ class GCashPaymentHandler {
             
             $amountInCentavos = $amount * 100;
             
-            // Build redirect URLs
-            $successUrl = $this->baseDomain . '/functions/gcash_success.php?transaction_id=' . $transactionId;
-            $failedUrl = $this->baseDomain . '/functions/gcash_failed.php?transaction_id=' . $transactionId;
+            // Build redirect URLs based on transaction type
+            $isCertification = !str_starts_with($transactionId, 'BRGYID-');
+
+            if ($isCertification) {
+                $successUrl = $this->baseDomain . '/functions/gcash_cert_success.php?transaction_id=' . $transactionId;
+                $failedUrl = $this->baseDomain . '/functions/gcash_cert_failed.php?transaction_id=' . $transactionId;
+            } else {
+                $successUrl = $this->baseDomain . '/functions/gcash_success.php?transaction_id=' . $transactionId;
+                $failedUrl = $this->baseDomain . '/functions/gcash_failed.php?transaction_id=' . $transactionId;
+            }
             
             // Log URLs for debugging
             $this->logTransaction('Creating GCash source', [
@@ -411,8 +418,27 @@ class GCashPaymentHandler {
     }
     
     private function updateRequestWithSourceId($transactionId, $sourceId) {
+        // Determine table based on transaction prefix
+        $table = 'barangay_id_requests'; // default
+        
+        $certMap = [
+            'RES-'  => 'residency_requests',
+            'IND-'  => 'indigency_requests',
+            'GM-'   => 'good_moral_requests',
+            'SP-'   => 'solo_parent_requests',
+            'GUA-'  => 'guardianship_requests',
+            'FTJS-' => 'job_seeker_requests',
+        ];
+        
+        foreach ($certMap as $prefix => $tbl) {
+            if (strpos($transactionId, $prefix) === 0) {
+                $table = $tbl;
+                break;
+            }
+        }
+        
         $stmt = $this->conn->prepare("
-            UPDATE barangay_id_requests 
+            UPDATE `$table` 
             SET paymongo_source_id = ? 
             WHERE transaction_id = ?
         ");
@@ -496,4 +522,157 @@ function handleGCashWebhook($payload) {
     global $conn;
     $handler = new GCashPaymentHandler($conn);
     return $handler->handleWebhook($payload);
+}
+
+/**
+ * Handle GCash success for certification requests
+ */
+function handleGCashSuccessForTable($transactionId, $table) {
+    global $conn;
+    
+    try {
+        // Get transaction data
+        $stmt = $conn->prepare("SELECT * FROM `$table` WHERE transaction_id = ? LIMIT 1");
+        $stmt->bind_param("s", $transactionId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if (!$result || $result->num_rows === 0) {
+            return ['success' => false, 'error' => 'Transaction not found.'];
+        }
+        
+        $transactionData = $result->fetch_assoc();
+        $stmt->close();
+        
+        $sourceId = $transactionData['paymongo_source_id'] ?? null;
+        if (!$sourceId) {
+            return ['success' => false, 'error' => 'Payment source not found.'];
+        }
+        
+        // Log the attempt
+        logGCashTransaction('Processing certification payment', [
+            'transaction_id' => $transactionId,
+            'table' => $table,
+            'source_id' => $sourceId
+        ]);
+        
+        // Create handler instance
+        $handler = new GCashPaymentHandler($conn);
+        
+        // Verify source using reflection to access private method
+        $reflection = new ReflectionClass($handler);
+        $method = $reflection->getMethod('makeApiRequest');
+        $method->setAccessible(true);
+        
+        $sourceResponse = $method->invoke($handler, 'GET', "/sources/{$sourceId}");
+        
+        if (!$sourceResponse['success']) {
+            return ['success' => false, 'error' => 'Failed to verify payment status.'];
+        }
+        
+        $sourceData = $sourceResponse['data']['data']['attributes'];
+        
+        logGCashTransaction('Source verification result', [
+            'status' => $sourceData['status'],
+            'transaction_id' => $transactionId
+        ]);
+        
+        if ($sourceData['status'] === 'chargeable') {
+            return createPaymentForTable($transactionId, $sourceId, $sourceData, $transactionData, $table);
+        }
+        
+        return ['success' => false, 'error' => 'Payment not yet completed.'];
+        
+    } catch (Exception $e) {
+        logGCashTransaction('Exception in handleGCashSuccessForTable', [
+            'error' => $e->getMessage(),
+            'transaction_id' => $transactionId,
+            'table' => $table
+        ]);
+        return ['success' => false, 'error' => 'System error processing payment.'];
+    }
+}
+
+/**
+ * Create payment for certification request
+ */
+function createPaymentForTable($transactionId, $sourceId, $sourceData, $transactionData, $table) {
+    global $conn;
+    
+    $handler = new GCashPaymentHandler($conn);
+    
+    $paymentData = [
+        'data' => [
+            'attributes' => [
+                'amount' => $sourceData['amount'],
+                'source' => ['id' => $sourceId, 'type' => 'source'],
+                'currency' => 'PHP',
+                'description' => "Certificate - {$transactionId}"
+            ]
+        ]
+    ];
+    
+    // Use reflection to access private method
+    $reflection = new ReflectionClass($handler);
+    $method = $reflection->getMethod('makeApiRequest');
+    $method->setAccessible(true);
+    
+    $paymentResponse = $method->invoke($handler, 'POST', '/payments', $paymentData);
+    
+    if ($paymentResponse['success']) {
+        $paymentResult = $paymentResponse['data']['data'];
+        $paymentId = $paymentResult['id'];
+        $status = $paymentResult['attributes']['status'] ?? 'pending';
+        $gcashRef = $paymentResult['attributes']['source']['id'] ?? 'GCASH-' . strtoupper(uniqid());
+        
+        $finalStatus = ($status === 'paid') ? 'paid' : 'processing';
+        
+        // Update database
+        $stmt = $conn->prepare("
+            UPDATE `$table` 
+            SET payment_status = ?,
+                paymongo_payment_id = ?,
+                gcash_reference = ?
+            WHERE transaction_id = ?
+        ");
+        $stmt->bind_param("ssss", $finalStatus, $paymentId, $gcashRef, $transactionId);
+        $stmt->execute();
+        $stmt->close();
+        
+        logGCashTransaction('Payment created for certification', [
+            'payment_id' => $paymentId,
+            'reference' => $gcashRef,
+            'status' => $finalStatus,
+            'transaction_id' => $transactionId,
+            'table' => $table
+        ]);
+        
+        return [
+            'success' => true,
+            'message' => 'Payment processed successfully.',
+            'payment_id' => $paymentId,
+            'reference' => $gcashRef
+        ];
+    }
+    
+    logGCashTransaction('Payment creation failed for certification', [
+        'error' => $paymentResponse['error'] ?? 'Unknown error',
+        'transaction_id' => $transactionId,
+        'table' => $table
+    ]);
+    
+    return ['success' => false, 'error' => 'Failed to process payment.'];
+}
+
+/**
+ * Helper function to log GCash transactions
+ */
+function logGCashTransaction($message, $data) {
+    $logDir = __DIR__ . '/../logs';
+    if (!is_dir($logDir)) {
+        mkdir($logDir, 0755, true);
+    }
+    
+    $logEntry = date('Y-m-d H:i:s') . " - " . $message . " - " . json_encode($data) . "\n";
+    file_put_contents($logDir . '/gcash_payments.log', $logEntry, FILE_APPEND | LOCK_EX);
 }

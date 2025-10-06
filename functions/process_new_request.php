@@ -99,7 +99,7 @@ switch($requestType) {
     }
 
     // 3) Generate next transaction_id
-    $prefix = 'BRGYID-';
+    $prefix = 'BID-'; // BRGYID
     $num = 1;
     $stmt = $conn->prepare("SELECT transaction_id FROM barangay_id_requests ORDER BY id DESC LIMIT 1");
     if ($stmt) {
@@ -295,7 +295,7 @@ switch($requestType) {
     } else {
       $num = 1;
     }
-    $transactionId = sprintf('GM-%07d', $num);
+    $transactionId = sprintf('CGM-%07d', $num); // GM
     $stmt->close();
 
     // 3) Insert into good_moral_requests
@@ -553,7 +553,7 @@ switch($requestType) {
     } else {
       $num = 1;
     }
-    $transactionId = sprintf('SP-%07d', $num);
+    $transactionId = sprintf('CSP-%07d', $num); // SP
     $stmt->close();
 
     // 5) Insert into solo_parent_requests with children as JSON
@@ -598,6 +598,18 @@ switch($requestType) {
     // 7) Redirect back to superAdminPanel
     header("Location: ../{$redirectBase}?page={$redirectPage}&transaction_id={$transactionId}");
     exit();
+    break;
+
+  case 'Barangay Clearance':
+    // TODO: Barangay Clearance
+    break;
+
+  case 'Business Clearance':
+    // TODO: Business Clearance
+    break;
+
+  case 'First Time Job Seeker':
+    // TODO: First Time Job Seeker
     break;
 
   default:

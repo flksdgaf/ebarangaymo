@@ -70,6 +70,9 @@ $candidateTables = [
     'indigency_requests',
     'residency_requests',
     'solo_parent_requests',
+    'barangay_clearance_requests',
+    'business_clearance_requests',
+    'job_seeker_requests'
 ];
 
 $updated = false;

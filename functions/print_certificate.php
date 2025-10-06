@@ -58,6 +58,10 @@ $typeMap = [
     'Indigency'         => 'indigency_requests',
     'Residency'         => 'residency_requests',
     'Solo Parent'       => 'solo_parent_requests',
+    'Barangay Clearance' => 'barangay_clearance_requests',
+    'Business Clearance' => 'business_clearance_requests',
+    'First Time Job Seeker' => 'job_seeker_requests'
+
 ];
 if (!isset($typeMap[$requestType])) {
     die('Unknown request type');
@@ -94,6 +98,19 @@ $requestFields = [
     'transaction_id', 'request_type', 'full_name', 'civil_status', 'age', 'sex', 'purok', 'years_solo_parent', 
     'children_data', 'purpose', 'payment_method', 'amount', 'created_at'
   ],
+  'barangay_clearance_requests' => [
+    'transaction_id', 'request_type', 'full_name', 'street', 'purok', 'barangay', 'municipality', 'province',
+    'birth_date', 'age', 'birth_place', 'marital_status', 'remarks', 'ctc_number', 'date_issued', 'place_issued', 
+    'amount', 'or_number', 'purpose', 'picture', 'payment_method', 'created_at'
+  ],
+  'business_clearance_requests' => [
+    'transaction_id', 'request_type', 'full_name', 'purok', 'barangay', 'municipality', 'province', 'age', 'marital_status', 
+    'business_name', 'business_type', 'address', 'ctc_number', 'date_issued', 'place_issued', 'amount', 'or_number', 'picture',
+    'payment_method', 'created_at'
+  ],
+  'job_seeker_requests' => [
+    'transaction_id', 'request_type', 'full_name', 'age', 'civil_status', 'purok', 'created_at'
+  ]
 ];
 
 if (!isset($requestFields[$table])) {

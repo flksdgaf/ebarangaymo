@@ -910,6 +910,67 @@ $result = $st->get_result();
               </div>
             </template>
 
+            <!-- FIRST TIME JOB SEEKER TEMPLATE -->
+            <template id="tpl-First Time Job Seeker">
+              <div class="row gy-2">
+                <!-- Section Title: Personal Details -->
+                <div class="col-12">
+                  <h6 class="fw-bold fs-5" style="color: #13411F;">Personal Details</h6>
+                  <hr class="my-2">
+                </div>
+                
+                <!-- Row 1: Full Name -->
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">First Name</label>
+                  <input name="first_time_job_seeker_first_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
+                  <input name="first_time_job_seeker_middle_name" type="text" class="form-control form-control-sm">
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Last Name</label>
+                  <input name="first_time_job_seeker_last_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
+                  <input name="first_time_job_seeker_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
+                </div>
+
+                <!-- Row 2: Age & Civil Status -->
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Age</label>
+                  <input name="first_time_job_seeker_age" type="number" min="0" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Civil Status</label>
+                  <select name="first_time_job_seeker_civil_status" class="form-select form-select-sm" required>
+                    <option value="">Select…</option>
+                    <option>Single</option>
+                    <option>Married</option>
+                    <option>Divorced</option>
+                    <option>Separated</option>
+                    <option>Widowed</option>
+                  </select>
+                </div>
+
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Purok</label>
+                  <div class="d-flex gap-2">
+                    <select name="first_time_job_seeker_purok" class="form-select form-select-sm" required>
+                      <option value="">Select…</option>
+                      <option>Purok 1</option>
+                      <option>Purok 2</option>
+                      <option>Purok 3</option>
+                      <option>Purok 4</option>
+                      <option>Purok 5</option>
+                      <option>Purok 6</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </template>
+
             <!-- GOOD MORAL TEMPLATE -->
             <template id="tpl-Good Moral">
               <div class="row gy-2">

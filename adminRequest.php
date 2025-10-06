@@ -127,6 +127,7 @@ if ($processing_type !== '' && $processing_type !== 'Official Receipt Logs') {
                 $whereClauses[] = "(
                     (r.request_source = 'Walk-In' AND r.payment_method = 'Over-the-Counter')
                     OR (r.request_type = 'Indigency' AND r.request_source = 'Walk-In')
+                    OR (r.request_type = 'First Time Job Seeker' AND r.request_source = 'Walk-In')
                 )";
             } else {
                 // Treasurer / default: show Walk-In or Online but only Over-the-Counter (or NULL).
@@ -135,6 +136,7 @@ if ($processing_type !== '' && $processing_type !== 'Official Receipt Logs') {
                     ((r.request_source = 'Walk-In' OR r.request_source = 'Online')
                       AND (r.payment_method = 'Over-the-Counter' OR r.payment_method IS NULL))
                     OR (r.request_type = 'Indigency' AND r.request_source = 'Walk-In')
+                    OR (r.request_type = 'First Time Job Seeker' AND r.request_source = 'Walk-In')
                 )";
             }
             break;
@@ -146,6 +148,7 @@ if ($processing_type !== '' && $processing_type !== 'Official Receipt Logs') {
                 $whereClauses[] = "(
                     (r.request_source = 'Online' AND r.payment_method IN ('Over-the-Counter','Brgy Payment Device','GCash'))
                     OR (r.request_type = 'Indigency' AND r.request_source = 'Online')
+                    OR (r.request_type = 'First Time Job Seeker' AND r.request_source = 'Online')
                 )";
             } else {
                 // Treasurer / default: show Online + GCash ONLY (do NOT include Indigency here)
@@ -372,7 +375,10 @@ $result = $st->get_result();
                 <select name="request_type" class="form-select form-select-sm" style="font-size:.75rem;">
                   <option value="">All</option>
                   <option <?= $request_type==='Barangay ID'?'selected':''?> value="Barangay ID">Barangay ID</option>
-                  <option <?= $request_type==='Business Permit'?'selected':''?> value="Business Permit">Business Permit</option>
+                  <!-- <option <= $request_type==='Business Permit'?'selected':''?> value="Business Permit">Business Permit</option> -->
+                  <option <?= $request_type==='Barangay Clearance'?'selected':''?> value="Barangay Clearance">Barangay Clearance</option>
+                  <option <?= $request_type==='Business Clearance'?'selected':''?> value="Business Clearance">Business Clearance</option>
+                  <option <?= $request_type==='First Time Job Seeker'?'selected':''?> value="First Time Job Seeker">First Time Job Seeker</option>
                   <option <?= $request_type==='Good Moral'?'selected':''?> value="Good Moral">Good Moral</option>
                   <option <?= $request_type==='Guardianship'?'selected':''?> value="Guardianship">Guardianship</option>
                   <option <?= $request_type==='Indigency'?'selected':''?> value="Indigency">Indigency</option>
@@ -1994,7 +2000,22 @@ document.addEventListener('DOMContentLoaded', () => {
       { title: 'Personal Information', fields: ['full_name','age','civil_status','purok','years_solo_parent'] },
       { title: 'Child Information', fields: ['child_name','child_age','child_sex'] },
       { title: 'Request Details', fields: ['purpose','transaction_id','request_type','payment_method','created_at'] }, //'amount',
-    ]
+    ],
+
+    barangay_clearance_requests: [
+      { title: 'Personal Information', fields: ['full_name','age','civil_status','purok'] },
+      { title: 'Request Details', fields: ['transaction_id','request_type','created_at'] }
+    ],
+
+    business_clearance_requests: [
+      { title: 'Personal Information', fields: ['full_name','age','civil_status','purok'] },
+      { title: 'Request Details', fields: ['transaction_id','request_type','created_at'] }
+    ],
+
+    job_seeker_requests: [
+      { title: 'Personal Information', fields: ['full_name','age','civil_status','purok'] },
+      { title: 'Request Details', fields: ['transaction_id','request_type','created_at'] }
+    ],
   };
 
   // small helpers

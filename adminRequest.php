@@ -122,7 +122,7 @@ if ($processing_type !== '' && $processing_type !== 'Official Receipt Logs') {
     switch ($processing_type) {
         case 'Walk-In':
             // Walk-In pane: show Walk-In + Over-the-Counter.
-            // Include Indigency ONLY if its source is Walk-In.
+            // Include Indigency AND First Time Job Seeker (both free services).
             if ($isAdminView) {
                 $whereClauses[] = "(
                     (r.request_source = 'Walk-In' AND r.payment_method = 'Over-the-Counter')
@@ -131,12 +131,11 @@ if ($processing_type !== '' && $processing_type !== 'Official Receipt Logs') {
                 )";
             } else {
                 // Treasurer / default: show Walk-In or Online but only Over-the-Counter (or NULL).
-                // Still include Indigency only when its source is Walk-In.
+                // EXCLUDE Indigency and First Time Job Seeker (free services, no OR needed)
                 $whereClauses[] = "(
                     ((r.request_source = 'Walk-In' OR r.request_source = 'Online')
                       AND (r.payment_method = 'Over-the-Counter' OR r.payment_method IS NULL))
-                    OR (r.request_type = 'Indigency' AND r.request_source = 'Walk-In')
-                    OR (r.request_type = 'First Time Job Seeker' AND r.request_source = 'Walk-In')
+                    AND r.request_type NOT IN ('Indigency', 'First Time Job Seeker')
                 )";
             }
             break;
@@ -151,8 +150,13 @@ if ($processing_type !== '' && $processing_type !== 'Official Receipt Logs') {
                     OR (r.request_type = 'First Time Job Seeker' AND r.request_source = 'Online')
                 )";
             } else {
-                // Treasurer / default: show Online + GCash ONLY (do NOT include Indigency here)
-                $whereClauses[] = "(r.request_source = 'Online' AND r.payment_method = 'GCash')";
+                // Treasurer / default: show Online + GCash ONLY
+                // EXCLUDE Indigency and First Time Job Seeker (free services, no OR needed)
+                $whereClauses[] = "(
+                    r.request_source = 'Online' 
+                    AND r.payment_method = 'GCash'
+                    AND r.request_type NOT IN ('Indigency', 'First Time Job Seeker')
+                )";
             }
             break;
 
@@ -1825,9 +1829,14 @@ $result = $st->get_result();
                           $docStatus = $row['document_status'] ?? '';
                           $payMethod = $row['payment_method'] ?? '';
                           $payStatus = $row['payment_status'] ?? '';
+                          $requestType = $row['request_type'] ?? '';
                           $accepted = in_array($docStatus, ['Processing','Ready to Release'], true);
+                          
+                          // Free services that don't need OR
+                          $freeServices = ['Indigency', 'First Time Job Seeker'];
+                          $isFreeService = in_array($requestType, $freeServices, true);
                         ?>
-                        <?php if (! $accepted): ?>
+                        <?php if (! $accepted || $isFreeService): ?>
                           <span class="text-muted small">—</span>
                         <?php else: ?>
                           <?php if ($payMethod === 'Over-the-Counter' || $payMethod === null || $payMethod === ''): ?>

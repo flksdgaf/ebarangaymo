@@ -239,7 +239,7 @@ $createdAt = date('Y-m-d H:i:s');
 $updatedAt = $createdAt;
 $paymentStatus = 'Pending';
 $documentStatus = isset($_POST['document_status']) && $_POST['document_status'] !== '' ? trim($_POST['document_status']) : 'For Verification';
-$amount = (isset($_POST['amount']) && $_POST['amount'] !== '') ? floatval($_POST['amount']) : 100.00;
+$amount = (isset($_POST['amount']) && $_POST['amount'] !== '') ? floatval($_POST['amount']) : 20.00;
 $requestType = 'Barangay ID';
 
 // Map column -> value

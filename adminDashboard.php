@@ -542,13 +542,13 @@ if ($queryString) {
     <!-- Treasurer's Dashboard -->
     <div class="row g-4 mb-4">
         <!-- Stats Cards Row -->
-        <div class="col-md-3 col-sm-6">
+        <!-- <div class="col-md-3 col-sm-6">
             <div class="card shadow-sm text-center p-3">
                 <span class="material-symbols-outlined fs-2 text-success">today</span>
-                <h2 class="fw-bold">₱<?= number_format($todayCollection, 2) ?></h2>
+                <h2 class="fw-bold">₱<= number_format($todayCollection, 2) ?></h2>
                 <p class="text-muted">Today's Collection</p>
             </div>
-        </div>
+        </div> -->
         
         <!-- <div class="col-md-3 col-sm-6">
             <div class="card shadow-sm text-center p-3">

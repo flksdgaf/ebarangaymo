@@ -455,66 +455,88 @@ if ($queryString) {
 
   <?php elseif ($currentRole === 'Brgy Treasurer'): ?>
     <?php
-    // Get today's date for filtering
+    // Get current date ranges
     $today = date('Y-m-d');
+    $monthStart = date('Y-m-01'); // First day of current month
+    $monthEnd = date('Y-m-t');   // Last day of current month
     
-    // Count online payments (assuming payment_method contains 'online', 'gcash', etc.)
-    $onlineCount = 0;
-    $onlineResult = $conn->query("SELECT COUNT(*) as count FROM view_dashboard WHERE payment_method IN ('GCash', 'PayMaya', 'Online Banking', 'Credit Card') AND DATE(created_at) = '{$today}'");
-    if ($onlineResult) {
-        $onlineCount = $onlineResult->fetch_assoc()['count'];
-    }
-    
-    // Count walk-in payments (assuming payment_method is 'Cash' or 'Walk-in')
-    $walkinCount = 0;
-    $walkinResult = $conn->query("SELECT COUNT(*) as count FROM view_dashboard WHERE payment_method IN ('Cash', 'Walk-in') AND DATE(created_at) = '{$today}'");
-    if ($walkinResult) {
-        $walkinCount = $walkinResult->fetch_assoc()['count'];
-    }
-    
-    // Count QR created (you might need to adjust this based on your QR system)
-    $qrCount = 0;
-    $qrResult = $conn->query("SELECT COUNT(*) as count FROM view_dashboard WHERE payment_method = 'QR Code' AND DATE(created_at) = '{$today}'");
-    if ($qrResult) {
-        $qrCount = $qrResult->fetch_assoc()['count'];
-    }
-    
-    // Calculate today's collection (sum of paid transactions today)
+    // TODAY'S COLLECTION
     $todayCollection = 0;
-    // You'll need to add an amount column to your view_dashboard or calculate from service fees
-    // For now, assuming a base fee structure
-    $collectionResult = $conn->query("SELECT COUNT(*) as count FROM view_dashboard WHERE payment_status = 'Paid' AND DATE(created_at) = '{$today}'");
-    if ($collectionResult) {
-        $paidCount = $collectionResult->fetch_assoc()['count'];
-        $todayCollection = $paidCount * 10; // Assuming 10 pesos average per service
+    $todayQuery = "
+        SELECT COALESCE(SUM(amount), 0) as total 
+        FROM view_dashboard 
+        WHERE payment_status = 'Paid' 
+        AND DATE(created_at) = '{$today}'
+    ";
+    $todayResult = $conn->query($todayQuery);
+    if ($todayResult) {
+        $todayCollection = $todayResult->fetch_assoc()['total'];
     }
     
-    // Get recent payment methods data for line graph (last 7 days)
-    $paymentMethodsData = [];
-    $gcashData = [];
-    $paymentDeviceData = [];
-    $overCounterData = [];
-    $dates = [];
+    // THIS MONTH'S COLLECTION
+    $monthCollection = 0;
+    $monthQuery = "
+        SELECT COALESCE(SUM(amount), 0) as total 
+        FROM view_dashboard 
+        WHERE payment_status = 'Paid' 
+        AND DATE(created_at) BETWEEN '{$monthStart}' AND '{$monthEnd}'
+    ";
+    $monthResult = $conn->query($monthQuery);
+    if ($monthResult) {
+        $monthCollection = $monthResult->fetch_assoc()['total'];
+    }
+    
+    // TOTAL COLLECTIONS (ALL TIME)
+    $totalCollection = 0;
+    $totalQuery = "
+        SELECT COALESCE(SUM(amount), 0) as total 
+        FROM view_dashboard 
+        WHERE payment_status = 'Paid'
+    ";
+    $totalResult = $conn->query($totalQuery);
+    if ($totalResult) {
+        $totalCollection = $totalResult->fetch_assoc()['total'];
+    }
+    
+    // PENDING PAYMENTS (Revenue not yet collected)
+    $pendingPayments = 0;
+    $pendingQuery = "
+        SELECT COALESCE(SUM(amount), 0) as total 
+        FROM view_dashboard 
+        WHERE payment_status = 'Unpaid'
+    ";
+    $pendingResult = $conn->query($pendingQuery);
+    if ($pendingResult) {
+        $pendingPayments = $pendingResult->fetch_assoc()['total'];
+    }
+    
+    // DAILY COLLECTIONS FOR LAST 7 DAYS (for line graph)
+    $dailyCollections = [];
+    $collectionDates = [];
     
     for ($i = 6; $i >= 0; $i--) {
         $date = date('Y-m-d', strtotime("-{$i} days"));
-        $dates[] = date('M d', strtotime($date));
+        $collectionDates[] = date('M d', strtotime($date));
         
-        // GCash payments
-        $gcashResult = $conn->query("SELECT COUNT(*) as count FROM view_dashboard WHERE payment_method = 'GCash' AND DATE(created_at) = '{$date}'");
-        $gcashData[] = $gcashResult ? $gcashResult->fetch_assoc()['count'] : 0;
-        
-        // Payment Device (assuming PayMaya, Online Banking, etc.)
-        $deviceResult = $conn->query("SELECT COUNT(*) as count FROM view_dashboard WHERE payment_method IN ('PayMaya', 'Online Banking', 'Credit Card') AND DATE(created_at) = '{$date}'");
-        $paymentDeviceData[] = $deviceResult ? $deviceResult->fetch_assoc()['count'] : 0;
-        
-        // Over-the-Counter (Cash payments)
-        $counterResult = $conn->query("SELECT COUNT(*) as count FROM view_dashboard WHERE payment_method = 'Cash' AND DATE(created_at) = '{$date}'");
-        $overCounterData[] = $counterResult ? $counterResult->fetch_assoc()['count'] : 0;
+        $dailyQuery = "
+            SELECT COALESCE(SUM(amount), 0) as total 
+            FROM view_dashboard 
+            WHERE payment_status = 'Paid' 
+            AND DATE(created_at) = '{$date}'
+        ";
+        $dailyResult = $conn->query($dailyQuery);
+        $dailyCollections[] = $dailyResult ? $dailyResult->fetch_assoc()['total'] : 0;
     }
     
-    // Get pending ORs (Official Receipts) - transactions that are paid but not yet released
-    $pendingORsResult = $conn->query("SELECT transaction_id, full_name, request_type, payment_method, payment_status FROM view_dashboard WHERE payment_status = 'Paid' AND document_status != 'Released' ORDER BY created_at DESC LIMIT 10");
+    // Get pending ORs for table
+    $pendingORsResult = $conn->query("
+        SELECT transaction_id, full_name, request_type, payment_method, payment_status, amount 
+        FROM view_dashboard 
+        WHERE payment_status = 'Paid' 
+        AND document_status != 'Released' 
+        ORDER BY created_at DESC 
+        LIMIT 10
+    ");
     ?>
     
     <!-- Treasurer's Dashboard -->
@@ -522,35 +544,35 @@ if ($queryString) {
         <!-- Stats Cards Row -->
         <div class="col-md-3 col-sm-6">
             <div class="card shadow-sm text-center p-3">
-                <span class="material-symbols-outlined fs-2 text-success">smartphone</span>
-                <h2 class="fw-bold"><?= number_format($onlineCount) ?></h2>
-                <p class="text-muted">Online</p>
-            </div>
-        </div>
-        
-        <div class="col-md-3 col-sm-6">
-            <div class="card shadow-sm text-center p-3">
-                <span class="material-symbols-outlined fs-2 text-success">store</span>
-                <h2 class="fw-bold"><?= number_format($walkinCount) ?></h2>
-                <p class="text-muted">Walk-In</p>
-            </div>
-        </div>
-        
-        <div class="col-md-3 col-sm-6">
-            <div class="card shadow-sm text-center p-3">
-                <span class="material-symbols-outlined fs-2 text-success">qr_code</span>
-                <h2 class="fw-bold"><?= number_format($qrCount) ?></h2>
-                <p class="text-muted">QR Created</p>
-            </div>
-        </div>
-        
-        <div class="col-md-3 col-sm-6">
-            <div class="card shadow-sm text-center p-3">
-                <span class="material-symbols-outlined fs-2 text-success">payments</span>
+                <span class="material-symbols-outlined fs-2 text-success">today</span>
                 <h2 class="fw-bold">₱<?= number_format($todayCollection, 2) ?></h2>
                 <p class="text-muted">Today's Collection</p>
             </div>
         </div>
+        
+        <!-- <div class="col-md-3 col-sm-6">
+            <div class="card shadow-sm text-center p-3">
+                <span class="material-symbols-outlined fs-2 text-success">calendar_month</span>
+                <h2 class="fw-bold">₱<= number_format($monthCollection, 2) ?></h2>
+                <p class="text-muted">This Month</p>
+            </div>
+        </div> -->
+        
+        <div class="col-md-3 col-sm-6">
+            <div class="card shadow-sm text-center p-3">
+                <span class="material-symbols-outlined fs-2 text-success">account_balance</span>
+                <h2 class="fw-bold">₱<?= number_format($totalCollection, 2) ?></h2>
+                <p class="text-muted">Total Collections</p>
+            </div>
+        </div>
+        
+        <!-- <div class="col-md-3 col-sm-6">
+            <div class="card shadow-sm text-center p-3">
+                <span class="material-symbols-outlined fs-2 text-warning">pending_actions</span>
+                <h2 class="fw-bold">₱<= number_format($pendingPayments, 2) ?></h2>
+                <p class="text-muted">Pending Payments</p>
+            </div>
+        </div> -->
     </div>
     
     <!-- Chart Section -->

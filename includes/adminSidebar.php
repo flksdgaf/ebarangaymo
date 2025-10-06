@@ -62,14 +62,14 @@ $menuItems = [
     'href' => 'adminEquipmentBorrowing.php',
     'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad']
   ],
-  // [
-  //   'id' => 'adminComplaints',
-  //   // 'label' => 'Blotter & Complaints',
-  //   'label' => ($_SESSION['loggedInUserRole'] === 'Brgy Treasurer') ? 'Complaint Transactions' : 'Blotter & Complaints',
-  //   'icon' => 'gavel',
-  //   'href' => 'adminComplaints.php',
-  //   'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Treasurer','Lupon Tagapamayapa']
-  // ],
+  [
+    'id' => 'adminComplaints',
+    // 'label' => 'Blotter & Complaints',
+    'label' => ($_SESSION['loggedInUserRole'] === 'Brgy Treasurer') ? 'Complaint Transactions' : 'Blotter & Complaints',
+    'icon' => 'gavel',
+    'href' => 'adminComplaints.php',
+    'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Treasurer','Lupon Tagapamayapa']
+  ],
   [
     'id' => 'adminResidents',
     'label' => 'Residents',
@@ -100,7 +100,6 @@ $menuItems = [
   //   'href' => 'adminCollections.php',
   //   'roles' => ['Brgy Treasurer','Brgy Bookkeeper'] // limited access as requested
   // ],
-
   [
     'id' => 'adminTransactions',
     'label' => 'Generate Reports',

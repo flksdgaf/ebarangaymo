@@ -188,7 +188,7 @@ $reportTypes = ['All','Barangay ID', 'Business Permit', 'Good Moral', 'Guardians
     </div> -->
 
     <!-- Katarungang Pambarangay Reports -->
-    <!-- <div class="accordion-item">
+    <div class="accordion-item">
       <h2 class="accordion-header" id="headingKP">
         <button class="accordion-button collapsed text-success fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseKP" aria-expanded="false" aria-controls="collapseKP">
           Katarungang Pambarangay Reports
@@ -197,14 +197,14 @@ $reportTypes = ['All','Barangay ID', 'Business Permit', 'Good Moral', 'Guardians
       <div id="collapseKP" class="accordion-collapse collapse" aria-labelledby="headingKP" data-bs-parent="#adminAccordion">
         <div class="accordion-body p-0">
           <div class="card border-0">
-            <div class="card-body"> -->
+            <div class="card-body">
               <!-- TODO: Add KP report filters and form here -->
-              <!-- <p class="text-muted mb-0">No filters or report options available yet.</p>
+              <p class="text-muted mb-0">No filters or report options available yet.</p>
             </div>
           </div>
         </div>
       </div>
-    </div> -->
+    </div>
 
   </div>
 </div>

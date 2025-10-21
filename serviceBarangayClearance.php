@@ -204,6 +204,27 @@ if (!empty($existingRequest)) {
 @media (max-width: 575.98px) {
     .claim-grid .col-sm-6 { flex: 0 0 100%; max-width: 100%; }
 }
+
+/* Camera Modal Styles */
+#cameraStream {
+    max-height: 400px;
+    object-fit: cover;
+    background: #000;
+}
+
+#photoCanvas {
+    max-height: 400px;
+    border: 2px solid #198754;
+}
+
+#cameraView button, #previewView button {
+    min-width: 140px;
+}
+
+.material-symbols-outlined {
+    vertical-align: middle;
+    font-size: 20px;
+}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -389,17 +410,38 @@ if (!empty($existingRequest)) {
                 </div>
 
                 <!-- OPTIONAL: Picture (not required unless you want) -->
-                <div class="row mb-2">
-                <label class="col-md-4 text-start fw-bold">Formal Picture <span class="small text-muted">(Optional)</span></label>
-                <div class="col-md-8">
-                    <input type="file" id="picture" name="picture"
-                        class="form-control custom-input"
-                        accept="image/*">
-                        <!-- NEW NOTE: ensure picture is recent -->
-                        <small class="form-text text-muted mt-1">
-                            Please ensure the picture is a recent/updated photo — clear, front-facing, with a plain background and no heavy filters.
+                <div class="row mb-3">
+                    <label class="col-md-4 text-start fw-bold">Formal Picture <span class="small text-muted">(Optional)</span></label>
+                    <div class="col-md-8">
+                        <div class="d-flex gap-2 align-items-start flex-wrap">
+                            <!-- Hidden file input -->
+                            <input type="file" id="picture" name="picture"
+                                class="form-control custom-input d-none"
+                                accept="image/*">
+                            
+                            <!-- Camera Button -->
+                            <button type="button" id="openCameraBtn" class="btn btn-outline-success">
+                                <span class="material-symbols-outlined">photo_camera</span> Take Photo
+                            </button>
+                            
+                            <!-- Upload Button -->
+                            <button type="button" id="uploadFileBtn" class="btn btn-outline-primary">
+                                <span class="material-symbols-outlined">upload_file</span> Upload File
+                            </button>
+                            
+                            <!-- Preview Container -->
+                            <div id="photoPreviewContainer" class="w-100 mt-2 d-none">
+                                <img id="photoPreview" src="" alt="Photo Preview" class="img-thumbnail" style="max-width: 200px;">
+                                <p class="text-success small mt-1 mb-0">
+                                    <span class="material-symbols-outlined" style="font-size: 16px; vertical-align: middle;">check_circle</span>
+                                    Photo ready for upload
+                                </p>
+                            </div>
+                        </div>
+                        <small class="form-text text-muted mt-1 d-block">
+                            Please ensure the picture is a recent/updated photo – clear, front-facing, with a plain background and no heavy filters.
                         </small>
-                </div>
+                    </div>
                 </div>
 
                 <!-- CLAIM DATE: two-column layout (morning / afternoon) -->
@@ -734,6 +776,43 @@ if (!empty($existingRequest)) {
             </div>
         </div>
     </div>
+
+    <!-- Camera Modal -->
+    <div class="modal fade" id="cameraModal" tabindex="-1" aria-labelledby="cameraModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cameraModalLabel">Take Your Photo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <!-- Camera View -->
+                    <div id="cameraView" class="position-relative">
+                        <video id="cameraStream" autoplay playsinline class="w-100 rounded"></video>
+                        <button type="button" id="captureBtn" class="btn btn-success btn-lg mt-3">
+                            <span class="material-symbols-outlined">photo_camera</span> Capture Photo
+                        </button>
+                    </div>
+                    
+                    <!-- Preview View (hidden initially) -->
+                    <div id="previewView" class="d-none">
+                        <canvas id="photoCanvas" class="w-100 rounded"></canvas>
+                        <div class="mt-3 d-flex gap-2 justify-content-center">
+                            <button type="button" id="retakeBtn" class="btn btn-warning">
+                                <span class="material-symbols-outlined">refresh</span> Retake
+                            </button>
+                            <button type="button" id="uploadPhotoBtn" class="btn btn-success">
+                                <span class="material-symbols-outlined">check_circle</span> Use This Photo
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Error Message -->
+                    <div id="cameraError" class="alert alert-danger d-none mt-3" role="alert"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <?php $initial = $transactionId ? 4 : 1; ?>
@@ -977,6 +1056,139 @@ document.addEventListener('DOMContentLoaded', function(){
                 purposeHidden.value = purposeOther.value.trim();
             } else if(purposeSelect && purposeSelect.value){
                 purposeHidden.value = purposeSelect.value;
+            }
+        });
+    }
+});
+
+// Camera functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const openCameraBtn = document.getElementById('openCameraBtn');
+    const uploadFileBtn = document.getElementById('uploadFileBtn');
+    const fileInput = document.getElementById('picture');
+    const cameraModalElement = document.getElementById('cameraModal');
+    const cameraStream = document.getElementById('cameraStream');
+    const cameraView = document.getElementById('cameraView');
+    const previewView = document.getElementById('previewView');
+    const photoCanvas = document.getElementById('photoCanvas');
+    const cameraError = document.getElementById('cameraError');
+    const captureBtn = document.getElementById('captureBtn');
+    const retakeBtn = document.getElementById('retakeBtn');
+    const uploadPhotoBtn = document.getElementById('uploadPhotoBtn');
+    const photoPreview = document.getElementById('photoPreview');
+    const photoPreviewContainer = document.getElementById('photoPreviewContainer');
+    
+    let stream = null;
+    let cameraModal = null;
+
+    function initModal() {
+        if (!cameraModal && cameraModalElement) {
+            cameraModal = new bootstrap.Modal(cameraModalElement);
+        }
+        return cameraModal;
+    }
+
+    if (openCameraBtn) {
+        openCameraBtn.addEventListener('click', async function() {
+            const modal = initModal();
+            if (!modal) return;
+            
+            modal.show();
+            cameraView.classList.remove('d-none');
+            previewView.classList.add('d-none');
+            cameraError.classList.add('d-none');
+            
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'user', width: 1280, height: 720 } 
+                });
+                cameraStream.srcObject = stream;
+            } catch (err) {
+                cameraError.textContent = 'Unable to access camera. Please check permissions or use the upload option.';
+                cameraError.classList.remove('d-none');
+                console.error('Camera error:', err);
+            }
+        });
+    }
+
+    if (captureBtn) {
+        captureBtn.addEventListener('click', function() {
+            const context = photoCanvas.getContext('2d');
+            photoCanvas.width = cameraStream.videoWidth;
+            photoCanvas.height = cameraStream.videoHeight;
+            context.drawImage(cameraStream, 0, 0);
+            
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            
+            cameraView.classList.add('d-none');
+            previewView.classList.remove('d-none');
+        });
+    }
+
+    if (retakeBtn) {
+        retakeBtn.addEventListener('click', async function() {
+            previewView.classList.add('d-none');
+            cameraView.classList.remove('d-none');
+            
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'user', width: 1280, height: 720 } 
+                });
+                cameraStream.srcObject = stream;
+            } catch (err) {
+                cameraError.textContent = 'Unable to restart camera.';
+                cameraError.classList.remove('d-none');
+            }
+        });
+    }
+
+    if (uploadPhotoBtn) {
+        uploadPhotoBtn.addEventListener('click', function() {
+            photoCanvas.toBlob(function(blob) {
+                const file = new File([blob], 'camera-photo.jpg', { type: 'image/jpeg' });
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                fileInput.files = dataTransfer.files;
+                
+                photoPreview.src = URL.createObjectURL(blob);
+                photoPreviewContainer.classList.remove('d-none');
+                
+                if (cameraModal) {
+                    cameraModal.hide();
+                }
+            }, 'image/jpeg', 0.9);
+        });
+    }
+
+    if (uploadFileBtn) {
+        uploadFileBtn.addEventListener('click', function() {
+            fileInput.click();
+        });
+    }
+
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+            if (e.target.files && e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    photoPreview.src = event.target.result;
+                    photoPreviewContainer.classList.remove('d-none');
+                };
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+    }
+
+    if (cameraModalElement) {
+        cameraModalElement.addEventListener('hidden.bs.modal', function() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            if (cameraStream) {
+                cameraStream.srcObject = null;
             }
         });
     }

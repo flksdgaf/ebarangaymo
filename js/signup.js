@@ -6,6 +6,102 @@ document.addEventListener("DOMContentLoaded", function () {
     const cancelBtn = document.querySelector(".cancel-btn");
     const nextBtn = document.querySelector(".next-btn");
 
+    // Username availability check
+    const usernameInput = document.getElementById("username");
+    let usernameTimeout;
+
+    // Email availability check
+    const emailInput = document.getElementById("email");
+    let emailTimeout;
+
+    emailInput.addEventListener("input", function() {
+        clearTimeout(emailTimeout);
+        const email = this.value.trim();
+        
+        // Remove any existing feedback
+        const existingFeedback = this.parentElement.querySelector('.email-feedback');
+        if (existingFeedback) {
+            existingFeedback.remove();
+        }
+        
+        // Basic email format check
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) return;
+        
+        emailTimeout = setTimeout(() => {
+            fetch('functions/check_email.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'email=' + encodeURIComponent(email)
+            })
+            .then(response => response.json())
+            .then(data => {
+                const feedback = document.createElement('small');
+                feedback.className = 'email-feedback';
+                feedback.style.display = 'block';
+                feedback.style.marginTop = '5px';
+                feedback.style.fontSize = '0.75rem';
+                
+                if (data.exists) {
+                    feedback.style.color = '#dc3545';
+                    feedback.textContent = '✗ Email already taken';
+                    emailInput.classList.add('is-invalid');
+                } else {
+                    feedback.style.color = '#28a745';
+                    feedback.textContent = '✓ Email available';
+                    emailInput.classList.remove('is-invalid');
+                }
+                
+                emailInput.parentElement.appendChild(feedback);
+            });
+        }, 500);
+    });
+
+    usernameInput.addEventListener("input", function() {
+        clearTimeout(usernameTimeout);
+        const username = this.value.trim();
+        
+        // Remove any existing feedback
+        const existingFeedback = this.parentElement.querySelector('.username-feedback');
+        if (existingFeedback) {
+            existingFeedback.remove();
+        }
+        
+        if (username.length < 3) return;
+        
+        usernameTimeout = setTimeout(() => {
+            fetch('functions/check_username.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'username=' + encodeURIComponent(username)
+            })
+            .then(response => response.json())
+            .then(data => {
+                const feedback = document.createElement('small');
+                feedback.className = 'username-feedback';
+                feedback.style.display = 'block';
+                feedback.style.marginTop = '5px';
+                feedback.style.fontSize = '0.75rem';
+                
+                if (data.exists) {
+                    feedback.style.color = '#dc3545';
+                    feedback.textContent = '✗ Username already taken';
+                    usernameInput.classList.add('is-invalid');
+                } else {
+                    feedback.style.color = '#28a745';
+                    feedback.textContent = '✓ Username available';
+                    usernameInput.classList.remove('is-invalid');
+                }
+                
+                usernameInput.parentElement.appendChild(feedback);
+            });
+        }, 500);
+    });
+
     // Validation function for active step
     function validateActiveStep() {
         let valid = true;
@@ -74,6 +170,20 @@ document.addEventListener("DOMContentLoaded", function () {
             if (!allRulesValid) {
                 valid = false;
                 errorMessages.push("Password does not meet all requirements.");
+            }
+
+            // Check if username is taken
+            const usernameFeedback = document.querySelector('.username-feedback');
+            if (usernameFeedback && usernameFeedback.textContent.includes('taken')) {
+                valid = false;
+                errorMessages.push("Username is already taken. Please choose another one.");
+            }
+
+            // Check if email is taken
+            const emailFeedback = document.querySelector('.email-feedback');
+            if (emailFeedback && emailFeedback.textContent.includes('taken')) {
+                valid = false;
+                errorMessages.push("Email is already taken. Please use another email.");
             }
         }
 

@@ -6,6 +6,7 @@
     <title>E-Barangay Mo</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    <link rel="preload" as="image" href="images/signin_bg.png">
     <link rel="stylesheet" href="styles.css">
     <!-- <link rel="stylesheet" href="about.css"> -->
     <!-- <link rel="stylesheet" href="signinup.css"> -->

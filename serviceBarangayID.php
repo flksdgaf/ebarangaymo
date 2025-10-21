@@ -293,7 +293,9 @@ if (!empty($existingRequest)) {
 
     #photoCanvas {
         max-height: 400px;
+        max-width: 400px;
         border: 2px solid #198754;
+        aspect-ratio: 1 / 1;
     }
 
     #cameraView button, #previewView button {
@@ -1154,9 +1156,31 @@ document.addEventListener('DOMContentLoaded', function() {
     if (captureBtn) {
         captureBtn.addEventListener('click', function() {
             const context = photoCanvas.getContext('2d');
-            photoCanvas.width = cameraStream.videoWidth;
-            photoCanvas.height = cameraStream.videoHeight;
-            context.drawImage(cameraStream, 0, 0);
+            
+            // Get video dimensions
+            const videoWidth = cameraStream.videoWidth;
+            const videoHeight = cameraStream.videoHeight;
+            
+            // Calculate square crop (use the smaller dimension)
+            const minDimension = Math.min(videoWidth, videoHeight);
+            
+            // Calculate center crop coordinates
+            const cropX = (videoWidth - minDimension) / 2;
+            const cropY = (videoHeight - minDimension) / 2;
+            
+            // Set canvas to square (e.g., 800x800 for good quality)
+            const outputSize = 800;
+            photoCanvas.width = outputSize;
+            photoCanvas.height = outputSize;
+            
+            // Draw the center-cropped square portion of the video
+            context.drawImage(
+                cameraStream,
+                cropX, cropY,           // Source x, y (start of crop)
+                minDimension, minDimension,  // Source width, height (square crop)
+                0, 0,                   // Destination x, y
+                outputSize, outputSize  // Destination width, height
+            );
             
             // Stop camera stream
             if (stream) {

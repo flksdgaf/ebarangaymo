@@ -468,6 +468,8 @@ $pageTitle = $filterMap[$filter] ?? 'My Requests';
 <link href="https://fonts.googleapis.com/css2?family=Material+Icons+Outlined" rel="stylesheet">
 <link rel="stylesheet" href="panels_user.css">
 
+<title>eBarangay Mo | Requests</title>
+
 <div class="container py-3">
     <div class="card shadow-sm p-3">
         <div class="requests-header">

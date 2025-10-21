@@ -231,7 +231,7 @@ if (!empty($existingRequest)) {
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Business Clearance</title>
+  <title>eBarangay Mo | Business Clearance</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="serviceBusinessClearance.css">

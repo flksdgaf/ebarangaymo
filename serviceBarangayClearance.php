@@ -232,6 +232,8 @@ if (!empty($existingRequest)) {
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
+<title>eBarangay Mo | Barangay Clearance</title>
+
 <div class="container py-4 px-3">
     <div class="progress-container">
         <div class="stepss">

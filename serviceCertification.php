@@ -43,10 +43,10 @@ $stmt->close();
 $map = [
   'Residency'    => ['table'=>'residency_requests',    'prefix'=>'RES-'],
   'Indigency'    => ['table'=>'indigency_requests',    'prefix'=>'IND-'],
-  'Good Moral'   => ['table'=>'good_moral_requests',   'prefix'=>'GM-' ],
-  'Solo Parent'  => ['table'=>'solo_parent_requests',  'prefix'=>'SP-' ],
+  'Good Moral'   => ['table'=>'good_moral_requests',   'prefix'=>'CGM-' ], // GM
+  'Solo Parent'  => ['table'=>'solo_parent_requests',  'prefix'=>'CSP-' ], // SP
   'Guardianship' => ['table'=>'guardianship_requests', 'prefix'=>'GUA-'],
-  'First Time Job Seeker' => ['table'=>'job_seeker_requests', 'prefix'=>'FTJS-'],
+  'First Time Job Seeker' => ['table'=>'job_seeker_requests', 'prefix'=>'FJS-'], // FTJS
 ];
 
 $chosenPayment = '';
@@ -195,6 +195,8 @@ if (!empty($existingRequestRow)) {
 ?>
 <link rel="stylesheet" href="serviceCertification.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<title>eBarangay Mo | Certification</title>
 
 <!-- Minimal claim-specific styles (scoped to this page) -->
 <style>

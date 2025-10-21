@@ -206,6 +206,8 @@ if (!empty($existingRequest)) {
 <link rel="stylesheet" href="serviceBarangayID.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
+<title>eBarangay Mo | Barangay ID</title>
+
 <!-- Minimal claim-specific styles (kept small & scoped) -->
 <style>
     /* claim grid: two columns per date (left: Morning, right: Afternoon) */

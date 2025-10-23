@@ -505,38 +505,46 @@ $result = $st->get_result();
                 <div class="col-12 d-flex align-items-center">
                   <span class="form-label fw-bold mb-2 me-4">Type of Transaction:</span>
                   <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="radio" name="barangay_id_transaction_type" id="txNew" value="New Application" required>
-                    <label class="form-check-label mb-0" for="barangay_id_txNew">New Application</label>
+                    <input class="form-check-input" type="radio" name="barangay_id_transaction_type" id="txNew" value="New Application" checked required>
+                    <label class="form-check-label mb-0" for="txNew">New Application</label>
                   </div>
                   <div class="form-check form-check-inline">
                     <input class="form-check-input" type="radio" name="barangay_id_transaction_type" id="txRenewal" value="Renewal">
-                    <label class="form-check-label mb-0" for="barangay_id_txRenewal">Renewal</label>
+                    <label class="form-check-label mb-0" for="txRenewal">Renewal</label>
                   </div>
+                </div>
+
+                <!-- Search for Existing Record (shown only when Renewal is selected) -->
+                <div class="col-12" id="renewalSearchContainer" style="display: none;">
+                  <label class="form-label fw-bold">Search Existing Record</label>
+                  <input type="text" id="renewalSearchInput" class="form-control form-control-sm" placeholder="Type name to search..." autocomplete="off">
+                  <div id="renewalSearchResults" class="list-group mt-2" style="max-height: 200px; overflow-y: auto;"></div>
+                  <input type="hidden" id="renewalTransactionId" name="renewal_transaction_id">
                 </div>
 
                 <!-- Full Name -->
                 <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">First Name</label>
-                  <input name="barangay_id_first_name" type="text" class="form-control form-control-sm" required>
+                  <input name="barangay_id_first_name" id="bid_first_name" type="text" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
-                  <input name="barangay_id_middle_name" type="text" class="form-control form-control-sm">
+                  <input name="barangay_id_middle_name" id="bid_middle_name" type="text" class="form-control form-control-sm">
                 </div>
                 <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">Last Name</label>
-                  <input name="barangay_id_last_name" type="text" class="form-control form-control-sm" required>
+                  <input name="barangay_id_last_name" id="bid_last_name" type="text" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>          
-                  <input name="barangay_id_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
+                  <input name="barangay_id_suffix" id="bid_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
                 </div>
 
                 <!-- Purok, Birthday & Birth Place -->
                 <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">Purok</label>
                   <div class="d-flex gap-2">
-                    <select name="barangay_id_purok" class="form-select form-select-sm" required>
+                    <select name="barangay_id_purok" id="bid_purok" class="form-select form-select-sm" required>
                       <option value="">Select…</option>
                       <option>Purok 1</option>
                       <option>Purok 2</option>
@@ -549,13 +557,13 @@ $result = $st->get_result();
                 </div>
                 <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">Birthday</label>
-                  <input name="barangay_id_dob" type="date" class="form-control form-control-sm" required>
+                  <input name="barangay_id_dob" id="bid_dob" type="date" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-6">
                   <label class="form-label fw-bold">Birth Place</label>
                   <div class="row">
                     <div class="col">
-                      <input type="text" name="barangay_id_birth_place" class="form-control form-control-sm" placeholder="Municipality / Province" required/>
+                      <input type="text" name="barangay_id_birth_place" id="bid_birth_place" class="form-control form-control-sm" placeholder="Municipality / Province" required/>
                     </div>
                   </div>
                 </div>
@@ -563,7 +571,7 @@ $result = $st->get_result();
                 <!-- Civil Status, Religion, Height & Weight-->
                 <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">Civil Status</label>
-                  <select name="barangay_id_civil_status" class="form-select form-select-sm" required>
+                  <select name="barangay_id_civil_status" id="bid_civil_status" class="form-select form-select-sm" required>
                     <option value="">Select…</option>
                     <option>Single</option>
                     <option>Married</option>
@@ -574,33 +582,32 @@ $result = $st->get_result();
                 </div>
                 <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">Religion</label>
-                  <select name="barangay_id_religion" id="religionSelect" class="form-select form-select-sm" required>
+                  <select name="barangay_id_religion" id="bid_religion" class="form-select form-select-sm" required>
                     <option value="">Select…</option>
                     <option>Roman Catholic</option>
                     <option>Islam</option>
                     <option>Iglesia ni Cristo</option>
                     <option value="Other">Others</option>
                   </select>
-                  <!-- This appears only when “Others” is selected -->
-                  <input name="barangay_id_religion_other" id="religionOtherInput" type="text" class="form-control form-control-sm mt-2 d-none" placeholder="Please specify religion">
+                  <input name="barangay_id_religion_other" id="bid_religion_other" type="text" class="form-control form-control-sm mt-2 d-none" placeholder="Please specify religion">
                 </div>
                 <div class="col-12 col-md-2">
                   <label class="form-label fw-bold">Height (ft)</label>
-                  <input name="barangay_id_height" type="decimal" min="0" class="form-control form-control-sm" required>
+                  <input name="barangay_id_height" id="bid_height" type="number" step="0.01" min="0" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-2">
                   <label class="form-label fw-bold">Weight (kg)</label>
-                  <input name="barangay_id_weight" type="decimal" min="0" class="form-control form-control-sm" required>
+                  <input name="barangay_id_weight" id="bid_weight" type="number" step="0.1" min="0" class="form-control form-control-sm" required>
                 </div>
 
                 <!-- Emergency Contact Person Name & Number -->
                 <div class="col-12 col-md-4">
                   <label class="form-label fw-bold">Emergency Contact Person</label>
-                  <input name="barangay_id_emergency_contact_person" type="text" class="form-control form-control-sm">
+                  <input name="barangay_id_emergency_contact_person" id="bid_emergency_contact" type="text" class="form-control form-control-sm">
                 </div>     
                 <div class="col-12 col-md-4">
                   <label class="form-label fw-bold">Emergency Contact Address</label>
-                  <input name="barangay_id_emergency_contact_address" type="text" class="form-control form-control-sm">
+                  <input name="barangay_id_emergency_contact_address" id="bid_emergency_address" type="text" class="form-control form-control-sm">
                 </div>    
 
                 <!-- Formal Picture -->
@@ -611,8 +618,8 @@ $result = $st->get_result();
                   </div>
                   <label class="form-label fw-bold">1×1 Formal Picture</label>
                   <input id="photoInput" name="barangay_id_photo" type="file" accept="image/*" class="form-control form-control-sm" disabled>
-                  <!-- this will display the existing filename -->
                   <div id="currentPhotoName" class="form-text text-muted d-none"></div>
+                  <input type="hidden" id="bid_existing_photo" name="barangay_id_existing_photo">
                 </div>
               </div>
             </template>
@@ -627,23 +634,27 @@ $result = $st->get_result();
                 </div>
 
                 <!-- Name -->
-                <div class="col-12 col-md-4">
-                  <label class="form-label fw-bold">Last Name</label>
-                  <input name="clearance_last_name" type="text" class="form-control form-control-sm" required>
-                </div>
-                <div class="col-12 col-md-4">
+                <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">First Name</label>
                   <input name="clearance_first_name" type="text" class="form-control form-control-sm" required>
                 </div>
-                <div class="col-12 col-md-4">
+                <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
                   <input name="clearance_middle_name" type="text" class="form-control form-control-sm">
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Last Name</label>
+                  <input name="clearance_last_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
+                  <input name="clearance_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
                 </div>
 
                 <!-- Address: Street, Purok, Barangay -->
                 <div class="col-12 col-md-6">
                   <label class="form-label fw-bold">Street</label>
-                  <input name="clearance_street" type="text" class="form-control form-control-sm" placeholder="Street / Block" required>
+                  <input name="clearance_street" type="text" class="form-control form-control-sm" placeholder="Street / Block">
                 </div>
                 <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">Purok</label>
@@ -659,17 +670,17 @@ $result = $st->get_result();
                 </div>
                 <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">Barangay</label>
-                  <input name="clearance_barangay" type="text" class="form-control form-control-sm" required>
+                  <input name="clearance_barangay" type="text" class="form-control form-control-sm" value="MAGANG" required>
                 </div>
 
                 <!-- Municipality & Province -->
                 <div class="col-12 col-md-6">
                   <label class="form-label fw-bold">Municipality / City</label>
-                  <input name="clearance_municipality" type="text" class="form-control form-control-sm" required>
+                  <input name="clearance_municipality" type="text" class="form-control form-control-sm" value="DAET" required>
                 </div>
                 <div class="col-12 col-md-6">
                   <label class="form-label fw-bold">Province</label>
-                  <input name="clearance_province" type="text" class="form-control form-control-sm" required>
+                  <input name="clearance_province" type="text" class="form-control form-control-sm" value="CAMARINES NORTE" required>
                 </div>
 
                 <!-- Birthdate, Age, Birthplace -->
@@ -710,7 +721,7 @@ $result = $st->get_result();
                 <!-- Formal Picture -->
                 <div class="col-12 col-md-6">
                   <label class="form-label fw-bold">Formal Picture (1×1 / 2×2)</label>
-                  <input id="clearance_photoInput" name="clearance_photo" type="file" accept="image/*" class="form-control form-control-sm">
+                  <input id="clearance_photoInput" name="clearance_photo" type="file" accept="image/*" class="form-control form-control-sm" required>
                   <div id="clearance_currentPhotoName" class="form-text text-muted d-none"></div>
                 </div>
               </div>
@@ -726,17 +737,21 @@ $result = $st->get_result();
                 </div>
 
                 <!-- Name -->
-                <div class="col-12 col-md-4">
-                  <label class="form-label fw-bold">Last Name</label>
-                  <input name="business_last_name" type="text" class="form-control form-control-sm" required>
-                </div>
-                <div class="col-12 col-md-4">
+                <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">First Name</label>
                   <input name="business_first_name" type="text" class="form-control form-control-sm" required>
                 </div>
-                <div class="col-12 col-md-4">
+                <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
                   <input name="business_middle_name" type="text" class="form-control form-control-sm">
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Last Name</label>
+                  <input name="business_last_name" type="text" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
+                  <input name="business_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
                 </div>
 
                 <!-- Address: Purok, Barangay -->
@@ -754,17 +769,17 @@ $result = $st->get_result();
                 </div>
                 <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">Barangay</label>
-                  <input name="business_barangay" type="text" class="form-control form-control-sm" required>
+                  <input name="business_barangay" type="text" class="form-control form-control-sm" value="MAGANG" required>
                 </div>
 
                 <!-- Municipality & Province -->
                 <div class="col-12 col-md-6">
                   <label class="form-label fw-bold">Municipality / City</label>
-                  <input name="business_municipality" type="text" class="form-control form-control-sm" required>
+                  <input name="business_municipality" type="text" class="form-control form-control-sm" value="DAET" required>
                 </div>
                 <div class="col-12 col-md-6">
                   <label class="form-label fw-bold">Province</label>
-                  <input name="business_province" type="text" class="form-control form-control-sm" required>
+                  <input name="business_province" type="text" class="form-control form-control-sm" value="CAMARINES NORTE" required>
                 </div>
 
                 <!-- Age & Marital Status -->
@@ -803,17 +818,12 @@ $result = $st->get_result();
                 <!-- CTC Number & Picture -->
                 <div class="col-12 col-md-6">
                   <label class="form-label fw-bold">CTC Number <small class="fw-normal">(if applicable)</small></label>
-                  <input name="business_ctc_number" type="text" class="form-control form-control-sm" placeholder="CTC No.">
+                  <input name="business_ctc_number" type="number" class="form-control form-control-sm" placeholder="CTC No.">
                 </div>
                 <div class="col-12 col-md-6">
                   <label class="form-label fw-bold">Owner's Picture (1×1 / 2×2)</label>
-                  <input id="business_photoInput" name="business_photo" type="file" accept="image/*" class="form-control form-control-sm">
+                  <input id="business_photoInput" name="business_photo" type="file" accept="image/*" class="form-control form-control-sm" required>
                   <div id="business_currentPhotoName" class="form-text text-muted d-none"></div>
-                </div>
-
-                <!-- Notes / Instructions -->
-                <div class="col-12">
-                  <small class="text-muted">Check that all information is accurate. Provide CTC and photo if required by local policy.</small>
                 </div>
               </div>
             </template>
@@ -1689,7 +1699,7 @@ $result = $st->get_result();
       </form>
     </div>
 
-    <div class="table-responsive admin-table"> <!--  style="height:500px;overflow-y:auto;" -->
+    <div class="table-responsive admin-table"> <!--  style="height:500px;overflow-y:auto;"  -->
       <?php if ($processing_type === 'Official Receipt Logs' && $_SESSION['loggedInUserRole'] === 'Brgy Treasurer'): ?>
 
         <!-- OFFICIAL RECEIPT LOGS TABLE -->
@@ -2613,6 +2623,137 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   })();
+
+  // Barangay ID Renewal Search Functionality
+  let renewalSearchTimeout;
+
+  document.addEventListener('change', (e) => {
+    if (e.target && (e.target.id === 'txNew' || e.target.id === 'txRenewal')) {
+      const isRenewal = document.getElementById('txRenewal').checked;
+      const searchContainer = document.getElementById('renewalSearchContainer');
+      const photoCheckbox = document.getElementById('requirePhotoCheck');
+      const photoInput = document.getElementById('photoInput');
+      
+      if (isRenewal) {
+        searchContainer.style.display = 'block';
+        // For renewal, photo is optional by default
+        if (photoCheckbox) {
+          photoCheckbox.checked = false;
+          photoInput.disabled = true;
+        }
+      } else {
+        searchContainer.style.display = 'none';
+        document.getElementById('renewalSearchInput').value = '';
+        document.getElementById('renewalSearchResults').innerHTML = '';
+        document.getElementById('renewalTransactionId').value = '';
+        clearBarangayIDFields();
+      }
+    }
+  });
+
+  document.addEventListener('input', (e) => {
+    if (e.target && e.target.id === 'renewalSearchInput') {
+      clearTimeout(renewalSearchTimeout);
+      const searchTerm = e.target.value.trim();
+      
+      if (searchTerm.length < 2) {
+        document.getElementById('renewalSearchResults').innerHTML = '';
+        return;
+      }
+      
+      renewalSearchTimeout = setTimeout(() => {
+        fetch(`functions/search_barangay_id.php?search=${encodeURIComponent(searchTerm)}`)
+          .then(res => res.json())
+          .then(data => {
+            const resultsContainer = document.getElementById('renewalSearchResults');
+            resultsContainer.innerHTML = '';
+            
+            if (data.success && data.results.length > 0) {
+              data.results.forEach(record => {
+                const item = document.createElement('button');
+                item.type = 'button';
+                item.className = 'list-group-item list-group-item-action';
+                item.textContent = `${record.full_name} - ${record.transaction_id}`;
+                item.onclick = () => populateBarangayIDFields(record);
+                resultsContainer.appendChild(item);
+              });
+            } else {
+              resultsContainer.innerHTML = '<div class="list-group-item">No records found</div>';
+            }
+          })
+          .catch(err => console.error('Search error:', err));
+      }, 300);
+    }
+  });
+
+  function populateBarangayIDFields(record) {
+    // Parse the full name
+    const nameParts = record.full_name.split(',');
+    let lastName = '', firstName = '', middleName = '', suffix = '';
+    
+    if (nameParts.length >= 2) {
+      const lastNamePart = nameParts[0].trim();
+      const firstMiddlePart = nameParts[1].trim();
+      
+      // Check for suffix in last name part (e.g., "Cruz Jr." or "Santos Sr.")
+      const suffixMatch = lastNamePart.match(/\b(Jr\.?|Sr\.?|III|IV|V)$/i);
+      if (suffixMatch) {
+        suffix = suffixMatch[0];
+        lastName = lastNamePart.replace(suffixMatch[0], '').trim();
+      } else {
+        lastName = lastNamePart;
+      }
+      
+      // Split first and middle name
+      const firstMiddleArr = firstMiddlePart.split(' ');
+      firstName = firstMiddleArr[0] || '';
+      middleName = firstMiddleArr.slice(1).join(' ') || '';
+    }
+    
+    // Populate fields
+    document.getElementById('bid_first_name').value = firstName;
+    document.getElementById('bid_middle_name').value = middleName;
+    document.getElementById('bid_last_name').value = lastName;
+    document.getElementById('bid_suffix').value = suffix;
+    document.getElementById('bid_purok').value = record.purok || '';
+    document.getElementById('bid_dob').value = record.birth_date || '';
+    document.getElementById('bid_birth_place').value = record.birth_place || '';
+    document.getElementById('bid_civil_status').value = record.civil_status || '';
+    document.getElementById('bid_religion').value = record.religion || '';
+    document.getElementById('bid_height').value = record.height || '';
+    document.getElementById('bid_weight').value = record.weight || '';
+    document.getElementById('bid_emergency_contact').value = record.emergency_contact_person || '';
+    document.getElementById('bid_emergency_address').value = record.emergency_contact_address || '';
+    
+    // Store transaction ID and existing photo
+    document.getElementById('renewalTransactionId').value = record.transaction_id;
+    document.getElementById('bid_existing_photo').value = record.formal_picture || '';
+    
+    // Show current photo if exists
+    if (record.formal_picture) {
+      const photoNameDiv = document.getElementById('currentPhotoName');
+      photoNameDiv.textContent = `Current photo: ${record.formal_picture}`;
+      photoNameDiv.classList.remove('d-none');
+    }
+    
+    // Clear search
+    document.getElementById('renewalSearchInput').value = record.full_name;
+    document.getElementById('renewalSearchResults').innerHTML = '';
+  }
+
+  function clearBarangayIDFields() {
+    const fields = ['bid_first_name', 'bid_middle_name', 'bid_last_name', 'bid_suffix', 
+                    'bid_purok', 'bid_dob', 'bid_birth_place', 'bid_civil_status', 
+                    'bid_religion', 'bid_height', 'bid_weight', 'bid_emergency_contact', 
+                    'bid_emergency_address'];
+    fields.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    document.getElementById('renewalTransactionId').value = '';
+    document.getElementById('bid_existing_photo').value = '';
+    document.getElementById('currentPhotoName').classList.add('d-none');
+  }
 
 });
 </script>

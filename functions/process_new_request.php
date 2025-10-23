@@ -22,6 +22,8 @@ $requestType = $_POST['request_type'] ?? '';
 switch($requestType) {
   case 'Barangay ID':
     $transactionType = trim($_POST['barangay_id_transaction_type'] ?? '');
+    $renewalTransactionId = trim($_POST['renewal_transaction_id'] ?? '');
+    $existingPhoto = trim($_POST['barangay_id_existing_photo'] ?? '');
 
     // 1) Collect posted fields
     $fn = trim($_POST['barangay_id_first_name'] ?? '');
@@ -71,7 +73,10 @@ switch($requestType) {
 
     // 2) Handle file upload
     $formalPicName = null;
-    if (!empty($_FILES['barangay_id_photo']['name']) && $_FILES['barangay_id_photo']['error'] === UPLOAD_ERR_OK) {
+    // For renewal: use existing photo if no new photo uploaded
+    if ($transactionType === 'Renewal' && $existingPhoto && empty($_FILES['barangay_id_photo']['name'])) {
+        $formalPicName = $existingPhoto;
+    } elseif (!empty($_FILES['barangay_id_photo']['name']) && $_FILES['barangay_id_photo']['error'] === UPLOAD_ERR_OK) {
         $uploadDir = __DIR__ . '/../barangayIDpictures/';
         if (!is_dir($uploadDir)) {
             if (!mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
@@ -601,15 +606,230 @@ switch($requestType) {
     break;
 
   case 'Barangay Clearance':
-    // TODO: Barangay Clearance
+    // 1) Collect posted fields & assemble full name
+    $fn = trim($_POST['clearance_first_name'] ?? '');
+    $mn = trim($_POST['clearance_middle_name'] ?? '');
+    $ln = trim($_POST['clearance_last_name'] ?? '');
+    $sn = trim($_POST['clearance_suffix'] ?? '');
+    $middlePart = $mn ? " {$mn}" : '';
+    $suffixPart = $sn ? " {$sn}" : '';
+    $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+
+    // 2) Other form inputs
+    $street = trim($_POST['clearance_street'] ?? '');
+    $purok = $_POST['clearance_purok'] ?? '';
+    $barangay = $_POST['clearance_barangay'] ?? 'MAGANG';
+    $municipality = $_POST['clearance_municipality'] ?? 'DAET';
+    $province = $_POST['clearance_province'] ?? 'CAMARINES NORTE';
+    $birthDate = $_POST['clearance_birthdate'] ?? '';
+    $age = (int)($_POST['clearance_age'] ?? 0);
+    $birthPlace = trim($_POST['clearance_birthplace'] ?? '');
+    $maritalStatus = $_POST['clearance_marital_status'] ?? '';
+    $ctcNumber = trim($_POST['clearance_ctc_number'] ?? '');
+    $ctcNumber = $ctcNumber ? (int)$ctcNumber : null;
+    $purpose = trim($_POST['clearance_purpose'] ?? '');
+    $paymentMethod = 'Over-the-Counter';
+    $documentStatus = 'For Verification';
+
+    // 3) Handle file upload
+    $pictureName = null;
+    if (!empty($_FILES['clearance_photo']['name']) && $_FILES['clearance_photo']['error'] === UPLOAD_ERR_OK) {
+        $uploadDir = __DIR__ . '/../clearancePictures/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        $orig = basename($_FILES['clearance_photo']['name']);
+        $ext = pathinfo($orig, PATHINFO_EXTENSION);
+        $allowedExt = ['jpg','jpeg','png','gif'];
+        if (in_array(strtolower($ext), $allowedExt, true)) {
+            $pictureName = 'clr_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . strtolower($ext);
+            $target = $uploadDir . $pictureName;
+            if (!move_uploaded_file($_FILES['clearance_photo']['tmp_name'], $target)) {
+                error_log("Failed to move uploaded file");
+                $pictureName = null;
+            }
+        }
+    }
+
+    // 4) Generate next transaction_id
+    $stmt = $conn->prepare("SELECT transaction_id FROM barangay_clearance_requests ORDER BY id DESC LIMIT 1");
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($res && $res->num_rows === 1) {
+      $lastTid = $res->fetch_assoc()['transaction_id'];
+      $num = intval(substr($lastTid, 4)) + 1;
+    } else {
+      $num = 1;
+    }
+    $transactionId = sprintf('CLR-%07d', $num);
+    $stmt->close();
+
+    // 5) Insert into barangay_clearance_requests
+    $sql = "INSERT INTO barangay_clearance_requests (account_id, transaction_id, full_name, street, purok, barangay, municipality, province, birth_date, age, birth_place, marital_status, ctc_number, purpose, picture, payment_method, document_status, request_source) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'Walk-In')";
+    $ins = $conn->prepare($sql);
+    $ins->bind_param('issssssssssisssss', $userId, $transactionId, $fullName, $street, $purok, $barangay, $municipality, $province, $birthDate, $age, $birthPlace, $maritalStatus, $ctcNumber, $purpose, $pictureName, $paymentMethod, $documentStatus);
+    $ins->execute();
+    $ins->close();
+
+    // 6) Activity logging
+    $admin_roles = ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper'];
+    if (in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
+      $logStmt = $conn->prepare("INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description) VALUES (?,?,?,?,?,?)");
+      $admin_id = $_SESSION['loggedInUserID'];
+      $role = $_SESSION['loggedInUserRole'];
+      $action = 'CREATE';
+      $table_name = 'barangay_clearance_requests';
+      $record_id = $transactionId;
+      $description = 'Created Barangay Clearance Request';
+      $logStmt->bind_param('isssss', $admin_id, $role, $action, $table_name, $record_id, $description);
+      $logStmt->execute();
+      $logStmt->close();
+    }
+
+    // 7) Redirect back
+    header("Location: ../{$redirectBase}?page={$redirectPage}&transaction_id={$transactionId}");
+    exit();
     break;
 
   case 'Business Clearance':
-    // TODO: Business Clearance
+    // 1) Collect posted fields & assemble full name
+    $fn = trim($_POST['business_first_name'] ?? '');
+    $mn = trim($_POST['business_middle_name'] ?? '');
+    $ln = trim($_POST['business_last_name'] ?? '');
+    $sn = trim($_POST['business_suffix'] ?? '');
+    $middlePart = $mn ? " {$mn}" : '';
+    $suffixPart = $sn ? " {$sn}" : '';
+    $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+
+    // 2) Other form inputs
+    $purok = $_POST['business_purok'] ?? '';
+    $barangay = $_POST['business_barangay'] ?? 'MAGANG';
+    $municipality = $_POST['business_municipality'] ?? 'DAET';
+    $province = $_POST['business_province'] ?? 'CAMARINES NORTE';
+    $age = (int)($_POST['business_age'] ?? 0);
+    $maritalStatus = $_POST['business_marital_status'] ?? '';
+    $businessName = trim($_POST['business_name'] ?? '');
+    $businessType = trim($_POST['business_type'] ?? '');
+    $businessAddress = trim($_POST['business_address'] ?? '');
+    $ctcNumber = trim($_POST['business_ctc_number'] ?? '');
+    $ctcNumber = $ctcNumber ? (int)$ctcNumber : 0;
+    $paymentMethod = 'Over-the-Counter';
+    $documentStatus = 'For Verification';
+
+    // 3) Handle file upload
+    $pictureName = null;
+    if (!empty($_FILES['business_photo']['name']) && $_FILES['business_photo']['error'] === UPLOAD_ERR_OK) {
+        $uploadDir = __DIR__ . '/../clearancePictures/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        $orig = basename($_FILES['business_photo']['name']);
+        $ext = pathinfo($orig, PATHINFO_EXTENSION);
+        $allowedExt = ['jpg','jpeg','png','gif'];
+        if (in_array(strtolower($ext), $allowedExt, true)) {
+            $pictureName = 'bc_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . strtolower($ext);
+            $target = $uploadDir . $pictureName;
+            if (!move_uploaded_file($_FILES['business_photo']['tmp_name'], $target)) {
+                error_log("Failed to move uploaded file");
+                $pictureName = null;
+            }
+        }
+    }
+
+    // 4) Generate next transaction_id
+    $stmt = $conn->prepare("SELECT transaction_id FROM business_clearance_requests ORDER BY id DESC LIMIT 1");
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($res && $res->num_rows === 1) {
+      $lastTid = $res->fetch_assoc()['transaction_id'];
+      $num = intval(substr($lastTid, 4)) + 1;
+    } else {
+      $num = 1;
+    }
+    $transactionId = sprintf('BUS-%07d', $num);
+    $stmt->close();
+
+    // 5) Insert into business_clearance_requests
+    $sql = "INSERT INTO business_clearance_requests (account_id, transaction_id, full_name, purok, barangay, municipality, province, age, marital_status, business_name, business_type, address, ctc_number, picture, payment_method, document_status, request_source) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'Walk-In')";
+    $ins = $conn->prepare($sql);
+    $ins->bind_param('issssssissssisss', $userId, $transactionId, $fullName, $purok, $barangay, $municipality, $province, $age, $maritalStatus, $businessName, $businessType, $businessAddress, $ctcNumber, $pictureName, $paymentMethod, $documentStatus);
+    $ins->execute();
+    $ins->close();
+
+    // 6) Activity logging
+    $admin_roles = ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper'];
+    if (in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
+      $logStmt = $conn->prepare("INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description) VALUES (?,?,?,?,?,?)");
+      $admin_id = $_SESSION['loggedInUserID'];
+      $role = $_SESSION['loggedInUserRole'];
+      $action = 'CREATE';
+      $table_name = 'business_clearance_requests';
+      $record_id = $transactionId;
+      $description = 'Created Business Clearance Request';
+      $logStmt->bind_param('isssss', $admin_id, $role, $action, $table_name, $record_id, $description);
+      $logStmt->execute();
+      $logStmt->close();
+    }
+
+    // 7) Redirect back
+    header("Location: ../{$redirectBase}?page={$redirectPage}&transaction_id={$transactionId}");
+    exit();
     break;
 
   case 'First Time Job Seeker':
-    // TODO: First Time Job Seeker
+    // 1) Collect posted fields & assemble full name
+    $fn = trim($_POST['first_time_job_seeker_first_name'] ?? '');
+    $mn = trim($_POST['first_time_job_seeker_middle_name'] ?? '');
+    $ln = trim($_POST['first_time_job_seeker_last_name'] ?? '');
+    $sn = trim($_POST['first_time_job_seeker_suffix'] ?? '');
+    $middlePart = $mn ? " {$mn}" : '';
+    $suffixPart = $sn ? " {$sn}" : '';
+    $fullName = "{$fn}{$middlePart} {$ln}{$suffixPart}"; // Note: different format for job seeker based on DB
+
+    // 2) Other form inputs
+    $age = (int)($_POST['first_time_job_seeker_age'] ?? 0);
+    $civilStatus = $_POST['first_time_job_seeker_civil_status'] ?? '';
+    $purok = $_POST['first_time_job_seeker_purok'] ?? '';
+    $documentStatus = 'For Verification';
+
+    // 3) Generate next transaction_id
+    $stmt = $conn->prepare("SELECT transaction_id FROM job_seeker_requests ORDER BY id DESC LIMIT 1");
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($res && $res->num_rows === 1) {
+      $lastTid = $res->fetch_assoc()['transaction_id'];
+      $num = intval(substr($lastTid, 4)) + 1;
+    } else {
+      $num = 1;
+    }
+    $transactionId = sprintf('FJS-%07d', $num);
+    $stmt->close();
+
+    // 4) Insert into job_seeker_requests (no claim_date, claim_time yet - Walk-In)
+    $sql = "INSERT INTO job_seeker_requests (account_id, transaction_id, full_name, age, civil_status, purok, payment_status, document_status, request_source) VALUES (?,?,?,?,?,?,'Free of Charge',?,'Walk-In')";
+    $ins = $conn->prepare($sql);
+    $ins->bind_param('issssss', $userId, $transactionId, $fullName, $age, $civilStatus, $purok, $documentStatus);
+    $ins->execute();
+    $ins->close();
+
+    // 5) Activity logging
+    $admin_roles = ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper'];
+    if (in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
+      $logStmt = $conn->prepare("INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description) VALUES (?,?,?,?,?,?)");
+      $admin_id = $_SESSION['loggedInUserID'];
+      $role = $_SESSION['loggedInUserRole'];
+      $action = 'CREATE';
+      $table_name = 'job_seeker_requests';
+      $record_id = $transactionId;
+      $description = 'Created First Time Job Seeker Request';
+      $logStmt->bind_param('isssss', $admin_id, $role, $action, $table_name, $record_id, $description);
+      $logStmt->execute();
+      $logStmt->close();
+    }
+
+    // 6) Redirect back
+    header("Location: ../{$redirectBase}?page={$redirectPage}&transaction_id={$transactionId}");
+    exit();
     break;
 
   default:

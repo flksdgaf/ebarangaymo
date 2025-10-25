@@ -418,11 +418,11 @@ $result = $st->get_result();
               <div class="mb-2">
                 <label class="form-label mb-1">Date Created</label>
                 <div class="d-flex gap-1">
-                  <div class="flex-grow-1">
+                  <div class="grow"> <!-- flex-grow-1 -->
                     <small class="text-muted">From</small>
                     <input type="date" name="date_from" class="form-control form-control-sm" style="font-size:.75rem;" value="<?=htmlspecialchars($date_from)?>">
                   </div>
-                  <div class="flex-grow-1">
+                  <div class="grow"> <!-- flex-grow-1 -->
                     <small class="text-muted">To</small>
                     <input type="date" name="date_to" class="form-control form-control-sm" style="font-size:.75rem;" value="<?=htmlspecialchars($date_to)?>">
                   </div>
@@ -434,7 +434,7 @@ $result = $st->get_result();
                 <a href="?page=adminRequest&<?= http_build_query(['request_source' => $processing_type,'request_page' => 1]) ?>" class="btn btn-sm btn-outline-secondary me-2">
                   Reset
                 </a>
-                <button type="submit" class="btn btn-sm btn-success flex-grow-1">Apply</button>
+                <button type="submit" class="btn btn-sm btn-success grow">Apply</button> <!-- flex-grow-1 -->
               </div>
             </form>
           </div>
@@ -524,7 +524,7 @@ $result = $st->get_result();
 
                 <!-- Full Name -->
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">First Name</label>
+                  <label class="form-label fw-bold">First Name <span class="text-danger">*</span></label>
                   <input name="barangay_id_first_name" id="bid_first_name" type="text" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-3">
@@ -532,7 +532,7 @@ $result = $st->get_result();
                   <input name="barangay_id_middle_name" id="bid_middle_name" type="text" class="form-control form-control-sm">
                 </div>
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Last Name</label>
+                  <label class="form-label fw-bold">Last Name <span class="text-danger">*</span></label>
                   <input name="barangay_id_last_name" id="bid_last_name" type="text" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-3">
@@ -542,7 +542,7 @@ $result = $st->get_result();
 
                 <!-- Purok, Birthday & Birth Place -->
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Purok</label>
+                  <label class="form-label fw-bold">Purok <span class="text-danger">*</span></label>
                   <div class="d-flex gap-2">
                     <select name="barangay_id_purok" id="bid_purok" class="form-select form-select-sm" required>
                       <option value="">Select…</option>
@@ -556,11 +556,11 @@ $result = $st->get_result();
                   </div>
                 </div>
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Birthday</label>
+                  <label class="form-label fw-bold">Birthday <span class="text-danger">*</span></label>
                   <input name="barangay_id_dob" id="bid_dob" type="date" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-6">
-                  <label class="form-label fw-bold">Birth Place</label>
+                  <label class="form-label fw-bold">Birth Place <span class="text-danger">*</span></label>
                   <div class="row">
                     <div class="col">
                       <input type="text" name="barangay_id_birth_place" id="bid_birth_place" class="form-control form-control-sm" placeholder="Municipality / Province" required/>
@@ -570,7 +570,7 @@ $result = $st->get_result();
 
                 <!-- Civil Status, Religion, Height & Weight-->
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Civil Status</label>
+                  <label class="form-label fw-bold">Civil Status <span class="text-danger">*</span></label>
                   <select name="barangay_id_civil_status" id="bid_civil_status" class="form-select form-select-sm" required>
                     <option value="">Select…</option>
                     <option>Single</option>
@@ -581,7 +581,7 @@ $result = $st->get_result();
                   </select>
                 </div>
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Religion</label>
+                  <label class="form-label fw-bold">Religion <span class="text-danger">*</span></label>
                   <select name="barangay_id_religion" id="bid_religion" class="form-select form-select-sm" required>
                     <option value="">Select…</option>
                     <option>Roman Catholic</option>
@@ -592,34 +592,57 @@ $result = $st->get_result();
                   <input name="barangay_id_religion_other" id="bid_religion_other" type="text" class="form-control form-control-sm mt-2 d-none" placeholder="Please specify religion">
                 </div>
                 <div class="col-12 col-md-2">
-                  <label class="form-label fw-bold">Height (ft)</label>
+                  <label class="form-label fw-bold">Height (ft) <span class="text-danger">*</span></label>
                   <input name="barangay_id_height" id="bid_height" type="number" step="0.01" min="0" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-2">
-                  <label class="form-label fw-bold">Weight (kg)</label>
+                  <label class="form-label fw-bold">Weight (kg) <span class="text-danger">*</span></label>
                   <input name="barangay_id_weight" id="bid_weight" type="number" step="0.1" min="0" class="form-control form-control-sm" required>
                 </div>
 
                 <!-- Emergency Contact Person Name & Number -->
                 <div class="col-12 col-md-4">
-                  <label class="form-label fw-bold">Emergency Contact Person</label>
+                  <label class="form-label fw-bold">Emergency Contact Person <small class="fw-normal">(optional)</small></label>
                   <input name="barangay_id_emergency_contact_person" id="bid_emergency_contact" type="text" class="form-control form-control-sm">
                 </div>     
                 <div class="col-12 col-md-4">
-                  <label class="form-label fw-bold">Emergency Contact Address</label>
+                  <label class="form-label fw-bold">Emergency Contact Address <small class="fw-normal">(optional)</small></label>
                   <input name="barangay_id_emergency_contact_address" id="bid_emergency_address" type="text" class="form-control form-control-sm">
                 </div>    
 
                 <!-- Formal Picture -->
-                <div class="col-12 col-md-6">
-                  <div class="form-check d-inline-block">
-                    <input class="form-check-input" type="checkbox" id="requirePhotoCheck">
-                    <label class="form-check-label fs-6" for="requirePhotoCheck"></label>
+                <div class="col-12 col-md-12">
+                  <label class="form-label fw-bold">Formal Picture <span class="text-danger">*</span></label>
+                  <div class="d-flex gap-2 align-items-start flex-wrap">
+                    <!-- Hidden file input -->
+                    <input type="file" id="photoInput" name="barangay_id_photo" class="form-control form-control-sm d-none" accept="image/*">
+                    
+                    <!-- Camera Button -->
+                    <button type="button" id="openCameraBtnBID" class="btn btn-sm btn-outline-success">
+                      <span class="material-symbols-outlined" style="font-size:16px; vertical-align:middle;">photo_camera</span> Take Photo
+                    </button>
+                    
+                    <!-- Upload Button -->
+                    <button type="button" id="uploadFileBtnBID" class="btn btn-sm btn-outline-primary">
+                      <span class="material-symbols-outlined" style="font-size:16px; vertical-align:middle;">upload_file</span> Upload File
+                    </button>
+                    
+                    <!-- Preview Container -->
+                    <div id="photoPreviewContainerBID" class="w-100 mt-2 d-none">
+                      <img id="photoPreviewBID" src="" alt="Photo Preview" class="img-thumbnail" style="max-width: 200px;">
+                      <p class="text-success small mt-1 mb-0">
+                        <span class="material-symbols-outlined" style="font-size: 16px; vertical-align: middle;">check_circle</span>
+                        Photo ready for upload
+                      </p>
+                    </div>
+                    
+                    <!-- Current photo display for renewals -->
+                    <div id="currentPhotoName" class="form-text text-muted d-none mt-2"></div>
                   </div>
-                  <label class="form-label fw-bold">1×1 Formal Picture</label>
-                  <input id="photoInput" name="barangay_id_photo" type="file" accept="image/*" class="form-control form-control-sm" disabled>
-                  <div id="currentPhotoName" class="form-text text-muted d-none"></div>
                   <input type="hidden" id="bid_existing_photo" name="barangay_id_existing_photo">
+                  <small class="form-text text-muted mt-1 d-block">
+                    Please ensure the picture is recent, clear, front-facing, with a plain background.
+                  </small>
                 </div>
               </div>
             </template>
@@ -635,7 +658,7 @@ $result = $st->get_result();
 
                 <!-- Name -->
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">First Name</label>
+                  <label class="form-label fw-bold">First Name <span class="text-danger">*</span></label>
                   <input name="clearance_first_name" type="text" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-3">
@@ -643,7 +666,7 @@ $result = $st->get_result();
                   <input name="clearance_middle_name" type="text" class="form-control form-control-sm">
                 </div>
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Last Name</label>
+                  <label class="form-label fw-bold">Last Name <span class="text-danger">*</span></label>
                   <input name="clearance_last_name" type="text" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-3">
@@ -653,11 +676,11 @@ $result = $st->get_result();
 
                 <!-- Address: Street, Purok, Barangay -->
                 <div class="col-12 col-md-6">
-                  <label class="form-label fw-bold">Street</label>
+                  <label class="form-label fw-bold">Street <span class="text-danger">*</span></label>
                   <input name="clearance_street" type="text" class="form-control form-control-sm" placeholder="Street / Block">
                 </div>
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Purok</label>
+                  <label class="form-label fw-bold">Purok <span class="text-danger">*</span></label>
                   <select name="clearance_purok" class="form-select form-select-sm" required>
                     <option value="">Select…</option>
                     <option>Purok 1</option>
@@ -669,37 +692,37 @@ $result = $st->get_result();
                   </select>
                 </div>
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Barangay</label>
+                  <label class="form-label fw-bold">Barangay <span class="text-danger">*</span></label>
                   <input name="clearance_barangay" type="text" class="form-control form-control-sm" value="MAGANG" required>
                 </div>
 
                 <!-- Municipality & Province -->
                 <div class="col-12 col-md-6">
-                  <label class="form-label fw-bold">Municipality / City</label>
+                  <label class="form-label fw-bold">Municipality / City <span class="text-danger">*</span></label>
                   <input name="clearance_municipality" type="text" class="form-control form-control-sm" value="DAET" required>
                 </div>
                 <div class="col-12 col-md-6">
-                  <label class="form-label fw-bold">Province</label>
+                  <label class="form-label fw-bold">Province <span class="text-danger">*</span></label>
                   <input name="clearance_province" type="text" class="form-control form-control-sm" value="CAMARINES NORTE" required>
                 </div>
 
                 <!-- Birthdate, Age, Birthplace -->
                 <div class="col-12 col-md-4">
-                  <label class="form-label fw-bold">Birthdate</label>
+                  <label class="form-label fw-bold">Birthdate <span class="text-danger">*</span></label>
                   <input name="clearance_birthdate" id="clearance_birthdate" type="date" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-2">
-                  <label class="form-label fw-bold">Age</label>
+                  <label class="form-label fw-bold">Age <span class="text-danger">*</span></label>
                   <input name="clearance_age" id="clearance_age" type="number" min="0" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-6">
-                  <label class="form-label fw-bold">Birth Place</label>
+                  <label class="form-label fw-bold">Birth Place <span class="text-danger">*</span></label>
                   <input name="clearance_birthplace" type="text" class="form-control form-control-sm" placeholder="Municipality / Province" required>
                 </div>
 
                 <!-- Marital Status, CTC No., Purpose -->
                 <div class="col-12 col-md-4">
-                  <label class="form-label fw-bold">Marital Status</label>
+                  <label class="form-label fw-bold">Marital Status <span class="text-danger">*</span></label>
                   <select name="clearance_marital_status" class="form-select form-select-sm" required>
                     <option value="">Select…</option>
                     <option>Single</option>
@@ -714,15 +737,39 @@ $result = $st->get_result();
                   <input name="clearance_ctc_number" type="text" class="form-control form-control-sm" placeholder="CTC No.">
                 </div>
                 <div class="col-12 col-md-4">
-                  <label class="form-label fw-bold">Purpose</label>
+                  <label class="form-label fw-bold">Purpose <span class="text-danger">*</span></label>
                   <input name="clearance_purpose" type="text" class="form-control form-control-sm" placeholder="e.g., Employment, Travel" required>
                 </div>
 
                 <!-- Formal Picture -->
-                <div class="col-12 col-md-6">
-                  <label class="form-label fw-bold">Formal Picture (1×1 / 2×2)</label>
-                  <input id="clearance_photoInput" name="clearance_photo" type="file" accept="image/*" class="form-control form-control-sm" required>
-                  <div id="clearance_currentPhotoName" class="form-text text-muted d-none"></div>
+                <div class="col-12 col-md-12">
+                  <label class="form-label fw-bold">Formal Picture <span class="text-danger">*</span></label>
+                  <div class="d-flex gap-2 align-items-start flex-wrap">
+                    <!-- Hidden file input -->
+                    <input type="file" id="clearance_photoInput" name="clearance_photo" class="form-control form-control-sm d-none" accept="image/*">
+                    
+                    <!-- Camera Button -->
+                    <button type="button" id="openCameraBtnClearance" class="btn btn-sm btn-outline-success">
+                      <span class="material-symbols-outlined" style="font-size:16px; vertical-align:middle;">photo_camera</span> Take Photo
+                    </button>
+                    
+                    <!-- Upload Button -->
+                    <button type="button" id="uploadFileBtnClearance" class="btn btn-sm btn-outline-primary">
+                      <span class="material-symbols-outlined" style="font-size:16px; vertical-align:middle;">upload_file</span> Upload File
+                    </button>
+                    
+                    <!-- Preview Container -->
+                    <div id="photoPreviewContainerClearance" class="w-100 mt-2 d-none">
+                      <img id="photoPreviewClearance" src="" alt="Photo Preview" class="img-thumbnail" style="max-width: 200px;">
+                      <p class="text-success small mt-1 mb-0">
+                        <span class="material-symbols-outlined" style="font-size: 16px; vertical-align: middle;">check_circle</span>
+                        Photo ready for upload
+                      </p>
+                    </div>
+                  </div>
+                  <small class="form-text text-muted mt-1 d-block">
+                    Please ensure the picture is recent, clear, front-facing, with a plain background.
+                  </small>
                 </div>
               </div>
             </template>
@@ -738,7 +785,7 @@ $result = $st->get_result();
 
                 <!-- Name -->
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">First Name</label>
+                  <label class="form-label fw-bold">First Name <span class="text-danger">*</span></label>
                   <input name="business_first_name" type="text" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-3">
@@ -746,7 +793,7 @@ $result = $st->get_result();
                   <input name="business_middle_name" type="text" class="form-control form-control-sm">
                 </div>
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Last Name</label>
+                  <label class="form-label fw-bold">Last Name <span class="text-danger">*</span></label>
                   <input name="business_last_name" type="text" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-3">
@@ -756,7 +803,7 @@ $result = $st->get_result();
 
                 <!-- Address: Purok, Barangay -->
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Purok</label>
+                  <label class="form-label fw-bold">Purok <span class="text-danger">*</span></label>
                   <select name="business_purok" class="form-select form-select-sm" required>
                     <option value="">Select…</option>
                     <option>Purok 1</option>
@@ -768,27 +815,27 @@ $result = $st->get_result();
                   </select>
                 </div>
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Barangay</label>
+                  <label class="form-label fw-bold">Barangay <span class="text-danger">*</span></label>
                   <input name="business_barangay" type="text" class="form-control form-control-sm" value="MAGANG" required>
                 </div>
 
                 <!-- Municipality & Province -->
                 <div class="col-12 col-md-6">
-                  <label class="form-label fw-bold">Municipality / City</label>
+                  <label class="form-label fw-bold">Municipality / City <span class="text-danger">*</span></label>
                   <input name="business_municipality" type="text" class="form-control form-control-sm" value="DAET" required>
                 </div>
                 <div class="col-12 col-md-6">
-                  <label class="form-label fw-bold">Province</label>
+                  <label class="form-label fw-bold">Province <span class="text-danger">*</span></label>
                   <input name="business_province" type="text" class="form-control form-control-sm" value="CAMARINES NORTE" required>
                 </div>
 
                 <!-- Age & Marital Status -->
                 <div class="col-12 col-md-2">
-                  <label class="form-label fw-bold">Age</label>
+                  <label class="form-label fw-bold">Age <span class="text-danger">*</span></label>
                   <input name="business_age" type="number" min="0" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-4">
-                  <label class="form-label fw-bold">Marital Status</label>
+                  <label class="form-label fw-bold">Marital Status <span class="text-danger">*</span></label>
                   <select name="business_marital_status" class="form-select form-select-sm" required>
                     <option value="">Select…</option>
                     <option>Single</option>
@@ -801,17 +848,17 @@ $result = $st->get_result();
 
                 <!-- Business Name & Type -->
                 <div class="col-12 col-md-6">
-                  <label class="form-label fw-bold">Name of Business</label>
+                  <label class="form-label fw-bold">Name of Business <span class="text-danger">*</span></label>
                   <input name="business_name" type="text" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-6">
-                  <label class="form-label fw-bold">Type of Business</label>
+                  <label class="form-label fw-bold">Type of Business <span class="text-danger">*</span></label>
                   <input name="business_type" type="text" class="form-control form-control-sm" placeholder="e.g., Retail, Food Service, Manufacturing" required>
                 </div>
 
                 <!-- Business Address -->
                 <div class="col-12">
-                  <label class="form-label fw-bold">Business Address</label>
+                  <label class="form-label fw-bold">Business Address <span class="text-danger">*</span></label>
                   <input name="business_address" type="text" class="form-control form-control-sm" placeholder="Street / Block / Lot / Purok" required>
                 </div>
 
@@ -820,10 +867,34 @@ $result = $st->get_result();
                   <label class="form-label fw-bold">CTC Number <small class="fw-normal">(if applicable)</small></label>
                   <input name="business_ctc_number" type="number" class="form-control form-control-sm" placeholder="CTC No.">
                 </div>
-                <div class="col-12 col-md-6">
-                  <label class="form-label fw-bold">Owner's Picture (1×1 / 2×2)</label>
-                  <input id="business_photoInput" name="business_photo" type="file" accept="image/*" class="form-control form-control-sm" required>
-                  <div id="business_currentPhotoName" class="form-text text-muted d-none"></div>
+                <div class="col-12 col-md-12">
+                  <label class="form-label fw-bold">Owner's Picture <span class="text-danger">*</span></label>
+                  <div class="d-flex gap-2 align-items-start flex-wrap">
+                    <!-- Hidden file input -->
+                    <input type="file" id="business_photoInput" name="business_photo" class="form-control form-control-sm d-none" accept="image/*">
+                    
+                    <!-- Camera Button -->
+                    <button type="button" id="openCameraBtnBusiness" class="btn btn-sm btn-outline-success">
+                      <span class="material-symbols-outlined" style="font-size:16px; vertical-align:middle;">photo_camera</span> Take Photo
+                    </button>
+                    
+                    <!-- Upload Button -->
+                    <button type="button" id="uploadFileBtnBusiness" class="btn btn-sm btn-outline-primary">
+                      <span class="material-symbols-outlined" style="font-size:16px; vertical-align:middle;">upload_file</span> Upload File
+                    </button>
+                    
+                    <!-- Preview Container -->
+                    <div id="photoPreviewContainerBusiness" class="w-100 mt-2 d-none">
+                      <img id="photoPreviewBusiness" src="" alt="Photo Preview" class="img-thumbnail" style="max-width: 200px;">
+                      <p class="text-success small mt-1 mb-0">
+                        <span class="material-symbols-outlined" style="font-size: 16px; vertical-align: middle;">check_circle</span>
+                        Photo ready for upload
+                      </p>
+                    </div>
+                  </div>
+                  <small class="form-text text-muted mt-1 d-block">
+                    Please ensure the picture is recent, clear, front-facing, with a plain background.
+                  </small>
                 </div>
               </div>
             </template>
@@ -941,7 +1012,7 @@ $result = $st->get_result();
                 
                 <!-- Row 1: Full Name -->
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">First Name</label>
+                  <label class="form-label fw-bold">First Name <span class="text-danger">*</span></label>
                   <input name="first_time_job_seeker_first_name" type="text" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-3">
@@ -949,7 +1020,7 @@ $result = $st->get_result();
                   <input name="first_time_job_seeker_middle_name" type="text" class="form-control form-control-sm">
                 </div>
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Last Name</label>
+                  <label class="form-label fw-bold">Last Name <span class="text-danger">*</span></label>
                   <input name="first_time_job_seeker_last_name" type="text" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-3">
@@ -959,11 +1030,11 @@ $result = $st->get_result();
 
                 <!-- Row 2: Age & Civil Status -->
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Age</label>
+                  <label class="form-label fw-bold">Age <span class="text-danger">*</span></label>
                   <input name="first_time_job_seeker_age" type="number" min="0" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Civil Status</label>
+                  <label class="form-label fw-bold">Civil Status <span class="text-danger">*</span></label>
                   <select name="first_time_job_seeker_civil_status" class="form-select form-select-sm" required>
                     <option value="">Select…</option>
                     <option>Single</option>
@@ -975,7 +1046,7 @@ $result = $st->get_result();
                 </div>
 
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Purok</label>
+                  <label class="form-label fw-bold">Purok <span class="text-danger">*</span></label>
                   <div class="d-flex gap-2">
                     <select name="first_time_job_seeker_purok" class="form-select form-select-sm" required>
                       <option value="">Select…</option>
@@ -1002,7 +1073,7 @@ $result = $st->get_result();
 
                 <!-- Row 1: Full Name & Civil Status -->
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">First Name</label>
+                  <label class="form-label fw-bold">First Name <span class="text-danger">*</span></label>
                   <input name="good_moral_first_name" type="text" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-3">
@@ -1010,7 +1081,7 @@ $result = $st->get_result();
                   <input name="good_moral_middle_name" type="text" class="form-control form-control-sm">
                 </div>
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Last Name</label>
+                  <label class="form-label fw-bold">Last Name <span class="text-danger">*</span></label>
                   <input name="good_moral_last_name" type="text" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-3">
@@ -1020,7 +1091,7 @@ $result = $st->get_result();
 
                 <!-- Row 2: Civil Status, Sex & Age -->
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Civil Status</label>
+                  <label class="form-label fw-bold">Civil Status <span class="text-danger">*</span></label>
                   <select name="good_moral_civil_status" class="form-select form-select-sm" required>
                     <option value="">Select…</option>
                     <option>Single</option>
@@ -1032,7 +1103,7 @@ $result = $st->get_result();
                 </div>
 
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Sex</label>
+                  <label class="form-label fw-bold">Sex <span class="text-danger">*</span></label>
                   <select name="good_moral_sex" class="form-select form-select-sm" required>
                     <option value="">Select…</option>
                     <option>Male</option>
@@ -1040,18 +1111,18 @@ $result = $st->get_result();
                   </select>
                 </div>
                 <div class="col-12 col-md-2">
-                  <label class="form-label fw-bold">Age</label>
+                  <label class="form-label fw-bold">Age <span class="text-danger">*</span></label>
                   <input name="good_moral_age" type="number" min="0" class="form-control form-control-sm" required>
                 </div>
 
                 <!-- Full Address -->
                 <div class="col-12 col-md-6">
-                  <label class="form-label fw-bold">Address</label>
+                  <label class="form-label fw-bold">Address <span class="text-danger">*</span></label>
                   <input name="good_moral_address" type="text" class="form-control form-control-sm" placeholder="Street / Subdivision / Lot / Block"/>
                 </div>
 
                 <div class="col-12 col-md-2">
-                  <label class="form-label fw-bold">Purok</label>
+                  <label class="form-label fw-bold">Purok <span class="text-danger">*</span></label>
                   <div class="d-flex gap-2">
                     <select name="good_moral_purok" class="form-select form-select-sm" required>
                       <option value="">Select…</option>
@@ -1067,7 +1138,7 @@ $result = $st->get_result();
 
                 <!-- Purpose -->
                 <div class="col-12">
-                  <label class="form-label fw-bold">Purpose</label>
+                  <label class="form-label fw-bold">Purpose <span class="text-danger">*</span></label>
                   <textarea name="good_moral_purpose" class="form-control form-control-sm" rows="2" placeholder="State the purpose of Good Moral" required></textarea>
                 </div>
               </div>
@@ -1083,7 +1154,7 @@ $result = $st->get_result();
 
                 <!-- Row 1: Guardian Full Name, Civil Status, Age -->
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">First Name</label>
+                  <label class="form-label fw-bold">First Name <span class="text-danger">*</span></label>
                   <input name="guardianship_first_name" type="text" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-3">
@@ -1091,7 +1162,7 @@ $result = $st->get_result();
                   <input name="guardianship_middle_name" type="text" class="form-control form-control-sm">
                 </div>
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Last Name</label>
+                  <label class="form-label fw-bold">Last Name <span class="text-danger">*</span></label>
                   <input name="guardianship_last_name" type="text" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-3">
@@ -1100,7 +1171,7 @@ $result = $st->get_result();
                 </div>
 
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Civil Status</label>
+                  <label class="form-label fw-bold">Civil Status <span class="text-danger">*</span></label>
                   <select name="guardianship_civil_status" class="form-select form-select-sm" required>
                     <option value="">Select…</option>
                     <option>Single</option>
@@ -1111,7 +1182,7 @@ $result = $st->get_result();
                   </select>
                 </div>
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Age</label>
+                  <label class="form-label fw-bold">Age <span class="text-danger">*</span></label>
                   <input name="guardianship_age" type="number" min="0" class="form-control form-control-sm" required>
                 </div>
 
@@ -1122,7 +1193,7 @@ $result = $st->get_result();
                 </div> -->
                 
                 <div class="col-12 col-md-2 mb-3">
-                  <label class="form-label fw-bold">Purok</label>
+                  <label class="form-label fw-bold">Purok <span class="text-danger">*</span></label>
                   <div class="d-flex gap-2">
                     <select name="guardianship_purok" class="form-select form-select-sm" required>
                       <option value="">Select…</option>
@@ -1159,7 +1230,7 @@ $result = $st->get_result();
                 </div> -->
 
                 <div class="col-12 col-md-6">
-                  <label class="form-label fw-bold">Full Name</label>
+                  <label class="form-label fw-bold">Full Name <span class="text-danger">*</span></label>
                   <input name="child_full_name" type="text" class="form-control form-control-sm" required>
                 </div>
 
@@ -1170,7 +1241,7 @@ $result = $st->get_result();
 
                 <!-- Row 3: Purpose -->
                 <div class="col-12">
-                  <label class="form-label fw-bold">Purpose</label>
+                  <label class="form-label fw-bold">Purpose <span class="text-danger">*</span></label>
                   <textarea name="guardianship_purpose" class="form-control form-control-sm" rows="2" placeholder="State the purpose of guardianship" required></textarea>
                 </div>
               </div>
@@ -1186,7 +1257,7 @@ $result = $st->get_result();
 
                 <!-- Row 1: First, Middle, Last, Suffix -->
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">First Name</label>
+                  <label class="form-label fw-bold">First Name <span class="text-danger">*</span></label>
                   <input name="indigency_first_name" type="text" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-3">
@@ -1194,7 +1265,7 @@ $result = $st->get_result();
                   <input name="indigency_middle_name" type="text" class="form-control form-control-sm">
                 </div>
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Last Name</label>
+                  <label class="form-label fw-bold">Last Name <span class="text-danger">*</span></label>
                   <input name="indigency_last_name" type="text" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-3">
@@ -1204,11 +1275,11 @@ $result = $st->get_result();
 
                 <!-- Row 2: Civil Status & Age -->
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Age</label>
+                  <label class="form-label fw-bold">Age <span class="text-danger">*</span></label>
                   <input name="indigency_age" type="number" min="0" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Civil Status</label>
+                  <label class="form-label fw-bold">Civil Status <span class="text-danger">*</span></label>
                   <select name="indigency_civil_status" class="form-select form-select-sm" required>
                     <option value="">Select…</option>
                     <option>Single</option>
@@ -1221,7 +1292,7 @@ $result = $st->get_result();
                 
                 <!-- Row 3: Full Address -->
                 <div class="col-12 col-md-2">
-                  <label class="form-label fw-bold">Purok</label>
+                  <label class="form-label fw-bold">Purok <span class="text-danger">*</span></label>
                   <div class="d-flex gap-2">
                     <select name="indigency_purok" class="form-select form-select-sm" required>
                       <option value="">Select…</option>
@@ -1237,7 +1308,7 @@ $result = $st->get_result();
 
                 <!-- Row 4: Purpose -->
                 <div class="col-12">
-                  <label class="form-label fw-bold">Purpose</label>
+                  <label class="form-label fw-bold">Purpose <span class="text-danger">*</span></label>
                   <textarea name="indigency_purpose" class="form-control form-control-sm" rows="2" placeholder="State the purpose of indigency" required></textarea>
                 </div>
               </div>
@@ -1253,7 +1324,7 @@ $result = $st->get_result();
 
                 <!-- Row 1: First, Middle, Last, Suffix -->
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">First Name</label>
+                  <label class="form-label fw-bold">First Name <span class="text-danger">*</span></label>
                   <input name="residency_first_name" type="text" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-3">
@@ -1261,7 +1332,7 @@ $result = $st->get_result();
                   <input name="residency_middle_name" type="text" class="form-control form-control-sm">
                 </div>
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Last Name</label>
+                  <label class="form-label fw-bold">Last Name <span class="text-danger">*</span></label>
                   <input name="residency_last_name" type="text" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-3">
@@ -1271,12 +1342,12 @@ $result = $st->get_result();
 
                 <!-- Row 2: Civil Status & Age -->
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Age</label>
+                  <label class="form-label fw-bold">Age <span class="text-danger">*</span></label>
                   <input name="residency_age" type="number" min="0" class="form-control form-control-sm" required>
                 </div>
 
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Civil Status</label>
+                  <label class="form-label fw-bold">Civil Status <span class="text-danger">*</span></label>
                   <select name="residency_civil_status" class="form-select form-select-sm" required>
                     <option value="">Select…</option>
                     <option>Single</option>
@@ -1289,7 +1360,7 @@ $result = $st->get_result();
                 
                 <!-- Row 3: Full Address & Years Residing -->
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Purok</label>
+                  <label class="form-label fw-bold">Purok <span class="text-danger">*</span></label>
                   <div class="d-flex gap-2">
                     <select name="residency_purok" class="form-select form-select-sm" required>
                       <option value="">Select…</option>
@@ -1303,13 +1374,13 @@ $result = $st->get_result();
                   </div>
                 </div>
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Years Residing Here</label>
+                  <label class="form-label fw-bold">Years Residing Here <span class="text-danger">*</span></label>
                   <input name="residency_residing_years" type="number" min="0" class="form-control form-control-sm" placeholder="e.g. 5" required>
                 </div>
 
                 <!-- Row 4: Purpose -->
                 <div class="col-12">
-                  <label class="form-label fw-bold">Purpose</label>
+                  <label class="form-label fw-bold">Purpose <span class="text-danger">*</span></label>
                   <textarea name="residency_purpose" class="form-control form-control-sm" rows="2" placeholder="State the purpose of residency" required></textarea>
                 </div>
               </div>
@@ -1325,7 +1396,7 @@ $result = $st->get_result();
 
                 <!-- Row 1: First, Middle, Last, Suffix -->
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">First Name</label>
+                  <label class="form-label fw-bold">First Name <span class="text-danger">*</span></label>
                   <input name="solo_parent_first_name" type="text" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-3">
@@ -1333,7 +1404,7 @@ $result = $st->get_result();
                   <input name="solo_parent_middle_name" type="text" class="form-control form-control-sm">
                 </div>
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Last Name</label>
+                  <label class="form-label fw-bold">Last Name <span class="text-danger">*</span></label>
                   <input name="solo_parent_last_name" type="text" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-3">
@@ -1343,11 +1414,11 @@ $result = $st->get_result();
 
                 <!-- Row 2: Age, Sex, Civil Status -->
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Age</label>
+                  <label class="form-label fw-bold">Age <span class="text-danger">*</span></label>
                   <input name="solo_parent_age" type="number" min="0" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Sex</label>
+                  <label class="form-label fw-bold">Sex <span class="text-danger">*</span></label>
                   <select name="solo_parent_sex" class="form-select form-select-sm" required>
                     <option value="">Select…</option>
                     <option>Male</option>
@@ -1355,7 +1426,7 @@ $result = $st->get_result();
                   </select>
                 </div>
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Civil Status</label>
+                  <label class="form-label fw-bold">Civil Status <span class="text-danger">*</span></label>
                   <select name="solo_parent_civil_status" class="form-select form-select-sm" required>
                     <option value="">Select…</option>
                     <option>Single</option>
@@ -1368,7 +1439,7 @@ $result = $st->get_result();
 
                 <!-- Row 3: Purok & Years as Solo Parent -->
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Purok</label>
+                  <label class="form-label fw-bold">Purok <span class="text-danger">*</span></label>
                   <select name="solo_parent_purok" class="form-select form-select-sm" required>
                     <option value="">Purok…</option>
                     <option>Purok 1</option>
@@ -1380,7 +1451,7 @@ $result = $st->get_result();
                   </select>
                 </div>
                 <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Years as Solo Parent</label>
+                  <label class="form-label fw-bold">Years as Solo Parent <span class="text-danger">*</span></label>
                   <input name="solo_parent_years_solo_parent" type="number" min="0" class="form-control form-control-sm" placeholder="e.g. 2" required>
                 </div>
 
@@ -1395,11 +1466,11 @@ $result = $st->get_result();
                   <div class="child-entry border rounded p-3 mb-3" data-child-index="0">
                     <div class="row gy-2">
                       <div class="col-12 col-md-6">
-                        <label class="form-label fw-bold">Child's Full Name</label>
+                        <label class="form-label fw-bold">Child's Full Name <span class="text-danger">*</span></label>
                         <input name="children[0][name]" type="text" class="form-control form-control-sm" required>
                       </div>
                       <div class="col-12 col-md-3">
-                        <label class="form-label fw-bold">Sex</label>
+                        <label class="form-label fw-bold">Sex <span class="text-danger">*</span></label>
                         <select name="children[0][sex]" class="form-select form-select-sm" required>
                           <option value="">Select…</option>
                           <option>Male</option>
@@ -1407,7 +1478,7 @@ $result = $st->get_result();
                         </select>
                       </div>
                       <div class="col-12 col-md-3">
-                        <label class="form-label fw-bold">Age</label>
+                        <label class="form-label fw-bold">Age <span class="text-danger">*</span></label>
                         <input name="children[0][age]" type="number" min="0" class="form-control form-control-sm" required>
                       </div>
                     </div>
@@ -1424,7 +1495,7 @@ $result = $st->get_result();
 
                 <!-- Purpose -->
                 <div class="col-12">
-                  <label class="form-label fw-bold">Purpose</label>
+                  <label class="form-label fw-bold">Purpose <span class="text-danger">*</span></label>
                   <textarea name="solo_parent_purpose" class="form-control form-control-sm" rows="2" placeholder="State the purpose of solo parent" required></textarea>
                 </div>
               </div>
@@ -1594,6 +1665,117 @@ $result = $st->get_result();
                 <button type="submit" class="btn btn-success">Save Changes</button>
               </div>
             </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Camera Modal for Barangay ID -->
+      <div class="modal fade" id="cameraModalBID" tabindex="-1" aria-labelledby="cameraModalBIDLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="cameraModalBIDLabel">Take Photo</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+              <!-- Camera View -->
+              <div id="cameraViewBID" class="position-relative">
+                <video id="cameraStreamBID" autoplay playsinline class="w-100 rounded" style="max-height: 400px; object-fit: cover; background: #000;"></video>
+                <button type="button" id="captureBtnBID" class="btn btn-success btn-lg mt-3">
+                  <span class="material-symbols-outlined" style="vertical-align:middle;">photo_camera</span> Capture Photo
+                </button>
+              </div>
+              
+              <!-- Preview View (hidden initially) -->
+              <div id="previewViewBID" class="d-none">
+                <canvas id="photoCanvasBID" class="w-100 rounded" style="max-height: 400px; max-width: 400px; border: 2px solid #198754; aspect-ratio: 1 / 1;"></canvas>
+                <div class="mt-3 d-flex gap-2 justify-content-center">
+                  <button type="button" id="retakeBtnBID" class="btn btn-warning" style="min-width: 140px;">
+                    <span class="material-symbols-outlined" style="vertical-align:middle;">refresh</span> Retake
+                  </button>
+                  <button type="button" id="uploadPhotoBtnBID" class="btn btn-success" style="min-width: 140px;">
+                    <span class="material-symbols-outlined" style="vertical-align:middle;">check_circle</span> Use This Photo
+                  </button>
+                </div>
+              </div>
+              
+              <!-- Error Message -->
+              <div id="cameraErrorBID" class="alert alert-danger d-none mt-3" role="alert"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Camera Modal for Barangay Clearance -->
+      <div class="modal fade" id="cameraModalClearance" tabindex="-1" aria-labelledby="cameraModalClearanceLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="cameraModalClearanceLabel">Take Photo</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+              <!-- Camera View -->
+              <div id="cameraViewClearance" class="position-relative">
+                <video id="cameraStreamClearance" autoplay playsinline class="w-100 rounded" style="max-height: 400px; object-fit: cover; background: #000;"></video>
+                <button type="button" id="captureBtnClearance" class="btn btn-success btn-lg mt-3">
+                  <span class="material-symbols-outlined" style="vertical-align:middle;">photo_camera</span> Capture Photo
+                </button>
+              </div>
+              
+              <!-- Preview View -->
+              <div id="previewViewClearance" class="d-none">
+                <canvas id="photoCanvasClearance" class="w-100 rounded" style="max-height: 400px; max-width: 400px; border: 2px solid #198754; aspect-ratio: 1 / 1;"></canvas>
+                <div class="mt-3 d-flex gap-2 justify-content-center">
+                  <button type="button" id="retakeBtnClearance" class="btn btn-warning" style="min-width: 140px;">
+                    <span class="material-symbols-outlined" style="vertical-align:middle;">refresh</span> Retake
+                  </button>
+                  <button type="button" id="uploadPhotoBtnClearance" class="btn btn-success" style="min-width: 140px;">
+                    <span class="material-symbols-outlined" style="vertical-align:middle;">check_circle</span> Use This Photo
+                  </button>
+                </div>
+              </div>
+              
+              <!-- Error Message -->
+              <div id="cameraErrorClearance" class="alert alert-danger d-none mt-3" role="alert"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Camera Modal for Business Clearance -->
+      <div class="modal fade" id="cameraModalBusiness" tabindex="-1" aria-labelledby="cameraModalBusinessLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="cameraModalBusinessLabel">Take Photo</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+              <!-- Camera View -->
+              <div id="cameraViewBusiness" class="position-relative">
+                <video id="cameraStreamBusiness" autoplay playsinline class="w-100 rounded" style="max-height: 400px; object-fit: cover; background: #000;"></video>
+                <button type="button" id="captureBtnBusiness" class="btn btn-success btn-lg mt-3">
+                  <span class="material-symbols-outlined" style="vertical-align:middle;">photo_camera</span> Capture Photo
+                </button>
+              </div>
+              
+              <!-- Preview View -->
+              <div id="previewViewBusiness" class="d-none">
+                <canvas id="photoCanvasBusiness" class="w-100 rounded" style="max-height: 400px; max-width: 400px; border: 2px solid #198754; aspect-ratio: 1 / 1;"></canvas>
+                <div class="mt-3 d-flex gap-2 justify-content-center">
+                  <button type="button" id="retakeBtnBusiness" class="btn btn-warning" style="min-width: 140px;">
+                    <span class="material-symbols-outlined" style="vertical-align:middle;">refresh</span> Retake
+                  </button>
+                  <button type="button" id="uploadPhotoBtnBusiness" class="btn btn-success" style="min-width: 140px;">
+                    <span class="material-symbols-outlined" style="vertical-align:middle;">check_circle</span> Use This Photo
+                  </button>
+                </div>
+              </div>
+              
+              <!-- Error Message -->
+              <div id="cameraErrorBusiness" class="alert alert-danger d-none mt-3" role="alert"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -1967,12 +2149,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
 
-      const chk = dynamicFields.querySelector('#requirePhotoCheck');
-      const photo = dynamicFields.querySelector('#photoInput');
-      if (chk && photo) {
-        chk.addEventListener('change', () => {
-          photo.disabled = !chk.checked;
-        });
+      // const chk = dynamicFields.querySelector('#requirePhotoCheck');
+      // const photo = dynamicFields.querySelector('#photoInput');
+      // if (chk && photo) {
+      //   chk.addEventListener('change', () => {
+      //     photo.disabled = !chk.checked;
+      //   });
+      // }
+
+      // Initialize camera functionality based on request type
+      if (type === 'Barangay ID') {
+        initBarangayIDCamera();
+      } else if (type === 'Barangay Clearance') {
+        initClearanceCamera();
+      } else if (type === 'Business Clearance') {
+        initBusinessCamera();
       }
 
       new bootstrap.Modal(document.getElementById('addRequestModal')).show();
@@ -2756,4 +2947,229 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 });
+
+// ========== UNIVERSAL CAMERA FUNCTIONALITY ==========
+function initCameraForRequest(config) {
+  const {
+    openCameraBtnId,
+    uploadFileBtnId,
+    fileInputId,
+    cameraModalId,
+    cameraStreamId,
+    cameraViewId,
+    previewViewId,
+    photoCanvasId,
+    cameraErrorId,
+    captureBtnId,
+    retakeBtnId,
+    uploadPhotoBtnId,
+    photoPreviewId,
+    photoPreviewContainerId,
+    photoFileName
+  } = config;
+
+  const openCameraBtn = document.getElementById(openCameraBtnId);
+  const uploadFileBtn = document.getElementById(uploadFileBtnId);
+  const fileInput = document.getElementById(fileInputId);
+  const cameraModalElement = document.getElementById(cameraModalId);
+  const cameraStream = document.getElementById(cameraStreamId);
+  const cameraView = document.getElementById(cameraViewId);
+  const previewView = document.getElementById(previewViewId);
+  const photoCanvas = document.getElementById(photoCanvasId);
+  const cameraError = document.getElementById(cameraErrorId);
+  const captureBtn = document.getElementById(captureBtnId);
+  const retakeBtn = document.getElementById(retakeBtnId);
+  const uploadPhotoBtn = document.getElementById(uploadPhotoBtnId);
+  const photoPreview = document.getElementById(photoPreviewId);
+  const photoPreviewContainer = document.getElementById(photoPreviewContainerId);
+  
+  let stream = null;
+  let cameraModal = null;
+
+  // Check if elements exist
+  if (!openCameraBtn || !uploadFileBtn || !fileInput) {
+    console.warn(`Camera buttons not found for ${photoFileName}`);
+    return;
+  }
+
+  // Initialize modal
+  function initModal() {
+    if (!cameraModal && cameraModalElement) {
+      cameraModal = new bootstrap.Modal(cameraModalElement);
+    }
+    return cameraModal;
+  }
+
+  // Open camera
+  openCameraBtn.addEventListener('click', async function() {
+    const modal = initModal();
+    if (!modal) {
+      console.error('Camera modal not found');
+      return;
+    }
+    
+    modal.show();
+    cameraView.classList.remove('d-none');
+    previewView.classList.add('d-none');
+    cameraError.classList.add('d-none');
+    
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'user', width: 1280, height: 720 } 
+      });
+      cameraStream.srcObject = stream;
+    } catch (err) {
+      cameraError.textContent = 'Unable to access camera. Please check permissions or use the upload option.';
+      cameraError.classList.remove('d-none');
+      console.error('Camera error:', err);
+    }
+  });
+
+  // Capture photo
+  captureBtn.addEventListener('click', function() {
+    const context = photoCanvas.getContext('2d');
+    const videoWidth = cameraStream.videoWidth;
+    const videoHeight = cameraStream.videoHeight;
+    const minDimension = Math.min(videoWidth, videoHeight);
+    const cropX = (videoWidth - minDimension) / 2;
+    const cropY = (videoHeight - minDimension) / 2;
+    const outputSize = 800;
+    
+    photoCanvas.width = outputSize;
+    photoCanvas.height = outputSize;
+    
+    context.drawImage(cameraStream, cropX, cropY, minDimension, minDimension, 0, 0, outputSize, outputSize);
+    
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
+    
+    cameraView.classList.add('d-none');
+    previewView.classList.remove('d-none');
+  });
+
+  // Retake photo
+  retakeBtn.addEventListener('click', async function() {
+    previewView.classList.add('d-none');
+    cameraView.classList.remove('d-none');
+    
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'user', width: 1280, height: 720 } 
+      });
+      cameraStream.srcObject = stream;
+    } catch (err) {
+      cameraError.textContent = 'Unable to restart camera.';
+      cameraError.classList.remove('d-none');
+    }
+  });
+
+  // Use captured photo
+  uploadPhotoBtn.addEventListener('click', function() {
+    photoCanvas.toBlob(function(blob) {
+      const file = new File([blob], photoFileName, { type: 'image/jpeg' });
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      fileInput.files = dataTransfer.files;
+      
+      photoPreview.src = URL.createObjectURL(blob);
+      photoPreviewContainer.classList.remove('d-none');
+      
+      if (cameraModal) {
+        cameraModal.hide();
+      }
+    }, 'image/jpeg', 0.9);
+  });
+
+  // Upload file button
+  uploadFileBtn.addEventListener('click', function() {
+    fileInput.click();
+  });
+
+  // Handle file input change
+  fileInput.addEventListener('change', function(e) {
+    if (e.target.files && e.target.files[0]) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        photoPreview.src = event.target.result;
+        photoPreviewContainer.classList.remove('d-none');
+      };
+      reader.readAsDataURL(e.target.files[0]);
+    }
+  });
+
+  // Clean up camera when modal closes
+  if (cameraModalElement) {
+    cameraModalElement.addEventListener('hidden.bs.modal', function() {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+      }
+      if (cameraStream) {
+        cameraStream.srcObject = null;
+      }
+    });
+  }
+}
+
+// ========== INITIALIZE SPECIFIC CAMERAS ==========
+function initBarangayIDCamera() {
+  initCameraForRequest({
+    openCameraBtnId: 'openCameraBtnBID',
+    uploadFileBtnId: 'uploadFileBtnBID',
+    fileInputId: 'photoInput',
+    cameraModalId: 'cameraModalBID',
+    cameraStreamId: 'cameraStreamBID',
+    cameraViewId: 'cameraViewBID',
+    previewViewId: 'previewViewBID',
+    photoCanvasId: 'photoCanvasBID',
+    cameraErrorId: 'cameraErrorBID',
+    captureBtnId: 'captureBtnBID',
+    retakeBtnId: 'retakeBtnBID',
+    uploadPhotoBtnId: 'uploadPhotoBtnBID',
+    photoPreviewId: 'photoPreviewBID',
+    photoPreviewContainerId: 'photoPreviewContainerBID',
+    photoFileName: 'barangay-id-photo.jpg'
+  });
+}
+
+function initClearanceCamera() {
+  initCameraForRequest({
+    openCameraBtnId: 'openCameraBtnClearance',
+    uploadFileBtnId: 'uploadFileBtnClearance',
+    fileInputId: 'clearance_photoInput',
+    cameraModalId: 'cameraModalClearance',
+    cameraStreamId: 'cameraStreamClearance',
+    cameraViewId: 'cameraViewClearance',
+    previewViewId: 'previewViewClearance',
+    photoCanvasId: 'photoCanvasClearance',
+    cameraErrorId: 'cameraErrorClearance',
+    captureBtnId: 'captureBtnClearance',
+    retakeBtnId: 'retakeBtnClearance',
+    uploadPhotoBtnId: 'uploadPhotoBtnClearance',
+    photoPreviewId: 'photoPreviewClearance',
+    photoPreviewContainerId: 'photoPreviewContainerClearance',
+    photoFileName: 'clearance-photo.jpg'
+  });
+}
+
+function initBusinessCamera() {
+  initCameraForRequest({
+    openCameraBtnId: 'openCameraBtnBusiness',
+    uploadFileBtnId: 'uploadFileBtnBusiness',
+    fileInputId: 'business_photoInput',
+    cameraModalId: 'cameraModalBusiness',
+    cameraStreamId: 'cameraStreamBusiness',
+    cameraViewId: 'cameraViewBusiness',
+    previewViewId: 'previewViewBusiness',
+    photoCanvasId: 'photoCanvasBusiness',
+    cameraErrorId: 'cameraErrorBusiness',
+    captureBtnId: 'captureBtnBusiness',
+    retakeBtnId: 'retakeBtnBusiness',
+    uploadPhotoBtnId: 'uploadPhotoBtnBusiness',
+    photoPreviewId: 'photoPreviewBusiness',
+    photoPreviewContainerId: 'photoPreviewContainerBusiness',
+    photoFileName: 'business-photo.jpg'
+  });
+}
 </script>

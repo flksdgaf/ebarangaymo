@@ -539,7 +539,7 @@ if (is_numeric($userId) && intval($userId) > 0) {
             <div class="value" style="font-size:14px; font-weight:700; color:var(--green-b)">You have not submitted any request yet.</div>
           </div>
 
-          <a href="?page=requestService" class="view-requests-btn" aria-label="Request a Service">
+          <a href="?page=userServices" class="view-requests-btn" aria-label="Request a Service">
             <span class="material-icons" aria-hidden="true">add</span>
           </a>
         </div>

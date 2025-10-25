@@ -227,16 +227,10 @@ if (!empty($existingRequest)) {
     }
 }
 ?>
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>eBarangay Mo | Business Clearance</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="serviceBusinessClearance.css">
+<link rel="stylesheet" href="serviceBusinessClearance.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
-  <style>
+<style>
     /* claim grid: two columns per date (left: Morning, right: Afternoon) */
     .claim-grid .date-row {
         margin-bottom: .6rem;
@@ -361,15 +355,13 @@ if (!empty($existingRequest)) {
         vertical-align: middle;
         font-size: 20px;
     }
-  </style>
+</style>
 
-  <!-- Optional: flatpickr (kept but not used for claim date) -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-</head>
-<body>
+<title>eBarangay Mo | Business Clearance</title>
+
 <div class="container py-4 px-3">
     <?php if ($svcError): ?>
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -937,8 +929,6 @@ if (!empty($existingRequest)) {
     window._existingClaimObj = <?php echo json_encode(['date' => $existingClaimDate, 'part' => $existingClaimPart], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
 </script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     // Use the claimOptionsGroup wrapper we added
@@ -1310,5 +1300,3 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <script src="js/serviceBusinessClearance.js"></script>
-</body>
-</html>

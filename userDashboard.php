@@ -130,7 +130,7 @@ if (is_numeric($userId) && intval($userId) > 0) {
   gap:50px;
   align-items:center;
   justify-content:center;
-  width:58%;
+  width:62%;
   margin-top: 0;
   border: none;
   /* added drop shadow */
@@ -434,6 +434,210 @@ if (is_numeric($userId) && intval($userId) > 0) {
   box-shadow: 0 8px 28px rgba(11,38,16,0.06);
   padding: 1rem; /* keep the card spacing */
   margin-top: 1rem;
+}
+
+/* ----------------- RESPONSIVE LAYOUT ADJUSTMENTS ----------------- */
+
+/* Tablet view (768px - 991px) */
+@media (max-width: 991px) {
+  .container.py-4 {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  
+  /* Adjust request pill for tablets */
+  .request-pill {
+    width: 85%;
+    gap: 30px;
+    padding: 12px 16px;
+  }
+  
+  .request-item {
+    min-width: 110px;
+  }
+  
+  .request-item .label {
+    font-size: 12px;
+  }
+  
+  .request-item .value {
+    font-size: 15px;
+  }
+  
+  /* Carousel adjustments */
+  #carouselExampleIndicators .carousel-inner {
+    width: 500px;
+  }
+  
+  #carouselExampleIndicators .carousel-item img {
+    max-height: 340px;
+  }
+  
+  /* Most requested services */
+  .most-requested {
+    gap: 20px;
+  }
+  
+  .most-requested-grid {
+    gap: 12px;
+  }
+  
+  .most-requested-tile {
+    padding: 14px 10px;
+    min-height: 76px;
+  }
+  
+  .most-requested-tile .tile-icon {
+    font-size: 22px;
+    margin-bottom: 8px;
+  }
+  
+  .most-requested-tile .tile-label {
+    font-size: 14px;
+  }
+}
+
+/* Mobile view (below 768px) */
+@media (max-width: 767px) {
+  :root {
+    --title-size: 18px;
+    --section-gap: 18px;
+  }
+  
+  .container.py-4 {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  /* Request card mobile */
+  .request-card {
+    padding: 14px;
+  }
+  
+  .request-pill {
+    width: 100%;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px;
+  }
+  
+  .request-item {
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .request-item .label {
+    font-size: 11px;
+  }
+  
+  .request-item .value {
+    font-size: 14px;
+  }
+  
+  .view-requests-btn {
+    width: 38px;
+    height: 38px;
+    margin-top: 4px;
+  }
+  
+  .view-requests-btn .material-icons {
+    font-size: 18px;
+  }
+  
+  /* Carousel mobile */
+  .carousel-wrapper {
+    padding: 8px 0;
+  }
+  
+  .carousel-container {
+    padding: 16px 8px;
+  }
+  
+  #carouselExampleIndicators .carousel-inner {
+    width: 100%;
+    max-width: 340px;
+  }
+  
+  #carouselExampleIndicators .carousel-item img {
+    max-height: 220px;
+  }
+  
+  /* Most requested services mobile */
+  .most-requested-card {
+    padding: 0.75rem;
+  }
+  
+  .most-requested {
+    padding: 4px 8px;
+    gap: 14px;
+  }
+  
+  .most-requested-left {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .most-requested-left .section-title {
+    font-size: 18px;
+  }
+  
+  .most-requested-left p {
+    font-size: 12px;
+  }
+  
+  .most-requested-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  
+  .most-requested-tile {
+    padding: 12px 8px;
+    min-height: 70px;
+  }
+  
+  .most-requested-tile .tile-icon {
+    font-size: 20px;
+    margin-bottom: 6px;
+  }
+  
+  .most-requested-tile .tile-label {
+    font-size: 13px;
+  }
+}
+
+/* Extra small mobile (below 480px) */
+@media (max-width: 479px) {
+  :root {
+    --title-size: 16px;
+  }
+  
+  .section-title {
+    font-size: 16px;
+  }
+  
+  .request-item .label {
+    font-size: 10px;
+  }
+  
+  .request-item .value {
+    font-size: 13px;
+  }
+  
+  #carouselExampleIndicators .carousel-inner {
+    max-width: 280px;
+  }
+  
+  #carouselExampleIndicators .carousel-item img {
+    max-height: 180px;
+  }
+  
+  .most-requested-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .most-requested-tile {
+    min-height: 64px;
+  }
 }
 </style>
 

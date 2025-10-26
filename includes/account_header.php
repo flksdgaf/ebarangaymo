@@ -150,25 +150,33 @@ if (in_array($role, $admin_roles)) {
 
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg border-bottom px-3 py-2 top-bar" style="background-color: #C4C4C4;">
-        <div class="container-fluid d-flex align-items-center justify-content-between">
-            <div class="d-flex align-items-center gap-2 topbar-title">
-                <span class="fw-bold topbar-text">
-                    <?php echo htmlspecialchars($topbarText); ?></span>
+    <nav class="navbar navbar-expand-lg border-bottom px-2 py-2 top-bar" style="background-color: #C4C4C4;">
+        <div class="container-fluid d-flex align-items-center justify-content-between p-0">
+            <!-- Left side: Hamburger + Title -->
+            <div class="d-flex align-items-center gap-1 topbar-title" style="flex-shrink: 0;">
+                <!-- Hamburger button (only visible on mobile/tablet) -->
+                <button id="hamburger-btn" class="btn btn-sm p-0 me-1" style="background: linear-gradient(180deg, #28a745, #145214); color: white; border: none; border-radius: 6px; padding: 5px 8px !important; flex-shrink: 0; display: none;">
+                    <span class="material-symbols-outlined" style="font-size: 18px; line-height: 1;">menu</span>
+                </button>
+                
+                <span class="fw-bold topbar-text" style="white-space: nowrap;">
+                    <?php echo htmlspecialchars($topbarText); ?>
                 </span>
             </div>
-            <div class="d-none d-md-block flex-grow-1"></div>
-            <div class="dropdown">
-                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="adminDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="margin-right: 5px;">
-                    <span class="user-label d-none d-md-inline"><?= htmlspecialchars($fullName) ?> - <?= htmlspecialchars($_SESSION['loggedInUserRole']) ?></span>
-                    <span class="d-md-none icon"><i class="fas fa-user"></i></span>
+            
+            <!-- Spacer -->
+            <div class="flex-grow-1" style="min-width: 8px;"></div>
+            
+            <!-- Right side: User dropdown (compact on mobile) -->
+            <div class="dropdown d-flex align-items-center gap-1" style="flex-shrink: 0;">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle user-dropdown-btn" type="button" id="adminDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="user-label"><?= htmlspecialchars($fullName) ?> - <?= htmlspecialchars($_SESSION['loggedInUserRole']) ?></span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
-                    <!-- <li><a class="dropdown-item" href="" data-bs-toggle="modal" data-bs-target="#myProfileModal"><i class="fas fa-cog me-2"></i>My Profile</a></li> -->
                     <li><a class="dropdown-item" href="<?php echo htmlspecialchars($settingsHref); ?>"><i class="fas fa-user-cog me-2"></i>Account Settings</a></li>                    
                     <li><a class="dropdown-item" href="functions/logout.php"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
                 </ul>
-                <img src="../<?php echo htmlspecialchars($profilePic); ?>?v=<?php echo time() ?>" class="rounded-circle" width="40" height="40" style="object-fit: cover; margin-right: 5px; border: 2px solid #000000;">
+                <img src="../<?php echo htmlspecialchars($profilePic); ?>?v=<?php echo time() ?>" class="rounded-circle user-profile-pic" width="36" height="36" style="object-fit: cover; border: 2px solid #000000; flex-shrink: 0;">
             </div>
         </div>
     </nav>

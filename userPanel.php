@@ -2,6 +2,31 @@
 <?php include 'includes/account_header.php'; ?>
 <?php include 'includes/userSidebar.php'; ?>
 
+<style>
+.user-main-content {
+    margin-left: 280px;
+    padding: 20px;
+    transition: margin-left 0.3s ease;
+}
+
+/* Mobile/Tablet view - now applies below 1024px */
+@media (max-width: 1023px) {
+    .user-main-content {
+        margin-left: 0 !important;
+        padding-top: 70px;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
+
+/* Ensure smooth transitions */
+@media (min-width: 1024px) {
+    body {
+        overflow-x: hidden;
+    }
+}
+</style>
+
 <div class="user-main-content">
     <?php
         // Default to 'dashboard' if no page is set

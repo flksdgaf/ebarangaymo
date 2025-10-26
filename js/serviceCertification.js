@@ -630,7 +630,7 @@ document.addEventListener("DOMContentLoaded", function () {
         // Render the purpose select
         const purposeContainer = document.getElementById(`purposeFieldContainer_${type}`);
         if (purposeContainer) {
-            const purposes = ['Employment','Another Valid ID','School Enrollment','Passport','Scholarship','4Ps Application','Others'];
+            const purposes = ['Medical Assistance','Employment','School Enrollment','Passport','Scholarship','4Ps Application','Others'];
             purposeContainer.innerHTML = `
                 <select id="purposeSelect_purpose_${type}" name="purpose_select" class="form-control" required>
                     <option value="">Select Purpose</option>
@@ -745,7 +745,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             if (f.type === 'purpose_select') {
-                const purposes = ['Employment','Another Valid ID','School Enrollment','Passport','Scholarship','4Ps Application','Others'];
+                const purposes = ['Medical Assistance','Employment','School Enrollment','Passport','Scholarship','4Ps Application','Others'];
                 const existingPurpose = ''; // Will be populated from existing data if available
                 const isInList = purposes.includes(existingPurpose);
                 const otherValue = isInList ? '' : existingPurpose;

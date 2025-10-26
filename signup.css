@@ -219,19 +219,71 @@ label {
 }
 
 /* Modal customization */
-.modal-content {
+.signup-modal .modal-content {
     border-radius: 20px;
     border: 2px solid #0D2C15;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
 
-.modal-header {
-    background: linear-gradient(to right, #0D2C15, #2A9245);
-    color: white;
-    border-radius: 18px 18px 0 0;
+.modal-icon-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-.modal-title {
-    font-weight: 600;
+.modal-icon {
+    font-size: 64px;
+    font-weight: 300;
+}
+
+.error-icon {
+    color: #dc3545;
+}
+
+.confirm-icon {
+    color: #2A9245;
+}
+
+.modal-title-custom {
+    color: #0D2C15;
+    font-weight: bold;
+    font-size: 24px;
+}
+
+.modal-message {
+    color: #333;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.btn-modal-close {
+    background: linear-gradient(25deg, #0D2C15, #2A9245);
+    border: none;
+    color: #fff;
+    padding: 10px 40px;
+    border-radius: 25px;
+    font-weight: bold;
+    transition: transform 0.2s;
+}
+
+.btn-modal-close:hover {
+    transform: scale(1.05);
+    color: #fff;
+}
+
+.btn-modal-cancel {
+    background: transparent;
+    border: 2px solid #2A9245;
+    color: #0D2C15;
+    padding: 10px 40px;
+    border-radius: 25px;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.btn-modal-cancel:hover {
+    background-color: rgba(42, 146, 69, 0.1);
+    transform: scale(1.05);
 }
 
 /* Responsive Design */

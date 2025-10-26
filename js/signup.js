@@ -112,7 +112,6 @@ document.addEventListener("DOMContentLoaded", function () {
             const firstName = document.getElementById("firstname").value.trim();
             const middleName = document.getElementById("middlename").value.trim();
             const lastName = document.getElementById("lastname").value.trim();
-            const suffix = document.getElementById("suffix").value.trim();
 
             const nameRegex = /^[A-Za-z\s.]+$/;
 
@@ -140,13 +139,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 document.getElementById("lastname").classList.remove("is-invalid");
             }
 
-            if (suffix !== "" && !nameRegex.test(suffix)) {
-                valid = false;
-                errorMessages.push("Suffix can only contain letters and periods.");
-                document.getElementById("suffix").classList.add("is-invalid");
-            } else {
-                document.getElementById("suffix").classList.remove("is-invalid");
-            }
+            // if (suffix !== "" && !nameRegex.test(suffix)) {
+            //     valid = false;
+            //     errorMessages.push("Suffix can only contain letters and periods.");
+            //     document.getElementById("suffix").classList.add("is-invalid");
+            // } else {
+            //     document.getElementById("suffix").classList.remove("is-invalid");
+            // }
         }
 
         // Step 2: Credentials
@@ -199,8 +198,8 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         if (!valid) {
-            const modalBody = document.querySelector("#validationModal .modal-body");
-            modalBody.textContent = errorMessages.join(" ");
+            const modalMessage = document.querySelector("#validationModal .modal-message");
+            modalMessage.textContent = errorMessages.join(" ");
         }
 
         return valid;
@@ -348,14 +347,12 @@ document.addEventListener("DOMContentLoaded", function () {
         const fn = document.getElementById("firstname").value.trim();
         const mn = document.getElementById("middlename").value.trim();
         const ln = document.getElementById("lastname").value.trim();
-        const sn = document.getElementById("suffix").value.trim();
         const bd = document.getElementById("birthdate").value;
         const pu = document.getElementById("purok").value;
         const em = document.getElementById("email").value.trim();
 
-        const suffixPart = sn ? ` ${sn}` : "";
         const middlePart = mn ? ` ${mn}` : "";
-        const fullName = `${ln}, ${fn}${middlePart}${suffixPart}`;
+        const fullName = `${ln}, ${fn}${middlePart}`;
 
         document.getElementById("summaryFullName").value = fullName;
         document.getElementById("summaryBirthdate").value = bd;

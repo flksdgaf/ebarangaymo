@@ -93,10 +93,14 @@ h5 {
 .forgot-pass {
     font-size: 12px;
     text-align: right;
-    display: block;
-    padding-right: 35px;
+    display: inline-block;
+    padding-right: 0;
     color: #333;
     text-decoration: none;
+}
+
+.forgot-pass:hover {
+    text-decoration: underline;
 }
 
 /* Input Styling */
@@ -112,8 +116,10 @@ h5 {
     top: 50%;
     transform: translateY(-50%);
     cursor: pointer;
-    font-size: 16px;
+    font-size: 20px;
     color: #666;
+    display: flex;
+    align-items: center;
 }
 
 .toggle-password:hover {
@@ -131,6 +137,70 @@ h5 {
 .form-control:focus {
     box-shadow: none;
     border-color: #ee0979;
+}
+
+.back-to-signin {
+    color: #0D2C15;
+    font-size: 13px;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.back-to-signin:hover {
+    text-decoration: underline;
+}
+
+/* Reset Password Modal Styles */
+.reset-modal .modal-content {
+    border-radius: 20px;
+    border: 2px solid #0D2C15;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-icon-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-icon {
+    font-size: 64px;
+    font-weight: 300;
+}
+
+.success-icon {
+    color: #2A9245;
+}
+
+.error-icon {
+    color: #dc3545;
+}
+
+.modal-title-custom {
+    color: #0D2C15;
+    font-weight: bold;
+    font-size: 24px;
+}
+
+.modal-message {
+    color: #333;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.btn-modal-close {
+    background: linear-gradient(25deg, #0D2C15, #2A9245);
+    border: none;
+    color: #fff;
+    padding: 10px 40px;
+    border-radius: 25px;
+    font-weight: bold;
+    transition: transform 0.2s;
+}
+
+.btn-modal-close:hover {
+    transform: scale(1.05);
+    color: #fff;
 }
 
 /* Mobile View */

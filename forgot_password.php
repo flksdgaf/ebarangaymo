@@ -18,6 +18,7 @@ $logoUrl = 'images/' . $info['logo'];
 ?>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="signin.css">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -49,7 +50,7 @@ $logoUrl = 'images/' . $info['logo'];
 
         <div class="text-center">
           <button type="submit" class="btn btn-gradient w-50 py-2 mb-3">Send Reset Link</button>
-          <p><a href="signin.php" style="color: #0D2C15; font-size: 13px; font-weight: bold; text-decoration: none;">Back to Sign In</a></p>
+          <p><a href="signin.php" class="back-to-signin">Back to Sign In</a></p>
         </div>
       </form>
     </div>
@@ -59,16 +60,20 @@ $logoUrl = 'images/' . $info['logo'];
   <?php if(!empty($message)) { ?>
   <div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="messageModalLabel"><?= $messageType === 'success' ? 'Success' : 'Error' ?></h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <?= htmlspecialchars($message) ?>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      <div class="modal-content reset-modal">
+        <div class="modal-body text-center p-4">
+          <div class="modal-icon-wrapper mb-3">
+            <?php if($messageType === 'success') { ?>
+              <span class="material-symbols-outlined modal-icon success-icon">check_circle</span>
+            <?php } else { ?>
+              <span class="material-symbols-outlined modal-icon error-icon">error</span>
+            <?php } ?>
+          </div>
+          <h4 class="modal-title-custom mb-3"><?= $messageType === 'success' ? 'Success!' : 'Error' ?></h4>
+          <p class="modal-message"><?= htmlspecialchars($message) ?></p>
+          <button type="button" class="btn btn-modal-close mt-3" data-bs-dismiss="modal">
+            <?= $messageType === 'success' ? 'Got it!' : 'Close' ?>
+          </button>
         </div>
       </div>
     </div>

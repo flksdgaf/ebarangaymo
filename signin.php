@@ -1,5 +1,23 @@
 <?php 
 session_start();
+
+// If already logged in, redirect to appropriate panel
+if (isset($_SESSION['auth']) && $_SESSION['auth'] === true) {
+    $role = $_SESSION['loggedInUserRole'];
+    $admin_roles = ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper', 'Brgy Kagawad', 'Brgy Treasurer', 'Lupon Tagapamayapa'];
+    
+    if ($role === 'SuperAdmin') {
+        header("Location: superAdminPanel.php");
+        exit;
+    } elseif (in_array($role, $admin_roles)) {
+        header("Location: adminPanel.php");
+        exit;
+    } elseif ($role === 'Resident') {
+        header("Location: userPanel.php");
+        exit;
+    }
+}
+
 $page = 'login'; 
 include 'includes/header.php';
 include 'functions/dbconn.php';
@@ -15,7 +33,8 @@ $info = $conn->query("SELECT logo, name, address FROM barangay_info WHERE id=1")
 $logoUrl = 'images/' . $info['logo'];
 ?>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"> -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="signin.css">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -52,10 +71,12 @@ $logoUrl = 'images/' . $info['logo'];
           <div class="col-md-8 position-relative mb-10">
             <input type="password" class="form-control custom-input password-field" id="password" name="password" required>
             <span class="toggle-password" onclick="togglePassword('password')">
-              <i class="fa fa-eye-slash"></i>
+              <span class="material-symbols-outlined">visibility_off</span>
             </span>
           </div>
-          <a href="forgot_password.php" class="forgot-pass"><strong><br>Forgot Password?</strong></a>
+          <div class="col-md-8 offset-md-3 text-end">
+            <a href="forgot_password.php" class="forgot-pass"><strong>Forgot Password?</strong></a>
+          </div>
         </div>
 
         <div class="text-center">
@@ -99,16 +120,14 @@ $logoUrl = 'images/' . $info['logo'];
   <script>
     window.togglePassword = function (id) {
         let input = document.getElementById(id);
-        let icon = input.nextElementSibling.querySelector("i");
+        let icon = input.nextElementSibling.querySelector(".material-symbols-outlined");
 
         if (input.type === "password") {
             input.type = "text";
-            icon.classList.remove("fa-eye-slash");
-            icon.classList.add("fa-eye");
+            icon.textContent = "visibility";
         } else {
             input.type = "password";
-            icon.classList.remove("fa-eye");
-            icon.classList.add("fa-eye-slash");
+            icon.textContent = "visibility_off";
         }
     };
   </script>

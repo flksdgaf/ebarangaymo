@@ -16,15 +16,13 @@ $account_id = getNextAccountId($conn);
 $fn = trim($_POST['firstname']   ?? '');
 $mn = trim($_POST['middlename']  ?? '');
 $ln = trim($_POST['lastname']    ?? '');
-$sn = trim($_POST['suffix']      ?? '');
 $bd = $_POST['birthdate']        ?? '';
 
 // Build the optional pieces
-$suffixPart = $sn ? " {$sn}" : '';
 $middlePart = $mn ? " {$mn}" : '';
 
-// Always put the comma immediately after last name (+ suffix), then a space
-$full_name = "{$suffixPart}{$ln}, {$fn}{$middlePart}";
+// Format: LastName, FirstName MiddleName
+$full_name = "{$ln}, {$fn}{$middlePart}";
 
 // Step 2 inputs
 $pu = $_POST['purok']                ?? '';

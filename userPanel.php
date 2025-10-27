@@ -13,7 +13,6 @@
 @media (max-width: 1023px) {
     .user-main-content {
         margin-left: 0 !important;
-        padding-top: 70px;
         padding-left: 1rem;
         padding-right: 1rem;
     }

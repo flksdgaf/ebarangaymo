@@ -207,10 +207,25 @@ if (is_numeric($userId) && intval($userId) > 0) {
 }
 .view-requests-btn .material-icons { font-size:20px; line-height:1; }
 
-/* responsive: stack vertically and center everything */
+/* responsive: keep horizontal layout but adjust spacing and font sizes */
 @media (max-width:900px){
-  .request-pill { flex-direction:column; gap:15px; align-items:center; padding:12px; width:100%; }
-  .view-requests-btn { width:40px; height:40px; }
+  .request-pill { 
+    gap:20px; 
+    padding:12px 16px; 
+    width:85%; 
+    flex-direction: row; /* keep horizontal */
+  }
+  .request-item {
+    min-width: 90px; /* reduce from 140px */
+  }
+  .request-item .label {
+    font-size: 11px; /* reduce from 13px */
+  }
+  .request-item .value {
+    font-size: 14px; /* reduce from 17px */
+  }
+  .view-requests-btn { width:38px; height:38px; }
+  .view-requests-btn .material-icons { font-size:18px; }
 }
 
 /* ---------- ANNOUNCEMENTS carousel ---------- */
@@ -448,20 +463,21 @@ if (is_numeric($userId) && intval($userId) > 0) {
   /* Adjust request pill for tablets */
   .request-pill {
     width: 85%;
-    gap: 30px;
+    gap: 20px;
     padding: 12px 16px;
+    flex-direction: row; /* ensure horizontal */
   }
   
   .request-item {
-    min-width: 110px;
+    min-width: 95px; /* reduced */
   }
   
   .request-item .label {
-    font-size: 12px;
+    font-size: 11px; /* smaller */
   }
   
   .request-item .value {
-    font-size: 15px;
+    font-size: 14px; /* smaller */
   }
   
   /* Carousel adjustments */
@@ -507,31 +523,39 @@ if (is_numeric($userId) && intval($userId) > 0) {
   .container.py-4 {
     padding-left: 0.75rem;
     padding-right: 0.75rem;
+    padding-top: 0.25rem; /* reduce top padding on mobile */
   }
   
   /* Request card mobile */
   .request-card {
     padding: 14px;
+    padding-top: 4px; /* CHANGED: reduced from 8px to 4px */
+    margin-top: 0;
   }
   
   .request-pill {
     width: 100%;
-    flex-direction: column;
-    gap: 12px;
-    padding: 14px;
+    flex-direction: row; /* keep horizontal */
+    gap: 10px;
+    padding: 10px 14px;
   }
-  
+
   .request-item {
-    min-width: auto;
-    width: 100%;
+    min-width: 75px; /* fixed width instead of auto */
+    flex: 1; /* allow items to grow equally */
   }
   
   .request-item .label {
-    font-size: 11px;
+    font-size: 10px; /* even smaller for mobile */
   }
   
   .request-item .value {
-    font-size: 14px;
+    font-size: 12px; /* even smaller for mobile */
+    word-break: break-word; /* prevent overflow */
+  }
+
+  .request-item .value .status-badge{
+    font-size: 12px;
   }
   
   .view-requests-btn {
@@ -562,19 +586,20 @@ if (is_numeric($userId) && intval($userId) > 0) {
     max-height: 220px;
   }
   
-  /* Most requested services mobile */
+/* Most requested services mobile */
   .most-requested-card {
-    padding: 0.75rem;
+    padding: 0.5rem; /* CHANGED: reduced from 0.75rem to 0.5rem */
   }
   
   .most-requested {
-    padding: 4px 8px;
+    padding: 4px 0; /* remove horizontal padding */
     gap: 14px;
   }
   
   .most-requested-left {
     width: 100%;
     min-width: auto;
+    text-align: center; /* center align title and description */
   }
   
   .most-requested-left .section-title {
@@ -586,13 +611,16 @@ if (is_numeric($userId) && intval($userId) > 0) {
   }
   
   .most-requested-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
     gap: 10px;
+    width: 100%;
+    padding: 0; /* CHANGED: remove horizontal padding */
   }
   
   .most-requested-tile {
     padding: 12px 8px;
     min-height: 70px;
+    width: 100%; /* full width */
   }
   
   .most-requested-tile .tile-icon {
@@ -603,6 +631,10 @@ if (is_numeric($userId) && intval($userId) > 0) {
   .most-requested-tile .tile-label {
     font-size: 13px;
   }
+
+  .most-requested-right {
+    width: 100%;
+  }
 }
 
 /* Extra small mobile (below 480px) */
@@ -611,16 +643,28 @@ if (is_numeric($userId) && intval($userId) > 0) {
     --title-size: 16px;
   }
   
+  .container.py-4 {
+    padding-top: 0.025rem; /* reduce top padding even more */
+  }
+  
   .section-title {
     font-size: 16px;
   }
   
+  .request-card {
+    padding-top: 6px; /* minimal top padding */
+  }
+  
   .request-item .label {
-    font-size: 10px;
+    font-size: 8px;
   }
   
   .request-item .value {
-    font-size: 13px;
+    font-size: 12px;
+  }
+
+  .request-item .value .status-badge{
+    font-size: 12px;
   }
   
   #carouselExampleIndicators .carousel-inner {
@@ -632,11 +676,19 @@ if (is_numeric($userId) && intval($userId) > 0) {
   }
   
   .most-requested-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr; /* ensure single column */
   }
   
   .most-requested-tile {
     min-height: 64px;
+  }
+  
+  .most-requested-left {
+    text-align: center; /* ensure centered on very small screens */
+  }
+
+  .most-requested {
+    align-items: center;
   }
 }
 </style>

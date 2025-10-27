@@ -60,7 +60,6 @@ if (!isset($_SESSION['auth']) || $_SESSION['auth'] !== true) {
     exit();
 }
 
-// Get the user's account id from session.
 $userId = $_SESSION['loggedInUserID'];
 
 // Try to find the logged‐in account in any purokX_rbi table:
@@ -111,6 +110,10 @@ $stmt->close();
 
 $role = $_SESSION['loggedInUserRole'] ?? '';
 
+// Define official roles that should display their role
+$officialRoles = ['Brgy Captain', 'Brgy Secretary', 'Brgy Kagawad', 'Brgy Recordkeeper', 'Brgy Treasurer', 'Lupon Tagapamayapa'];
+$shouldShowRole = in_array($role, $officialRoles);
+
 // ACESS LEVELS ( ALL ACCESS - ALL ACCESS - ALL ACCESS - VIEWING ONLY - TRANSACTIONS - KATARAUNGANG PAMBARANGAY)
 $admin_roles = ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper', 'Brgy Kagawad', 'Brgy Treasurer', 'Lupon Tagapamayapa'];
 
@@ -153,9 +156,9 @@ if (in_array($role, $admin_roles)) {
     <nav class="navbar navbar-expand-lg border-bottom px-2 py-2 top-bar" style="background-color: #C4C4C4;">
         <div class="container-fluid d-flex align-items-center justify-content-between p-0">
             <!-- Left side: Hamburger + Title -->
-            <div class="d-flex align-items-center gap-1 topbar-title" style="flex-shrink: 0;">
+            <div class="d-flex align-items-left gap-1 topbar-title" style="flex-shrink: 0;">
                 <!-- Hamburger button (only visible on mobile/tablet) -->
-                <button id="hamburger-btn" class="btn btn-sm p-0 me-1" style="background: linear-gradient(180deg, #28a745, #145214); color: white; border: none; border-radius: 6px; padding: 5px 8px !important; flex-shrink: 0; display: none;">
+                <button id="hamburger-btn" class="btn btn-sm p-0" style="background: linear-gradient(180deg, #28a745, #145214); color: white; border: none; border-radius: 6px; padding: 5px 8px !important; flex-shrink: 0; display: none;">
                     <span class="material-symbols-outlined" style="font-size: 18px; line-height: 1;">menu</span>
                 </button>
                 
@@ -170,7 +173,10 @@ if (in_array($role, $admin_roles)) {
             <!-- Right side: User dropdown (compact on mobile) -->
             <div class="dropdown d-flex align-items-center gap-1" style="flex-shrink: 0;">
                 <button class="btn btn-sm btn-outline-secondary dropdown-toggle user-dropdown-btn" type="button" id="adminDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    <span class="user-label"><?= htmlspecialchars($fullName) ?> - <?= htmlspecialchars($_SESSION['loggedInUserRole']) ?></span>
+                    <span class="user-label">
+                        <?= htmlspecialchars($fullName) ?>
+                        <?php if ($shouldShowRole): ?> - <?= htmlspecialchars($_SESSION['loggedInUserRole']) ?><?php endif; ?>
+                    </span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
                     <li><a class="dropdown-item" href="<?php echo htmlspecialchars($settingsHref); ?>"><i class="fas fa-user-cog me-2"></i>Account Settings</a></li>                    

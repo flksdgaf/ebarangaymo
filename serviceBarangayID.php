@@ -529,9 +529,9 @@ if (!empty($existingRequest)) {
                             </button>
                             
                             <!-- Upload Button -->
-                            <button type="button" id="uploadFileBtn" class="btn btn-outline-primary">
+                            <!-- <button type="button" id="uploadFileBtn" class="btn btn-outline-primary">
                                 <span class="material-symbols-outlined">upload_file</span> Upload File
-                            </button>
+                            </button> -->
                             
                             <!-- Preview Container -->
                             <div id="photoPreviewContainer" class="w-100 mt-2 d-none">

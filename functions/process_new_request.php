@@ -608,10 +608,8 @@ switch($requestType) {
     $fn = trim($_POST['clearance_first_name'] ?? '');
     $mn = trim($_POST['clearance_middle_name'] ?? '');
     $ln = trim($_POST['clearance_last_name'] ?? '');
-    $sn = trim($_POST['clearance_suffix'] ?? '');
     $middlePart = $mn ? " {$mn}" : '';
-    $suffixPart = $sn ? " {$sn}" : '';
-    $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+    $fullName = "{$ln}, {$fn}{$middlePart}";
 
     // 2) Other form inputs
     $street = trim($_POST['clearance_street'] ?? '');
@@ -632,7 +630,7 @@ switch($requestType) {
     // 3) Handle file upload
     $pictureName = null;
     if (!empty($_FILES['clearance_photo']['name']) && $_FILES['clearance_photo']['error'] === UPLOAD_ERR_OK) {
-        $uploadDir = __DIR__ . '/../clearancePictures/';
+        $uploadDir = __DIR__ . '/../barangayClearancePictures/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }
@@ -665,7 +663,7 @@ switch($requestType) {
     // 5) Insert into barangay_clearance_requests
     $sql = "INSERT INTO barangay_clearance_requests (account_id, transaction_id, full_name, street, purok, barangay, municipality, province, birth_date, age, birth_place, marital_status, ctc_number, purpose, picture, payment_method, document_status, request_source) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'Walk-In')";
     $ins = $conn->prepare($sql);
-    $ins->bind_param('issssssssssisssss', $userId, $transactionId, $fullName, $street, $purok, $barangay, $municipality, $province, $birthDate, $age, $birthPlace, $maritalStatus, $ctcNumber, $purpose, $pictureName, $paymentMethod, $documentStatus);
+    $ins->bind_param('issssssssssssssss', $userId, $transactionId, $fullName, $street, $purok, $barangay, $municipality, $province, $birthDate, $age, $birthPlace, $maritalStatus, $ctcNumber, $purpose, $pictureName, $paymentMethod, $documentStatus);
     $ins->execute();
     $ins->close();
 

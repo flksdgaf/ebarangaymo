@@ -766,21 +766,17 @@ $result = $st->get_result();
                 </div>
 
                 <!-- Name -->
-                <div class="col-12 col-md-3">
+                <div class="col-12 col-md-4">
                   <label class="form-label fw-bold">First Name <span class="text-danger">*</span></label>
                   <input name="business_first_name" type="text" class="form-control form-control-sm" required>
                 </div>
-                <div class="col-12 col-md-3">
+                <div class="col-12 col-md-4">
                   <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
                   <input name="business_middle_name" type="text" class="form-control form-control-sm">
                 </div>
-                <div class="col-12 col-md-3">
+                <div class="col-12 col-md-4">
                   <label class="form-label fw-bold">Last Name <span class="text-danger">*</span></label>
                   <input name="business_last_name" type="text" class="form-control form-control-sm" required>
-                </div>
-                <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
-                  <input name="business_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
                 </div>
 
                 <!-- Address: Purok, Barangay -->
@@ -858,11 +854,6 @@ $result = $st->get_result();
                     <!-- Camera Button -->
                     <button type="button" id="openCameraBtnBusiness" class="btn btn-sm btn-outline-success">
                       <span class="material-symbols-outlined" style="font-size:16px; vertical-align:middle;">photo_camera</span> Take Photo
-                    </button>
-                    
-                    <!-- Upload Button -->
-                    <button type="button" id="uploadFileBtnBusiness" class="btn btn-sm btn-outline-primary">
-                      <span class="material-symbols-outlined" style="font-size:16px; vertical-align:middle;">upload_file</span> Upload File
                     </button>
                     
                     <!-- Preview Container -->
@@ -3293,7 +3284,7 @@ function initClearanceCamera() {
 function initBusinessCamera() {
   initCameraForRequest({
     openCameraBtnId: 'openCameraBtnBusiness',
-    uploadFileBtnId: 'uploadFileBtnBusiness',
+    uploadFileBtnId: null,
     fileInputId: 'business_photoInput',
     cameraModalId: 'cameraModalBusiness',
     cameraStreamId: 'cameraStreamBusiness',

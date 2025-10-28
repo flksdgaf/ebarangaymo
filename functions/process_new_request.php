@@ -692,10 +692,8 @@ switch($requestType) {
     $fn = trim($_POST['business_first_name'] ?? '');
     $mn = trim($_POST['business_middle_name'] ?? '');
     $ln = trim($_POST['business_last_name'] ?? '');
-    $sn = trim($_POST['business_suffix'] ?? '');
     $middlePart = $mn ? " {$mn}" : '';
-    $suffixPart = $sn ? " {$sn}" : '';
-    $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+    $fullName = "{$ln}, {$fn}{$middlePart}";
 
     // 2) Other form inputs
     $purok = $_POST['business_purok'] ?? '';
@@ -715,7 +713,7 @@ switch($requestType) {
     // 3) Handle file upload
     $pictureName = null;
     if (!empty($_FILES['business_photo']['name']) && $_FILES['business_photo']['error'] === UPLOAD_ERR_OK) {
-        $uploadDir = __DIR__ . '/../clearancePictures/';
+        $uploadDir = __DIR__ . '/../businessClearancePictures/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }

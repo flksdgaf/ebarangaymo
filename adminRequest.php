@@ -1041,21 +1041,17 @@ $result = $st->get_result();
                 </div>
 
                 <!-- Row 1: Full Name & Civil Status -->
-                <div class="col-12 col-md-3">
+                <div class="col-12 col-md-4">
                   <label class="form-label fw-bold">First Name <span class="text-danger">*</span></label>
                   <input name="good_moral_first_name" type="text" class="form-control form-control-sm" required>
                 </div>
-                <div class="col-12 col-md-3">
+                <div class="col-12 col-md-4">
                   <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
                   <input name="good_moral_middle_name" type="text" class="form-control form-control-sm">
                 </div>
-                <div class="col-12 col-md-3">
+                <div class="col-12 col-md-4">
                   <label class="form-label fw-bold">Last Name <span class="text-danger">*</span></label>
                   <input name="good_moral_last_name" type="text" class="form-control form-control-sm" required>
-                </div>
-                <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
-                  <input name="good_moral_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
                 </div>
 
                 <!-- Row 2: Civil Status, Sex & Age -->
@@ -1084,12 +1080,6 @@ $result = $st->get_result();
                   <input name="good_moral_age" type="number" min="0" class="form-control form-control-sm" required>
                 </div>
 
-                <!-- Full Address -->
-                <div class="col-12 col-md-6">
-                  <label class="form-label fw-bold">Address <span class="text-danger">*</span></label>
-                  <input name="good_moral_address" type="text" class="form-control form-control-sm" placeholder="Street / Subdivision / Lot / Block"/>
-                </div>
-
                 <div class="col-12 col-md-2">
                   <label class="form-label fw-bold">Purok <span class="text-danger">*</span></label>
                   <div class="d-flex gap-2">
@@ -1103,6 +1093,12 @@ $result = $st->get_result();
                       <option>Purok 6</option>
                     </select>
                   </div>
+                </div>
+
+                <!-- Full Address -->
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-bold">Address <span class="text-danger">*</span></label>
+                  <input name="good_moral_address" type="text" class="form-control form-control-sm" placeholder="Street / Subdivision / Lot / Block"/>
                 </div>
 
                 <!-- Purpose -->

@@ -268,11 +268,9 @@ switch($requestType) {
     $fn = trim($_POST['good_moral_first_name'] ?? '');
     $mn = trim($_POST['good_moral_middle_name'] ?? '');
     $ln = trim($_POST['good_moral_last_name'] ?? '');
-    $sn = trim($_POST['good_moral_suffix'] ?? '');
     $middlePart = $mn ? " {$mn}" : '';
-    $suffixPart = $sn ? " {$sn}" : '';
     // $fullName = "{$ln}, {$fn}, {$middlePart}, {$suffixPart}";
-    $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+    $fullName = "{$ln}, {$fn}{$middlePart}";
     // $fullName = trim($_POST['full_name'] ?? '');
 
     $civilStatus = $_POST['good_moral_civil_status'] ?? '';

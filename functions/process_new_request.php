@@ -393,10 +393,8 @@ switch($requestType) {
     $fn = trim($_POST['indigency_first_name'] ?? '');
     $mn = trim($_POST['indigency_middle_name'] ?? '');
     $ln = trim($_POST['indigency_last_name'] ?? '');
-    $sn = trim($_POST['indigency_suffix'] ?? '');
     $middlePart = $mn ? " {$mn}" : '';
-    $suffixPart = $sn ? " {$sn}" : '';
-    $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+    $fullName = "{$ln}, {$fn}{$middlePart}";
     // $fullName = trim($_POST['full_name'] ?? '');
 
     // 2) Other form inputs

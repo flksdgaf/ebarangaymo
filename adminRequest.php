@@ -1280,21 +1280,17 @@ $result = $st->get_result();
                 </div>
 
                 <!-- Row 1: First, Middle, Last, Suffix -->
-                <div class="col-12 col-md-3">
+                <div class="col-12 col-md-4">
                   <label class="form-label fw-bold">First Name <span class="text-danger">*</span></label>
                   <input name="residency_first_name" type="text" class="form-control form-control-sm" required>
                 </div>
-                <div class="col-12 col-md-3">
+                <div class="col-12 col-md-4">
                   <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
                   <input name="residency_middle_name" type="text" class="form-control form-control-sm">
                 </div>
-                <div class="col-12 col-md-3">
+                <div class="col-12 col-md-4">
                   <label class="form-label fw-bold">Last Name <span class="text-danger">*</span></label>
                   <input name="residency_last_name" type="text" class="form-control form-control-sm" required>
-                </div>
-                <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
-                  <input name="residency_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
                 </div>
 
                 <!-- Row 2: Civil Status & Age -->

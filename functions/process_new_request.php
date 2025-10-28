@@ -775,10 +775,8 @@ switch($requestType) {
     $fn = trim($_POST['first_time_job_seeker_first_name'] ?? '');
     $mn = trim($_POST['first_time_job_seeker_middle_name'] ?? '');
     $ln = trim($_POST['first_time_job_seeker_last_name'] ?? '');
-    $sn = trim($_POST['first_time_job_seeker_suffix'] ?? '');
     $middlePart = $mn ? " {$mn}" : '';
-    $suffixPart = $sn ? " {$sn}" : '';
-    $fullName = "{$fn}{$middlePart} {$ln}{$suffixPart}"; // Note: different format for job seeker based on DB
+    $fullName = "{$ln}, {$fn}{$middlePart} "; // Note: different format for job seeker based on DB
 
     // 2) Other form inputs
     $age = (int)($_POST['first_time_job_seeker_age'] ?? 0);

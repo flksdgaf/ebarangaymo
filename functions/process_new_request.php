@@ -516,10 +516,8 @@ switch($requestType) {
     $fn = trim($_POST['solo_parent_first_name'] ?? '');
     $mn = trim($_POST['solo_parent_middle_name'] ?? '');
     $ln = trim($_POST['solo_parent_last_name'] ?? '');
-    $sn = trim($_POST['solo_parent_suffix'] ?? '');
     $middlePart = $mn ? " {$mn}" : '';
-    $suffixPart = $sn ? " {$sn}" : '';
-    $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+    $fullName = "{$ln}, {$fn}{$middlePart}";
 
     // 2) Other form inputs
     $civilStatus = $_POST['solo_parent_civil_status'] ?? '';

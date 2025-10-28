@@ -332,10 +332,8 @@ switch($requestType) {
     $fn = trim($_POST['guardianship_first_name'] ?? '');
     $mn = trim($_POST['guardianship_middle_name'] ?? '');
     $ln = trim($_POST['guardianship_last_name'] ?? '');
-    $sn = trim($_POST['guardianship_suffix'] ?? '');
     $middlePart = $mn ? " {$mn}" : '';
-    $suffixPart = $sn ? " {$sn}" : '';
-    $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+    $fullName = "{$ln}, {$fn}{$middlePart}";
 
     $civilStatus = $_POST['guardianship_civil_status'] ?? '';
     $age = (int)($_POST['guardianship_age'] ?? 0);

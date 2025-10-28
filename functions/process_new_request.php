@@ -29,10 +29,8 @@ switch($requestType) {
     $fn = trim($_POST['barangay_id_first_name'] ?? '');
     $mn = trim($_POST['barangay_id_middle_name'] ?? '');
     $ln = trim($_POST['barangay_id_last_name'] ?? '');
-    $sn = trim($_POST['barangay_id_suffix'] ?? '');
-    $suffixPart = $sn ? " {$sn}" : '';
     $middlePart = $mn ? " {$mn}" : '';
-    $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+    $fullName = "{$ln}, {$fn}{$middlePart}";
 
     $purok = trim($_POST['barangay_id_purok'] ?? '');
     $birthDate = trim($_POST['barangay_id_dob'] ?? '');

@@ -523,21 +523,17 @@ $result = $st->get_result();
                 </div>
 
                 <!-- Full Name -->
-                <div class="col-12 col-md-3">
+                <div class="col-12 col-md-4">
                   <label class="form-label fw-bold">First Name <span class="text-danger">*</span></label>
                   <input name="barangay_id_first_name" id="bid_first_name" type="text" class="form-control form-control-sm" required>
                 </div>
-                <div class="col-12 col-md-3">
+                <div class="col-12 col-md-4">
                   <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
                   <input name="barangay_id_middle_name" id="bid_middle_name" type="text" class="form-control form-control-sm">
                 </div>
-                <div class="col-12 col-md-3">
+                <div class="col-12 col-md-4">
                   <label class="form-label fw-bold">Last Name <span class="text-danger">*</span></label>
                   <input name="barangay_id_last_name" id="bid_last_name" type="text" class="form-control form-control-sm" required>
-                </div>
-                <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>          
-                  <input name="barangay_id_suffix" id="bid_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
                 </div>
 
                 <!-- Purok, Birthday & Birth Place -->
@@ -620,11 +616,6 @@ $result = $st->get_result();
                     <!-- Camera Button -->
                     <button type="button" id="openCameraBtnBID" class="btn btn-sm btn-outline-success">
                       <span class="material-symbols-outlined" style="font-size:16px; vertical-align:middle;">photo_camera</span> Take Photo
-                    </button>
-                    
-                    <!-- Upload Button -->
-                    <button type="button" id="uploadFileBtnBID" class="btn btn-sm btn-outline-primary">
-                      <span class="material-symbols-outlined" style="font-size:16px; vertical-align:middle;">upload_file</span> Upload File
                     </button>
                     
                     <!-- Preview Container -->
@@ -1956,6 +1947,26 @@ $result = $st->get_result();
                   default: $c = 'bg-secondary'; 
                 }
 
+                // function status_class(string $ps): string {
+                //     $ps = trim($ps);
+
+                //     // if it starts with "Refund" (case-insensitive), return success
+                //     if (preg_match('/^Refund\b/i', $ps)) {
+                //         return 'bg-success';
+                //     }
+
+                //     switch ($ps) {
+                //         case 'Paid':             return 'bg-success';
+                //         case 'Free of Charge':   return 'bg-success';
+                //         case 'Unpaid':           return 'bg-danger';
+                //         case 'Pending':          return 'bg-warning';
+                //         case 'Failed':           return 'bg-danger';
+                //         default:                 return 'bg-secondary';
+                //     }
+                // }
+
+                // $c = status_class($ps);
+
                 $ds = $row['document_status'] ?? '';
                 switch ($ds) {
                   case 'For Verification': $d = 'bg-info'; break;
@@ -2657,6 +2668,68 @@ document.addEventListener('DOMContentLoaded', () => {
     downloadReqPDF.href = '#';
   });
 
+  // Handle transaction type changes for Barangay ID
+  document.addEventListener('change', (e) => {
+    if (e.target && (e.target.id === 'txNew' || e.target.id === 'txRenewal')) {
+      const isRenewal = document.getElementById('txRenewal').checked;
+      const searchContainer = document.getElementById('renewalSearchContainer');
+      
+      // Define fields that should be readonly during renewal
+      const editableFields = [
+        'bid_first_name', 'bid_middle_name', 'bid_last_name',
+        'bid_purok', 'bid_dob', 'bid_birth_place',
+        'bid_civil_status', 'bid_religion', 'bid_height',
+        'bid_weight', 'bid_emergency_contact', 'bid_emergency_address'
+      ];
+      
+      if (isRenewal) {
+        searchContainer.style.display = 'block';
+        
+        // Make fields readonly with inline styles
+        editableFields.forEach(fieldId => {
+          const field = document.getElementById(fieldId);
+          if (field) {
+            field.readOnly = true;
+            field.style.backgroundColor = '#e9ecef';
+            field.style.cursor = 'not-allowed';
+          }
+        });
+        
+        // Make religion select disabled with inline styles
+        const religionSelect = document.getElementById('bid_religion');
+        if (religionSelect) {
+          religionSelect.disabled = true;
+          religionSelect.style.backgroundColor = '#e9ecef';
+          religionSelect.style.cursor = 'not-allowed';
+        }
+      } else {
+        searchContainer.style.display = 'none';
+        document.getElementById('renewalSearchInput').value = '';
+        document.getElementById('renewalSearchResults').innerHTML = '';
+        document.getElementById('renewalTransactionId').value = '';
+        clearBarangayIDFields();
+        
+        // Make fields editable and remove inline styles
+        editableFields.forEach(fieldId => {
+          const field = document.getElementById(fieldId);
+          if (field) {
+            field.readOnly = false;
+            field.style.backgroundColor = '';
+            field.style.cursor = '';
+          }
+        });
+        
+        // Make religion select enabled and remove inline styles
+        const religionSelect = document.getElementById('bid_religion');
+        if (religionSelect) {
+          religionSelect.disabled = false;
+          religionSelect.style.backgroundColor = '';
+          religionSelect.style.cursor = '';
+        }
+      }
+    }
+  });
+
   // Dynamic child fields for Solo Parent
   let childCounter = 1;
 
@@ -2818,29 +2891,29 @@ document.addEventListener('DOMContentLoaded', () => {
   // Barangay ID Renewal Search Functionality
   let renewalSearchTimeout;
 
-  document.addEventListener('change', (e) => {
-    if (e.target && (e.target.id === 'txNew' || e.target.id === 'txRenewal')) {
-      const isRenewal = document.getElementById('txRenewal').checked;
-      const searchContainer = document.getElementById('renewalSearchContainer');
-      const photoCheckbox = document.getElementById('requirePhotoCheck');
-      const photoInput = document.getElementById('photoInput');
+  // document.addEventListener('change', (e) => {
+  //   if (e.target && (e.target.id === 'txNew' || e.target.id === 'txRenewal')) {
+  //     const isRenewal = document.getElementById('txRenewal').checked;
+  //     const searchContainer = document.getElementById('renewalSearchContainer');
+  //     const photoCheckbox = document.getElementById('requirePhotoCheck');
+  //     const photoInput = document.getElementById('photoInput');
       
-      if (isRenewal) {
-        searchContainer.style.display = 'block';
-        // For renewal, photo is optional by default
-        if (photoCheckbox) {
-          photoCheckbox.checked = false;
-          photoInput.disabled = true;
-        }
-      } else {
-        searchContainer.style.display = 'none';
-        document.getElementById('renewalSearchInput').value = '';
-        document.getElementById('renewalSearchResults').innerHTML = '';
-        document.getElementById('renewalTransactionId').value = '';
-        clearBarangayIDFields();
-      }
-    }
-  });
+  //     if (isRenewal) {
+  //       searchContainer.style.display = 'block';
+  //       // For renewal, photo is optional by default
+  //       if (photoCheckbox) {
+  //         photoCheckbox.checked = false;
+  //         photoInput.disabled = true;
+  //       }
+  //     } else {
+  //       searchContainer.style.display = 'none';
+  //       document.getElementById('renewalSearchInput').value = '';
+  //       document.getElementById('renewalSearchResults').innerHTML = '';
+  //       document.getElementById('renewalTransactionId').value = '';
+  //       clearBarangayIDFields();
+  //     }
+  //   }
+  // });
 
   document.addEventListener('input', (e) => {
     if (e.target && e.target.id === 'renewalSearchInput') {
@@ -2880,20 +2953,11 @@ document.addEventListener('DOMContentLoaded', () => {
   function populateBarangayIDFields(record) {
     // Parse the full name
     const nameParts = record.full_name.split(',');
-    let lastName = '', firstName = '', middleName = '', suffix = '';
+    let lastName = '', firstName = '', middleName = '';
     
     if (nameParts.length >= 2) {
-      const lastNamePart = nameParts[0].trim();
+      lastName = nameParts[0].trim();
       const firstMiddlePart = nameParts[1].trim();
-      
-      // Check for suffix in last name part (e.g., "Cruz Jr." or "Santos Sr.")
-      const suffixMatch = lastNamePart.match(/\b(Jr\.?|Sr\.?|III|IV|V)$/i);
-      if (suffixMatch) {
-        suffix = suffixMatch[0];
-        lastName = lastNamePart.replace(suffixMatch[0], '').trim();
-      } else {
-        lastName = lastNamePart;
-      }
       
       // Split first and middle name
       const firstMiddleArr = firstMiddlePart.split(' ');
@@ -2905,7 +2969,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('bid_first_name').value = firstName;
     document.getElementById('bid_middle_name').value = middleName;
     document.getElementById('bid_last_name').value = lastName;
-    document.getElementById('bid_suffix').value = suffix;
     document.getElementById('bid_purok').value = record.purok || '';
     document.getElementById('bid_dob').value = record.birth_date || '';
     document.getElementById('bid_birth_place').value = record.birth_place || '';
@@ -2933,7 +2996,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function clearBarangayIDFields() {
-    const fields = ['bid_first_name', 'bid_middle_name', 'bid_last_name', 'bid_suffix', 
+    const fields = ['bid_first_name', 'bid_middle_name', 'bid_last_name',
                     'bid_purok', 'bid_dob', 'bid_birth_place', 'bid_civil_status', 
                     'bid_religion', 'bid_height', 'bid_weight', 'bid_emergency_contact', 
                     'bid_emergency_address'];
@@ -2987,7 +3050,7 @@ function initCameraForRequest(config) {
   let cameraModal = null;
 
   // Check if elements exist
-  if (!openCameraBtn || !uploadFileBtn || !fileInput) {
+  if (!openCameraBtn || !fileInput) {
     console.warn(`Camera buttons not found for ${photoFileName}`);
     return;
   }
@@ -3014,22 +3077,73 @@ function initCameraForRequest(config) {
     cameraError.classList.add('d-none');
     
     try {
+      // Check if mediaDevices is supported
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera access is not supported in this browser.');
+      }
+      
       stream = await navigator.mediaDevices.getUserMedia({ 
         video: { facingMode: 'user', width: 1280, height: 720 } 
       });
       cameraStream.srcObject = stream;
+      
+      // Wait for video to be ready
+      await new Promise((resolve, reject) => {
+        cameraStream.onloadedmetadata = () => {
+          cameraStream.play()
+            .then(resolve)
+            .catch(reject);
+        };
+        // Timeout after 10 seconds
+        setTimeout(() => reject(new Error('Camera timeout')), 10000);
+      });
+      
     } catch (err) {
-      cameraError.textContent = 'Unable to access camera. Please check permissions or use the upload option.';
+      let errorMessage = 'Unable to access camera. ';
+      
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        errorMessage += 'Camera permission was denied. Please allow camera access in your browser settings.';
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        errorMessage += 'No camera device found. Please connect a camera and try again.';
+      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+        errorMessage += 'Camera is already in use by another application. Please close other apps using the camera.';
+      } else if (err.message && err.message.includes('not supported')) {
+        errorMessage += 'Camera access is not supported in this browser. Please use the upload option instead.';
+      } else {
+        errorMessage += 'Please check permissions or use the upload option. Error: ' + (err.message || 'Unknown error');
+      }
+      
+      cameraError.textContent = errorMessage;
       cameraError.classList.remove('d-none');
       console.error('Camera error:', err);
+      
+      // Disable capture button if camera failed
+      if (captureBtn) {
+        captureBtn.disabled = true;
+      }
     }
   });
 
   // Capture photo
   captureBtn.addEventListener('click', function() {
+    // Check if camera stream is active and ready
+    if (!stream || !cameraStream.srcObject || cameraStream.readyState !== cameraStream.HAVE_ENOUGH_DATA) {
+      cameraError.textContent = 'Camera not ready. Please wait for the camera to load or refresh and try again.';
+      cameraError.classList.remove('d-none');
+      return;
+    }
+
     const context = photoCanvas.getContext('2d');
     const videoWidth = cameraStream.videoWidth;
     const videoHeight = cameraStream.videoHeight;
+    
+    // Validate video dimensions
+    if (!videoWidth || !videoHeight || videoWidth === 0 || videoHeight === 0) {
+      cameraError.textContent = 'Camera feed is not available. Please check camera permissions and try again.';
+      cameraError.classList.remove('d-none');
+      return;
+    }
+    
     const minDimension = Math.min(videoWidth, videoHeight);
     const cropX = (videoWidth - minDimension) / 2;
     const cropY = (videoHeight - minDimension) / 2;
@@ -3038,7 +3152,14 @@ function initCameraForRequest(config) {
     photoCanvas.width = outputSize;
     photoCanvas.height = outputSize;
     
-    context.drawImage(cameraStream, cropX, cropY, minDimension, minDimension, 0, 0, outputSize, outputSize);
+    try {
+      context.drawImage(cameraStream, cropX, cropY, minDimension, minDimension, 0, 0, outputSize, outputSize);
+    } catch (err) {
+      cameraError.textContent = 'Failed to capture photo. Please try again.';
+      cameraError.classList.remove('d-none');
+      console.error('Capture error:', err);
+      return;
+    }
     
     if (stream) {
       stream.getTracks().forEach(track => track.stop());
@@ -3066,7 +3187,22 @@ function initCameraForRequest(config) {
 
   // Use captured photo
   uploadPhotoBtn.addEventListener('click', function() {
+    // Validate that canvas has actual image data
+    const context = photoCanvas.getContext('2d');
+    const imageData = context.getImageData(0, 0, photoCanvas.width, photoCanvas.height);
+    const hasData = imageData.data.some(channel => channel !== 0);
+    
+    if (!hasData) {
+      alert('No photo captured. Please take a photo first.');
+      return;
+    }
+    
     photoCanvas.toBlob(function(blob) {
+      if (!blob) {
+        alert('Failed to process photo. Please try again.');
+        return;
+      }
+      
       const file = new File([blob], photoFileName, { type: 'image/jpeg' });
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(file);
@@ -3081,10 +3217,12 @@ function initCameraForRequest(config) {
     }, 'image/jpeg', 0.9);
   });
 
-  // Upload file button
-  uploadFileBtn.addEventListener('click', function() {
-    fileInput.click();
-  });
+  // Upload file button - only if it exists
+  if (uploadFileBtn) {
+    uploadFileBtn.addEventListener('click', function() {
+      fileInput.click();
+    });
+  }
 
   // Handle file input change
   fileInput.addEventListener('change', function(e) {
@@ -3108,6 +3246,14 @@ function initCameraForRequest(config) {
       if (cameraStream) {
         cameraStream.srcObject = null;
       }
+      // Re-enable capture button for next time
+      if (captureBtn) {
+        captureBtn.disabled = false;
+      }
+      // Hide error message
+      if (cameraError) {
+        cameraError.classList.add('d-none');
+      }
     });
   }
 }
@@ -3116,7 +3262,7 @@ function initCameraForRequest(config) {
 function initBarangayIDCamera() {
   initCameraForRequest({
     openCameraBtnId: 'openCameraBtnBID',
-    uploadFileBtnId: 'uploadFileBtnBID',
+    uploadFileBtnId: null,
     fileInputId: 'photoInput',
     cameraModalId: 'cameraModalBID',
     cameraStreamId: 'cameraStreamBID',

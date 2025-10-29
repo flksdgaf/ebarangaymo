@@ -55,6 +55,7 @@ if ($equipment_sn) {
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="serviceEquipmentBorrowing.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 </head>
 <body>
 <div class="container py-4 px-3">
@@ -84,7 +85,16 @@ if ($equipment_sn) {
     </div>
     
   <div class="card shadow-sm px-5 py-5 mb-5 mt-4 form-card">
-    <h2 class="mb-1 text-success fw-bold" id="mainHeader">APPLICATION FORM</h2>
+    <div class="d-flex align-items-center position-relative mb-3">
+        <!-- Back Button - Only shown on step 1 -->
+        <button type="button" id="backToServicesBtn" class="btn btn-link text-success position-absolute start-0" style="display: none;">
+            <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+        
+        <div class="flex-grow-1">
+            <h2 class="mb-1 text-success fw-bold" id="mainHeader">APPLICATION FORM</h2>
+        </div>
+    </div>
     <p id="subHeader" class="mb-2">Provide the necessary details to borrow equipment.</p>
     <hr id="mainHr" class="mb-4">
 
@@ -446,6 +456,38 @@ if ($equipment_sn) {
 
   // initialize
   showStep(current);
+
+  // Back button functionality for Equipment Borrowing
+  // Back button functionality for Equipment Borrowing
+  const backToServicesBtn = document.getElementById('backToServicesBtn');
+  
+  if (backToServicesBtn) {
+    // Show/hide back button based on current step
+    function toggleBackButton() {
+      // Show back button only on first step (step 1)
+      if (current === 1) {
+        backToServicesBtn.style.display = 'block';
+      } else {
+        backToServicesBtn.style.display = 'none';
+      }
+    }
+    
+    // Initial check
+    toggleBackButton();
+    
+    // Update back button visibility whenever step changes
+    const originalShowStep = showStep;
+    showStep = function(n) {
+      originalShowStep(n);
+      toggleBackButton();
+    };
+    
+    // Handle back button click - redirect to equipment borrowing section
+    backToServicesBtn.addEventListener('click', function() {
+      // Redirect to userServices with hash to trigger equipment section
+      window.location.href = 'userPanel.php?page=userServices#equipment';
+    });
+  }
 })();
 </script>
 </body>

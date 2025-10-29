@@ -299,9 +299,9 @@ html, body {
   }
   
   /* Heading adjustments */
-  #equipmentContainer h1 {
+  /* #equipmentContainer h1 {
     font-size: 1.5rem;
-  }
+  } */
 }
 
 /* Mobile devices (576px and below) */
@@ -360,10 +360,10 @@ html, body {
   }
   
   /* Heading adjustments */
-  #equipmentContainer h1 {
+  /* #equipmentContainer h1 {
     font-size: 1.3rem;
     padding: 0 2.5rem;
-  }
+  } */
   
   /* Grid adjustments */
   #equipmentContainer .row {
@@ -411,8 +411,8 @@ html, body {
   }
   
   #equipmentContainer h1 {
-    font-size: 1.1rem;
-    padding: 0 2rem;
+    font-size: 1.3rem;
+    padding: 0 2.5rem;
   }
   
   #backToServicesBtn .material-icons {
@@ -428,6 +428,67 @@ html, body {
 .equipment-card:nth-child(5) { animation-delay: 0.7s; }
 .equipment-card:nth-child(6) { animation-delay: 0.85s; }
 .equipment-card:nth-child(n+7) { animation-delay: 1s; }
+
+.gradient-text {
+  background: linear-gradient(90deg, #0D2C15 0%, #2A9245 50%, #61AD41 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;               /* required for background-clip */
+  display: inline-block;
+  font-weight: 800;                 /* bold like Services header */
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  line-height: 1.05;
+  margin: 0;
+  padding: 0;
+}
+
+h1.gradient-text.text-uppercase {
+  font-size: clamp(1.25rem, 3.0vw, 1.9rem);
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  width: 100%;
+}
+
+#equipmentContainer > .d-flex.align-items-center {
+  position: relative; /* already is, but reinforce */
+}
+
+#equipmentContainer > .d-flex.align-items-center h1 {
+  flex: 1 1 auto;                 /* take available center space */
+  max-width: calc(100% - 90px);   /* leave room for back button on the left */
+  margin: 0 auto;
+  text-align: center;
+  display: block;
+  word-break: break-word;         /* allow wrapping if title long */
+}
+
+#backToServicesBtn {
+  z-index: 6;            /* above the header so it's clickable */
+}
+
+@media (max-width: 576px) {
+  h1.gradient-text.text-uppercase {
+    font-size: clamp(1rem, 4.5vw, 1.35rem);
+    padding: 0 1rem;    /* small horizontal breathing room */
+  }
+
+  #equipmentContainer > .d-flex.align-items-center h1 {
+    max-width: calc(100% - 70px); /* slightly less left inset at mobile */
+    font-size: clamp(0.95rem, 4.8vw, 1.25rem);
+  }
+
+  #backToServicesBtn .material-icons { font-size: 36px !important; }
+  #backToServicesBtn { font-size: 1.15rem; }
+}
+
+#servicesMainContainer h1.gradient-text,
+#equipmentContainer h1.gradient-text {
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
 </style>
 
 <div class="container py-4">
@@ -564,6 +625,12 @@ html, body {
     };
 
     document.addEventListener('DOMContentLoaded', () => {
+        // Check if we should show equipment section on page load (from hash)
+        if (window.location.hash === '#equipment') {
+            document.getElementById('servicesMainContainer').style.display = 'none';
+            document.getElementById('equipmentContainer').style.display = 'block';
+        }
+
         document.querySelectorAll('.service-card').forEach(card => {
             card.addEventListener('click', e => {
                 if (userRemark && blockedRemarks[userRemark]) {
@@ -579,12 +646,16 @@ html, body {
                 e.preventDefault();
                 document.getElementById('servicesMainContainer').style.display = 'none';
                 document.getElementById('equipmentContainer').style.display = 'block';
+                // Update URL hash without page reload
+                window.history.pushState(null, '', '#equipment');
             }
         });
 
         document.getElementById('backToServicesBtn').addEventListener('click', () => {
             document.getElementById('equipmentContainer').style.display = 'none';
             document.getElementById('servicesMainContainer').style.display = 'block';
+            // Remove hash from URL
+            window.history.pushState(null, '', window.location.pathname + window.location.search);
         });
 
         // Add equipment card interaction animations

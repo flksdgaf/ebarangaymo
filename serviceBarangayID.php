@@ -310,7 +310,7 @@ if (!empty($existingRequest)) {
     }
 </style>
 
-<div class="container py-4 px-3">
+<div class="container px-3">
     <div class="progress-container">
         <div class="stepss">
             <!-- STEP 1 -->
@@ -350,8 +350,17 @@ if (!empty($existingRequest)) {
         </div>
     </div>
 
-    <div class="card shadow-sm px-5 py-5 mb-5 mt-4">
-        <h2 class="mb-1 text-success fw-bold" id="mainHeader"></h2>
+    <div class="card shadow-sm px-5 py-5 mb-5">
+        <div class="d-flex align-items-center position-relative mb-3">
+            <!-- Back Button - Only shown on step 1 -->
+            <button type="button" id="backToServicesBtn" class="btn btn-link text-success position-absolute start-0" style="display: none;">
+                <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+            
+            <div class="flex-grow-1">
+                <h2 class="mb-1 text-success fw-bold" id="mainHeader"></h2>
+            </div>
+        </div>
         <p id="subHeader" class="mb-2">Provide the necessary details to apply for your Barangay ID.</p>
         <hr id="mainHr" class="mb-4">
 
@@ -1264,6 +1273,51 @@ document.addEventListener('DOMContentLoaded', function() {
             if (cameraStream) {
                 cameraStream.srcObject = null;
             }
+        });
+    }
+});
+</script>
+
+<script>
+// Back button functionality for Barangay ID
+document.addEventListener('DOMContentLoaded', function() {
+    const backToServicesBtn = document.getElementById('backToServicesBtn');
+    
+    if (backToServicesBtn) {
+        // Show back button only on step 1 (Application Form)
+        function toggleBackButton() {
+            // Get all step divs
+            const steps = document.querySelectorAll('.step');
+            let currentStepIndex = -1;
+            
+            // Find which step is currently active
+            steps.forEach((step, index) => {
+                if (step.classList.contains('active-step')) {
+                    currentStepIndex = index;
+                }
+            });
+            
+            // Show back button only on first step (index 0) and when not viewing a transaction
+            if (currentStepIndex === 0 && !<?php echo $transactionId ? 'true' : 'false'; ?>) {
+                backToServicesBtn.style.display = 'block';
+            } else {
+                backToServicesBtn.style.display = 'none';
+            }
+        }
+        
+        // Initial check
+        toggleBackButton();
+        
+        // Listen for step changes to show/hide back button
+        const observer = new MutationObserver(toggleBackButton);
+        const steps = document.querySelectorAll('.step');
+        steps.forEach(step => {
+            observer.observe(step, { attributes: true, attributeFilter: ['class'] });
+        });
+        
+        // Handle back button click
+        backToServicesBtn.addEventListener('click', function() {
+            window.location.href = 'userPanel.php?page=userServices';
         });
     }
 });

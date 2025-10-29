@@ -3,7 +3,6 @@
     margin: auto;
     width: 90%;
     max-width: 800px;
-    padding-top: 5px;
 }
 
 .progress-line {
@@ -848,3 +847,42 @@ h4 {
   white-space: normal;
 }
 
+/* Back button styling - matches equipment borrowing style */
+#backToServicesBtn {
+    z-index: 6;
+    text-decoration: none;
+    padding: 0;
+    background: transparent;
+    border: none;
+    color: #198754;
+    transition: all 0.3s ease;
+    margin-top: -300px;
+    margin-left: -50px;
+}
+
+#backToServicesBtn:hover {
+    color: #157347;
+    transform: translateX(-3px);
+}
+
+#backToServicesBtn .material-symbols-outlined {
+    font-size: 50px;
+}
+
+@media (max-width: 767px) {
+    #backToServicesBtn .material-symbols-outlined {
+        font-size: 40px;
+    }
+}
+
+@media (max-width: 576px) {
+    #backToServicesBtn .material-symbols-outlined {
+        font-size: 36px;
+    }
+}
+
+@media (max-width: 399px) {
+    #backToServicesBtn .material-symbols-outlined {
+        font-size: 30px;
+    }
+}    

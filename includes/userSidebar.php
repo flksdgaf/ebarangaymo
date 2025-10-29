@@ -46,7 +46,7 @@ $logoUrl = 'images/' . $info['logo'];
     left: 0;
     width: 280px;
     height: 100vh;
-    background: #145214;
+    background: #13411F;
     z-index: 1030;
     overflow-y: auto;
     overflow-x: hidden;

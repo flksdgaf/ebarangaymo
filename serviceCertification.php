@@ -194,6 +194,7 @@ if (!empty($existingRequestRow)) {
 }
 ?>
 <link rel="stylesheet" href="serviceCertification.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <title>eBarangay Mo | Certification</title>
@@ -298,7 +299,16 @@ if (!empty($existingRequestRow)) {
     </div>
 
     <div class="card shadow-sm px-5 py-5 mb-5 mt-4">
-        <h2 class="mb-1 text-success fw-bold" id="mainHeader"></h2>
+        <div class="d-flex align-items-center position-relative mb-3">
+            <!-- Back Button - Only shown on step 1 -->
+            <button type="button" id="backToServicesBtn" class="btn btn-link text-success position-absolute start-0" style="display: none;">
+                <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+            
+            <div class="flex-grow-1">
+                <h2 class="mb-1 text-success fw-bold" id="mainHeader"></h2>
+            </div>
+        </div>
         <p id="subHeader" class="mb-2">Select a type of certification and provide the necessary details to apply.</p>
         <hr id="mainHr" class="mb-4">
 
@@ -903,6 +913,51 @@ document.addEventListener('DOMContentLoaded', function () {
         setTimeout(() => {
             if (typeof window.populateSummary === 'function') window.populateSummary();
         }, 120);
+    }
+});
+</script>
+
+<script>
+// Back button functionality for Certification
+document.addEventListener('DOMContentLoaded', function() {
+    const backToServicesBtn = document.getElementById('backToServicesBtn');
+    
+    if (backToServicesBtn) {
+        // Get current step from the step navigation logic
+        function getCurrentStep() {
+            // Check which step div has the 'active-step' class
+            const activeStep = document.querySelector('.step.active-step');
+            if (activeStep) {
+                return parseInt(activeStep.getAttribute('data-step')) || 1;
+            }
+            return 1;
+        }
+        
+        // Show/hide back button based on current step
+        function toggleBackButton() {
+            const currentStep = getCurrentStep();
+            // Show back button only on first step (step 1) and when not viewing a transaction
+            if (currentStep === 1 && !<?php echo $transactionId ? 'true' : 'false'; ?>) {
+                backToServicesBtn.style.display = 'block';
+            } else {
+                backToServicesBtn.style.display = 'none';
+            }
+        }
+        
+        // Initial check
+        toggleBackButton();
+        
+        // Listen for step changes to show/hide back button
+        const observer = new MutationObserver(toggleBackButton);
+        const steps = document.querySelectorAll('.step');
+        steps.forEach(step => {
+            observer.observe(step, { attributes: true, attributeFilter: ['class'] });
+        });
+        
+        // Handle back button click
+        backToServicesBtn.addEventListener('click', function() {
+            window.location.href = 'userPanel.php?page=userServices';
+        });
     }
 });
 </script>

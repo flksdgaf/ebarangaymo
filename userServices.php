@@ -60,11 +60,19 @@ $stmt->close();
 <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
-<!-- Inline CSS for Equipment Cards -->
 <style>
 html, body {
   height: 100%;
   background-color: #efefef !important;
+}
+
+:root {
+  --card-width: 280px;
+  --card-height: 350px;
+  --icon-size: 80px;
+  --title-size: 1.4rem;
+  --qty-size: 3rem;
+  --btn-bottom: 1.5rem;
 }
 .container.py-4,
 .services-container,
@@ -100,8 +108,9 @@ html, body {
 .equipment-card {
   border-radius: 0.8rem;
   background: linear-gradient(135deg, #1e7e34 0%, #28a745 100%);
-  width: 280px;
-  height: 350px;
+  width: var(--card-width);
+  height: var(--card-height);
+  max-width: 100%;
   color: #fff;
   position: relative;
   overflow: hidden;
@@ -118,8 +127,8 @@ html, body {
 .equipment-icon {
   background: rgba(255, 255, 255, 0.2);
   border-radius: 50%;
-  width: 80px;
-  height: 80px;
+  width: var(--icon-size);
+  height: var(--icon-size);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -139,7 +148,7 @@ html, body {
 
 /* Equipment title */
 .equipment-title {
-  font-size: 1.4rem;
+  font-size: var(--title-size);
   font-weight: 700;
   color: #fff;
   margin-bottom: 1rem;
@@ -165,7 +174,7 @@ html, body {
 }
 
 .quantity-display {
-  font-size: 3rem;
+  font-size: var(--qty-size);
   font-weight: 900;
   color: #fff;
   text-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
@@ -205,24 +214,209 @@ html, body {
 }
 
 /* Responsive adjustments */
-@media (max-width: 576px) {
-  .equipment-card { 
-    width: 260px; 
-    height: 330px;
-    padding: 1.5rem 1rem; 
+
+/* Large tablets and small desktops (768px - 991px) */
+@media (max-width: 991px) {
+  :root {
+    --card-width: 260px;
+    --card-height: 340px;
+    --icon-size: 75px;
+    --title-size: 1.3rem;
+    --qty-size: 2.8rem;
   }
-  .equipment-icon {
-    width: 70px;
-    height: 70px;
+  
+  .equipment-card {
+    padding: 1.8rem 1.3rem;
   }
+  
+  .icon-main {
+    font-size: 2.3rem;
+  }
+  
+  .availability-text {
+    font-size: 12px;
+  }
+  
+  .btn-borrow {
+    padding: 0.65rem 1.8rem;
+    font-size: 0.95rem;
+    min-width: 130px;
+  }
+  
+  #equipmentContainer {
+    padding-top: 2.5rem;
+    padding-bottom: 2.5rem;
+  }
+}
+
+/* Tablets (768px and below) */
+@media (max-width: 767px) {
+  :root {
+    --card-width: 240px;
+    --card-height: 320px;
+    --icon-size: 70px;
+    --title-size: 1.2rem;
+    --qty-size: 2.5rem;
+  }
+  
+  .equipment-card {
+    padding: 1.5rem 1rem;
+  }
+  
   .icon-main {
     font-size: 2rem;
   }
-  .equipment-title {
-    font-size: 1.2rem;
+  
+  .equipment-icon {
+    margin-bottom: 1.2rem;
   }
-  .quantity-display {
-    font-size: 2.5rem;
+  
+  .availability-section {
+    margin-bottom: 1.2rem;
+    padding: 0.5rem 0.7rem;
+  }
+  
+  .availability-text {
+    font-size: 11px;
+    margin-right: 0.7rem;
+  }
+  
+  .btn-borrow {
+    padding: 0.6rem 1.5rem;
+    font-size: 0.9rem;
+    min-width: 120px;
+    bottom: 1.2rem;
+  }
+  
+  #equipmentContainer {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+  
+  /* Back button adjustments */
+  #backToServicesBtn .material-icons {
+    font-size: 40px;
+  }
+  
+  /* Heading adjustments */
+  #equipmentContainer h1 {
+    font-size: 1.5rem;
+  }
+}
+
+/* Mobile devices (576px and below) */
+@media (max-width: 576px) {
+  :root {
+    --card-width: 220px;
+    --card-height: 300px;
+    --icon-size: 65px;
+    --title-size: 1.1rem;
+    --qty-size: 2.2rem;
+  }
+  
+  .equipment-card {
+    padding: 1.3rem 0.9rem;
+  }
+  
+  .icon-main {
+    font-size: 1.8rem;
+  }
+  
+  .equipment-icon {
+    margin-bottom: 1rem;
+  }
+  
+  .availability-section {
+    margin-bottom: 1rem;
+    padding: 0.4rem 0.6rem;
+  }
+  
+  .availability-text {
+    font-size: 10px;
+    margin-right: 0.5rem;
+  }
+  
+  .btn-borrow {
+    padding: 0.55rem 1.3rem;
+    font-size: 0.85rem;
+    min-width: 110px;
+    bottom: 1rem;
+  }
+  
+  #equipmentContainer {
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+  }
+  
+  /* Container padding adjustments */
+  .container.py-4 {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  /* Back button adjustments */
+  #backToServicesBtn .material-icons {
+    font-size: 35px;
+  }
+  
+  /* Heading adjustments */
+  #equipmentContainer h1 {
+    font-size: 1.3rem;
+    padding: 0 2.5rem;
+  }
+  
+  /* Grid adjustments */
+  #equipmentContainer .row {
+    gap: 1rem;
+  }
+}
+
+/* Extra small devices (below 400px) */
+@media (max-width: 399px) {
+  :root {
+    --card-width: 200px;
+    --card-height: 280px;
+    --icon-size: 60px;
+    --title-size: 1rem;
+    --qty-size: 2rem;
+  }
+  
+  .equipment-card {
+    padding: 1.2rem 0.8rem;
+  }
+  
+  .icon-main {
+    font-size: 1.6rem;
+  }
+  
+  .equipment-icon {
+    margin-bottom: 0.8rem;
+  }
+  
+  .availability-section {
+    margin-bottom: 0.8rem;
+    padding: 0.3rem 0.5rem;
+  }
+  
+  .availability-text {
+    font-size: 9px;
+    margin-right: 0.4rem;
+  }
+  
+  .btn-borrow {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    min-width: 100px;
+    bottom: 0.8rem;
+  }
+  
+  #equipmentContainer h1 {
+    font-size: 1.1rem;
+    padding: 0 2rem;
+  }
+  
+  #backToServicesBtn .material-icons {
+    font-size: 30px;
   }
 }
 

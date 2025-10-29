@@ -156,7 +156,7 @@ if (in_array($role, $admin_roles)) {
     <nav class="navbar navbar-expand-lg border-bottom px-2 py-2 top-bar" style="background-color: #C4C4C4;">
         <div class="container-fluid d-flex align-items-center justify-content-between p-0">
             <!-- Left side: Hamburger + Title -->
-            <div class="d-flex align-items-left gap-1 topbar-title" style="flex-shrink: 0;">
+            <div class="d-flex align-items-center gap-1 topbar-title" style="flex-shrink: 0; margin-left: 0px">
                 <!-- Hamburger button (only visible on mobile/tablet) -->
                 <button id="hamburger-btn" class="btn btn-sm p-0" style="background: linear-gradient(180deg, #28a745, #145214); color: white; border: none; border-radius: 6px; padding: 5px 8px !important; flex-shrink: 0; display: none;">
                     <span class="material-symbols-outlined" style="font-size: 18px; line-height: 1;">menu</span>

@@ -22,7 +22,7 @@ include 'includes/header.php';
             <!-- Content -->
             <h1 class="review-title">UNDER REVIEW</h1>
             <p class="review-message">
-                Your account details are being verified by the system and will take a few minutes.<br>
+                Your account details are being verified by the system and will take a few minutes.
                 This page will update once your account has been successfully verified.<br><br>
                 If you have any urgent concerns, feel free to contact our support team.<br>
                 Thank you for your patience!

@@ -1,4 +1,5 @@
 <?php
+session_start(); // ADD THIS
 // DB credentials
 require_once 'dbconn.php';
 date_default_timezone_set('Asia/Manila');
@@ -18,6 +19,58 @@ $mn = trim($_POST['middlename']  ?? '');
 $ln = trim($_POST['lastname']    ?? '');
 $bd = $_POST['birthdate']        ?? '';
 
+// Step 4 creds (moved up for early validation)
+$username = trim($_POST['username'] ?? '');
+$pwd_plain= $_POST['password']       ?? '';
+
+// Check for duplicate username (case-sensitive)
+$checkUsername = $conn->prepare("SELECT account_id FROM user_accounts WHERE BINARY username = ?");
+$checkUsername->bind_param("s", $username);
+$checkUsername->execute();
+$checkUsername->store_result();
+
+if ($checkUsername->num_rows > 0) {
+    $checkUsername->close();
+    $_SESSION['signup_error'] = "Username already exists. Please choose a different username.";
+    header("Location: ../signup.php");
+    exit;
+}
+$checkUsername->close();
+
+// Check for duplicate email if provided
+$email = trim($_POST['email'] ?? '');
+if (!empty($email)) {
+    $checkEmail = $conn->prepare("SELECT account_id FROM user_accounts WHERE email = ?");
+    $checkEmail->bind_param("s", $email);
+    $checkEmail->execute();
+    $checkEmail->store_result();
+    
+    if ($checkEmail->num_rows > 0) {
+        $checkEmail->close();
+        $_SESSION['signup_error'] = "Email already exists. Please use a different email.";
+        header("Location: ../signup.php");
+        exit;
+    }
+    $checkEmail->close();
+}
+
+// Validate age - must be 10 years or older
+if ($bd) {
+    $birthDate = new DateTime($bd);
+    $today = new DateTime();
+    $age = $today->diff($birthDate)->y;
+    
+    if ($age < 10) {
+        $_SESSION['signup_error'] = "You must be at least 10 years old to register.";
+        header("Location: ../signup.php");
+        exit;
+    }
+} else {
+    $_SESSION['signup_error'] = "Birthdate is required.";
+    header("Location: ../signup.php");
+    exit;
+}
+
 // Build the optional pieces
 $middlePart = $mn ? " {$mn}" : '';
 
@@ -27,9 +80,6 @@ $full_name = "{$ln}, {$fn}{$middlePart}";
 // Step 2 inputs
 $pu = $_POST['purok']                ?? '';
 
-// Email from credentials step
-$email = trim($_POST['email'] ?? '');
-
 // Step 3 file fields (front & back ID only)
 $validID  = $_POST['validID']                ?? '';
 $front    = $_FILES['frontID']   ?? null;
@@ -38,9 +88,7 @@ $back     = $_FILES['backID']    ?? null;
 // Use default profile picture
 $profileName = 'default_profile_pic.png';
 
-// Step 4 creds
-$username = trim($_POST['username'] ?? '');
-$pwd_plain= $_POST['password']       ?? '';
+// Hash password (username and email already validated above)
 $pwd_hash = password_hash($pwd_plain, PASSWORD_DEFAULT);
 
 // Directories (ensure they exist & are writable)

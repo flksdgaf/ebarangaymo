@@ -1,12 +1,15 @@
 <?php 
+session_start(); // ADD THIS
 $page = 'signinup'; 
 include 'includes/header.php';
 ?>
 
+<!-- ADD Tesseract.js in head -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="signup.css">
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script> <!-- ADD THIS LINE -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="js/signup.js"></script>
 
@@ -15,6 +18,16 @@ include 'includes/header.php';
         <div class="form-container">
             <h1 class="text-center">CREATE ACCOUNT</h1>
             <h5 id="subHeader" class="text-center">Fill out all needed information</h5>
+
+            <?php
+            if (isset($_SESSION['signup_error'])) {
+                echo '<div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        ' . htmlspecialchars($_SESSION['signup_error']) . '
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                      </div>';
+                unset($_SESSION['signup_error']);
+            }
+            ?>
 
             <!-- Multi-Step Form -->
             <form id="registrationForm" action="functions/new_acc_signup.php" method="POST" enctype="multipart/form-data">
@@ -226,4 +239,12 @@ include 'includes/header.php';
             </div>
         </div>
     </div>
+
+    <script>
+        // Set max date to 10 years ago from today
+        const today = new Date();
+        const maxDate = new Date(today.getFullYear() - 10, today.getMonth(), today.getDate());
+        const maxDateString = maxDate.toISOString().split('T')[0];
+        document.getElementById('birthdate').setAttribute('max', maxDateString);
+    </script>
 </body>

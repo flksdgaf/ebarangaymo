@@ -6,7 +6,7 @@ header('Content-Type: application/json');
 if (isset($_POST['username'])) {
     $username = trim($_POST['username']);
     
-    $stmt = $conn->prepare("SELECT username FROM user_accounts WHERE username = ?");
+    $stmt = $conn->prepare("SELECT username FROM user_accounts WHERE BINARY username = ?");
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $result = $stmt->get_result();

@@ -93,15 +93,13 @@ $logoUrl = 'images/' . $info['logo'];
   <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="errorModalLabel">Login Error</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <?php echo htmlspecialchars($loginError); ?>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <div class="modal-body text-center p-4">
+          <div class="modal-icon-wrapper mb-3">
+            <span class="material-symbols-outlined modal-icon error-icon">error</span>
+          </div>
+          <h4 class="modal-title-custom mb-3">Login Error</h4>
+          <p class="modal-message"><?php echo htmlspecialchars($loginError); ?></p>
+          <button type="button" class="btn btn-modal-close mt-3" data-bs-dismiss="modal">Got it</button>
         </div>
       </div>
     </div>

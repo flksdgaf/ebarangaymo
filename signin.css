@@ -331,3 +331,23 @@ h5 {
         text-decoration: underline; 
     }
 }
+
+.confirm-icon {
+    color: #FFA500;
+}
+
+.btn-modal-cancel {
+    background: #6c757d;
+    border: none;
+    color: #fff;
+    padding: 10px 40px;
+    border-radius: 25px;
+    font-weight: bold;
+    transition: transform 0.2s;
+}
+
+.btn-modal-cancel:hover {
+    transform: scale(1.05);
+    color: #fff;
+    background: #5a6268;
+}

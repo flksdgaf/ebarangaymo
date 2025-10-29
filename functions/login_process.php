@@ -23,7 +23,7 @@ if(isset($_POST['username']) && isset($_POST['password'])) {
 
     if($username !== '' && $password !== '') {
         // Prepare the statement to prevent SQL injection
-        $query = "SELECT * FROM user_accounts WHERE username = ? LIMIT 1";
+        $query = "SELECT * FROM user_accounts WHERE BINARY username = ? LIMIT 1";
         $stmt = $conn->prepare($query);
         if(!$stmt) { 
             $_SESSION['login_error'] = "An internal error occurred.";

@@ -21,7 +21,7 @@ $lastDay = date("Y-m-t", strtotime($firstDay));
 
 // Fetch required columns from complaint_records
 $stmt = $conn->prepare("
-    SELECT transaction_id, complaint_type, complainant_name, respondent_name, complaint_status
+    SELECT transaction_id, created_at, complaint_type, complainant_name, respondent_name, complaint_status
     FROM complaint_records
     WHERE DATE(created_at) BETWEEN ? AND ?
     ORDER BY created_at ASC, transaction_id ASC
@@ -200,9 +200,6 @@ body { font-family: Arial, sans-serif; font-size: 10pt; background: #fff; margin
   flex-direction: row;
   align-items: center; 
   justify-content: center;
-  margin-bottom: 20px; 
-  border-bottom: 2px solid #000; 
-  padding-bottom: 10px;
   gap: 20px;
 }
 .logo { 
@@ -215,9 +212,13 @@ body { font-family: Arial, sans-serif; font-size: 10pt; background: #fff; margin
   flex: 0 1 auto;
   text-align: center; 
 }
-.header-text h4 { margin: 2px 0; font-size: 11pt; font-family: 'Times New Roman', serif; }
-.header-text h3 { margin: 5px 0; font-size: 12pt; font-weight: bold; font-family: 'Times New Roman', serif; }
-.title { font-size: 13pt; font-weight: bold; margin: 15px 0 5px 0; text-align: center; }
+.horizontal1 {border-top: 4px solid #000000ff;}
+.horizontal2 {border-top: 2px solid #000000ff; margin-top: -10px;}
+.header-text h4 { margin: 2px 0; font-size: 11pt; font-family: 'Times New Roman', serif; font-weight: bold;}
+.header-text h3 { margin: 5px 0; font-size: 12pt; font-family: 'Times New Roman', serif; font-weight: bold;}
+.header-text .sub-header { margin: 5px 0; font-size: 11pt; font-family: Arial, sans-serif;}
+.hr { width: 100%; height: 5px; }
+.title { font-size: 13pt; font-weight: bold; margin: 15px 0 0px 0; text-align: center; }
 .subtitle { font-size: 11pt; text-align: center; margin-bottom: 15px; }
 table { width: 100%; border-collapse: collapse; margin-top: 10px; }
 th, td {
@@ -226,6 +227,7 @@ th, td {
   text-align: center;
   vertical-align: middle;
   font-size: 9pt;
+  word-wrap: break-word;
 }
 th { background: #eee; font-weight: bold; }
 .left { text-align: left; }
@@ -241,7 +243,6 @@ th { background: #eee; font-weight: bold; }
   width: 50%; 
   text-align: left; 
   vertical-align: top;
-  padding: 0 20px;
 }
 .signature-box p { margin: 3px 0; }
 CSS;
@@ -266,21 +267,34 @@ $previewCss .= "
 // Build table rows
 $rowsHtml = '';
 if ($totalRecords > 0) {
-    $counter = 1;
     foreach ($rows as $row) {
-        $status = htmlspecialchars($row['complaint_status'] ?? 'Pending');
+        // Format Barangay Case No.: Extract last 4 digits and year
+        $transactionId = $row['transaction_id'];
+        $lastFourDigits = substr($transactionId, -4); // Get last 4 characters
+        $yearFiled = date('Y', strtotime($row['created_at']));
+        $caseNumber = htmlspecialchars($lastFourDigits . '-' . $yearFiled);
+        
+        // Format Date: Month Day, Year (e.g., August 7, 2025)
+        $dateSettlement = htmlspecialchars(date('F j, Y', strtotime($row['created_at'])));
+        
+        $kindOfCase = htmlspecialchars($row['complaint_type'] ?? 'N/A');
+        $title = htmlspecialchars($row['complaint_type'] ?? 'N/A');
+        $complainant = htmlspecialchars($row['complainant_name']);
+        $respondent = htmlspecialchars($row['respondent_name'] ?: 'N/A');
+        $remarks = htmlspecialchars($row['complaint_status'] ?? 'Pending');
         
         $rowsHtml .= '<tr>'
-            . '<td>' . $counter++ . '</td>'
-            . '<td class="left">' . htmlspecialchars($row['transaction_id']) . '</td>'
-            . '<td class="left">' . htmlspecialchars($row['complaint_type'] ?? 'N/A') . '</td>'
-            . '<td class="left">' . htmlspecialchars($row['complainant_name']) . '</td>'
-            . '<td class="left">' . htmlspecialchars($row['respondent_name'] ?: 'N/A') . '</td>'
-            . '<td>' . $status . '</td>'
+            . '<td>' . $caseNumber . '</td>'
+            . '<td>' . $dateSettlement . '</td>'
+            . '<td>' . $kindOfCase . '</td>'
+            . '<td>' . $title . '</td>'
+            . '<td>' . $complainant . '</td>'
+            . '<td>' . $respondent . '</td>'
+            . '<td>' . $remarks . '</td>'
             . '</tr>';
     }
 } else {
-    $rowsHtml = '<tr><td colspan="6">No complaint records found for the selected month.</td></tr>';
+    $rowsHtml = '<tr><td colspan="7">No complaint records found for the selected month.</td></tr>';
 }
 
 // Core page HTML
@@ -293,23 +307,26 @@ $corePageHtml = '
         <h4>Province of Camarines Norte</h4>
         <h4>Municipality of Daet</h4>
         <h3>BARANGAY MAGANG</h3>
-        <h4>TANGGAPAN NG LUPON TAGAPAMAYAPA</h4>
+        <h4 class="sub-header">TANGGAPAN NG LUPON TAGAPAMAYAPA</h4>
       </div>
     </div>
-
+    <hr class="horizontal1">
+    <hr class="horizontal2">
+    
     <div class="title">KATARUNGANG PAMBARANGAY MONTHLY REPORT</div>
-    <div class="subtitle">For the month of <strong>' . htmlspecialchars($displayPeriod) . '</strong></div>
+    <div class="subtitle">For the month of ' . htmlspecialchars($displayPeriod) . '</div>
 
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th style="width: 5%;">No.</th>
-            <th style="width: 15%;">Transaction ID</th>
-            <th style="width: 20%;">Complaint Type</th>
-            <th style="width: 22%;">Complainant</th>
-            <th style="width: 22%;">Respondent</th>
-            <th style="width: 16%;">Status</th>
+            <th style="width: 12%;">Barangay Case No.</th>
+            <th style="width: 12%;">Date of Amicable Settlement</th>
+            <th style="width: 15%;">KIND OF CASE</th>
+            <th style="width: 15%;">TITLE</th>
+            <th style="width: 15%;">COMPLAINANT</th>
+            <th style="width: 15%;">RESPONDENT</th>
+            <th style="width: 16%;">REMARKS</th>
           </tr>
         </thead>
         <tbody>' . $rowsHtml . '</tbody>
@@ -317,6 +334,7 @@ $corePageHtml = '
     </div>
 
     <div class="footer-note">
+    <p><strong>NOTE:</strong> In the remarks, Mediated for cases settled by PB, Conciliated settled by the Pangkat Tagapagkasundo, Dismissed certified endorsed to court, On-going cases, Incoming, Arbitrated Cases.</p>
       <p>This ' . date('jS') . ' day of ' . date('F') . ', ' . date('Y') . '. Barangay Magang, Daet, Camarines Norte.</p>
     </div>
 
@@ -364,5 +382,3 @@ if (strtolower($format) === 'pdf') {
     echo '</div>';
     exit;
 }
-
-// <p><strong>NOTE:</strong> In the remarks, Mediated for cases settled by PB, conciliated settled by the Pangkat Tagapagkasundo, Dismissed certified endorsed to court, On-going cases, Incoming, Arbitrated Cases</p>

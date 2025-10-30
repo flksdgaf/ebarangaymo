@@ -20,7 +20,7 @@ html,body{
   color:#111827;
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
-  overflow: hidden !important;
+  /* overflow: hidden !important; */
 }
 
 /* header / title */

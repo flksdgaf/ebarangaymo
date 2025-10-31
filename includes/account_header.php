@@ -62,25 +62,37 @@ if (!isset($_SESSION['auth']) || $_SESSION['auth'] !== true) {
 
 $userId = $_SESSION['loggedInUserID'];
 
-// Try to find the logged‐in account in any purokX_rbi table:
+// Try to find the logged-in account in any purokX_rbi table and join with user_accounts for username:
 $sql = "
-  SELECT full_name, profile_picture
-  FROM purok1_rbi WHERE account_ID = ?
+  SELECT r.full_name, r.profile_picture, u.username
+  FROM purok1_rbi r
+  INNER JOIN user_accounts u ON r.account_ID = u.account_id
+  WHERE r.account_ID = ?
   UNION ALL
-  SELECT full_name, profile_picture
-  FROM purok2_rbi WHERE account_ID = ?
+  SELECT r.full_name, r.profile_picture, u.username
+  FROM purok2_rbi r
+  INNER JOIN user_accounts u ON r.account_ID = u.account_id
+  WHERE r.account_ID = ?
   UNION ALL
-  SELECT full_name, profile_picture
-  FROM purok3_rbi WHERE account_ID = ?
+  SELECT r.full_name, r.profile_picture, u.username
+  FROM purok3_rbi r
+  INNER JOIN user_accounts u ON r.account_ID = u.account_id
+  WHERE r.account_ID = ?
   UNION ALL
-  SELECT full_name, profile_picture
-  FROM purok4_rbi WHERE account_ID = ?
+  SELECT r.full_name, r.profile_picture, u.username
+  FROM purok4_rbi r
+  INNER JOIN user_accounts u ON r.account_ID = u.account_id
+  WHERE r.account_ID = ?
   UNION ALL
-  SELECT full_name, profile_picture
-  FROM purok5_rbi WHERE account_ID = ?
+  SELECT r.full_name, r.profile_picture, u.username
+  FROM purok5_rbi r
+  INNER JOIN user_accounts u ON r.account_ID = u.account_id
+  WHERE r.account_ID = ?
   UNION ALL
-  SELECT full_name, profile_picture
-  FROM purok6_rbi WHERE account_ID = ?
+  SELECT r.full_name, r.profile_picture, u.username
+  FROM purok6_rbi r
+  INNER JOIN user_accounts u ON r.account_ID = u.account_id
+  WHERE r.account_ID = ?
   LIMIT 1
 ";
 
@@ -97,6 +109,7 @@ if ($stmt) {
 
 $profilePic = "profilePictures/default_profile_pic.png";
 $fullName = "User";
+$username = "User";
 
 // if we found a record in one of the purok tables, use it
 if (isset($result) && $result->num_rows === 1) {
@@ -105,6 +118,7 @@ if (isset($result) && $result->num_rows === 1) {
         $profilePic = "profilePictures/" . $row['profile_picture'];
     }
     $fullName = $row['full_name'];
+    $username = $row['username'];
 }
 $stmt->close();
 
@@ -173,8 +187,12 @@ if (in_array($role, $admin_roles)) {
             <!-- Right side: User dropdown (compact on mobile) -->
             <div class="dropdown d-flex align-items-center gap-1" style="flex-shrink: 0;">
                 <button class="btn btn-sm btn-outline-secondary dropdown-toggle user-dropdown-btn" type="button" id="adminDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    <span class="user-label">
+                    <!-- <span class="user-label">
                         <?= htmlspecialchars($fullName) ?>
+                        <?php if ($shouldShowRole): ?> - <?= htmlspecialchars($_SESSION['loggedInUserRole']) ?><?php endif; ?>
+                    </span> -->
+                    <span class="user-label">
+                        <?= htmlspecialchars($username) ?>
                         <?php if ($shouldShowRole): ?> - <?= htmlspecialchars($_SESSION['loggedInUserRole']) ?><?php endif; ?>
                     </span>
                 </button>

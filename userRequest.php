@@ -512,7 +512,7 @@ $pageTitle = $filterMap[$filter] ?? 'My Requests';
             </div>
         </div>
 
-        <div class="list-wrapper" style="height: 480px;">
+        <div class="list-wrapper">
             <?php
             if ($result->num_rows):
                 $rows = [];
@@ -538,7 +538,7 @@ $pageTitle = $filterMap[$filter] ?? 'My Requests';
                     ?>
                     <div class="request-card mb-2" role="button" <?= $dataAttrs ?>>
                         <div class="col-tx"><?= $txid ?></div>
-                        <div class="col-type"><div style="white-space:normal;"><?= $rtype ?></div></div>
+                        <div class="col-type"><?= $rtype ?></></div>
                         <div class="col-pay"><?= htmlspecialchars($displayPay) ?></div>
                         <div class="col-status <?= statusClass($statusTxt) ?>"><div><?= htmlspecialchars($statusTxt) ?></div></div>
                     </div>

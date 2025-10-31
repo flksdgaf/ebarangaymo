@@ -192,6 +192,10 @@ html,body{
     color: #059669;
 }
 
+.list-wrapper {
+  height: 460px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .header-controls {
@@ -709,4 +713,372 @@ html,body{
     font-weight: 600;
 }
 
+/* ============================================
+   RESPONSIVE IMPROVEMENTS FOR MOBILE
+   ============================================ */
 
+/* Tablet view (768px - 991px) */
+@media (max-width: 991px) {
+  .container.py-3 {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  
+  /* Adjust header controls */
+  .requests-header {
+    margin-bottom: 1rem;
+  }
+  
+  /* Modal adjustments */
+  .modal-header-info {
+    padding: 12px 20px;
+  }
+  
+  .header-info-grid {
+    gap: 16px;
+  }
+  
+  .modal-main-grid {
+    gap: 28px;
+    padding: 16px 20px;
+    grid-template-columns: 1fr 240px;
+  }
+  
+  .modal-actions {
+    padding: 12px 20px;
+  }
+  
+  .info-value {
+    font-size: 0.95rem;
+  }
+}
+
+/* Mobile view (below 768px) */
+@media (max-width: 767px) {
+  .container.py-3 {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+  
+  /* Search bar - reduce height */
+  .search-input-wrapper {
+    padding: 0;
+  }
+  
+  .search-input {
+    padding: 0.625rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .search-btn {
+    padding: 0.625rem 1rem;
+  }
+  
+  .search-icon {
+    width: 18px;
+    height: 18px;
+  }
+  
+  /* Request cards - single column */
+  .request-card {
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+    padding: 0.75rem;
+  }
+  
+  .col-tx, .col-type, .col-pay, .col-status {
+    text-align: left;
+    justify-content: flex-start;
+    display: grid;
+    grid-template-columns: 85px 1fr;
+    gap: 0.5rem;
+    align-items: baseline;
+  }
+  
+  /* Update labels for better alignment */
+  .col-tx::before { 
+    content: "ID:"; 
+    font-weight: 600; 
+    color: #6b7280;
+    text-align: left;
+  }
+  .col-type::before { 
+    content: "Type:"; 
+    font-weight: 600; 
+    color: #6b7280;
+    text-align: left;
+  }
+  .col-pay::before { 
+    content: "Payment:"; 
+    font-weight: 600; 
+    color: #6b7280;
+    text-align: left;
+  }
+  .col-status::before { 
+    content: "Status:"; 
+    font-weight: 600; 
+    color: #6b7280;
+    text-align: left;
+  }
+  
+  /* List wrapper - increase height for mobile */
+  .list-wrapper {
+    max-height: 520px;
+    height: auto;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Reduce space around group labels */
+  .group-label {
+    margin: 0.5rem 0;
+  }
+  
+  /* ===== MODAL ADJUSTMENTS FOR MOBILE ===== */
+  
+  /* Make modal full screen */
+  .modal-dialog {
+    margin: 0;
+    max-width: 100%;
+    height: 100vh;
+    display: flex;
+    align-items: stretch;
+  }
+  
+  #requestDetailModal .modal-content {
+    margin: 15px;
+    height: 90vh;
+    border-radius: 0 !important;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  #requestDetailModal .modal-body {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+  }
+  
+  /* Band with icon on the left side of title */
+  .modal-band {
+    height: auto;
+    padding: 16px;
+    flex-direction: row; /* CHANGED: back to row for horizontal layout */
+    align-items: center; /* CHANGED: center items */
+    gap: 12px;
+    flex-shrink: 0; /* Prevent band from shrinking */
+  }
+  
+  .modal-band .band-icon {
+    width: 48px;
+    height: 48px;
+    margin-right: 0;
+    margin-bottom: 0; /* REMOVED: no bottom margin */
+    flex-shrink: 0;
+  }
+  
+  .modal-band .band-center {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .modal-band .band-info {
+    align-items: flex-start;
+  }
+  
+  .modal-band .band-info .band-type {
+    font-size: 1.35rem; /* Adjusted for better fit */
+    line-height: 1.2;
+  }
+  
+  .modal-band .band-info .band-sub {
+    font-size: 0.85rem;
+    margin-top: 2px;
+  }
+  
+  /* Header info - non-scrollable */
+  .modal-header-info {
+    padding: 12px 16px;
+    flex-shrink: 0; /* Prevent from shrinking */
+  }
+  
+  .header-info-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  /* Scrollable content area */
+  .modal-main-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 16px;
+    max-height: none; /* Remove max-height */
+    overflow-y: auto; /* Make this section scrollable */
+    flex: 1; /* Take remaining space */
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  }
+  
+  /* Custom scrollbar for modal content */
+  .modal-main-grid::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .modal-main-grid::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .modal-main-grid::-webkit-scrollbar-thumb {
+    background-color: rgba(40, 167, 69, 0.3);
+    border-radius: 999px;
+  }
+  
+  /* Actions at bottom - non-scrollable */
+  .modal-actions {
+    padding: 12px 16px;
+    flex-direction: column;
+    flex-shrink: 0; /* Prevent from shrinking */
+    border-top: 1px solid #e9ecef;
+    background: #fff;
+  }
+  
+  .btn-cancel {
+    width: 100%;
+    padding: 14px 24px;
+    font-size: 1rem;
+  }
+  
+  /* Detail sections */
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .details-columns {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .application-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  /* Pagination - reduce spacing */
+  .pagination.pagination-circle {
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+    margin-bottom: 0.5rem;
+  }
+  
+  .pagination.pagination-circle .page-link.page-circle {
+    width: 32px;
+    height: 32px;
+    font-size: 0.85rem;
+  }
+  
+  /* Reduce pagination container spacing */
+  .pagination-container {
+    margin-top: 8px;
+    margin-bottom: 8px;
+  }
+}
+
+/* Extra small mobile (below 480px) */
+@media (max-width: 479px) {
+  .container.py-3 {
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  
+  /* Search bar even smaller */
+  .search-input {
+    padding: 0.5rem 0.875rem; 
+    font-size: 0.85rem;
+  }
+  
+  .search-btn {
+    padding: 0.5rem 0.875rem;
+  }
+  
+  /* Further reduce spacing */
+  .request-card {
+    padding: 0.5rem;
+    font-size: 0.9rem;
+    gap: 0.25rem;
+  }
+  
+  .col-tx, .col-type, .col-pay, .col-status {
+    font-size: 0.85rem;
+    grid-template-columns: 75px 1fr;
+  }
+  
+  .group-label {
+    font-size: 0.85rem;
+    margin: 0.35rem 0;
+  }
+  
+  /* List wrapper */
+  .list-wrapper {
+    max-height: 530px;
+  }
+  
+  /* Modal adjustments for extra small screens */
+  .modal-band .band-icon {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .modal-band .band-info .band-type {
+    font-size: 1.2rem;
+  }
+  
+  .modal-band .band-info .band-sub {
+    font-size: 0.78rem;
+  }
+  
+  .info-label {
+    font-size: 0.65rem;
+  }
+  
+  .info-value {
+    font-size: 0.9rem;
+  }
+  
+  .modal-main-grid h3 {
+    font-size: 0.85rem !important;
+  }
+  
+  .detail-row .label {
+    font-size: 0.7rem;
+  }
+  
+  .detail-row .value {
+    font-size: 0.8rem;
+  }
+  
+  .btn-cancel {
+    font-size: 0.9rem;
+    padding: 12px 20px;
+  }
+  
+  /* Pagination smaller */
+  .pagination.pagination-circle {
+    margin-top: 6px;
+    margin-bottom: 0.5rem;
+  }
+  
+  .pagination.pagination-circle .page-link.page-circle {
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+  }
+  
+  /* Pagination container */
+  .pagination-container {
+    margin-top: 6px;
+    margin-bottom: 6px;
+  }
+}

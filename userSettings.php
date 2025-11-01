@@ -100,7 +100,6 @@ if (isset($_POST['personal_submit'])) {
     foreach ($updateFields as $f) {
         $posted[$f] = trim($_POST[$f] ?? '');
     }
-    $postedUsername = trim($_POST['username'] ?? $userAcct['username']);
 
     // detect if any changes exist compared to $currentProfile
     $changes = false;
@@ -109,31 +108,11 @@ if (isset($_POST['personal_submit'])) {
         $new = $posted[$f];
         if ($cur !== $new) { $changes = true; break; }
     }
-    if (!$changes && $postedUsername !== ($userAcct['username'] ?? '')) $changes = true;
     if (!$changes && !empty($_FILES['new_picture']['name']) && $_FILES['new_picture']['error'] === UPLOAD_ERR_OK) $changes = true;
 
     if (!$changes) {
         $_SESSION['infoMessage'] = '<div class="alert alert-info alert-dismissible fade show" role="alert">No changes detected.<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
         client_redirect_and_exit();
-    }
-
-    // username uniqueness check & update (if changed)
-    if ($postedUsername && $postedUsername !== ($userAcct['username'] ?? '')) {
-        $chk = $conn->prepare("SELECT account_ID FROM user_accounts WHERE username = ? AND account_ID != ?");
-        $chk->bind_param('si', $postedUsername, $userId);
-        $chk->execute();
-        if ($chk->get_result()->num_rows) {
-            $_SESSION['infoMessage'] = '<div class="alert alert-danger alert-dismissible fade show" role="alert">Username is already taken.<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
-            $chk->close();
-            client_redirect_and_exit();
-        } else {
-            $chk->close();
-            $upd = $conn->prepare("UPDATE user_accounts SET username = ? WHERE account_ID = ?");
-            $upd->bind_param('si', $postedUsername, $userId);
-            $upd->execute();
-            $upd->close();
-            $userAcct['username'] = $postedUsername;
-        }
     }
 
     // Update purok table personal fields
@@ -272,15 +251,24 @@ $profile_birthdate = $profile['birthdate'] ?? '';
       --ebg-green:#2e8b57;
     }
     body { background:#f3f4f6; }
-    body.no-scroll { overflow: hidden; }
     .full-page { min-height:100vh; }
     .settings-tabs { display:flex; gap:0.6rem; justify-content:flex-start; align-items:center; margin-bottom:1rem; }
-    .tab-btn { border-radius:40px; padding:6px 18px; border:2px solid var(--ebg-green); background:transparent; color:var(--ebg-green); cursor:pointer; font-weight:600; }
+    .tab-btn { 
+      border-radius: 40px; 
+      padding: 8px 20px; 
+      border: 2px solid var(--ebg-green); 
+      background: transparent; 
+      color: var(--ebg-green); 
+      cursor: pointer; 
+      font-weight: 600; 
+      transition: all 0.2s ease;
+      font-size: 0.95rem;
+    }
     .tab-btn.active { background:var(--ebg-green); color:#fff; border-color:var(--ebg-green); }
     .profile-hero { display:flex; gap:2rem; align-items:flex-start; padding:1.5rem; background:#fff; border-radius:6px; box-shadow:0 6px 18px rgba(0,0,0,0.06); }
-    .left-card { width:320px; height: 410px; background:var(--ebg-dark); color:#fff; padding:28px 22px; display:flex; flex-direction:column; align-items:center; }
+    .left-card { width:320px; height: 410px; background:var(--ebg-dark); color:#fff; padding:28px 22px; display:flex; flex-direction:column; align-items:center; border-radius:6px; }
     .left-card img { width:180px; height:180px; object-fit:cover; border-radius:100px; border:4px solid #fff; background:#fff; margin-top: 30px;}
-    .left-username { margin-top:18px; font-size:20px; font-weight:700; letter-spacing:0.5px; }
+    .left-username { margin-top:18px; font-size:20px; font-weight:700; letter-spacing:0.5px; text-align:center; }
     .left-id { opacity:0.9; margin-top:6px; color:#dfeee0; }
     .right-form { flex:1; padding:4px 8px; }
     .right-form h2 { color:var(--ebg-green); font-weight:700; margin-bottom:4px; }
@@ -290,8 +278,9 @@ $profile_birthdate = $profile['birthdate'] ?? '';
     .upload-valid-link { font-size:0.9rem; color:#111827; text-decoration:none; }
     .upload-valid-link a { text-decoration:none; color:inherit; cursor:pointer; font-weight:700; }
     .profile-actions { display:flex; gap:12px; align-items:center; justify-content:flex-end; margin-top:12px; }
-    .edit-btn { border-radius:20px; padding:8px 20px; background:transparent; border:2px solid var(--ebg-green); color:var(--ebg-green); font-weight:600; }
+    .edit-btn { border-radius:20px; padding:8px 20px; background:transparent; border:2px solid var(--ebg-green); color:var(--ebg-green); font-weight:600; transition: all 0.2s ease; cursor:pointer; }
     .edit-btn.editing { background:var(--ebg-green); color:#fff; border-color:var(--ebg-green); }
+    .edit-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(46, 139, 87, 0.2); }
     .valid-id-note { font-size:0.85rem; color:#6c757d; }
     /* username/password section styling to align with profile */
     .cred-wrap { display:flex; gap:1rem; align-items:flex-start; }
@@ -299,11 +288,278 @@ $profile_birthdate = $profile['birthdate'] ?? '';
     .cred-card h5 { margin-bottom:12px; color:var(--ebg-green); font-weight:700; }
     .btn-save { border-radius:20px; padding:8px 18px; }
     .alert-area { margin-bottom:12px; }
-    @media (max-width: 900px) {
-      .profile-hero { flex-direction:column; align-items:center; }
-      .left-card { width:100%; display:flex; flex-direction:row; gap:16px; padding:16px; }
-      .left-username { font-size:1rem; }
-      .cred-wrap { flex-direction:column; }
+
+    /* ============================================
+      RESPONSIVE LAYOUT ADJUSTMENTS
+      ============================================ */
+
+    /* Tablet view (768px - 991px) */
+    @media (max-width: 991px) {
+      .container-fluid.full-page { padding-left: 1rem; padding-right: 1rem; }
+      
+      .profile-hero { 
+        gap: 1.5rem; 
+        padding: 1.25rem; 
+      }
+      
+      .left-card { 
+        width: 280px; 
+        height: auto;
+        padding: 20px 18px;
+      }
+      
+      .left-card img { 
+        width: 150px; 
+        height: 150px; 
+        margin-top: 20px;
+      }
+      
+      .left-username { font-size: 18px; }
+      
+      .right-form { padding: 8px; }
+      
+      .right-form h2 { font-size: 1.5rem; }
+      
+      .settings-tabs { 
+        gap: 0.5rem; 
+        flex-wrap: wrap;
+      }
+      
+      .tab-btn { 
+        padding: 6px 16px; 
+        font-size: 0.95rem; 
+      }
+      
+      .cred-wrap { gap: 0.75rem; }
+      
+      .cred-card { padding: 16px; }
+    }
+
+    /* Mobile view (below 768px) */
+    @media (max-width: 767px) {
+      .container-fluid.full-page { 
+        padding-left: 0.75rem; 
+        padding-right: 0.75rem; 
+        padding-top: 0.5rem;
+      }
+      
+      .profile-hero { 
+        flex-direction: column; 
+        align-items: center; 
+        padding: 1rem;
+      }
+      
+      .left-card { 
+        width: 100%; 
+        height: auto;
+        display: flex; 
+        flex-direction: row; 
+        gap: 16px; 
+        padding: 16px; 
+        align-items: center;
+      }
+      
+      .left-card img { 
+        width: 100px; 
+        height: 100px; 
+        margin-top: 0;
+      }
+      
+      .left-username { 
+        font-size: 1.1rem; 
+        margin-top: 0;
+        text-align: left;
+      }
+      
+      .left-id { font-size: 0.9rem; }
+      
+      .right-form { 
+        width: 100%; 
+        padding: 12px 8px; 
+      }
+      
+      .right-form h2 { 
+        font-size: 1.3rem; 
+        text-align: center;
+      }
+      
+      .small-muted { 
+        font-size: 0.8rem; 
+        text-align: center;
+      }
+      
+      .upload-valid-link { 
+        font-size: 0.85rem; 
+        text-align: center;
+        display: block;
+        margin-top: -5px;
+      }
+
+      /* Stack the info text and upload link vertically on mobile */
+      .col-12.d-flex.justify-content-between.align-items-start.mb-3 {
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 8px;
+      }
+      
+      .profile-actions { 
+        justify-content: center; 
+        margin-top: 16px; 
+      }
+      
+      .edit-btn { 
+        width: 100%; 
+        padding: 10px 20px; 
+      }
+      
+      .settings-tabs { 
+        justify-content: center; 
+        gap: 0.4rem; 
+      }
+      
+      .tab-btn { 
+        font-size: 0.8rem; 
+        padding: 7px 12px; 
+        flex: 1;
+        text-align: center;
+        white-space: nowrap;
+      }
+      
+      .cred-wrap { 
+        flex-direction: column; 
+      }
+      
+      .cred-card { 
+        padding: 14px; 
+        width: 100%;
+      }
+      
+      .cred-card h5 { 
+        font-size: 1.05rem; 
+        text-align: center;
+      }
+      
+      .btn-save { 
+        width: 100%; 
+        padding: 10px 18px; 
+      }
+      
+      /* Stack form fields better on mobile */
+      .col-md-6.mb-3.d-flex.gap-2 {
+        flex-direction: column !important;
+      }
+      
+      .col-md-6.mb-3.d-flex.gap-2 > div {
+        flex: 1 1 100% !important;
+      }
+      
+      /* Keep input groups horizontal on mobile for password fields */
+      .input-group { 
+        flex-direction: row !important; 
+      }
+
+      .input-group .form-control {
+        flex: 1;
+      }
+
+      .input-group .btn { 
+        width: auto !important;
+        border-radius: 0 0.375rem 0.375rem 0 !important;
+        padding: 0.5rem 0.75rem;
+      }
+    }
+
+    /* Extra small mobile (below 480px) */
+    @media (max-width: 479px) {
+      .container-fluid.full-page { 
+        padding-left: 0.5rem; 
+        padding-right: 0.5rem; 
+      }
+      
+      .profile-hero { 
+        padding: 0.75rem; 
+      }
+      
+      .left-card { 
+        flex-direction: column; 
+        text-align: center; 
+        padding: 14px;
+      }
+      
+      .left-card img { 
+        width: 110px; 
+        height: 110px; 
+        margin: 10px auto 0;
+      }
+      
+      .left-username { 
+        font-size: 1rem; 
+        text-align: center;
+        margin-top: 0;
+      }
+
+      .left-id {
+        margin-top: -10px;
+      }
+      
+      .right-form { 
+        padding: 8px 4px; 
+      }
+      
+      .right-form h2 { 
+        font-size: 1.15rem; 
+      }
+      
+      .small-muted { 
+        font-size: 0.75rem; 
+      }
+      
+      .upload-valid-link { 
+        font-size: 0.78rem; 
+      }
+      
+      .tab-btn { 
+        font-size: 0.7rem; 
+        padding: 6px 8px; 
+        white-space: nowrap;
+      }
+      
+      .form-label { 
+        font-size: 0.8rem; 
+      }
+      
+      .form-control, .form-select { 
+        font-size: 0.85rem; 
+        padding: 0.5rem 0.75rem; 
+      }
+      
+      .edit-btn { 
+        font-size: 0.9rem; 
+        padding: 8px 16px; 
+      }
+      
+      .cred-card { 
+        padding: 12px; 
+      }
+      
+      .cred-card h5 { 
+        font-size: 0.95rem; 
+      }
+      
+      .btn-save { 
+        font-size: 0.9rem; 
+        padding: 8px 16px; 
+      }
+
+      /* Justify Data Privacy text on mobile */
+      #policySection .card-body p {
+        text-align: justify;
+      }
+
+      /* Smaller checkbox label text on mobile */
+      #policySection .form-check-label {
+        font-size: 0.8rem;
+      }
     }
   </style>
 </head>
@@ -348,10 +604,6 @@ $profile_birthdate = $profile['birthdate'] ?? '';
                   <label class="form-label small-muted">Full Name</label>
                   <input name="full_name" id="full_name" class="form-control" value="<?= htmlspecialchars($profile['full_name'] ?? '') ?>" readonly required>
                 </div>
-                <div class="col-md-6 mb-3">
-                  <label class="form-label small-muted">Username</label>
-                  <input name="username" id="username" class="form-control" value="<?= htmlspecialchars($userAcct['username'] ?? '') ?>" readonly required>
-                </div>
 
                 <div class="col-md-6 mb-3">
                   <label class="form-label small-muted">Address</label>
@@ -359,15 +611,15 @@ $profile_birthdate = $profile['birthdate'] ?? '';
                 </div>
 
                 <div class="col-md-6 mb-3 d-flex gap-2">
-                  <div style="flex:0 0 30%;">
+                  <div style="flex:0 0 35%;">
                     <label class="form-label small-muted">Birth Month</label>
                     <input type="text" id="birth_m" class="form-control" readonly value="<?= $profile['birthdate'] ? date('M', strtotime($profile['birthdate'])) : '' ?>">
                   </div>
-                  <div style="flex:0 0 20%;">
+                  <div style="flex:0 0 25%;">
                     <label class="form-label small-muted">Day</label>
                     <input type="text" id="birth_d" class="form-control" readonly value="<?= $profile['birthdate'] ? date('d', strtotime($profile['birthdate'])) : '' ?>">
                   </div>
-                  <div style="flex:0 0 30%;">
+                  <div style="flex:0 0 35%;">
                     <label class="form-label small-muted">Year</label>
                     <input type="text" id="birth_y" class="form-control" readonly value="<?= $profile['birthdate'] ? date('Y', strtotime($profile['birthdate'])) : '' ?>">
                   </div>
@@ -394,11 +646,12 @@ $profile_birthdate = $profile['birthdate'] ?? '';
                   <input name="contact_number_display" id="contact_number_display" class="form-control" value="<?= htmlspecialchars($profile['contact_number'] ?? '') ?>" readonly>
                 </div>
 
-                <div class="col-md-4 mb-3">
+                <div class="col-md-6 mb-3">
                   <label class="form-label small-muted">Birth Registration No.</label>
                   <input name="birth_registration_number" id="birth_registration_number" class="form-control" value="<?= htmlspecialchars($profile['birth_registration_number'] ?? '') ?>" readonly>
                 </div>
-                <div class="col-md-4 mb-3">
+
+                <div class="col-md-6 mb-3">
                   <label class="form-label small-muted">Education</label>
                   <select name="highest_educational_attainment" id="hea" class="form-select" disabled>
                     <?php foreach (['Kindergarten','Elementary','High School','Senior High School','Undergraduate','College Graduate','Post-Graduate','Vocational','None','Unknown'] as $edu): ?>
@@ -406,7 +659,8 @@ $profile_birthdate = $profile['birthdate'] ?? '';
                     <?php endforeach; ?>
                   </select>
                 </div>
-                <div class="col-md-4 mb-3">
+
+                <div class="col-md-6 mb-3">
                   <label class="form-label small-muted">Occupation</label>
                   <input name="occupation" id="occupation" class="form-control" value="<?= htmlspecialchars($profile['occupation'] ?? '') ?>" readonly>
                 </div>

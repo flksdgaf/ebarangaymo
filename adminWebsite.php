@@ -237,7 +237,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
 
     <!-- Add Modal -->
     <div class="modal fade" id="addAnnouncementModal" tabindex="-1">
-      <div class="modal-dialog">
+      <div class="modal-dialog modal-dialog-centered">
         <form method="POST" action="functions/update_announcements.php" enctype="multipart/form-data" class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">New Announcement</h5>
@@ -534,7 +534,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
 
               <!-- eBarangay Mo First Image Modal -->
               <div class="modal fade" id="editFirst_imageModal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog">
+                <div class="modal-dialog modal-dialog-centered">
                   <form action="functions/update_about_ebarangaymo.php" method="post" enctype="multipart/form-data" class="modal-content">
                     <div class="modal-header">
                       <h5 class="modal-title">Edit First Image</h5>
@@ -552,7 +552,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
 
               <!--  eBarangay Mo Second Image Modal -->
               <div class="modal fade" id="editSecond_imageModal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog">
+                <div class="modal-dialog modal-dialog-centered">
                   <form action="functions/update_about_ebarangaymo.php" method="post" enctype="multipart/form-data" class="modal-content">
                     <div class="modal-header">
                       <h5 class="modal-title">Edit Second Image</h5>
@@ -570,7 +570,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
 
               <!--  eBarangay Mo Third Image Modal -->
               <div class="modal fade" id="editThird_imageModal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog">
+                <div class="modal-dialog modal-dialog-centered">
                   <form action="functions/update_about_ebarangaymo.php" method="post" enctype="multipart/form-data" class="modal-content">
                     <div class="modal-header">
                       <h5 class="modal-title">Edit Third Image</h5>

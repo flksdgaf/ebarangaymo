@@ -17,11 +17,9 @@ $foundPurok = null;
 // 1. Search the 6 purok tables for the record
 for ($i = 1; $i <= 6; $i++) {
     $tbl = "purok{$i}_rbi";
-    // Note: avoid SQL injection by validating table names in code, not via user input.
     $sql = "SELECT full_name, birthdate FROM `$tbl` WHERE account_ID = ?";
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
-        // Prepare failed; skip this table
         continue;
     }
     $stmt->bind_param("s", $accountId);
@@ -45,8 +43,6 @@ function formatDate($dateStr) {
     return $d->format('F d, Y');
 }
 $birthFmt = formatDate($birthdate);
-
-
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -54,71 +50,60 @@ $birthFmt = formatDate($birthdate);
     <meta charset="UTF-8">
     <title>Account Approved</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
     <link rel="stylesheet" href="approved_user.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
-
-    <!-- Overlay second image -->
-    <img src="images/bg_nothover.png" class="overlay-image" alt="Overlay Image">
-
-    <!-- Centered content -->
-    <div class="d-flex align-items-center justify-content-center vh-100">
-        <div class="content">
-            <!-- Lottie or GIF -->
-            <canvas id="canvas" width="200" height="200"></canvas>
-            <script type="module">
-            import { DotLottie } from "https://cdn.jsdelivr.net/npm/@lottiefiles/dotlottie-web/+esm";
-            new DotLottie({
-                autoplay: true,
-                loop: true,
-                canvas: document.getElementById("canvas"),
-                src: "https://lottie.host/1810df78-2585-4229-8aad-a66155581d90/GlQyyA7IfH.lottie",
-            });
-            </script>
+    <div class="page-wrapper">
+        <div class="approval-container">
+            <!-- Animated Icon -->
+            <div class="icon-wrapper">
+                <div class="icon-stack">
+                    <span class="material-symbols-outlined approval-icon-bg">circle</span>
+                    <span class="material-symbols-outlined approval-icon">check_circle</span>
+                </div>
+            </div>
     
-            <!-- Dynamic Texts -->
-            <h1 class="mb-3">ACCOUNT APPROVED</h1>
+            <!-- Content -->
+            <h1 class="approval-title">ACCOUNT APPROVED</h1>
 
-            <!-- Wrap in a flex container that centers it horizontally -->
-            <div class="d-flex justify-content-center">
-                <div class="p-4">
-                    <!-- Heading -->
-                    <h5 class="text-center mb-3">Account Details</h5>
-                    <!-- Borderless table with auto width, centered -->
-                    <table class="table table-borderless bg-transparent w-auto mx-auto mb-0">
+            <!-- Details Card -->
+            <div class="details-card">
+                <h6>Account Details</h6>
+                <table class="table table-borderless w-auto mx-auto">
                     <tbody>
                         <?php if (!empty($accountId)): ?>
                         <tr>
-                        <th class="text-start pe-3">Account ID:</th>
-                        <td class="text-start"><?php echo htmlspecialchars($accountId) ?></td>
+                            <th class="text-start pe-3">Account ID:</th>
+                            <td class="text-start"><?php echo htmlspecialchars($accountId) ?></td>
                         </tr>
                         <?php endif; ?>
                         <?php if (!empty($fullName)): ?>
                         <tr>
-                        <th class="text-start pe-3">Account Name:</th>
-                        <td class="text-start"><?php echo htmlspecialchars($fullName) ?></td>
+                            <th class="text-start pe-3">Account Name:</th>
+                            <td class="text-start"><?php echo htmlspecialchars($fullName) ?></td>
                         </tr>
-                        
                         <?php endif; ?>
                     </tbody>
-                    </table>
-                </div>
+                </table>
             </div>
 
             <!-- Message -->
-            <p class="mb-4">
+            <p class="approval-message">
                 Congratulations! Your account has been approved.<br>
                 You can now log in using your credentials.<br>
                 Thank you for joining. You may proceed to your dashboard by clicking the button below.
             </p>
 
+            <!-- Continue Button -->
             <form id="continueForm" method="POST" action="functions/update_role_to_resident.php" class="d-inline">
-                <button type="submit" class="btn btn-light btn-home">CONTINUE TO MY ACCOUNT</button>
+                <button type="submit" class="btn btn-continue">
+                    <span class="material-symbols-outlined">login</span>
+                    CONTINUE TO MY ACCOUNT
+                </button>
             </form>
-
         </div>
     </div>
-
 </body>
 </html>

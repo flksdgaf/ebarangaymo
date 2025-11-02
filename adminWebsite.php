@@ -58,7 +58,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
                       <td><img src="images/<?= $info['logo'] ?>" alt="Logo" style="height:32px;"></td>
                       <td class="text-end">
                         <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#editLogoModal">
-                          <i class="bi bi-pencil"></i> Edit
+                          <span class="material-symbols-outlined">edit</span> Edit
                         </button>
                       </td>
                     </tr>
@@ -67,7 +67,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
                       <td><?= $info['name'] ?></td>
                       <td class="text-end">
                         <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#editTextModal" data-field="name">
-                          <i class="bi bi-pencil"></i> Edit
+                          <span class="material-symbols-outlined">edit</span> Edit
                         </button>
                       </td>
                     </tr>
@@ -76,7 +76,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
                       <td><?= $info['address'] ?></td>
                       <td class="text-end">
                         <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#editTextModal" data-field="address">
-                          <i class="bi bi-pencil"></i> Edit
+                          <span class="material-symbols-outlined">edit</span> Edit
                         </button>
                       </td>
                     </tr>
@@ -88,7 +88,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
               <div class="d-flex align-items-center mb-3 justify-content-between">
                 <h6 class="text-secondary fw-bold mb-0">Announcements</h6>
                 <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addAnnouncementModal">
-                  <i class="bi bi-plus-lg"></i> Add New Announcement
+                  <span class="material-symbols-outlined">add</span> Add New Announcement
                 </button>
               </div>
               <div class="table-responsive admin-table mb-4">
@@ -109,7 +109,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
                         <form method="POST" action="functions/update_announcements.php" style="display:inline">
                           <input type="hidden" name="delete_id" value="<?=$a['id']?>">
                           <button class="btn btn-danger btn-sm" onclick="return confirm('Delete this slide?')">
-                            <i class="bi bi-trash"></i> Delete
+                            <span class="material-symbols-outlined">delete</span> Delete
                           </button>
                         </form>
                       </td>
@@ -123,7 +123,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
               <div class="d-flex align-items-center mb-3 justify-content-between">
                 <h6 class="text-secondary fw-bold mb-0">News and Updates</h6>
                 <button id="addNewsBtn" class="btn btn-success btn-sm">
-                  <i class="bi bi-plus-lg"></i> Add News
+                  <span class="material-symbols-outlined">add</span> Add News
                 </button>
               </div>
               <div class="table-responsive admin-table">
@@ -156,11 +156,11 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
                                   data-headline="<?=htmlspecialchars($row['headline'], ENT_QUOTES)?>"
                                   data-link="<?=htmlspecialchars($row['link'],   ENT_QUOTES)?>"
                                   data-cover="<?=$row['cover_file']?>">
-                            <i class="bi bi-pencil"></i> Edit
+                            <span class="material-symbols-outlined">edit</span> Edit
                           </button>
 
                           <button class="btn btn-danger btn-sm deleteNewsBtn" data-id="<?=$row['id']?>">
-                            <i class="bi bi-trash"></i> Delete
+                            <span class="material-symbols-outlined">delete</span> Delete
                           </button>
                         </div>
                       </td>
@@ -260,7 +260,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
                 <button type="button"
                         class="btn btn-outline-secondary btn-sm"
                         onclick="document.getElementById('imgInput').click()">
-                  <i class="bi bi-image"></i> Choose Image
+                  <span class="material-symbols-outlined">image</span> Choose Image
                 </button>
                 <input type="file"
                       name="image"
@@ -427,7 +427,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
                     <td><?= htmlspecialchars($about['title']) ?></td>
                     <td class="text-end">
                       <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#editAboutBannerTitleModal">
-                        <i class="bi bi-pencil"></i> Edit
+                        <span class="material-symbols-outlined">edit</span> Edit
                       </button>
                     </td>
                   </tr>
@@ -442,7 +442,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
                     </td>
                     <td class="text-end">
                       <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#editAboutBannerImageModal">
-                        <i class="bi bi-pencil"></i> Edit
+                        <span class="material-symbols-outlined">edit</span> Edit
                       </button>
                     </td>
                   </tr>
@@ -523,7 +523,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
                       </td>
                       <td class="text-end">
                         <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#edit<?= ucfirst($label) ?>Modal">
-                          <i class="bi bi-pencil"></i> Edit
+                          <span class="material-symbols-outlined">edit</span> Edit
                         </button>
                       </td>
                     </tr>
@@ -606,7 +606,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
                       </td>
                       <td class="text-end">
                         <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#editOfficialsDescriptionModal">
-                          <i class="bi bi-pencil"></i> Edit
+                          <span class="material-symbols-outlined">edit</span> Edit
                         </button>
                       </td>
                     </tr>
@@ -621,7 +621,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
                       </td>
                       <td class="text-end">
                         <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#editOfficialsImageModal">
-                          <i class="bi bi-pencil"></i> Edit
+                          <span class="material-symbols-outlined">edit</span> Edit
                         </button>
                       </td>
                     </tr>
@@ -697,7 +697,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
                     </td>
                     <td class="text-end">
                       <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#editMissionModal">
-                        <i class="bi bi-pencil"></i> Edit
+                        <span class="material-symbols-outlined">edit</span> Edit
                       </button>
                     </td>
                   </tr>
@@ -708,7 +708,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
                     </td>
                     <td class="text-end">
                       <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#editVisionModal">
-                        <i class="bi bi-pencil"></i> Edit
+                        <span class="material-symbols-outlined">edit</span> Edit
                       </button>
                     </td>
                   </tr>
@@ -780,7 +780,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
                       </td>
                       <td class="text-end">
                         <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#editCitizensCharterDescriptionModal">
-                          <i class="bi bi-pencil"></i> Edit
+                          <span class="material-symbols-outlined">edit</span> Edit
                         </button>
                       </td>
                     </tr>
@@ -795,7 +795,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
                       </td>
                       <td class="text-end">
                         <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#editCitizensCharterImageModal">
-                          <i class="bi bi-pencil"></i> Edit
+                          <span class="material-symbols-outlined">edit</span> Edit
                         </button>
                       </td>
                     </tr>
@@ -871,7 +871,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
                       </td>
                       <td class="text-end">
                         <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#editBarangayMapDescriptionModal">
-                          <i class="bi bi-pencil"></i> Edit
+                          <span class="material-symbols-outlined">edit</span> Edit
                         </button>
                       </td>
                     </tr>
@@ -886,7 +886,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
                       </td>
                       <td class="text-end">
                         <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#editBarangayMapImageModal">
-                          <i class="bi bi-pencil"></i> Edit
+                          <span class="material-symbols-outlined">edit</span> Edit
                         </button>
                       </td>
                     </tr>
@@ -978,7 +978,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
                       <td><?= htmlspecialchars($servicesBanner['title']) ?></td>
                       <td class="text-end">
                         <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#editServicesBannerTitleModal">
-                          <i class="bi bi-pencil"></i> Edit
+                          <span class="material-symbols-outlined">edit</span> Edit
                         </button>
                       </td>
                     </tr>
@@ -993,7 +993,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
                       </td>
                       <td class="text-end">
                         <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#editServicesBannerImageModal">
-                          <i class="bi bi-pencil"></i> Edit
+                          <span class="material-symbols-outlined">edit</span> Edit
                         </button>
                       </td>
                     </tr>
@@ -1053,7 +1053,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
               <h6 class="text-secondary fw-bold d-flex justify-content-between align-items-center">
               Barangay Services
               <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addServiceModal">
-                <i class="bi bi-plus-circle"></i> Add New Service
+                <span class="material-symbols-outlined">add_circle</span> Add New Service
               </button>
               </h6>
 
@@ -1082,7 +1082,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
                       </td>
                       <td class="text-end">
                         <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteServiceModal<?= $row['id'] ?>">
-                          <i class="bi bi-trash"></i> Delete
+                          <span class="material-symbols-outlined">delete</span> Delete
                         </button>
                       </td>
                     </tr>
@@ -1206,7 +1206,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
                       <td><?= htmlspecialchars($transparency['title']) ?></td>
                       <td class="text-end">
                         <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#editTransparencyTitleModal">
-                          <i class="bi bi-pencil"></i> Edit
+                          <span class="material-symbols-outlined">edit</span> Edit
                         </button>
                       </td>
                     </tr>
@@ -1221,7 +1221,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
                       </td>
                       <td class="text-end">
                         <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#editTransparencyImageModal">
-                          <i class="bi bi-pencil"></i> Edit
+                          <span class="material-symbols-outlined">edit</span> Edit
                         </button>
                       </td>
                     </tr>
@@ -1296,7 +1296,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
                       </td>
                       <td class="text-end">
                         <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#editTransparencyDescriptionModal">
-                          <i class="bi bi-pencil"></i> Edit
+                          <span class="material-symbols-outlined">edit</span> Edit
                         </button>
                       </td>
                     </tr>
@@ -1311,7 +1311,7 @@ $transparencyContent = $conn->query("SELECT image, description FROM transparency
                       </td>
                       <td class="text-end">
                         <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#editTransparencyImageModal">
-                          <i class="bi bi-pencil"></i> Edit
+                          <span class="material-symbols-outlined">edit</span> Edit
                         </button>
                       </td>
                     </tr>

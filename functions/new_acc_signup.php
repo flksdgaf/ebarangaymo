@@ -13,10 +13,16 @@ function getNextAccountId($conn) {
 
 $account_id = getNextAccountId($conn);
 
-// Step 1 inputs
-$fn = trim($_POST['firstname']   ?? '');
-$mn = trim($_POST['middlename']  ?? '');
-$ln = trim($_POST['lastname']    ?? '');
+// // Step 1 inputs
+// $fn = trim($_POST['firstname']   ?? '');
+// $mn = trim($_POST['middlename']  ?? '');
+// $ln = trim($_POST['lastname']    ?? '');
+// $bd = $_POST['birthdate']        ?? '';
+
+// Step 1 inputs - Format names to Title Case
+$fn = ucwords(strtolower(trim($_POST['firstname']   ?? '')));
+$mn = ucwords(strtolower(trim($_POST['middlename']  ?? '')));
+$ln = ucwords(strtolower(trim($_POST['lastname']    ?? '')));
 $bd = $_POST['birthdate']        ?? '';
 
 // Step 4 creds (moved up for early validation)

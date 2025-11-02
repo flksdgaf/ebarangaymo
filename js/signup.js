@@ -6,144 +6,144 @@ document.addEventListener("DOMContentLoaded", function () {
     const cancelBtn = document.querySelector(".cancel-btn");
     const nextBtn = document.querySelector(".next-btn");
 
-    // OCR validation for birthdate on ID
-    async function validateIDBirthdate(frontIDFile, enteredBirthdate) {
-        try {
-            // Show progress in console
-            const { data: { text } } = await Tesseract.recognize(
-                frontIDFile,
-                'eng',
-                {
-                    logger: m => {
-                        if (m.status === 'recognizing text') {
-                            console.log(`OCR Progress: ${Math.round(m.progress * 100)}%`);
-                        }
-                    }
-                }
-            );
+    // // OCR validation for birthdate on ID
+    // async function validateIDBirthdate(frontIDFile, enteredBirthdate) {
+    //     try {
+    //         // Show progress in console
+    //         const { data: { text } } = await Tesseract.recognize(
+    //             frontIDFile,
+    //             'eng',
+    //             {
+    //                 logger: m => {
+    //                     if (m.status === 'recognizing text') {
+    //                         console.log(`OCR Progress: ${Math.round(m.progress * 100)}%`);
+    //                     }
+    //                 }
+    //             }
+    //         );
             
-            console.log('OCR Extracted Text:', text);
+    //         console.log('OCR Extracted Text:', text);
             
-            // Month names mapping
-            const monthNames = {
-                'january': 0, 'jan': 0,
-                'february': 1, 'feb': 1,
-                'march': 2, 'mar': 2,
-                'april': 3, 'apr': 3,
-                'may': 4,
-                'june': 5, 'jun': 5,
-                'july': 6, 'jul': 6,
-                'august': 7, 'aug': 7,
-                'september': 8, 'sep': 8, 'sept': 8,
-                'october': 9, 'oct': 9,
-                'november': 10, 'nov': 10,
-                'december': 11, 'dec': 11
-            };
+    //         // Month names mapping
+    //         const monthNames = {
+    //             'january': 0, 'jan': 0,
+    //             'february': 1, 'feb': 1,
+    //             'march': 2, 'mar': 2,
+    //             'april': 3, 'apr': 3,
+    //             'may': 4,
+    //             'june': 5, 'jun': 5,
+    //             'july': 6, 'jul': 6,
+    //             'august': 7, 'aug': 7,
+    //             'september': 8, 'sep': 8, 'sept': 8,
+    //             'october': 9, 'oct': 9,
+    //             'november': 10, 'nov': 10,
+    //             'december': 11, 'dec': 11
+    //         };
             
-            // Extract dates from OCR text (various formats)
-            const datePatterns = [
-                // Month DD, YYYY (e.g., "July 09, 2003", "July 9, 2003")
-                /\b(January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*[\s,]+(\d{1,2})[\s,]+(\d{4})\b/gi,
+    //         // Extract dates from OCR text (various formats)
+    //         const datePatterns = [
+    //             // Month DD, YYYY (e.g., "July 09, 2003", "July 9, 2003")
+    //             /\b(January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*[\s,]+(\d{1,2})[\s,]+(\d{4})\b/gi,
                 
-                // DD Month YYYY (e.g., "09 July 2003", "9 July 2003")
-                /\b(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\s+(\d{4})\b/gi,
+    //             // DD Month YYYY (e.g., "09 July 2003", "9 July 2003")
+    //             /\b(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\s+(\d{4})\b/gi,
                 
-                // MM/DD/YYYY or DD/MM/YYYY
-                /\b(\d{2})\/(\d{2})\/(\d{4})\b/g,
+    //             // MM/DD/YYYY or DD/MM/YYYY
+    //             /\b(\d{2})\/(\d{2})\/(\d{4})\b/g,
                 
-                // YYYY-MM-DD
-                /\b(\d{4})-(\d{2})-(\d{2})\b/g,
+    //             // YYYY-MM-DD
+    //             /\b(\d{4})-(\d{2})-(\d{2})\b/g,
                 
-                // DD-MM-YYYY or MM-DD-YYYY
-                /\b(\d{2})-(\d{2})-(\d{4})\b/g
-            ];
+    //             // DD-MM-YYYY or MM-DD-YYYY
+    //             /\b(\d{2})-(\d{2})-(\d{4})\b/g
+    //         ];
             
-            let foundMatch = false;
-            const entered = new Date(enteredBirthdate);
-            const extractedDates = [];
+    //         let foundMatch = false;
+    //         const entered = new Date(enteredBirthdate);
+    //         const extractedDates = [];
             
-            for (const pattern of datePatterns) {
-                const matches = text.matchAll(pattern);
-                for (const match of matches) {
-                    let testDate;
+    //         for (const pattern of datePatterns) {
+    //             const matches = text.matchAll(pattern);
+    //             for (const match of matches) {
+    //                 let testDate;
                     
-                    // Handle "Month DD, YYYY" format (e.g., "July 09, 2003")
-                    if (match[1] && isNaN(match[1])) {
-                        const monthStr = match[1].toLowerCase().replace(/[^a-z]/g, '');
-                        const monthNum = monthNames[monthStr];
-                        if (monthNum !== undefined) {
-                            const day = parseInt(match[2]);
-                            const year = parseInt(match[3]);
-                            testDate = new Date(year, monthNum, day);
-                            console.log(`Parsed Month-Day-Year: ${match[1]} ${match[2]}, ${match[3]} => ${testDate}`);
-                        }
-                    }
-                    // Handle "DD Month YYYY" format (e.g., "09 July 2003")
-                    else if (match[2] && isNaN(match[2])) {
-                        const monthStr = match[2].toLowerCase().replace(/[^a-z]/g, '');
-                        const monthNum = monthNames[monthStr];
-                        if (monthNum !== undefined) {
-                            const day = parseInt(match[1]);
-                            const year = parseInt(match[3]);
-                            testDate = new Date(year, monthNum, day);
-                            console.log(`Parsed Day-Month-Year: ${match[1]} ${match[2]} ${match[3]} => ${testDate}`);
-                        }
-                    }
-                    // YYYY-MM-DD format
-                    else if (match[0].includes('-') && match[1].length === 4) {
-                        testDate = new Date(match[1], parseInt(match[2]) - 1, match[3]);
-                        console.log(`Parsed YYYY-MM-DD: ${match[0]} => ${testDate}`);
-                    }
-                    // MM/DD/YYYY or DD/MM/YYYY or MM-DD-YYYY or DD-MM-YYYY
-                    else if (match[3]) {
-                        const date1 = new Date(match[3], parseInt(match[1]) - 1, match[2]); // MM/DD/YYYY
-                        const date2 = new Date(match[3], parseInt(match[2]) - 1, match[1]); // DD/MM/YYYY
+    //                 // Handle "Month DD, YYYY" format (e.g., "July 09, 2003")
+    //                 if (match[1] && isNaN(match[1])) {
+    //                     const monthStr = match[1].toLowerCase().replace(/[^a-z]/g, '');
+    //                     const monthNum = monthNames[monthStr];
+    //                     if (monthNum !== undefined) {
+    //                         const day = parseInt(match[2]);
+    //                         const year = parseInt(match[3]);
+    //                         testDate = new Date(year, monthNum, day);
+    //                         console.log(`Parsed Month-Day-Year: ${match[1]} ${match[2]}, ${match[3]} => ${testDate}`);
+    //                     }
+    //                 }
+    //                 // Handle "DD Month YYYY" format (e.g., "09 July 2003")
+    //                 else if (match[2] && isNaN(match[2])) {
+    //                     const monthStr = match[2].toLowerCase().replace(/[^a-z]/g, '');
+    //                     const monthNum = monthNames[monthStr];
+    //                     if (monthNum !== undefined) {
+    //                         const day = parseInt(match[1]);
+    //                         const year = parseInt(match[3]);
+    //                         testDate = new Date(year, monthNum, day);
+    //                         console.log(`Parsed Day-Month-Year: ${match[1]} ${match[2]} ${match[3]} => ${testDate}`);
+    //                     }
+    //                 }
+    //                 // YYYY-MM-DD format
+    //                 else if (match[0].includes('-') && match[1].length === 4) {
+    //                     testDate = new Date(match[1], parseInt(match[2]) - 1, match[3]);
+    //                     console.log(`Parsed YYYY-MM-DD: ${match[0]} => ${testDate}`);
+    //                 }
+    //                 // MM/DD/YYYY or DD/MM/YYYY or MM-DD-YYYY or DD-MM-YYYY
+    //                 else if (match[3]) {
+    //                     const date1 = new Date(match[3], parseInt(match[1]) - 1, match[2]); // MM/DD/YYYY
+    //                     const date2 = new Date(match[3], parseInt(match[2]) - 1, match[1]); // DD/MM/YYYY
                         
-                        // Check which format matches the entered date better
-                        if (Math.abs(date1 - entered) < Math.abs(date2 - entered)) {
-                            testDate = date1;
-                            console.log(`Parsed MM/DD/YYYY: ${match[0]} => ${testDate}`);
-                        } else {
-                            testDate = date2;
-                            console.log(`Parsed DD/MM/YYYY: ${match[0]} => ${testDate}`);
-                        }
-                    }
+    //                     // Check which format matches the entered date better
+    //                     if (Math.abs(date1 - entered) < Math.abs(date2 - entered)) {
+    //                         testDate = date1;
+    //                         console.log(`Parsed MM/DD/YYYY: ${match[0]} => ${testDate}`);
+    //                     } else {
+    //                         testDate = date2;
+    //                         console.log(`Parsed DD/MM/YYYY: ${match[0]} => ${testDate}`);
+    //                     }
+    //                 }
                     
-                    if (testDate && !isNaN(testDate.getTime())) {
-                        extractedDates.push(testDate);
+    //                 if (testDate && !isNaN(testDate.getTime())) {
+    //                     extractedDates.push(testDate);
                         
-                        // Check if dates match (within 1 day tolerance for parsing differences)
-                        const daysDiff = Math.abs((testDate - entered) / (1000 * 60 * 60 * 24));
-                        if (daysDiff <= 1) {
-                            foundMatch = true;
-                            console.log('✓ Match found!', testDate.toLocaleDateString());
-                            break;
-                        }
-                    }
-                }
-                if (foundMatch) break;
-            }
+    //                     // Check if dates match (within 1 day tolerance for parsing differences)
+    //                     const daysDiff = Math.abs((testDate - entered) / (1000 * 60 * 60 * 24));
+    //                     if (daysDiff <= 1) {
+    //                         foundMatch = true;
+    //                         console.log('✓ Match found!', testDate.toLocaleDateString());
+    //                         break;
+    //                     }
+    //                 }
+    //             }
+    //             if (foundMatch) break;
+    //         }
             
-            console.log('All extracted dates from ID:', extractedDates.map(d => d.toLocaleDateString()));
-            console.log('Entered birthdate:', entered.toLocaleDateString());
+    //         console.log('All extracted dates from ID:', extractedDates.map(d => d.toLocaleDateString()));
+    //         console.log('Entered birthdate:', entered.toLocaleDateString());
             
-            return {
-                success: foundMatch,
-                message: foundMatch 
-                    ? 'Birthdate verified with ID ✓' 
-                    : 'Warning: Birthdate on ID does not match the entered birthdate. Please verify your information.',
-                extractedDates: extractedDates
-            };
+    //         return {
+    //             success: foundMatch,
+    //             message: foundMatch 
+    //                 ? 'Birthdate verified with ID ✓' 
+    //                 : 'Warning: Birthdate on ID does not match the entered birthdate. Please verify your information.',
+    //             extractedDates: extractedDates
+    //         };
             
-        } catch (error) {
-            console.error('OCR Error:', error);
-            return {
-                success: false,
-                message: 'Could not verify ID automatically. Please ensure the image is clear and try again.',
-                error: error.message
-            };
-        }
-    }
+    //     } catch (error) {
+    //         console.error('OCR Error:', error);
+    //         return {
+    //             success: false,
+    //             message: 'Could not verify ID automatically. Please ensure the image is clear and try again.',
+    //             error: error.message
+    //         };
+    //     }
+    // }
 
     // Username availability check
     const usernameInput = document.getElementById("username");
@@ -252,7 +252,8 @@ document.addEventListener("DOMContentLoaded", function () {
             const middleName = document.getElementById("middlename").value.trim();
             const lastName = document.getElementById("lastname").value.trim();
 
-            const nameRegex = /^[A-Za-z\s.]+$/;
+            // const nameRegex = /^[A-Za-z\s.]+$/;
+            const nameRegex = /^[\p{L}\s.\-']+$/u;
 
             if (!nameRegex.test(firstName)) {
                 valid = false;
@@ -372,7 +373,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Check required fields
         document.querySelectorAll(".step.active-step input[required], .step.active-step select[required]").forEach(field => {
-            if (!field.value.trim()) {
+            // Special validation for email field
+            if (field.type === 'email') {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!field.value.trim() || !emailRegex.test(field.value.trim())) {
+                    isValid = false;
+                    field.classList.add("is-invalid");
+                } else {
+                    field.classList.remove("is-invalid");
+                }
+            } else if (!field.value.trim()) {
                 isValid = false;
                 field.classList.add("is-invalid");
             } else {
@@ -382,6 +392,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (!isValid) {
             let validationModal = new bootstrap.Modal(document.getElementById("validationModal"));
+            // Update modal message for better user feedback
+            const modalMessage = document.querySelector("#validationModal .modal-message");
+            modalMessage.textContent = "Please fill in all required fields correctly. Make sure the email address is valid.";
             validationModal.show();
             return;
         }
@@ -393,54 +406,54 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        // OCR Validation for Step 1 (Personal Information)
-        if (currentStep === 0) {
-            const frontIDFile = document.getElementById('frontID').files[0];
-            const enteredBirthdate = document.getElementById('birthdate').value;
+        // // OCR Validation for Step 1 (Personal Information)
+        // if (currentStep === 0) {
+        //     const frontIDFile = document.getElementById('frontID').files[0];
+        //     const enteredBirthdate = document.getElementById('birthdate').value;
             
-            if (frontIDFile && enteredBirthdate) {
-                // Disable button and show loading state
-                nextBtn.disabled = true;
-                const originalText = nextBtn.textContent;
-                nextBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Verifying ID...';
+        //     if (frontIDFile && enteredBirthdate) {
+        //         // Disable button and show loading state
+        //         nextBtn.disabled = true;
+        //         const originalText = nextBtn.textContent;
+        //         nextBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Verifying ID...';
                 
-                try {
-                    const result = await validateIDBirthdate(frontIDFile, enteredBirthdate);
+        //         try {
+        //             const result = await validateIDBirthdate(frontIDFile, enteredBirthdate);
                     
-                    // Re-enable button
-                    nextBtn.disabled = false;
-                    nextBtn.textContent = originalText;
+        //             // Re-enable button
+        //             nextBtn.disabled = false;
+        //             nextBtn.textContent = originalText;
                     
-                    if (!result.success) {
-                        // Show warning but allow user to proceed
-                        const proceedAnyway = confirm(
-                            result.message + '\n\n' +
-                            'Extracted dates from ID: ' + (result.extractedDates?.map(d => d.toLocaleDateString()).join(', ') || 'None found') + '\n' +
-                            'Your entered birthdate: ' + new Date(enteredBirthdate).toLocaleDateString() + '\n\n' +
-                            'Do you want to proceed anyway? Click OK to continue or Cancel to fix your birthdate.'
-                        );
+        //             if (!result.success) {
+        //                 // Show warning but allow user to proceed
+        //                 const proceedAnyway = confirm(
+        //                     result.message + '\n\n' +
+        //                     'Extracted dates from ID: ' + (result.extractedDates?.map(d => d.toLocaleDateString()).join(', ') || 'None found') + '\n' +
+        //                     'Your entered birthdate: ' + new Date(enteredBirthdate).toLocaleDateString() + '\n\n' +
+        //                     'Do you want to proceed anyway? Click OK to continue or Cancel to fix your birthdate.'
+        //                 );
                         
-                        if (!proceedAnyway) {
-                            return;
-                        }
-                    } else {
-                        // Show success message briefly
-                        const successMsg = document.createElement('div');
-                        successMsg.className = 'alert alert-success mt-2';
-                        successMsg.textContent = '✓ Birthdate verified successfully!';
-                        document.querySelector('.step.active-step').appendChild(successMsg);
-                        setTimeout(() => successMsg.remove(), 2000);
-                    }
-                } catch (error) {
-                    // Re-enable button
-                    nextBtn.disabled = false;
-                    nextBtn.textContent = originalText;
+        //                 if (!proceedAnyway) {
+        //                     return;
+        //                 }
+        //             } else {
+        //                 // Show success message briefly
+        //                 const successMsg = document.createElement('div');
+        //                 successMsg.className = 'alert alert-success mt-2';
+        //                 successMsg.textContent = '✓ Birthdate verified successfully!';
+        //                 document.querySelector('.step.active-step').appendChild(successMsg);
+        //                 setTimeout(() => successMsg.remove(), 2000);
+        //             }
+        //         } catch (error) {
+        //             // Re-enable button
+        //             nextBtn.disabled = false;
+        //             nextBtn.textContent = originalText;
                     
-                    console.error('Validation error:', error);
-                    alert('An error occurred during ID verification. You may proceed, but please ensure your information is correct.');
-                }
-            }
-        }
+        //             console.error('Validation error:', error);
+        //             alert('An error occurred during ID verification. You may proceed, but please ensure your information is correct.');
+        //         }
+        //     }
+        // }
 
         // If on final review step
         if (currentStep === 2) {

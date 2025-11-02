@@ -1,6 +1,6 @@
 /* Background Image */
 body {
-    background: url('images/bg_nothover.png') no-repeat center center fixed;
+    background: url('images/signin_bg.png') no-repeat center center fixed;
     background-size: cover;
     min-height: 100vh;
     display: flex;
@@ -16,8 +16,8 @@ body {
     border-radius: 48px;
     border: 2px solid #0D2C15;
     width: 90vw;
-    max-width: 750px;
-    padding: 3rem 4rem;
+    max-width: 1000px;
+    padding: 2rem 4rem;
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
 }
 
@@ -34,15 +34,15 @@ h1 {
 
 /* Subheader */
 h5 {
-    color: #0D2C15;
+    color: #1a1a1a;
     font-size: 14px;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     font-weight: normal;
 }
 
 /* Labels */
 label {
-    color: #0D2C15;
+    color: #000000;
     font-weight: 600;
     font-size: 14px;
     margin-bottom: 0.3rem;
@@ -56,6 +56,47 @@ label {
     border-radius: 8px;
     padding: 0.6rem 1rem;
     font-size: 14px;
+}
+
+/* Birthdate dropdown styling */
+.birthdate-dropdowns {
+    display: flex;
+    gap: 0.3rem;
+    width: 100%;
+}
+
+.birthdate-dropdowns select {
+    background-color: #d3d3d3 !important;
+    color: #000 !important;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    padding: 0.6rem 0.5rem;
+    font-size: 14px;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.8rem center;
+    padding-right: 2rem;
+    flex: 1;
+    box-sizing: border-box;
+}
+
+.birthdate-dropdowns select:focus {
+    box-shadow: 0 0 0 0.2rem rgba(42, 146, 69, 0.25);
+    outline: none;
+}
+
+.birthdate-dropdowns select:hover {
+    background-color: #c5c5c5 !important;
+}
+
+/* Force black text for selected values */
+select#birth_month,
+select#birth_day,
+select#birth_year {
+    color: #000 !important;
+    -webkit-text-fill-color: #000 !important;
 }
 
 .custom-input:focus {
@@ -97,7 +138,7 @@ label {
     display: flex;
     justify-content: center;
     gap: 8px;
-    margin: 2rem 0 1.5rem 0;
+    margin: 1.5rem 0 1.5rem 0;
 }
 
 .dot {
@@ -163,15 +204,28 @@ label {
 
 /* Password validation rules */
 .password-rules {
-    margin-top: 0.5rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.3rem 1rem;
+    align-items: start;
+}
+
+.rules-header {
+    display: block;
+    color: #000;
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    margin-top: 0.3rem;
+    grid-column: 1 / -1;
 }
 
 .rule {
     display: flex;
     align-items: center;
     color: #dc3545;
-    font-size: 12px;
-    margin: 0.3rem 0;
+    font-size: 11px;
+    margin: 0;
     transition: color 0.3s;
 }
 
@@ -207,6 +261,7 @@ label {
     color: #0D2C15;
     font-weight: 600;
     text-decoration: none;
+    font-weight: bold;
 }
 
 .signin-link a:hover {
@@ -216,6 +271,7 @@ label {
 /* Invalid input styling */
 .is-invalid {
     border: 2px solid #dc3545 !important;
+    box-sizing: border-box !important;
 }
 
 /* Modal customization */
@@ -289,18 +345,40 @@ label {
 /* Responsive Design */
 @media (max-width: 768px) {
     .form-container {
-        width: 95vw;
+        width: 90vw;
+        max-width: 90vw;
         padding: 2rem 1.5rem;
         border-radius: 30px;
+        margin: 2rem auto;
+    }
+
+    /* Add these new rules for stacking fields */
+    .form-container .row .col-md-4,
+    .form-container .row .col-md-6 {
+        width: 100% !important;
+        margin-bottom: 1rem;
+    }
+    
+    .form-container .row {
+        margin-bottom: 0.5rem;
     }
 
     h1 {
-        font-size: 1.8rem;
+        font-size: 2rem;
+        margin-bottom: 0.3rem;
     }
 
     h5 {
-        font-size: 12px;
+        font-size: 13px;
         margin-bottom: 1.5rem;
+    }
+
+    .dots-container {
+        margin: 1.5rem 0 1rem 0;
+    }
+    
+    .btn-container {
+        margin-top: 1.5rem;
     }
 
     .btn {
@@ -320,7 +398,10 @@ label {
 
 @media (max-width: 480px) {
     .form-container {
+        width: 88vw;
+        max-width: 88vw;
         padding: 1.5rem 1rem;
+        margin: 1.5rem auto;
     }
 
     h1 {
@@ -350,4 +431,19 @@ label {
     font-size: 14px;
     padding: 10px 15px;
     margin-top: 10px;
+}
+
+.rule-divider {
+    display:flex;
+}
+
+/* Step 3: Review - Narrower Fields */
+.step:nth-child(3) .row {
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.step:nth-child(3) .custom-input {
+    max-width: 100%;
 }

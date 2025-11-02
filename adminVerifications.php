@@ -102,62 +102,39 @@ if ($res0) {
   </div>
 </div>
 
-<!-- Details Modal (same for both views) -->
-<!-- <div class="modal fade" id="requestDetailsModal" tabindex="-1" aria-labelledby="requestDetailsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="requestDetailsModalLabel">Request Details</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body"></div>
-    </div>
-  </div>
-</div> -->
 <!-- Details Modal -->
 <div class="modal fade" id="requestDetailsModal" tabindex="-1" aria-labelledby="requestDetailsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered" style="max-width: 750px;">
-    <div class="modal-content">
-      <!-- Match your system’s modal header color -->
-      <div class="modal-header" style="background-color: #13411F; color: white;">
-        <h5 class="modal-title fw-bold" id="requestDetailsModalLabel">Request Details</h5>
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 850px; height: 90vh;">
+    <div class="modal-content" style="height: 100%;">
+      <!-- Header -->
+      <div class="modal-header py-3" style="background: linear-gradient(135deg, #13411F 0%, #1a5c2e 100%); color: white;">
+        <div>
+          <h6 class="modal-title fw-bold mb-0" id="requestDetailsModalLabel">Account Verification Details</h6>
+          <small class="opacity-75" style="font-size: 0.8rem;">Review applicant information carefully</small>
+        </div>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
 
-      <!-- Grouped content for better readability -->
-      <div class="modal-body p-4" style="max-height: 70vh; overflow-y: auto;">
-        <div class="row g-3" id="detailsContent">
-          <!-- JS will inject grouped fields here -->
+      <!-- Body -->
+      <div class="modal-body p-0" style="overflow-y: auto; flex: 1;">
+        <div id="detailsContent">
+          <!-- JS will inject content here -->
         </div>
       </div>
 
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Close</button>
+      <div class="modal-footer bg-light py-2">
+        <button type="button" class="btn btn-sm btn-secondary px-3" data-bs-dismiss="modal">
+          <span class="material-icons align-middle" style="font-size: 18px;">close</span>
+          Close
+        </button>
       </div>
     </div>
   </div>
 </div>
 
-
-<!-- Confirmation Modal for Approve/Attach (pending) -->
-<!-- <div class="modal fade" id="confirmApproveModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Confirm Verification</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body" id="confirmApproveBody"></div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-success" id="confirmApproveBtn">Confirm</button>
-      </div>
-    </div>
-  </div>
-</div> -->
 <!-- Confirmation Modal for Approve/Attach (pending) -->
 <div class="modal fade" id="confirmApproveModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered" style="max-width: 500px;">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 550px;">
     <div class="modal-content">
       <div class="modal-header bg-success text-white">
         <h5 class="modal-title fw-bold">Confirm Verification</h5>
@@ -173,32 +150,8 @@ if ($res0) {
 </div>
 
 <!-- Decline Reason Modal -->
-<!-- <div class="modal fade" id="declineReasonModal" tabindex="-1" aria-labelledby="declineReasonModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="declineReasonModalLabel">Decline Account Confirmation</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <form id="declineReasonForm" method="POST" action="functions/decline_account.php">
-        <div class="modal-body">
-          <input type="hidden" name="account_ID" id="declineAccountId" value="">
-          <div class="mb-3">
-            <label id="declineReasonLabel" for="declineReasonInput" class="form-label"></label>
-            <textarea class="form-control" id="declineReasonInput" name="reason" rows="3" required></textarea>
-          </div>
-        </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="submit" class="btn btn-danger">Confirm Decline</button>
-      </div>
-      </form>
-    </div>
-  </div>
-</div> -->
-<!-- Decline Reason Modal -->
 <div class="modal fade" id="declineReasonModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="declineReasonModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered" style="max-width: 700px;">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 550px;">
     <div class="modal-content">
       <div class="modal-header bg-danger text-white">
         <h5 class="modal-title fw-bold" id="declineReasonModalLabel">
@@ -227,29 +180,8 @@ if ($res0) {
 </div>
 
 <!-- Delete Permanently Confirmation Modal -->
-<!-- <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="confirmDeleteModalLabel">Confirm Permanent Deletion</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <form id="confirmDeleteForm" method="POST" action="functions/delete_declined_account.php">
-        <div class="modal-body">
-          <input type="hidden" name="account_ID" id="deleteAccountId" value="">
-          <p id="confirmDeleteLabel"></p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-danger">Delete Permanently</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div> -->
-<!-- Delete Permanently Confirmation Modal -->
 <div class="modal fade" id="confirmDeleteModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered" style="max-width: 700px;">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 550px;">
     <div class="modal-content">
       <!-- Header -->
       <div class="modal-header bg-danger text-white">
@@ -280,14 +212,17 @@ if ($res0) {
 
 <!-- Zoom Modal -->
 <div class="modal fade" id="zoomImageModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
     <div class="modal-content bg-dark text-white border-0 shadow-lg">
-      <div class="modal-header border-0">
-        <h5 class="modal-title fw-bold" id="zoomImageTitle"></h5>
+      <div class="modal-header border-0 pb-2">
+        <h6 class="modal-title fw-bold" id="zoomImageTitle">
+          <span class="material-icons align-middle me-1" style="font-size: 20px;">fullscreen</span>
+          <span></span>
+        </h6>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body text-center">
-        <img id="zoomedImage" src="" class="img-fluid rounded shadow">
+      <div class="modal-body text-center p-3">
+        <img id="zoomedImage" src="" class="img-fluid rounded shadow" style="max-height: 80vh; object-fit: contain;">
       </div>
     </div>
   </div>
@@ -349,56 +284,151 @@ if ($res0) {
         row.addEventListener('click', e => {
           if (e.target.closest('button') || e.target.closest('form')) return;
           const dataObj = JSON.parse(row.getAttribute('data-full'));
-          // let html = '<dl class="row">';
-          // const exclude = ['username','password'];
-          // for (let key in dataObj) {
-          //   if (exclude.includes(key)) continue;
-          //   let label = key.replace(/_/g,' ').replace(/\b\w/g, c=>c.toUpperCase());
-          //   let val = dataObj[key];
-          //   if (/\.(jpg|jpeg|png|gif)$/i.test(val)) {
-          //     const folder = key.includes('front') ? 'frontID'
-          //                 : key.includes('back') ? 'backID'
-          //                 : 'profilePictures';
-          //     html += `<dt class="col-sm-3">${label}</dt>
-          //             <dd class="col-sm-9 mb-3">
-          //               <img src="${folder}/${val}"
-          //                     class="img-fluid img-thumbnail" style="max-height:200px;">
-          //             </dd>`;
-          //   } else {
-          //     html += `<dt class="col-sm-3">${label}</dt>
-          //             <dd class="col-sm-9 mb-3">${val}</dd>`;
-          //   }
-          // }
-          // html += '</dl>';
-          // detailsBody.innerHTML = html;
+
           let html = '';
-          const exclude = ['username','password'];
+          const exclude = ['username','password', 'sex', 'civil_status'];
 
-          // Group 1: Basic Info
-          html += '<h6 class="fw-bold mb-2">Basic Information</h6><div class="row mb-3">';
-          html += `<div class="col-md-6"><strong>Account ID:</strong> ${dataObj.account_ID}</div>`;
-          html += `<div class="col-md-6"><strong>Full Name:</strong> ${dataObj.full_name}</div>`;
-          html += `<div class="col-md-6"><strong>Purok:</strong> ${dataObj.purok}</div>`;
-          html += `<div class="col-md-6"><strong>Birthdate:</strong> ${dataObj.birthdate}</div>`;
-          html += `<div class="col-md-6"><strong>Sex:</strong> ${dataObj.sex}</div>`;
-          html += `<div class="col-md-6"><strong>Civil Status:</strong> ${dataObj.civil_status}</div>`;
-          html += '</div>';
+          // Profile Header Section
+          html += `
+          <div class="bg-light border-bottom p-3">
+            <div class="row align-items-center">
+              <div class="col-md-8">
+                <div class="d-flex align-items-center gap-2">
+                  <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                    <span class="material-icons text-success" style="font-size: 24px;">person</span>
+                  </div>
+                  <div>
+                    <h6 class="mb-0 fw-bold text-dark">${dataObj.full_name}</h6>
+                    <small class="text-muted" style="font-size: 0.8rem;">
+                      <span class="material-icons align-middle" style="font-size: 14px;">location_on</span>${dataObj.purok} | 
+                      <span class="material-icons align-middle" style="font-size: 14px;">tag</span>${dataObj.account_ID}
+                    </small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          `;
 
-          // Group 2: Identification
-          html += '<h6 class="fw-bold mb-2">Identification</h6><div class="row mb-3">';
+          // Main Content
+          html += '<div class="p-3">';
+
+          // Personal Information Card
+          html += `
+          <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body p-3">
+              <h6 class="fw-bold text-success mb-2" style="font-size: 0.9rem;">
+                <span class="material-icons align-middle me-1" style="font-size: 18px;">badge</span>Personal Information
+              </h6>
+              <div class="row g-2">
+                <div class="col-md-6">
+                  <div class="d-flex align-items-start">
+                    <span class="material-icons text-muted me-2" style="font-size: 18px;">cake</span>
+                    <div>
+                      <small class="text-muted d-block" style="font-size: 0.75rem;">Date of Birth</small>
+                      <span class="fw-semibold" style="font-size: 0.85rem;">${dataObj.birthdate}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="d-flex align-items-start">
+                    <span class="material-icons text-muted me-2" style="font-size: 18px;">home</span>
+                    <div>
+                      <small class="text-muted d-block" style="font-size: 0.75rem;">Purok</small>
+                      <span class="fw-semibold" style="font-size: 0.85rem;">${dataObj.purok}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          `;
+
+          // Identification Documents Card
+          html += `
+          <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body p-3">
+              <h6 class="fw-bold text-success mb-2" style="font-size: 0.9rem;">
+                <span class="material-icons align-middle me-1" style="font-size: 18px;">credit_card</span>Identification Documents
+              </h6>
+              <div class="row g-2">
+          `;
+
           if (dataObj.front_ID) {
-            // html += `<div class="col-md-6"><img src="frontID/${dataObj.front_ID}" class="img-fluid img-thumbnail" style="max-height:200px;"></div>`;
-            html += `<div class="col-md-6"><img src="frontID/${dataObj.front_ID}" class="img-fluid img-thumbnail id-preview" style="max-height:200px; cursor:pointer;" data-full-src="frontID/${dataObj.front_ID}" data-title="Front Identification"></div>`;
+            html += `
+                <div class="col-md-6">
+                  <div class="position-relative">
+                    <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">
+                      <span class="material-icons align-middle" style="font-size: 14px;">credit_card</span> Front ID
+                    </small>
+                    <div class="border rounded overflow-hidden bg-light position-relative" style="height: 160px;">
+                      <img src="frontID/${dataObj.front_ID}" 
+                          class="img-fluid w-100 h-100 object-fit-cover id-preview" 
+                          style="cursor: pointer; transition: transform 0.2s;"
+                          onmouseover="this.style.transform='scale(1.05)'"
+                          onmouseout="this.style.transform='scale(1)'"
+                          data-full-src="frontID/${dataObj.front_ID}" 
+                          data-title="Front Identification">
+                      <div class="position-absolute bottom-0 start-0 end-0 bg-dark bg-opacity-50 text-white text-center py-1" style="font-size: 0.75rem;">
+                        <span class="material-icons align-middle" style="font-size: 14px;">zoom_in</span> Click to enlarge
+                      </div>
+                    </div>
+                  </div>
+                </div>
+            `;
           }
-          if (dataObj.back_ID) {
-            // html += `<div class="col-md-6"><img src="backID/${dataObj.back_ID}" class="img-fluid img-thumbnail" style="max-height:200px;"></div>`;
-            html += `<div class="col-md-6"><img src="backID/${dataObj.back_ID}" class="img-fluid img-thumbnail id-preview" style="max-height:200px; cursor:pointer;" data-full-src="backID/${dataObj.back_ID}" data-title="Back Identification"></div>`;
-          }
-          html += '</div>';
 
-          // Group 3: Account Creation
-          html += '<h6 class="fw-bold mb-2">Account Creation</h6>';
-          html += `<p><strong>Date Created:</strong> ${dataObj.time_creation}</p>`;
+          if (dataObj.back_ID) {
+            html += `
+                <div class="col-md-6">
+                  <div class="position-relative">
+                    <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">
+                      <span class="material-icons align-middle" style="font-size: 14px;">credit_card</span> Back ID
+                    </small>
+                    <div class="border rounded overflow-hidden bg-light position-relative" style="height: 160px;">
+                      <img src="backID/${dataObj.back_ID}" 
+                          class="img-fluid w-100 h-100 object-fit-cover id-preview" 
+                          style="cursor: pointer; transition: transform 0.2s;"
+                          onmouseover="this.style.transform='scale(1.05)'"
+                          onmouseout="this.style.transform='scale(1)'"
+                          data-full-src="backID/${dataObj.back_ID}" 
+                          data-title="Back Identification">
+                      <div class="position-absolute bottom-0 start-0 end-0 bg-dark bg-opacity-50 text-white text-center py-1" style="font-size: 0.75rem;">
+                        <span class="material-icons align-middle" style="font-size: 14px;">zoom_in</span> Click to enlarge
+                      </div>
+                    </div>
+                  </div>
+                </div>
+            `;
+          }
+
+          html += `
+              </div>
+            </div>
+          </div>
+          `;
+
+          // Account Timeline Card
+          html += `
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-3">
+              <h6 class="fw-bold text-success mb-2" style="font-size: 0.9rem;">
+                <span class="material-icons align-middle me-1" style="font-size: 18px;">history</span>Account Timeline
+              </h6>
+              <div class="d-flex align-items-start">
+                <div class="bg-success bg-opacity-10 rounded-circle p-2 me-2" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+                  <span class="material-icons text-success" style="font-size: 16px;">add_circle</span>
+                </div>
+                <div>
+                  <small class="text-muted d-block" style="font-size: 0.75rem;">Account Created</small>
+                  <span class="fw-semibold" style="font-size: 0.85rem;">${dataObj.time_creation}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          `;
+
+          html += '</div>'; // Close p-3
 
           detailsBody.innerHTML = html;
           detailsModal.show();

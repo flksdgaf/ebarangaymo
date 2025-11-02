@@ -48,7 +48,7 @@ function startsWith($string, $startString) {
               <?php if ($isImage): ?>
                 <img src="images/<?= htmlspecialchars(substr($row['icon'], 4)) ?>" alt="<?= htmlspecialchars($row['title']) ?>" style="height:32px; width:auto;">
               <?php else: ?>
-                <i class="<?= htmlspecialchars($row['icon']) ?> icon" style="font-size: 24px;"></i>
+                <i class="<?= htmlspecialchars($row['icon']) ?> icon" style="font-size: 45px;"></i>
               <?php endif; ?>
             </div>
             <div>

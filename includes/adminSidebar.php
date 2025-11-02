@@ -92,20 +92,19 @@ $menuItems = [
   //   'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad'] //,'Brgy Treasurer'
   // ],
 
-  // <-- NEW Collection tab
-  // [
-  //   'id' => 'adminCollections',
-  //   'label' => 'Collection',
-  //   'icon' => 'receipt', // material icon name; change to preferred icon if you want
-  //   'href' => 'adminCollections.php',
-  //   'roles' => ['Brgy Treasurer','Brgy Bookkeeper'] // limited access as requested
-  // ],
+  [
+    'id' => 'adminCollections',
+    'label' => 'Collection',
+    'icon' => 'receipt', // material icon name; change to preferred icon if you want
+    'href' => 'adminCollections.php',
+    'roles' => ['Brgy Treasurer','Brgy Bookkeeper'] // limited access as requested
+  ],
   [
     'id' => 'adminTransactions',
     'label' => 'Generate Reports',
     'icon' => 'bar_chart',
     'href' => 'adminTransactions.php',
-    'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad'] //,'Brgy Treasurer'
+    'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad', 'Brgy Treasurer']
   ],
   [
     'id' => 'adminWebsite',

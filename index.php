@@ -28,10 +28,10 @@ $news = $ress->fetch_all(MYSQLI_ASSOC);
 <!-- BANNER SECTION -->
 <div class="container-fluid px-0 position-relative">
   <!-- Background image -->
-  <img src="images/landing_banner.png" alt="Banner" class="img-fluid w-100 banner-image">
+  <img src="images/landing_banner.png" alt="Banner" class="w-100 landing-banner-image">
 
   <!-- Content overlay -->
-  <div class="position-absolute banner-overlay text-white text-center">
+  <div class="position-absolute banner-overlay text-white">
     <div class="container">
       <!-- DESKTOP VIEW -->
       <div class="row align-items-center justify-content-center d-none d-md-flex">
@@ -48,15 +48,15 @@ $news = $ress->fetch_all(MYSQLI_ASSOC);
     </div>
       
     <!-- MOBILE VIEW -->
-    <div class="d-flex d-md-none flex-column align-items-center">
-      <div class="d-flex justify-content-center gap-3 mb-3">
-        <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Brgy. Magang Logo" class="img-fluid">
+    <div class="d-flex d-md-none flex-row align-items-center justify-content-center gap-3 px-3">
+      <div class="flex-shrink-0">
+        <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Brgy. Magang Logo" class="img-fluid" style="max-width: 70px; width: 70px;">
       </div>
-      <div class="text-center">
-        <h6 class="mb-1 small">Republic of the Philippines</h6>
-        <hr class="my-1" style="width: 100%; border-top: 2px solid white; opacity: 1; margin: 0;">
-        <h3 class="fw-bold my-0"><?= htmlspecialchars($info['name']) ?></h3>
-        <p class="mt-0 mb-0"><?= htmlspecialchars($info['address']) ?></p>
+      <div class="text-start flex-grow-1">
+        <h6 class="mb-1" style="font-size: 0.7rem;">Republic of the Philippines</h6>
+        <hr class="my-1" style="border-top: 1.5px solid white; opacity: 1;">
+        <h5 class="fw-bold my-0" style="font-size: 1rem;"><?= htmlspecialchars($info['name']) ?></h5>
+        <p class="mt-0 mb-0" style="font-size: 0.75rem;"><?= htmlspecialchars($info['address']) ?></p>
       </div>
     </div>
   </div>
@@ -64,7 +64,7 @@ $news = $ress->fetch_all(MYSQLI_ASSOC);
 
 
 <!-- CAROUSEL SECTION -->
-<div class="carousel-wrapper mb-5">
+<div class="carousel-wrapper mb-3">
     <div class="carousel-blur-bg"></div> 
 
     <div class="carousel-container">
@@ -107,7 +107,7 @@ $news = $ress->fetch_all(MYSQLI_ASSOC);
 
 
 <!-- SERVICE SECTION -->
-<div class="container-fluid mt-5 mb-5 pt-5 pb-2 services-container">
+<div class="container-fluid mt-3 mb-3 pt-3 pb-2 services-container">
   <h1 class="text-center gradient-text text-uppercase autoShow">Services Offered</h1>
   <div class="container mt-5">
     <!-- All buttons in one column, centered -->
@@ -443,7 +443,7 @@ $news = $ress->fetch_all(MYSQLI_ASSOC);
 
 
 <!-- NEWS & UPDATES -->
-<div class="container-fluid px-4 mt-5 mb-5 pt-5 new-updates-container">
+<div class="container-fluid px-4 mt-3 mb-3 pt-3 new-updates-container">
 <div id="newsTrigger" style="height: 1px;"></div>
   <div class="row align-items-center autoShow">
     <div class="col-md-5">
@@ -468,9 +468,9 @@ $news = $ress->fetch_all(MYSQLI_ASSOC);
 </div>
 
 <!-- ABOUT SECTION -->
-<div class="mb-5 pb-1 container-fluid autoShow autoShow">
-    <div class="row align-items-center">
-        <div class="col-md-6">
+<div class="mb-5 pb-1 container-fluid autoShow">
+    <div class="row align-items-center g-0">
+        <div class="col-md-6 col-12">
             <div class="p-4 text-white rounded about-text">
                 <h1 class="fw-bold">ABOUT</h1>
                 <p class="mt-3" style="text-align: justify;">
@@ -483,9 +483,9 @@ $news = $ress->fetch_all(MYSQLI_ASSOC);
             </div>
         </div>
         
-      <div class="col-md-6 text-center">
-        <div class="about-image-container">
-          <img src="images/about_image.png" alt="eBarangay Mo Platform" class="img-fluid fade-right-scroll">
+      <div class="col-md-6 col-12">
+        <div class="about-image-container" style="max-width: 100%; overflow: hidden;">
+          <img src="images/about_image.png" alt="eBarangay Mo Platform" class="img-fluid fade-right-scroll" style="max-width: 100%; height: auto; display: block;">
         </div>
       </div>
     </div>

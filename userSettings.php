@@ -673,9 +673,10 @@ $profile_birthdate = $profile['birthdate'] ?? '';
                   </div>
                 </div>
 
-                <div class="col-12 profile-actions">
+                <!-- EDIT PROFILE BUTTON -->
+                <!-- <div class="col-12 profile-actions">
                   <button type="button" id="editProfileBtn" class="edit-btn">Edit Profile</button>
-                </div>
+                </div> -->
               </form>
             </div>
           </div>

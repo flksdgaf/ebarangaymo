@@ -68,7 +68,7 @@ $menuItems = [
     'label' => ($_SESSION['loggedInUserRole'] === 'Brgy Treasurer') ? 'Complaint Transactions' : 'Blotter & Complaints',
     'icon' => 'gavel',
     'href' => 'adminComplaints.php',
-    'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Brgy Treasurer','Lupon Tagapamayapa']
+    'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Lupon Tagapamayapa'] //,'Brgy Treasurer'
   ],
   [
     'id' => 'adminResidents',
@@ -112,7 +112,7 @@ $menuItems = [
     'label' => 'Website Configuration',
     'icon' => 'web',
     'href' => 'adminWebsite.php',
-    'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad']
+    'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper'] // ,'Brgy Kagawad'
   ],
   [
     'id' => 'adminDeviceStatus',

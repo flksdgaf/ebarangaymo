@@ -49,7 +49,6 @@ $civilStatus   = $data['civil_status'] ?? '';
 $sex           = $data['sex'] ?? '';
 $age           = $data['age'] ?? '';
 $purok         = $data['purok'] ?? '';
-$address       = $data['address'] ?? '';
 $purpose       = $data['purpose'] ?? '';
 $paymentMethod = $data['payment_method'] ?? '';
 $amount        = $data['amount'] ?? '';
@@ -68,16 +67,8 @@ function reformatName($name) {
 // Reformat the full name
 $fullNameFormatted = reformatName($fullName);
 
-// Build address string conditionally
-$addressParts = [];
-if (!empty(trim($address))) {
-    $addressParts[] = htmlspecialchars($address);
-}
-if (!empty(trim($purok))) {
-    $addressParts[] = htmlspecialchars($purok);
-}
-$addressParts[] = 'Barangay Magang, Daet, Camarines Norte';
-$fullAddress = implode(', ', $addressParts);
+// Build address string - just purok and barangay info
+$fullAddress = htmlspecialchars($purok) . ', Barangay Magang, Daet, Camarines Norte';
 
 // Format date with suffix
 function formatWithSuffix($dateStr) {
@@ -212,7 +203,7 @@ if ($download || $print) {
           This is to certify that
           <strong><?= htmlspecialchars(strtoupper($fullNameFormatted)) ?></strong>,
           <strong><?= htmlspecialchars($age) ?></strong> years old,
-          <?= htmlspecialchars(strtoupper($civilStatus)) ?>,
+          <strong><?= htmlspecialchars(strtoupper($civilStatus)) ?></strong>,
           is a resident of <?= $fullAddress ?>.
         </p>
 
@@ -354,7 +345,7 @@ if ($download || $print) {
         This is to certify that
         <strong><?= htmlspecialchars(strtoupper($fullNameFormatted)) ?></strong>,
         <strong><?= htmlspecialchars($age) ?></strong> years old,
-        <?= htmlspecialchars(strtoupper($civilStatus)) ?>,
+        <strong><?= htmlspecialchars(strtoupper($civilStatus)) ?></strong>,
         is a resident of <?= $fullAddress ?>.
       </p>
 

@@ -269,22 +269,15 @@ switch($requestType) {
     $mn = trim($_POST['good_moral_middle_name'] ?? '');
     $ln = trim($_POST['good_moral_last_name'] ?? '');
     $middlePart = $mn ? " {$mn}" : '';
-    // $fullName = "{$ln}, {$fn}, {$middlePart}, {$suffixPart}";
     $fullName = "{$ln}, {$fn}{$middlePart}";
-    // $fullName = trim($_POST['full_name'] ?? '');
 
     $civilStatus = $_POST['good_moral_civil_status'] ?? '';
     $sex = $_POST['good_moral_sex'] ?? '';
     $age = (int)($_POST['good_moral_age'] ?? 0);
     $purok = $_POST['good_moral_purok'] ?? '';
-    // $barangay = $_POST['barangay'] ?? '';
-    $address = trim($_POST['good_moral_address'] ?? '');
-    // $fullAddress = "{$subdivision}, {$purok}, {$barangay}";
     $purpose = trim($_POST['good_moral_purpose'] ?? '');
     $paymentMethod = 'Over-the-Counter';
-    // $documentStatus = 'Processing';
     $documentStatus = 'For Verification';
-    // $claimDate = $_POST['claim_date'] ?? '';
 
     // 2) Generate next transaction_id
     $stmt = $conn->prepare("SELECT transaction_id FROM good_moral_requests ORDER BY id DESC LIMIT 1");
@@ -299,10 +292,10 @@ switch($requestType) {
     $transactionId = sprintf('CGM-%07d', $num); // GM
     $stmt->close();
 
-    // 3) Insert into good_moral_requests
-    $sql = "INSERT INTO good_moral_requests (account_id, transaction_id, full_name, civil_status, sex, age, purok, address, purpose, claim_date, payment_method, document_status) VALUES (?,?,?,?,?,?,?,?,?,NULL,?,?)";
+    // 3) Insert into good_moral_requests (removed address field)
+    $sql = "INSERT INTO good_moral_requests (account_id, transaction_id, full_name, civil_status, sex, age, purok, purpose, claim_date, payment_method, document_status) VALUES (?,?,?,?,?,?,?,?,NULL,?,?)";
     $ins = $conn->prepare($sql);
-    $ins->bind_param('issssisssss', $userId, $transactionId, $fullName, $civilStatus, $sex, $age, $purok, $address, $purpose, $paymentMethod, $documentStatus);
+    $ins->bind_param('issssissss', $userId, $transactionId, $fullName, $civilStatus, $sex, $age, $purok, $purpose, $paymentMethod, $documentStatus);
     $ins->execute();
     $ins->close();
 
@@ -339,9 +332,25 @@ switch($requestType) {
     $age = (int)($_POST['guardianship_age'] ?? 0);
     $purok = $_POST['guardianship_purok'] ?? '';
 
-    // Child's Details
-    $childName = trim($_POST['child_full_name'] ?? '');
-    $childRelationship = trim($_POST['child_relationship'] ?? ''); // NEW FIELD
+    // Collect children data (now an array like Solo Parent)
+    $childrenData = $_POST['guardianship_children'] ?? [];
+    
+    // Build comma-separated string for child_name
+    $childNames = [];
+    $childRelationships = [];
+    
+    foreach ($childrenData as $child) {
+        if (!empty($child['name'])) {
+            $childNames[] = trim($child['name']);
+            $childRelationships[] = !empty($child['relationship']) ? trim($child['relationship']) : '';
+        }
+    }
+    
+    // Format: "Child1, Child2, Child3"
+    $childName = implode(', ', $childNames);
+    
+    // Format: "Relationship1, Relationship2, Relationship3" (keep same format for backward compatibility)
+    $childRelationship = implode(', ', $childRelationships);
 
     $purpose = trim($_POST['guardianship_purpose'] ?? '');
     $paymentMethod = 'Over-the-Counter';
@@ -360,7 +369,7 @@ switch($requestType) {
     $transactionId = sprintf('GUA-%07d', $num);
     $stmt->close();
     
-    // 3) Insert into guardianship_requests (updated to include child_relationship)
+    // 3) Insert into guardianship_requests
     $sql = "INSERT INTO guardianship_requests (account_id, transaction_id, full_name, civil_status, age, purok, child_name, child_relationship, purpose, claim_date, payment_method, document_status) VALUES (?,?,?,?,?,?,?,?,?,NULL,?,?)";
     $ins = $conn->prepare($sql);
     $ins->bind_param('isssissssss', $userId, $transactionId, $fullName, $civilStatus, $age, $purok, $childName, $childRelationship, $purpose, $paymentMethod, $documentStatus);
@@ -374,7 +383,7 @@ switch($requestType) {
       $admin_id = $_SESSION['loggedInUserID'];
       $role = $_SESSION['loggedInUserRole'];
       $action = 'CREATE';
-      $table_name = 'guardianship_request';
+      $table_name = 'guardianship_requests';
       $record_id = $transactionId;
       $description = 'Created Guardianship Request';
       

@@ -1116,12 +1116,6 @@ $result = $st->get_result();
                   </div>
                 </div>
 
-                <!-- Full Address -->
-                <div class="col-12 col-md-6">
-                  <label class="form-label fw-bold">Address <span class="text-danger">*</span></label>
-                  <input name="good_moral_address" type="text" class="form-control form-control-sm" placeholder="Street / Subdivision / Lot / Block"/>
-                </div>
-
                 <!-- Purpose -->
                 <div class="col-12">
                   <label class="form-label fw-bold">Purpose <span class="text-danger">*</span></label>

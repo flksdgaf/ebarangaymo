@@ -54,8 +54,8 @@ body {
 .landing-banner-image {
     width: 100%;
     height: auto;
-    min-height: 200px;
-    max-height: 250px;
+    min-height: 150px;
+    max-height: 200px;
     object-fit: cover;
 }
   
@@ -110,10 +110,10 @@ body {
 }
 
 @media (max-width: 479px) {
-    .mobile-banner {
+    /* .mobile-banner {
         min-height: 110px;
         padding: 15px 0;
-    }
+    } */
 }
 
 .carousel-inner {
@@ -187,10 +187,10 @@ body {
         object-fit: contain;
     }
 
-    .mobile-banner {
-        min-height: 140px; /* Give more height for small screens */
+    /* .mobile-banner {
+        min-height: 140px;
         padding: 20px 0;
-    }
+    } */
 }
 
 .gradient-text {

@@ -17,12 +17,20 @@ function startsWith($string, $startString) {
 
 <!-- BANNER SECTION -->
 <div class="container-fluid px-0">
-  <div class="position-relative text-white text-center">
+  <!-- DESKTOP VIEW - Image with overlay -->
+  <div class="position-relative d-none d-md-block">
     <img src="<?= htmlspecialchars($bannerUrl) ?>" alt="Services Banner" class="img-fluid w-100">
-
-    <div class="position-absolute top-50 start-50 translate-middle">
+    <div class="position-absolute top-50 start-50 translate-middle text-white text-center">
       <h1 class="fw-semibold text-uppercase"><?= htmlspecialchars($servicesBanner['title'] ?? 'Services') ?></h1>
       <p>Home / Services</p>
+    </div>
+  </div>
+  
+  <!-- MOBILE VIEW - Solid green banner -->
+  <div class="d-block d-md-none mobile-banner">
+    <div class="text-center py-4">
+      <h1 class="fw-semibold text-uppercase text-white mb-2"><?= htmlspecialchars($servicesBanner['title'] ?? 'Services') ?></h1>
+      <p class="text-white mb-0">Home / Services</p>
     </div>
   </div>
 </div>

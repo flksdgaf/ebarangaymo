@@ -18,14 +18,22 @@ $barangayMap = $conn->query("SELECT description, image FROM about_barangay_map W
 
 <!-- BANNER SECTION -->
 <div class="container-fluid px-0">
-    <!-- Background image with overlay -->
-    <div class="position-relative text-white text-center">
+    <!-- DESKTOP VIEW - Image with overlay -->
+    <div class="position-relative text-white text-center d-none d-md-block">
         <img src="<?= htmlspecialchars($bannerUrl) ?>" alt="About Banner" class="img-fluid w-100">
         
         <!-- Overlay content -->
         <div class="position-absolute top-50 start-50 translate-middle">
             <h1 class="fw-semibold text-uppercase"><?= htmlspecialchars($about['title']) ?></h1>
             <p>Home / About</p>
+        </div>
+    </div>
+
+    <!-- MOBILE VIEW - Solid green banner -->
+    <div class="d-block d-md-none mobile-banner">
+        <div class="text-center py-4">
+            <h1 class="fw-semibold text-uppercase text-white mb-2"><?= htmlspecialchars($about['title']) ?></h1>
+            <p class="text-white mb-0">Home / About</p>
         </div>
     </div>
 </div>
@@ -70,6 +78,27 @@ $barangayMap = $conn->query("SELECT description, image FROM about_barangay_map W
                             <div class="bg-light text-muted p-5 text-center rounded-4">No Image</div>
                         <?php endif; ?>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Modal -->
+    <div class="modal fade" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title" id="contactModalLabel">
+                        <i class="fas fa-check-circle text-success me-2" id="successIcon" style="display: none;"></i>
+                        <i class="fas fa-exclamation-circle text-danger me-2" id="errorIcon" style="display: none;"></i>
+                        <span id="modalTitle"></span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modalMessage">
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
                 </div>
             </div>
         </div>
@@ -148,8 +177,25 @@ $barangayMap = $conn->query("SELECT description, image FROM about_barangay_map W
         <div>
             <div class="col-lg-10 autoShow">
                 <h2 class="text-uppercase fw-bold gradient-text">Contact Us</h2>
-                <p>Kung mayroon mang katanungan o kailangan ng tulong, mangyaring i-fill out ang form sa ibaba at agad susagutin o tutulungan sa lalong madaling panahon.</p>
-                <form action="contact_process.php" method="post">
+                <p>May katanungan o kailangan ng tulong? Punan ang mga detalye sa form sa ibaba upang maipaalam ito sa aming team.</p>
+                
+                <?php
+                // Store messages for modal display
+                $modalMessage = '';
+                $modalType = '';
+
+                if (isset($_SESSION['success'])) {
+                    $modalMessage = $_SESSION['success'];
+                    $modalType = 'success';
+                    unset($_SESSION['success']);
+                } elseif (isset($_SESSION['error'])) {
+                    $modalMessage = $_SESSION['error'];
+                    $modalType = 'error';
+                    unset($_SESSION['error']);
+                }
+                ?>
+                
+                <form action="contact_process.php" method="post" id="contactForm">
                     <div class="mb-3">
                         <label for="name" class="form-label">Name</label>
                         <input type="text" class="form-control" id="name" name="name" placeholder="Your Name" required>
@@ -177,6 +223,7 @@ $barangayMap = $conn->query("SELECT description, image FROM about_barangay_map W
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+  // Back to Top Button functionality
   const backToTopBtn = document.getElementById("backToTopBtn");
   const officialsTrigger = document.getElementById("officials");
 
@@ -196,6 +243,29 @@ document.addEventListener("DOMContentLoaded", function () {
   backToTopBtn.addEventListener("click", function () {
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
+
+  // Modal functionality for contact form messages
+  <?php if (!empty($modalMessage)): ?>
+    const contactModal = new bootstrap.Modal(document.getElementById('contactModal'));
+    const modalTitle = document.getElementById('modalTitle');
+    const modalMessage = document.getElementById('modalMessage');
+    const successIcon = document.getElementById('successIcon');
+    const errorIcon = document.getElementById('errorIcon');
+
+    <?php if ($modalType === 'success'): ?>
+      modalTitle.textContent = 'Success!';
+      modalMessage.textContent = '<?= addslashes($modalMessage) ?>';
+      successIcon.style.display = 'inline';
+      errorIcon.style.display = 'none';
+    <?php else: ?>
+      modalTitle.textContent = 'Error';
+      modalMessage.textContent = '<?= addslashes($modalMessage) ?>';
+      successIcon.style.display = 'none';
+      errorIcon.style.display = 'inline';
+    <?php endif; ?>
+
+    contactModal.show();
+  <?php endif; ?>
 });
 </script>
 

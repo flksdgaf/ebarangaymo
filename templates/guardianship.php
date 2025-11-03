@@ -65,12 +65,34 @@ function reformatName($name) {
 
 // Reformat names
 $fullNameFormatted = reformatName($fullName);
-$childNameFormatted = reformatName($childName);
 
-// Build relationship text - if relationship exists, use it instead of "legal guardian"
-$hasCustomRelationship = !empty(trim($childRelationship));
+// Handle multiple children
+$childNamesArray = array_map('trim', explode(',', $childName));
+$childRelationshipsArray = array_map('trim', explode(',', $childRelationship));
+$childCount = count($childNamesArray);
+
+// Format child names based on count
+if ($childCount === 1) {
+    $childNameFormatted = reformatName($childNamesArray[0]);
+    $formattedChildren = htmlspecialchars(strtoupper($childNameFormatted));
+} elseif ($childCount === 2) {
+    $child1 = reformatName($childNamesArray[0]);
+    $child2 = reformatName($childNamesArray[1]);
+    $formattedChildren = htmlspecialchars(strtoupper($child1)) . ' & ' . htmlspecialchars(strtoupper($child2));
+} else {
+    // For 3 or more children
+    $formattedChildNames = [];
+    foreach ($childNamesArray as $name) {
+        $formattedChildNames[] = htmlspecialchars(strtoupper(reformatName($name)));
+    }
+    $lastChild = array_pop($formattedChildNames);
+    $formattedChildren = implode(', ', $formattedChildNames) . ', & ' . $lastChild;
+}
+
+// Build relationship text - use first child's relationship if exists
+$hasCustomRelationship = !empty($childRelationshipsArray[0]);
 $guardianshipRole = $hasCustomRelationship 
-    ? htmlspecialchars(strtoupper($childRelationship))
+    ? htmlspecialchars(strtoupper($childRelationshipsArray[0]))
     : 'legal guardian';
 
 // Format date with suffix
@@ -201,13 +223,13 @@ if ($download || $print) {
           This is to certify that
           <strong><?= htmlspecialchars(strtoupper($fullNameFormatted)) ?></strong>,
           <strong><?= htmlspecialchars($age) ?></strong> years old,
-          <?= htmlspecialchars(strtoupper($civilStatus)) ?>,
+          <strong><?= htmlspecialchars(strtoupper($civilStatus)) ?></strong>,
           is a bonafide resident of <?= htmlspecialchars($purok) ?>, Barangay Magang, Daet, Camarines Norte.
         </p>
 
         <p>
           This is to certify further that said person is the <?= $hasCustomRelationship ? '<strong>' . $guardianshipRole . '</strong>' : $guardianshipRole ?> of
-          <strong><?= htmlspecialchars(strtoupper($childNameFormatted)) ?></strong>.
+          <strong><?= $formattedChildren ?></strong> and is known to me as one of the indigent families of Barangay.
         </p>
 
         <p>
@@ -329,13 +351,13 @@ if ($download || $print) {
         This is to certify that
         <strong><?= htmlspecialchars(strtoupper($fullNameFormatted)) ?></strong>,
         <strong><?= htmlspecialchars($age) ?></strong> years old,
-        <?= htmlspecialchars(strtoupper($civilStatus)) ?>,
+        <strong><?= htmlspecialchars(strtoupper($civilStatus)) ?></strong>,
         is a bonafide resident of <?= htmlspecialchars($purok) ?>, Barangay Magang, Daet, Camarines Norte.
       </p>
 
       <p>
         This is to certify further that said person is the <?= $hasCustomRelationship ? '<strong>' . $guardianshipRole . '</strong>' : $guardianshipRole ?> of
-        <strong><?= htmlspecialchars(strtoupper($childNameFormatted)) ?></strong>.
+        <strong><?= $formattedChildren ?></strong> and is known to me as one of the indigent families of Barangay.
       </p>
 
       <p>

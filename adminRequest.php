@@ -1167,12 +1167,6 @@ $result = $st->get_result();
                   <label class="form-label fw-bold">Age <span class="text-danger">*</span></label>
                   <input name="guardianship_age" type="number" min="0" class="form-control form-control-sm" required>
                 </div>
-
-                <!-- Full Address -->
-                <!-- <div class="col-12 col-md-6">
-                  <label class="form-label fw-bold">Address</label>
-                  <input name="guardianship_address" type="text" class="form-control form-control-sm" placeholder="Street / Subdivision / Lot / Block"/>
-                </div> -->
                 
                 <div class="col-12 col-md-2 mb-3">
                   <label class="form-label fw-bold">Purok <span class="text-danger">*</span></label>
@@ -1190,35 +1184,33 @@ $result = $st->get_result();
                 </div>
 
                 <div class="col-12">
-                  <h6 class="fw-bold fs-5" style="color: #13411F;">Child's Details</h6>
+                  <h6 class="fw-bold fs-5" style="color: #13411F;">Children Details</h6>
                   <hr class="my-2">
                 </div>
 
-                <!-- <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">First Name</label>
-                  <input name="child_first_name" type="text" class="form-control form-control-sm" required>
-                </div>
-                <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
-                  <input name="child_middle_name" type="text" class="form-control form-control-sm">
-                </div>
-                <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Last Name</label>
-                  <input name="child_last_name" type="text" class="form-control form-control-sm" required>
-                </div>
-                <div class="col-12 col-md-3">
-                  <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
-                  <input name="child_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
-                </div> -->
-
-                <div class="col-12 col-md-6">
-                  <label class="form-label fw-bold">Full Name <span class="text-danger">*</span></label>
-                  <input name="child_full_name" type="text" class="form-control form-control-sm" required>
+                <!-- Container for dynamic child fields -->
+                <div class="col-12" id="guardianshipChildrenContainer">
+                  <!-- First child (required) -->
+                  <div class="guardianship-child-entry border rounded p-3 mb-3" data-child-index="0">
+                    <div class="row gy-2">
+                      <div class="col-12 col-md-6">
+                        <label class="form-label fw-bold">Child's Full Name <span class="text-danger">*</span></label>
+                        <input name="guardianship_children[0][name]" type="text" class="form-control form-control-sm" required>
+                      </div>
+                      <div class="col-12 col-md-6">
+                        <label class="form-label fw-bold">Relationship to Guardian <small class="fw-normal">(optional)</small></label>
+                        <input name="guardianship_children[0][relationship]" type="text" class="form-control form-control-sm" placeholder="e.g., Son, Daughter, Nephew, Niece">
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <div class="col-12 col-md-6">
-                  <label class="form-label fw-bold">Relationship to Child <small class="fw-normal">(optional)</small></label>
-                  <input name="child_relationship" type="text" class="form-control form-control-sm" placeholder="e.g., Son, Daughter, Nephew">
+                <!-- Add Child Button -->
+                <div class="col-12">
+                  <button type="button" class="btn btn-sm btn-outline-success" id="addGuardianshipChildBtn">
+                    <span class="material-symbols-outlined" style="font-size:16px; vertical-align:middle;">add</span>
+                    Add Another Child
+                  </button>
                 </div>
 
                 <!-- Row 3: Purpose -->
@@ -2154,7 +2146,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     guardianship_requests: [
       { title: 'Applicant Information', fields: ['full_name','age','civil_status','purok'] },
-      { title: 'Child Details', fields: ['child_name','purpose'] },
+      { title: 'Children Details', fields: ['child_name','child_relationship','purpose'] },
       { title: 'Request Details', fields: ['transaction_id','request_type','payment_method','created_at'] }, //'amount',
     ],
 
@@ -2740,6 +2732,46 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target.closest('.remove-child-btn')) {
       const entry = e.target.closest('.child-entry');
       if (document.querySelectorAll('.child-entry').length > 1) {
+        entry.remove();
+      } else {
+        alert('At least one child is required.');
+      }
+    }
+  });
+
+  // Dynamic child fields for Guardianship
+  let guardianshipChildCounter = 1;
+
+  document.addEventListener('click', (e) => {
+    // Add guardianship child button
+    if (e.target.closest('#addGuardianshipChildBtn')) {
+      const container = document.getElementById('guardianshipChildrenContainer');
+      const newChild = document.createElement('div');
+      newChild.className = 'guardianship-child-entry border rounded p-3 mb-3 position-relative';
+      newChild.dataset.childIndex = guardianshipChildCounter;
+      newChild.innerHTML = `
+        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2 remove-guardianship-child-btn" style="z-index:10;">
+          <span class="material-symbols-outlined" style="font-size:14px;">close</span>
+        </button>
+        <div class="row gy-2">
+          <div class="col-12 col-md-6">
+            <label class="form-label fw-bold">Child's Full Name <span class="text-danger">*</span></label>
+            <input name="guardianship_children[${guardianshipChildCounter}][name]" type="text" class="form-control form-control-sm" required>
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label fw-bold">Relationship to Guardian <small class="fw-normal">(optional)</small></label>
+            <input name="guardianship_children[${guardianshipChildCounter}][relationship]" type="text" class="form-control form-control-sm" placeholder="e.g., Son, Daughter, Nephew, Niece">
+          </div>
+        </div>
+      `;
+      container.appendChild(newChild);
+      guardianshipChildCounter++;
+    }
+
+    // Remove guardianship child button
+    if (e.target.closest('.remove-guardianship-child-btn')) {
+      const entry = e.target.closest('.guardianship-child-entry');
+      if (document.querySelectorAll('.guardianship-child-entry').length > 1) {
         entry.remove();
       } else {
         alert('At least one child is required.');

@@ -87,6 +87,10 @@ if (is_numeric($userId) && intval($userId) > 0) {
   line-height:1.05;
 }
 
+.wheres-my-req .value {
+  font-size:14px; 
+}
+
 /* More specific fallback to ensure gradient shows in card contexts */
 .card .section-title {
   /* re-apply to override any card color inheritance */
@@ -690,6 +694,14 @@ if (is_numeric($userId) && intval($userId) > 0) {
   .most-requested {
     align-items: center;
   }
+
+  .wheres-my-req .label {
+    font-size: 12px;
+  }
+
+  .wheres-my-req .value {
+    font-size: 10px;
+  }
 }
 </style>
 
@@ -790,9 +802,9 @@ if (is_numeric($userId) && intval($userId) > 0) {
       <?php else: ?>
         <!-- No requests display -->
         <div style="width:100%; display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap;">
-          <div>
+          <div class="wheres-my-req">
             <div class="label" style="color:var(--green-b);">No recent requests</div>
-            <div class="value" style="font-size:14px; font-weight:700; color:var(--green-b)">You have not submitted any request yet.</div>
+            <div class="value" style="font-weight:700; color:var(--green-b)">You have not submitted any request yet.</div>
           </div>
 
           <a href="?page=userServices" class="view-requests-btn" aria-label="Request a Service">

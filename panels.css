@@ -13,6 +13,41 @@
   font-size: 22px;
 }
 
+/* Make account header the same height as the main header (62px),
+   and vertically center all content. Override bootstrap spacing. */
+.top-bar {
+  height: 62px !important;
+  min-height: 62px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  display: flex;
+  align-items: center;
+}
+
+/* Ensure the internal container fills the nav height and centers children */
+.top-bar .container-fluid {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* keep existing spacing but vertically centered */
+}
+
+/* Slightly tweak the title/hamburger alignment (optional) */
+.top-bar .topbar-title {
+  line-height: 1;
+  display: flex;
+  align-items: center;
+}
+
+/* Keep profile pic vertically centered and the same visual size */
+.top-bar .user-profile-pic {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  vertical-align: middle;
+}
+
+
 @media (min-width: 768px) {
   .top-bar {
       margin-left: 300px;

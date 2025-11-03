@@ -140,7 +140,7 @@ if (isset($_POST['personal_submit'])) {
                     $_SESSION['picMessage'] = '<div class="alert alert-danger alert-dismissible fade show">Profile picture upload failed.<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
                 }
             }
-            $_SESSION['infoMessage'] = '<div class="alert alert-success alert-dismissible fade show" role="alert">Personal information updated successfully.<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
+            // $_SESSION['infoMessage'] = '<div class="alert alert-success alert-dismissible fade show" role="alert">Personal information updated successfully.<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
         } else {
             $_SESSION['infoMessage'] = '<div class="alert alert-danger alert-dismissible fade show" role="alert">Failed to update personal information.<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
         }
@@ -267,7 +267,7 @@ $profile_birthdate = $profile['birthdate'] ?? '';
     .tab-btn.active { background:var(--ebg-green); color:#fff; border-color:var(--ebg-green); }
     .profile-hero { display:flex; gap:2rem; align-items:flex-start; padding:1.5rem; background:#fff; border-radius:6px; box-shadow:0 6px 18px rgba(0,0,0,0.06); }
     .left-card { width:320px; height: 410px; background:var(--ebg-dark); color:#fff; padding:28px 22px; display:flex; flex-direction:column; align-items:center; border-radius:6px; }
-    .left-card img { width:180px; height:180px; object-fit:cover; border-radius:100px; border:4px solid #fff; background:#fff; margin-top: 30px;}
+    .left-card img { width:180px; height:180px; object-fit:cover; border-radius:100px; border:4px solid #fff; background:#fff;}
     .left-username { margin-top:18px; font-size:20px; font-weight:700; letter-spacing:0.5px; text-align:center; }
     .left-id { opacity:0.9; margin-top:6px; color:#dfeee0; }
     .right-form { flex:1; padding:4px 8px; }
@@ -560,6 +560,10 @@ $profile_birthdate = $profile['birthdate'] ?? '';
       #policySection .form-check-label {
         font-size: 0.8rem;
       }
+
+      #changePicBtn {
+        margin-top: -20px;
+      }
     }
   </style>
 </head>
@@ -584,7 +588,13 @@ $profile_birthdate = $profile['birthdate'] ?? '';
               <img src="profilePictures/<?= htmlspecialchars($currentPic) ?>" alt="Avatar">
               <div class="left-username"><?= htmlspecialchars($profile['full_name'] ?: ($userAcct['username'] ?? '')) ?></div>
               <div class="left-id">#<?= htmlspecialchars($profile['account_ID'] ?? '') ?></div>
+
+              <!-- Change Profile Picture button placed below Account ID -->
+              <div style="width:100%; display:flex; justify-content:center; margin-top: 20px;">
+                <button type="button" id="changePicBtn" class="edit-btn">Change Profile Picture</button>
+              </div>
             </div>
+
 
             <div class="right-form">
               <h2>Personal Details</h2>
@@ -595,9 +605,9 @@ $profile_birthdate = $profile['birthdate'] ?? '';
 
                 <div class="col-12 d-flex justify-content-between align-items-start mb-3">
                   <div class="small-muted">Fill your personal information</div>
-                  <div class="upload-valid-link">
+                  <!-- <div class="upload-valid-link">
                     Want to fill these without typing? <a id="openValidId" data-bs-toggle="modal" data-bs-target="#uploadIDModal">Upload a Valid ID</a>
-                  </div>
+                  </div> -->
                 </div>
 
                 <div class="col-md-6 mb-3">
@@ -641,42 +651,37 @@ $profile_birthdate = $profile['birthdate'] ?? '';
                     <?php endforeach; ?>
                   </select>
                 </div>
-                <div class="col-md-6 mb-3">
+                <!-- <div class="col-md-6 mb-3">
                   <label class="form-label small-muted">Contact Number</label>
-                  <input name="contact_number_display" id="contact_number_display" class="form-control" value="<?= htmlspecialchars($profile['contact_number'] ?? '') ?>" readonly>
-                </div>
+                  <input name="contact_number_display" id="contact_number_display" class="form-control" value="<?= htmlspecialchars($profile['contact_number'] ?? '') ?>">
+                </div> -->
 
-                <div class="col-md-6 mb-3">
+                <!-- <div class="col-md-6 mb-3">
                   <label class="form-label small-muted">Birth Registration No.</label>
                   <input name="birth_registration_number" id="birth_registration_number" class="form-control" value="<?= htmlspecialchars($profile['birth_registration_number'] ?? '') ?>" readonly>
-                </div>
+                </div> -->
 
-                <div class="col-md-6 mb-3">
+                <!-- <div class="col-md-6 mb-3">
                   <label class="form-label small-muted">Education</label>
                   <select name="highest_educational_attainment" id="hea" class="form-select" disabled>
                     <?php foreach (['Kindergarten','Elementary','High School','Senior High School','Undergraduate','College Graduate','Post-Graduate','Vocational','None','Unknown'] as $edu): ?>
                       <option value="<?= $edu ?>" <?= (isset($profile['highest_educational_attainment']) && $profile['highest_educational_attainment'] == $edu) ? 'selected' : '' ?>><?= $edu ?></option>
                     <?php endforeach; ?>
                   </select>
-                </div>
+                </div> -->
 
-                <div class="col-md-6 mb-3">
+                <!-- <div class="col-md-6 mb-3">
                   <label class="form-label small-muted">Occupation</label>
                   <input name="occupation" id="occupation" class="form-control" value="<?= htmlspecialchars($profile['occupation'] ?? '') ?>" readonly>
-                </div>
-
-                <div class="col-12 mb-2 d-none" id="profilePicUploadWrap">
-                  <label class="form-label small-muted">Upload New Profile Picture</label>
-                  <div class="d-flex gap-2 align-items-center">
-                    <input type="file" name="new_picture" id="new_picture" accept="image/*" class="form-control form-control-sm">
-                    <div class="small-muted">Max 2MB</div>
-                  </div>
-                </div>
-
-                <!-- EDIT PROFILE BUTTON -->
-                <!-- <div class="col-12 profile-actions">
-                  <button type="button" id="editProfileBtn" class="edit-btn">Edit Profile</button>
                 </div> -->
+
+                <!-- Hidden file input (kept in DOM for the picker) -->
+                <input type="file" name="new_picture" id="new_picture" accept="image/*" style="display:none">
+
+                <!-- Small note below the button -->
+                <div class="col-12 mt-2">
+                  <div class="small-muted">To update any personal information, please visit the Barangay and process the change with a Barangay official.</div>
+                </div>
               </form>
             </div>
           </div>
@@ -763,7 +768,7 @@ $profile_birthdate = $profile['birthdate'] ?? '';
         </div>
 
         <!-- Upload Valid ID Modal -->
-        <div class="modal fade" id="uploadIDModal" tabindex="-1" aria-hidden="true">
+        <!-- <div class="modal fade" id="uploadIDModal" tabindex="-1" aria-hidden="true">
           <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
               <form method="POST" enctype="multipart/form-data">
@@ -785,172 +790,158 @@ $profile_birthdate = $profile['birthdate'] ?? '';
               </form>
             </div>
           </div>
-        </div>
+        </div> -->
 
       </div> <!-- /.col-12 -->
     </div> <!-- /.row -->
   </div> <!-- /.container-fluid -->
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script> -->
   <script>
-    // Tab switching with active state
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', function () {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-        const target = this.dataset.target;
-        document.querySelectorAll('.settings-section').forEach(s => s.classList.add('d-none'));
-        document.getElementById(target).classList.remove('d-none');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      });
+  // Tab switching with active state
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      const target = this.dataset.target;
+      document.querySelectorAll('.settings-section').forEach(s => s.classList.add('d-none'));
+      document.getElementById(target).classList.remove('d-none');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+
+  // Toggle password visibility helper
+  function toggle(id) {
+    const inp = document.getElementById(id);
+    if (!inp) return;
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+  }
+
+  /* ----------------------------
+     Profile picture flow (hidden input + single button)
+     - Hidden file input (new_picture) is clicked when the button is pressed.
+     - When a file is picked, the form auto-submits so server code handles saving.
+     ---------------------------- */
+  const personalForm = document.getElementById('personalForm');
+  const changePicBtn = document.getElementById('changePicBtn');
+  const newPictureInput = document.getElementById('new_picture');
+
+  if (changePicBtn && newPictureInput && personalForm) {
+    // Open native file picker when button clicked
+    changePicBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      newPictureInput.click();
     });
 
-    // Toggle password visibility helper
-    function toggle(id) {
-      const inp = document.getElementById(id);
-      if (!inp) return;
-      inp.type = inp.type === 'password' ? 'text' : 'password';
-    }
-
-    // Edit Profile toggle behavior (keeps previous logic)
-    const editBtn = document.getElementById('editProfileBtn');
-    const personalForm = document.getElementById('personalForm');
-    const body = document.body;
-    let editing = false;
-
-    function setEditable(enable) {
-      personalForm.querySelectorAll('input, select, textarea').forEach(el => {
-        if (el.type === 'hidden' || el.type === 'file') return;
-        if (['address_display','contact_number_display','birth_m','birth_d','birth_y'].includes(el.name) || el.id === 'address_display' || el.id === 'contact_number_display') return;
-        if (el.tagName.toLowerCase() === 'select') {
-          el.disabled = !enable;
-        } else {
-          el.readOnly = !enable;
-        }
-      });
-
-      const picWrap = document.getElementById('profilePicUploadWrap');
-      if (enable) picWrap.classList.remove('d-none'); else picWrap.classList.add('d-none');
-
-      if (enable) {
-        editBtn.classList.add('editing');
-        editBtn.textContent = 'Save Changes';
-        body.classList.remove('no-scroll');
-      } else {
-        editBtn.classList.remove('editing');
-        editBtn.textContent = 'Edit Profile';
-        body.classList.add('no-scroll');
-      }
-      editing = enable;
-    }
-
-    setEditable(false);
-
-    function handleFormKeydown(e) {
-      if (!editing && e.key === 'Enter') {
-        e.preventDefault();
-        return false;
-      }
-      return true;
-    }
-
-    editBtn.addEventListener('click', function (e) {
-      e.preventDefault();
-      if (!editing) {
-        setEditable(true);
-        setTimeout(() => {
-          const first = personalForm.querySelector('input:not([readonly]), select:not([disabled])');
-          if (first) first.focus();
-        }, 60);
-      } else {
+    // When a file is chosen, submit the form so your existing PHP handles it
+    newPictureInput.addEventListener('change', function () {
+      if (newPictureInput.files && newPictureInput.files.length) {
         personalForm.submit();
       }
     });
+  }
 
-    // username form client-side validation
-    function showAlert(areaId, type, message) {
-      const area = document.getElementById(areaId);
-      if (!area) return;
-      area.innerHTML = '<div class="alert alert-' + type + ' alert-dismissible fade show" role="alert">' + message + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
+  // Prevent Enter from submitting the personal form accidentally.
+  // Form already has onkeydown="return handleFormKeydown(event)"
+  function handleFormKeydown(e) {
+    if (e.key === 'Enter') {
+      const tag = (e.target && e.target.tagName || '').toLowerCase();
+      const type = (e.target && e.target.type || '').toLowerCase();
+      // allow Enter in textarea and file input; block elsewhere to avoid accidental submit
+      if (tag === 'textarea' || type === 'file') return true;
+      e.preventDefault();
+      return false;
     }
-    function clearAlert(areaId) {
-      const area = document.getElementById(areaId);
-      if (area) area.innerHTML = '';
+    return true;
+  }
+
+  /* ----------------------------
+     Username / Password helpers (unchanged logic)
+     ---------------------------- */
+  function showAlert(areaId, type, message) {
+    const area = document.getElementById(areaId);
+    if (!area) return;
+    area.innerHTML = '<div class="alert alert-' + type + ' alert-dismissible fade show" role="alert">' + message + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
+  }
+  function clearAlert(areaId) {
+    const area = document.getElementById(areaId);
+    if (area) area.innerHTML = '';
+  }
+
+  function validateUsernameForm(e) {
+    clearAlert('usernameAlertArea');
+    const newU = document.getElementById('new_username').value.trim();
+    const confirmU = document.getElementById('new_username_confirm').value.trim();
+    if (newU === '' && confirmU === '') {
+      showAlert('usernameAlertArea', 'info', 'Enter a new username to change it.');
+      return false;
     }
-
-    function validateUsernameForm(e) {
-      // run before submit
-      clearAlert('usernameAlertArea');
-      const newU = document.getElementById('new_username').value.trim();
-      const confirmU = document.getElementById('new_username_confirm').value.trim();
-      if (newU === '' && confirmU === '') {
-        showAlert('usernameAlertArea', 'info', 'Enter a new username to change it.');
-        return false;
-      }
-      if (newU !== confirmU) {
-        showAlert('usernameAlertArea', 'danger', 'Confirm Username does not match.');
-        return false;
-      }
-      // ok - allow submit
-      return true;
+    if (newU !== confirmU) {
+      showAlert('usernameAlertArea', 'danger', 'Confirm Username does not match.');
+      return false;
     }
+    return true;
+  }
 
-    // password form client-side validation & complexity
-    function validatePasswordForm(e) {
-      clearAlert('passwordAlertArea');
-      const cur = document.getElementById('current_password').value;
-      const nw = document.getElementById('new_password').value;
-      const cnf = document.getElementById('new_password_confirm').value;
+  function validatePasswordForm(e) {
+    clearAlert('passwordAlertArea');
+    const cur = document.getElementById('current_password').value;
+    const nw = document.getElementById('new_password').value;
+    const cnf = document.getElementById('new_password_confirm').value;
 
-      if (nw === '' && cnf === '') {
-        showAlert('passwordAlertArea', 'info', 'Enter a new password to change it.');
-        return false;
-      }
-      if (nw !== cnf) {
-        showAlert('passwordAlertArea', 'danger', 'Confirm New Password does not match.');
-        return false;
-      }
-      // complexity check: 8-15 chars, upper & lower, number, special
-      const pattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,15}$/;
-      if (!pattern.test(nw)) {
-        showAlert('passwordAlertArea', 'danger', 'Password must be 8-15 characters, include upper & lower case letters, at least one number and one special character.');
-        return false;
-      }
-      if (!cur) {
-        showAlert('passwordAlertArea', 'danger', 'Current password is required to change your password.');
-        return false;
-      }
-      return true;
+    if (nw === '' && cnf === '') {
+      showAlert('passwordAlertArea', 'info', 'Enter a new password to change it.');
+      return false;
     }
+    if (nw !== cnf) {
+      showAlert('passwordAlertArea', 'danger', 'Confirm New Password does not match.');
+      return false;
+    }
+    const pattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,15}$/;
+    if (!pattern.test(nw)) {
+      showAlert('passwordAlertArea', 'danger', 'Password must be 8-15 characters, include upper & lower case letters, at least one number and one special character.');
+      return false;
+    }
+    if (!cur) {
+      showAlert('passwordAlertArea', 'danger', 'Current password is required to change your password.');
+      return false;
+    }
+    return true;
+  }
 
-    // prevent modal click from submitting form; open modal safely
-    const openValid = document.getElementById('openValidId');
-    if (openValid) {
-      openValid.addEventListener('click', function (e) {
-        e.preventDefault();
-        const modalEl = document.getElementById('uploadIDModal');
-        if (modalEl) {
-          const modal = new bootstrap.Modal(modalEl);
-          modal.show();
-        }
+  /* ----------------------------
+     Modal safe-open handlers (keeps UX similar to before)
+     ---------------------------- */
+  const openValid = document.getElementById('openValidId');
+  if (openValid) {
+    openValid.addEventListener('click', function (e) {
+      e.preventDefault();
+      const modalEl = document.getElementById('uploadIDModal');
+      if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+      }
+    });
+  }
+
+  const uploadModalEl = document.getElementById('uploadIDModal');
+  if (uploadModalEl) {
+    uploadModalEl.addEventListener('show.bs.modal', function () {
+      document.body.classList.remove('no-scroll');
+    });
+    uploadModalEl.addEventListener('hidden.bs.modal', function () {
+      document.body.classList.add('no-scroll');
+    });
+  }
+
+  // auto-hide alerts after 8s
+  document.addEventListener('DOMContentLoaded', function () {
+    setTimeout(() => {
+      document.querySelectorAll('.alert').forEach(a => {
+        try { bootstrap.Alert.getOrCreateInstance(a).close(); } catch(e) {}
       });
-    }
-
-    document.getElementById('uploadIDModal')?.addEventListener('show.bs.modal', function () {
-      if (!editing) document.body.classList.remove('no-scroll');
-    });
-    document.getElementById('uploadIDModal')?.addEventListener('hidden.bs.modal', function () {
-      if (!editing) document.body.classList.add('no-scroll');
-    });
-
-    // auto-hide alerts after 8s
-    document.addEventListener('DOMContentLoaded', function () {
-      setTimeout(() => {
-        document.querySelectorAll('.alert').forEach(a => {
-          try { bootstrap.Alert.getOrCreateInstance(a).close(); } catch(e) {}
-        });
-      }, 8000);
-    });
-  </script>
+    }, 8000);
+  });
+</script>
 </body>
 </html>

@@ -203,7 +203,7 @@ if ($download || $print) {
           This is to certify that 
           <strong><?= htmlspecialchars(strtoupper($fullNameFormatted)) ?></strong>, 
           <strong><?= htmlspecialchars($age) ?></strong> years old,
-          <?= htmlspecialchars(strtoupper($civilStatus)) ?>, 
+          <strong><?= htmlspecialchars(strtoupper($civilStatus)) ?></strong>, 
           is a bonafide resident of <?= htmlspecialchars($purok) ?>, 
           Barangay Magang, Daet, Camarines Norte.
         </p>
@@ -331,7 +331,7 @@ if ($download || $print) {
         This is to certify that 
         <strong><?= htmlspecialchars(strtoupper($fullNameFormatted)) ?></strong>, 
         <strong><?= htmlspecialchars($age) ?></strong> years old,
-        <?= htmlspecialchars(strtoupper($civilStatus)) ?>, 
+        <strong><?= htmlspecialchars(strtoupper($civilStatus)) ?></strong>, 
         is a bonafide resident of <?= htmlspecialchars($purok) ?>, 
         Barangay Magang, Daet, Camarines Norte.
       </p>

@@ -2,11 +2,6 @@
     font-family: 'Poppins', sans-serif;
 }
 
-.container {
-    margin-top: 10px;
-    margin-bottom: 10px;
-}
-
 @keyframes fadeUp {
     from {
         opacity: 0;

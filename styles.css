@@ -46,68 +46,38 @@ body {
 }
 
 /* BANNER CSS */
-/* Banner image - no change for desktop */
-.banner-image {
-    width: 100%;
-    height: auto;
-  }
+/* Desktop Banner */
+.desktop-banner {
+    position: relative;
+}
 
 .landing-banner-image {
     width: 100%;
     height: auto;
-    min-height: 180px; /* Desktop minimum height */
+    min-height: 200px;
+    max-height: 250px;
     object-fit: cover;
 }
   
-/* Overlay shared style */
 .banner-overlay {
     top: 47%;
     left: 22.5%;
     transform: translate(-50%, -50%);
     width: 100%;
     padding: 20px;
+    z-index: 10;
 }
 
-/* MOBILE FIX */
+/* Mobile Banner - Solid Green Background */
+.mobile-banner {
+    background: linear-gradient(135deg, #0D2C15, #2A9245);
+    color: white;
+    width: 100%;
+    min-height: 120px;
+}
+
+/* MOBILE ADJUSTMENTS */
 @media (max-width: 768px) {
-    .banner-overlay {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        padding: 10px 15px;
-        width: 90%;
-    }
-
-    .banner-overlay h5 {
-        font-size: 1rem;
-    }
-
-    .banner-overlay h6 {
-        font-size: 0.7rem;
-    }
-
-    .banner-overlay h3 {
-        font-size: 1.4rem;
-    }
-
-    .banner-overlay p {
-        font-size: 0.75rem;
-    }
-
-    .banner-overlay .img-fluid {
-        max-width: 70px;
-        width: 70px;
-    }
-
-    .d-md-flex {
-        display: none !important;
-    }
-
-    .d-md-none {
-        display: flex !important;
-    }
-
     .custom-signin-btn {
         width: 100%;
         text-align: center;
@@ -136,6 +106,13 @@ body {
     
     .new-updates-container h1 {
         margin-bottom: 1rem;
+    }
+}
+
+@media (max-width: 479px) {
+    .mobile-banner {
+        min-height: 110px;
+        padding: 15px 0;
     }
 }
 
@@ -210,10 +187,9 @@ body {
         object-fit: contain;
     }
 
-    .landing-banner-image {
-        min-height: 100px; /* Reduced height for mobile */
-        max-height: 150px; /* Cap the maximum height */
-        object-fit: cover;
+    .mobile-banner {
+        min-height: 140px; /* Give more height for small screens */
+        padding: 20px 0;
     }
 }
 

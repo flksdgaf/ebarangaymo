@@ -26,37 +26,38 @@ $news = $ress->fetch_all(MYSQLI_ASSOC);
 ?>
 
 <!-- BANNER SECTION -->
-<div class="container-fluid px-0 position-relative">
-  <!-- Background image -->
-  <img src="images/landing_banner.png" alt="Banner" class="w-100 landing-banner-image">
-
-  <!-- Content overlay -->
-  <div class="position-absolute banner-overlay text-white">
-    <div class="container">
-      <!-- DESKTOP VIEW -->
-      <div class="row align-items-center justify-content-center d-none d-md-flex">
-        <div class="col-md-3 offset-md-1 text-end">
-          <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Barangay Logo" class="img-fluid" style="max-width: 110px;">
-        </div>
-        <div class="col-md-6 text-start">
-          <h6 class="mb-2">Republic of the Philippines</h6>
-          <hr class="my-1" style="width: 55%; border-top: 2px solid white; opacity: 1; margin-left: 0;">
-          <h2 class="fw-bold my-0" aria-label="Barangay Name"><?= htmlspecialchars($info['name']) ?></h2>
-          <p class="mt-0 mb-0" aria-label="Barangay Address"><?= htmlspecialchars($info['address']) ?></p>
+<div class="container-fluid px-0">
+  <!-- DESKTOP VIEW - Image with overlay -->
+  <div class="position-relative d-none d-md-block desktop-banner">
+    <img src="images/landing_banner.png" alt="Banner" class="w-100 landing-banner-image">
+    <div class="position-absolute banner-overlay text-white">
+      <div class="container">
+        <div class="row align-items-center justify-content-center">
+          <div class="col-md-3 offset-md-1 text-end">
+            <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Barangay Logo" class="img-fluid" style="max-width: 110px;">
+          </div>
+          <div class="col-md-6 text-start">
+            <h6 class="mb-2">Republic of the Philippines</h6>
+            <hr class="my-1" style="width: 55%; border-top: 2px solid white; opacity: 1; margin-left: 0;">
+            <h2 class="fw-bold my-0" aria-label="Barangay Name"><?= htmlspecialchars($info['name']) ?></h2>
+            <p class="mt-0 mb-0" aria-label="Barangay Address"><?= htmlspecialchars($info['address']) ?></p>
+          </div>
         </div>
       </div>
     </div>
+  </div>
       
-    <!-- MOBILE VIEW -->
-    <div class="d-flex d-md-none flex-row align-items-center justify-content-center gap-3 px-3">
+  <!-- MOBILE VIEW - Solid green banner with proper spacing -->
+  <div class="d-block d-md-none mobile-banner">
+    <div class="d-flex flex-row align-items-center justify-content-center gap-3 px-3 py-4">
       <div class="flex-shrink-0">
-        <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Brgy. Magang Logo" class="img-fluid" style="max-width: 70px; width: 70px;">
+        <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Brgy. Magang Logo" class="img-fluid" style="max-width: 80px; width: 80px;">
       </div>
       <div class="text-start flex-grow-1">
-        <h6 class="mb-1" style="font-size: 0.7rem;">Republic of the Philippines</h6>
+        <h6 class="mb-1" style="font-size: 0.75rem;">Republic of the Philippines</h6>
         <hr class="my-1" style="border-top: 1.5px solid white; opacity: 1;">
-        <h5 class="fw-bold my-0" style="font-size: 1rem;"><?= htmlspecialchars($info['name']) ?></h5>
-        <p class="mt-0 mb-0" style="font-size: 0.75rem;"><?= htmlspecialchars($info['address']) ?></p>
+        <h5 class="fw-bold my-0" style="font-size: 1.1rem;"><?= htmlspecialchars($info['name']) ?></h5>
+        <p class="mt-0 mb-0" style="font-size: 0.8rem;"><?= htmlspecialchars($info['address']) ?></p>
       </div>
     </div>
   </div>

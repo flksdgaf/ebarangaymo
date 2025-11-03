@@ -8,6 +8,27 @@ $newTid = $_GET['transaction_id'] ?? '';
 
 $currentRole = $_SESSION['loggedInUserRole'] ?? '';
 
+// Status Class
+if (! function_exists('status_class')) {
+    function status_class(string $ps): string {
+        $ps = trim($ps);
+
+        // if it starts with "Refund" (case-insensitive), return success
+        if (preg_match('/^Refund\b/i', $ps)) {
+            return 'bg-success';
+        }
+
+        switch ($ps) {
+            case 'Paid':             return 'bg-success';
+            case 'Free of Charge':   return 'bg-success';
+            case 'Unpaid':           return 'bg-danger';
+            case 'Pending':          return 'bg-warning';
+            case 'Failed':           return 'bg-danger';
+            default:                 return 'bg-secondary';
+        }
+    }
+}
+
 // New Walk-In requests are considered ones that are in "Processing"
 $walkInCount = (int) $conn->query(
   "SELECT COUNT(*) FROM view_request WHERE request_source = 'Walk-In' AND payment_status = 'Unpaid'"
@@ -56,10 +77,10 @@ $bindParams = [];
 
 // Show released and rejected records in the "Document Records" tab
 if ($processing_type === 'Document Records') {
-    $whereClauses[] = "r.document_status IN ('Released', 'Rejected')";
+    $whereClauses[] = "r.document_status IN ('Released', 'Rejected', 'Refund')";
 } else {
-    // Hide released/rejected from other tabs
-    $whereClauses[] = "r.document_status NOT IN ('Released','Rejected')";
+    // Hide released/rejected/refund from other tabs
+    $whereClauses[] = "r.document_status NOT IN ('Released','Rejected', 'Refund')";
 }
 
 // GLOBAL SEARCH
@@ -472,21 +493,21 @@ $result = $st->get_result();
       <?php endif; ?>
 
       <!-- Add New Request Modal -->
-      <div class="modal fade" id="addRequestModal" data-bs-backdrop="static" data-bs-keyboard="false"tabindex="-1" aria-labelledby="addRequestModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width:90vw;"> <!-- modal-dialog-scrollable -->
-          <div class="modal-content">
-            <div class="modal-header text-white" style="background-color: #13411F;">
+      <div class="modal fade" id="addRequestModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="addRequestModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width:90vw; max-height:90vh; margin: 1.75rem auto;">
+          <div class="modal-content" style="max-height: calc(100vh - 3.5rem); display: flex; flex-direction: column;">
+            <div class="modal-header text-white" style="background-color: #13411F; flex-shrink: 0;">
               <h5 class="modal-title" id="addRequestModalLabel">New Request</h5>
               <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form id="addRequestForm" method="POST" action="functions/process_new_request.php" enctype="multipart/form-data">
-              <div class="modal-body">
+            <form id="addRequestForm" method="POST" action="functions/process_new_request.php" enctype="multipart/form-data" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
+              <div class="modal-body" style="flex: 1; overflow-y: auto; overflow-x: hidden;">
                 <input type="hidden" name="request_type" id="modalRequestType" value="">
                 <input type="hidden" name="admin_account_id" value="<?= $userId ?>">
                 <!-- Dynamic fields get injected here -->
                 <div class="row g-3" id="dynamicFields"></div>
               </div>
-              <div class="modal-footer">
+              <div class="modal-footer" style="flex-shrink: 0; background-color: #f8f9fa;">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="submit" class="btn btn-success">Create Request</button>
               </div>
@@ -1414,11 +1435,11 @@ $result = $st->get_result();
                   <!-- First child (required) -->
                   <div class="child-entry border rounded p-3 mb-3" data-child-index="0">
                     <div class="row gy-2">
-                      <div class="col-12 col-md-6">
+                      <div class="col-12 col-md-4">
                         <label class="form-label fw-bold">Child's Full Name <span class="text-danger">*</span></label>
                         <input name="children[0][name]" type="text" class="form-control form-control-sm" required>
                       </div>
-                      <div class="col-12 col-md-3">
+                      <div class="col-12 col-md-2">
                         <label class="form-label fw-bold">Sex <span class="text-danger">*</span></label>
                         <select name="children[0][sex]" class="form-select form-select-sm" required>
                           <option value="">Select…</option>
@@ -1427,8 +1448,13 @@ $result = $st->get_result();
                         </select>
                       </div>
                       <div class="col-12 col-md-3">
-                        <label class="form-label fw-bold">Age <span class="text-danger">*</span></label>
-                        <input name="children[0][age]" type="number" min="0" class="form-control form-control-sm" required>
+                        <label class="form-label fw-bold">Birthdate <span class="text-danger">*</span></label>
+                        <input name="children[0][birthdate]" type="date" class="form-control form-control-sm child-birthdate" required>
+                      </div>
+                      <div class="col-12 col-md-3">
+                        <label class="form-label fw-bold">Age</label>
+                        <input name="children[0][age_display]" type="text" class="form-control form-control-sm child-age-display" readonly style="background-color: #e9ecef;">
+                        <input name="children[0][age]" type="hidden" class="child-age-value">
                       </div>
                     </div>
                   </div>
@@ -1456,15 +1482,14 @@ $result = $st->get_result();
 
       <!-- View Request Modal -->
       <div class="modal fade" id="viewRequestModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="viewRequestModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" style="max-width: 820px; margin: 30px auto;">
-          <div class="modal-content" style="display: flex; flex-direction: column; max-height: calc(100vh - 60px);">
-
-            <div class="modal-header text-white" style="background-color:#13411F;">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 820px; max-height: 90vh; margin: 1.75rem auto;">
+          <div class="modal-content" style="display: flex; flex-direction: column; max-height: calc(100vh - 3.5rem);">
+            <div class="modal-header text-white" style="background-color:#13411F; flex-shrink: 0;">
               <h5 class="modal-title" id="viewRequestModalLabel">Request Details</h5>
               <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
 
-            <div class="modal-body p-3" style="flex:1; overflow:auto;">
+            <div class="modal-body p-3" style="flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0;">
               <div class="container-fluid">
                 <div id="viewRequestSummary" class="mb-2 text-muted small"></div>
 
@@ -1480,10 +1505,9 @@ $result = $st->get_result();
               </div>
             </div>
 
-            <div class="modal-footer justify-content-end px-4 py-2" style="background-color:#f8f9fa;">
+            <div class="modal-footer justify-content-end px-4 py-2" style="background-color:#f8f9fa; flex-shrink: 0;">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
-
           </div>
         </div>
       </div>
@@ -1541,17 +1565,16 @@ $result = $st->get_result();
 
       <!-- View Request Modal -->
       <div class="modal fade" id="previewRequestModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="previewRequestModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" style="max-width: 820px;">
-          <div class="modal-content" style="display: flex; flex-direction: column; max-height: calc(100vh - 60px);">
-            
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 820px; max-height: 90vh; margin: 1.75rem auto;">
+          <div class="modal-content" style="display: flex; flex-direction: column; max-height: calc(100vh - 3.5rem);">
             <!-- Modal Header -->
-            <div class="modal-header text-white" style="background-color: #13411F;">
+            <div class="modal-header text-white" style="background-color: #13411F; flex-shrink: 0;">
               <h5 class="modal-title" id="previewRequestModalLabel">Document Request Preview</h5>
               <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
 
             <!-- Scrollable Modal Body -->
-            <div class="modal-body p-0" style="flex: 1; overflow: hidden;">
+            <div class="modal-body p-0" style="flex: 1; overflow: hidden; min-height: 0;">
               <div class="preview-container" style="height: 100%; overflow-y: auto; background-color: #ccc; padding: 20px;">
                 <iframe
                   id="requestPreviewFrame"
@@ -1563,7 +1586,7 @@ $result = $st->get_result();
             </div>
 
             <!-- Modal Footer -->
-            <div class="modal-footer justify-content-between px-4 py-2" style="background-color: #f8f9fa;">
+            <div class="modal-footer justify-content-between px-4 py-2" style="background-color: #f8f9fa; flex-shrink: 0;">
               <div class="form-check">
                 <input class="form-check-input" type="checkbox" value="1" id="includeHeader">
                 <label class="form-check-label" for="includeHeader">
@@ -1582,26 +1605,23 @@ $result = $st->get_result();
                 </button>
               </div>
             </div>
-
           </div>
         </div>
       </div>
 
       <!-- Edit Request Modal -->
       <div class="modal fade" id="editRequestModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="editRequestModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width:90vw;">
-          <div class="modal-content">
-            
+        <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width:90vw; max-height:90vh; margin: 1.75rem auto;">
+          <div class="modal-content" style="max-height: calc(100vh - 3.5rem); display: flex; flex-direction: column;">
             <!-- Header -->
-            <div class="modal-header text-white" style="background-color: #13411F;">
+            <div class="modal-header text-white" style="background-color: #13411F; flex-shrink: 0;">
               <h5 class="modal-title" id="editRequestModalLabel">Edit Request</h5>
               <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             
             <!-- Form -->
-            <form id="editRequestForm" method="POST" action="functions/process_edit_request.php" enctype="multipart/form-data">
-              
-              <div class="modal-body">
+            <form id="editRequestForm" method="POST" action="functions/process_edit_request.php" enctype="multipart/form-data" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
+              <div class="modal-body" style="flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0;">
                 <!-- carry over identifying info -->
                 <input type="hidden" name="transaction_id" id="editTransactionId" value="">
                 <input type="hidden" name="request_type" id="editRequestType" value="">
@@ -1609,7 +1629,7 @@ $result = $st->get_result();
                 <div class="row g-3" id="editDynamicFields"></div>
               </div>
               
-              <div class="modal-footer">
+              <div class="modal-footer" style="flex-shrink: 0; background-color: #f8f9fa;">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="submit" class="btn btn-success">Save Changes</button>
               </div>
@@ -1620,13 +1640,13 @@ $result = $st->get_result();
 
       <!-- Camera Modal for Barangay ID -->
       <div class="modal fade" id="cameraModalBID" tabindex="-1" aria-labelledby="cameraModalBIDLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
+        <div class="modal-dialog modal-dialog-centered modal-lg" style="max-height: 90vh; margin: 1.75rem auto;">
+          <div class="modal-content" style="max-height: calc(100vh - 3.5rem); display: flex; flex-direction: column;">
+            <div class="modal-header" style="flex-shrink: 0;">
               <h5 class="modal-title" id="cameraModalBIDLabel">Take Photo</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body text-center">
+            <div class="modal-body text-center" style="flex: 1; overflow-y: auto; min-height: 0;">
               <!-- Camera View -->
               <div id="cameraViewBID" class="position-relative">
                 <video id="cameraStreamBID" autoplay playsinline class="w-100 rounded" style="max-height: 400px; object-fit: cover; background: #000;"></video>
@@ -1657,13 +1677,13 @@ $result = $st->get_result();
 
       <!-- Camera Modal for Barangay Clearance -->
       <div class="modal fade" id="cameraModalClearance" tabindex="-1" aria-labelledby="cameraModalClearanceLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
+        <div class="modal-dialog modal-dialog-centered modal-lg" style="max-height: 90vh; margin: 1.75rem auto;">
+          <div class="modal-content" style="max-height: calc(100vh - 3.5rem); display: flex; flex-direction: column;">
+            <div class="modal-header" style="flex-shrink: 0;">
               <h5 class="modal-title" id="cameraModalClearanceLabel">Take Photo</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body text-center">
+            <div class="modal-body text-center" style="flex: 1; overflow-y: auto; min-height: 0;">
               <!-- Camera View -->
               <div id="cameraViewClearance" class="position-relative">
                 <video id="cameraStreamClearance" autoplay playsinline class="w-100 rounded" style="max-height: 400px; object-fit: cover; background: #000;"></video>
@@ -1694,13 +1714,13 @@ $result = $st->get_result();
 
       <!-- Camera Modal for Business Clearance -->
       <div class="modal fade" id="cameraModalBusiness" tabindex="-1" aria-labelledby="cameraModalBusinessLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
+        <div class="modal-dialog modal-dialog-centered modal-lg" style="max-height: 90vh; margin: 1.75rem auto;">
+          <div class="modal-content" style="max-height: calc(100vh - 3.5rem); display: flex; flex-direction: column;">
+            <div class="modal-header" style="flex-shrink: 0;">
               <h5 class="modal-title" id="cameraModalBusinessLabel">Take Photo</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body text-center">
+            <div class="modal-body text-center" style="flex: 1; overflow-y: auto; min-height: 0;">
               <!-- Camera View -->
               <div id="cameraViewBusiness" class="position-relative">
                 <video id="cameraStreamBusiness" autoplay playsinline class="w-100 rounded" style="max-height: 400px; object-fit: cover; background: #000;"></video>
@@ -1731,10 +1751,10 @@ $result = $st->get_result();
 
       <!-- Record Payment Modal -->
       <div class="modal fade" id="recordModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="recordModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-          <div class="modal-content">
+        <div class="modal-dialog modal-dialog-centered modal-lg" style="max-height: 90vh; margin: 1.75rem auto;">
+          <div class="modal-content" style="max-height: calc(100vh - 3.5rem); display: flex; flex-direction: column;">
             <!-- Header -->
-            <div class="modal-header text-white" style="background-color: #13411F;">
+            <div class="modal-header text-white" style="background-color: #13411F; flex-shrink: 0;">
               <h5 class="modal-title" id="recordModalLabel">
                 <i class="bi bi-receipt me-2"></i>
                 Record Payment
@@ -1742,8 +1762,8 @@ $result = $st->get_result();
               <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
 
-            <form id="recordForm" action="functions/process_record_payment.php" method="POST">
-              <div class="modal-body">
+            <form id="recordForm" action="functions/process_record_payment.php" method="POST" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
+              <div class="modal-body" style="flex: 1; overflow-y: auto; min-height: 0;">
                 <input type="hidden" name="transaction_id" id="recordTransactionId">
                 <input type="hidden" name="payment_method" id="recordPaymentMethodHidden">
                 <input type="hidden" name="amount_paid" id="recordAmountPaidHidden">
@@ -1778,7 +1798,7 @@ $result = $st->get_result();
               </div>
 
               <!-- Footer -->
-              <div class="modal-footer">
+              <div class="modal-footer" style="flex-shrink: 0; background-color: #f8f9fa;">
                 <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
                 <button type="submit" class="btn btn-success btn-sm">Save Payment</button>
               </div>
@@ -1896,34 +1916,8 @@ $result = $st->get_result();
               <?php while ($row = $result->fetch_assoc()):
                 $tid = htmlspecialchars($row['transaction_id']);
                 $ps = $row['payment_status'] ?? '';
-                switch ($ps) {
-                  case 'Paid': $c = 'bg-success'; break;
-                  case 'Free of Charge': $c = 'bg-success'; break;
-                  case 'Unpaid': $c = 'bg-danger';  break;
-                  case 'Pending': $c = 'bg-warning'; break;
-                  case 'Failed': $c = 'bg-danger'; break;
-                  default: $c = 'bg-secondary'; 
-                }
 
-                // function status_class(string $ps): string {
-                //     $ps = trim($ps);
-
-                //     // if it starts with "Refund" (case-insensitive), return success
-                //     if (preg_match('/^Refund\b/i', $ps)) {
-                //         return 'bg-success';
-                //     }
-
-                //     switch ($ps) {
-                //         case 'Paid':             return 'bg-success';
-                //         case 'Free of Charge':   return 'bg-success';
-                //         case 'Unpaid':           return 'bg-danger';
-                //         case 'Pending':          return 'bg-warning';
-                //         case 'Failed':           return 'bg-danger';
-                //         default:                 return 'bg-secondary';
-                //     }
-                // }
-
-                // $c = status_class($ps);
+                $c = status_class($ps);
 
                 $ds = $row['document_status'] ?? '';
                 switch ($ds) {
@@ -2497,18 +2491,26 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function statusIsAllowed(status, serviceType) {
-    const norm = normalizeStatus(status).toLowerCase();
+      const norm = normalizeStatus(status).toLowerCase();
 
-    // Treat these values as allowed to print/download (you can add more)
-    const allowed = ['paid','free of charge'];
+      // Treat these values as allowed to print/download
+      const allowed = ['paid', 'free of charge', 'refund', 'refunded'];
 
-    if (allowed.includes(norm)) return true;
+      if (allowed.includes(norm)) return true;
 
-    // Also allow by service type, e.g. Indigency
-    if (serviceType && normalizeStatus(serviceType).toLowerCase() === 'indigency') return true;
-    if (serviceType && normalizeStatus(serviceType).toLowerCase() === 'indigent') return true;
+      // Also check if status starts with "refund" (case-insensitive)
+      if (norm.startsWith('refund')) return true;
 
-    return false;
+      // Check if it contains "refund" anywhere (catches "Refund - reason")
+      if (norm.includes('refund')) return true;
+
+      // Also allow by service type, e.g. Indigency, First Time Job Seeker
+      if (serviceType) {
+          const normType = normalizeStatus(serviceType).toLowerCase();
+          if (normType === 'indigency' || normType === 'first time job seeker') return true;
+      }
+
+      return false;
   }
 
   function setPrintDownloadStateByStatus(status, serviceType) {
@@ -2553,8 +2555,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // NEW: set print/download enablement based on data attribute
       const paymentStatus = btn.dataset.paymentStatus || '';
-      const serviceType = btn.dataset.serviceType || '';
-      setPrintDownloadStateByStatus(paymentStatus, serviceType);
+      const serviceType = btn.dataset.requestType || '';  // Variable is named serviceType
+      // Temporary debug logging
+      console.log('Payment Status:', paymentStatus, 'Service Type:', serviceType);
+      console.log('Status Allowed:', statusIsAllowed(paymentStatus, serviceType));
+      setPrintDownloadStateByStatus(paymentStatus, serviceType);  // Use serviceType here!
 
       // show modal
       viewReqModal.show();
@@ -2696,6 +2701,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target.closest('#addChildBtn')) {
       const container = document.getElementById('childrenContainer');
       const newChild = document.createElement('div');
+      const today = new Date().toISOString().split('T')[0]; // Get today's date
       newChild.className = 'child-entry border rounded p-3 mb-3 position-relative';
       newChild.dataset.childIndex = childCounter;
       newChild.innerHTML = `
@@ -2703,12 +2709,12 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="material-symbols-outlined" style="font-size:14px;">close</span>
         </button>
         <div class="row gy-2">
-          <div class="col-12 col-md-6">
-            <label class="form-label fw-bold">Child's Full Name</label>
+          <div class="col-12 col-md-4">
+            <label class="form-label fw-bold">Child's Full Name <span class="text-danger">*</span></label>
             <input name="children[${childCounter}][name]" type="text" class="form-control form-control-sm" required>
           </div>
-          <div class="col-12 col-md-3">
-            <label class="form-label fw-bold">Sex</label>
+          <div class="col-12 col-md-2">
+            <label class="form-label fw-bold">Sex <span class="text-danger">*</span></label>
             <select name="children[${childCounter}][sex]" class="form-select form-select-sm" required>
               <option value="">Select…</option>
               <option>Male</option>
@@ -2716,8 +2722,13 @@ document.addEventListener('DOMContentLoaded', () => {
             </select>
           </div>
           <div class="col-12 col-md-3">
+            <label class="form-label fw-bold">Birthdate <span class="text-danger">*</span></label>
+            <input name="children[${childCounter}][birthdate]" type="date" class="form-control form-control-sm child-birthdate" max="${today}" required>
+          </div>
+          <div class="col-12 col-md-3">
             <label class="form-label fw-bold">Age</label>
-            <input name="children[${childCounter}][age]" type="number" min="0" class="form-control form-control-sm" required>
+            <input name="children[${childCounter}][age_display]" type="text" class="form-control form-control-sm child-age-display" readonly style="background-color: #e9ecef;">
+            <input name="children[${childCounter}][age]" type="hidden" class="child-age-value">
           </div>
         </div>
       `;
@@ -3276,4 +3287,133 @@ function initBusinessCamera() {
     photoFileName: 'business-photo.jpg'
   });
 }
+
+// ========== AGE CALCULATION HELPER ==========
+function calculateAge(birthdate) {
+  if (!birthdate) return { display: '', value: 0 };
+  
+  const birth = new Date(birthdate);
+  const today = new Date();
+  
+  // Calculate differences
+  let years = today.getFullYear() - birth.getFullYear();
+  let months = today.getMonth() - birth.getMonth();
+  let days = today.getDate() - birth.getDate();
+  
+  // Adjust for negative days
+  if (days < 0) {
+    months--;
+    const lastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+    days += lastMonth.getDate();
+  }
+  
+  // Adjust for negative months
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+  
+  // Determine display format
+  let display = '';
+  let value = 0;
+  
+  if (years > 0) {
+    // Show years (with proper singular/plural)
+    const yearText = years === 1 ? 'year' : 'years';
+    display = `${years} ${yearText} old`;
+    value = years;
+  } else if (months > 0) {
+    // Show months (with proper singular/plural)
+    const monthText = months === 1 ? 'month' : 'months';
+    display = `${months} ${monthText} old`;
+    value = months / 12; // Convert to fractional years for storage
+  } else if (days >= 7) {
+    // Show weeks (with proper singular/plural)
+    const weeks = Math.floor(days / 7);
+    const weekText = weeks === 1 ? 'week' : 'weeks';
+    display = `${weeks} ${weekText} old`;
+    value = weeks / 52; // Convert to fractional years for storage
+  } else {
+    // Show days (with proper singular/plural)
+    const dayText = days === 1 ? 'day' : 'days';
+    display = `${days} ${dayText} old`;
+    value = days / 365; // Convert to fractional years for storage
+  }
+  
+  return { display, value };
+}
+
+// ========== SET MAX DATE TO TODAY (Prevent Future Dates) ==========
+document.addEventListener('DOMContentLoaded', () => {
+  // Set max date to today for all birthdate inputs
+  const today = new Date().toISOString().split('T')[0];
+  
+  // Function to set max date on birthdate inputs
+  function setMaxDateOnBirthdates() {
+    document.querySelectorAll('.child-birthdate').forEach(input => {
+      input.setAttribute('max', today);
+    });
+  }
+  
+  // Set initially
+  setMaxDateOnBirthdates();
+  
+  // Also set when modal opens (for dynamically added children)
+  const addRequestModal = document.getElementById('addRequestModal');
+  if (addRequestModal) {
+    addRequestModal.addEventListener('shown.bs.modal', setMaxDateOnBirthdates);
+  }
+});
+
+// Validate birthdate on change
+document.addEventListener('change', (e) => {
+  if (e.target && e.target.classList.contains('child-birthdate')) {
+    const selectedDate = new Date(e.target.value);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to start of day
+    
+    if (selectedDate > today) {
+      alert('Birthdate cannot be in the future. Please select a valid date.');
+      e.target.value = ''; // Clear the invalid date
+      
+      // Clear the age display fields
+      const container = e.target.closest('.child-entry');
+      if (container) {
+        const ageDisplay = container.querySelector('.child-age-display');
+        const ageValue = container.querySelector('.child-age-value');
+        if (ageDisplay) ageDisplay.value = '';
+        if (ageValue) ageValue.value = '';
+      }
+      return;
+    }
+    
+    // If valid, calculate age normally
+    const container = e.target.closest('.child-entry');
+    if (container) {
+      const ageDisplay = container.querySelector('.child-age-display');
+      const ageValue = container.querySelector('.child-age-value');
+      const birthdate = e.target.value;
+      
+      const ageResult = calculateAge(birthdate);
+      if (ageDisplay) ageDisplay.value = ageResult.display;
+      if (ageValue) ageValue.value = ageResult.value;
+    }
+  }
+});
+
+// Auto-calculate age when birthdate changes
+document.addEventListener('change', (e) => {
+  if (e.target && e.target.classList.contains('child-birthdate')) {
+    const container = e.target.closest('.child-entry');
+    if (container) {
+      const ageDisplay = container.querySelector('.child-age-display');
+      const ageValue = container.querySelector('.child-age-value');
+      const birthdate = e.target.value;
+      
+      const ageResult = calculateAge(birthdate);
+      if (ageDisplay) ageDisplay.value = ageResult.display;
+      if (ageValue) ageValue.value = ageResult.value;
+    }
+  }
+});
 </script>

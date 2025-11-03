@@ -85,7 +85,8 @@ if (!empty($transactionId)) {
             if (is_array($children)) {
                 foreach ($children as $child) {
                     $childName = strtoupper(htmlspecialchars($child['name'] ?? ''));
-                    $childAge = htmlspecialchars($child['age'] ?? '');
+                    // Use age_display directly from the stored data
+                    $childAge = htmlspecialchars($child['age_display'] ?? ($child['age'] ?? ''));
                     $childSex = $child['sex'] ?? 'Male';
                     
                     if (isset($genderCount[$childSex])) {
@@ -137,7 +138,8 @@ foreach ($orderedGenders as $gender) {
     $childList = [];
     foreach ($childrenByGender[$gender] as $child) {
         $trimmedName = trim($child['name']); // Remove any trailing/leading spaces
-        $childList[] = "<strong>{$trimmedName}</strong>, {$child['age']} years old";
+        // Don't add "years old" since age_display already contains it
+        $childList[] = "<strong>{$trimmedName}</strong>, {$child['age']}";
     }
     
     // Combine: "two (2) girls CHILD NAME, 22 years old, CHILD NAME, 17 years old"
@@ -281,13 +283,13 @@ if ($download || $print) {
 
         <p>
           This is to certify that <strong><?= htmlspecialchars(strtoupper($fullNameFormatted)) ?></strong>, 
-          <strong><?= htmlspecialchars($residentAge) ?></strong> years old, <?= strtoupper($civilStatus === 'widowed' ? 'WIDOW' : $civilStatus) ?>,
+          <strong><?= htmlspecialchars($residentAge) ?></strong> years old, SINGLE, <!-- <= strtoupper($civilStatus === 'widowed' ? 'WIDOW' : $civilStatus) > -->
           is a resident of <?= htmlspecialchars($purok) ?>, Magang, Daet, Camarines Norte.
         </p>
 
         <p>
-          This is to certify that the said person is a <strong>SOLO PARENT</strong> to <?= $pronoun ?> <?= ($childCount > 1 ? 'children' : 'child') ?>, <?= $genderSummary ?> 
-          and <?= $statusTerm ?>
+          This is to certify that the said person is a <strong>SOLO PARENT</strong> to <?= $pronoun ?> <?= ($childCount > 1 ? 'children' : 'child') ?>, <?= $genderSummary ?>, 
+          <?= $statusTerm ?>
         </p>
 
         <p>
@@ -405,13 +407,13 @@ if ($download || $print) {
 
       <p>
         This is to certify that <strong><?= htmlspecialchars(strtoupper($fullNameFormatted)) ?></strong>, 
-        <strong><?= htmlspecialchars($residentAge) ?></strong> years old, <?= strtoupper($civilStatus === 'widowed' ? 'WIDOW' : $civilStatus) ?>,
+        <strong><?= htmlspecialchars($residentAge) ?></strong> years old, SINGLE, <!-- <= strtoupper($civilStatus === 'widowed' ? 'WIDOW' : $civilStatus) > -->
         is a resident of <?= htmlspecialchars($purok) ?>, Magang, Daet, Camarines Norte.
       </p>
 
       <p>
-        This is to certify that the said person is a <strong>SOLO PARENT</strong> to <?= $pronoun ?> <?= ($childCount > 1 ? 'children' : 'child') ?>, <?= $genderSummary ?> 
-        and <?= $statusTerm ?>
+        This is to certify that the said person is a <strong>SOLO PARENT</strong> to <?= $pronoun ?> <?= ($childCount > 1 ? 'children' : 'child') ?>, <?= $genderSummary ?>, 
+        <?= $statusTerm ?>
       </p>
 
       <p>

@@ -18,6 +18,9 @@ $typeMap = [
   'Indigency'         => 'indigency_requests',
   'Residency'         => 'residency_requests',
   'Solo Parent'       => 'solo_parent_requests',
+  'Barangay Clearance' => 'barangay_clearance_requests',
+  'Business Clearance' => 'business_clearance_requests',
+  'First Time Job Seeker' => 'job_seeker_requests'
 ];
 
 if (!isset($typeMap[$requestType])) {

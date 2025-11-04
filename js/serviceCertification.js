@@ -445,9 +445,13 @@ document.addEventListener("DOMContentLoaded", function () {
                     <div class="col-sm-9">
                         <input type="text" name="child_name[]" class="form-control" value="${prefillName}" required>
                     </div>
-                    <div class="col-sm-1 d-flex gap-1">
-                        <button type="button" class="btn btn-outline-danger btn-sm remove-child" style="white-space: nowrap;">DELETE</button>
-                        <button type="button" class="btn btn-outline-primary btn-sm add-child" style="white-space: nowrap;">+ Add</button>
+                    <div class="col-sm-1 d-flex gap-2 justify-content-end align-items-center">
+                        <button type="button" class="btn btn-outline-danger btn-sm remove-child d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; padding: 0;">
+                            <span class="material-symbols-outlined" style="font-size: 20px;">delete</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-success btn-sm add-child d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; padding: 0;">
+                            <span class="material-symbols-outlined" style="font-size: 20px;">add</span>
+                        </button>
                     </div>`;
                 container.appendChild(row);
                 
@@ -461,6 +465,20 @@ document.addEventListener("DOMContentLoaded", function () {
                 
                 row.querySelector('.add-child').onclick = () => addChild();
             }
+
+            // Validate birthdates to prevent future dates
+            container.addEventListener('change', function(e) {
+                if (e.target && e.target.classList.contains('child-birthdate')) {
+                    const selectedDate = new Date(e.target.value);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    
+                    if (selectedDate > today) {
+                        alert('Birthdate cannot be in the future. Please select a valid date.');
+                        e.target.value = '';
+                    }
+                }
+            });
             
             function updateChildButtons() {
                 const allRows = container.querySelectorAll('.child-row');
@@ -491,29 +509,24 @@ document.addEventListener("DOMContentLoaded", function () {
         } else if (type === 'solo parent') {
             const parentSexVal = (window.existingParentSex || window.currentUser?.sex || '').toString();
             const parentSexHtml = `
-                <div class="row mb-3">
-                    <label class="col-sm-2 col-form-label fw-bold">Parent Sex:</label>
-                    <div class="col-sm-4">
-                        <select name="parent_sex" class="form-select">
-                            <option value="" ${parentSexVal === '' ? 'selected' : ''}>-- Select --</option>
-                            <option value="Male" ${parentSexVal === 'Male' ? 'selected' : ''}>Male</option>
-                            <option value="Female" ${parentSexVal === 'Female' ? 'selected' : ''}>Female</option>
-                            <option value="Other" ${parentSexVal && parentSexVal !== 'Male' && parentSexVal !== 'Female' ? 'selected' : ''}>Other</option>
-                        </select>
-                    </div>
+            <div class="row mb-3">
+                <label class="col-sm-2 col-form-label fw-bold">Parent Sex:</label>
+                <div class="col-sm-3">
+                    <select name="parent_sex" class="form-select" required>
+                        <option value="Male" ${parentSexVal === 'Male' ? 'selected' : ''}>Male</option>
+                        <option value="Female" ${parentSexVal === 'Female' ? 'selected' : ''}>Female</option>
+                    </select>
                 </div>
-            `;
+                <label class="col-sm-3 col-form-label fw-bold text-end">Years as Solo Parent:</label>
+                <div class="col-sm-4">
+                    <input type="number" name="years_solo_parent" class="form-control" required>
+                </div>
+            </div>
+        `;
             wrapper.innerHTML = parentSexHtml;
             
             wrapper.innerHTML += `
             <div id="soloChildren"></div>
-
-            <div class="row mb-3">
-                <label class="col-sm-2 fw-bold">Years as Solo Parent:</label>
-                <div class="col-sm-10">
-                <input type="number" name="years_solo_parent" class="form-control" required>
-                </div>
-            </div>
 
             <div id="soloClaimContainer" class="row mb-3">
                 <label class="col-sm-2 fw-bold">Claim Date:</label>
@@ -527,36 +540,42 @@ document.addEventListener("DOMContentLoaded", function () {
             const container = wrapper.querySelector('#soloChildren');
             
             function addChild(prefillData = null) {
-                const row = document.createElement('div');
-                row.className = 'row mb-3 child-row';
-                row.innerHTML = `
-                    <label class="col-sm-2 col-form-label fw-bold">Child's Name:</label>
-                    <div class="col-sm-4">
-                        <input type="text" name="child_name[]" class="form-control" 
-                            value="${prefillData?.name || ''}" required>
-                    </div>
+            const row = document.createElement('div');
+            row.className = 'row mb-3 child-row';
+            
+            // Get today's date for max attribute
+            const today = new Date().toISOString().split('T')[0];
+            
+            row.innerHTML = `
+            <label class="col-sm-2 col-form-label fw-bold">Child's Name</label>
+            <div class="col-sm-3">
+                <input type="text" name="child_name[]" class="form-control" 
+                    value="${prefillData?.name || ''}" required>
+            </div>
 
-                    <label class="col-sm-1 col-form-label fw-bold">Age:</label>
-                    <div class="col-sm-1">
-                        <input type="number" name="child_age[]" class="form-control" 
-                            value="${prefillData?.age || ''}" required>
-                    </div>
+            <label class="col-form-label fw-bold" style="width: 55px;">Sex</label>
+            <div class="col-sm-2" style="min-width: 80px;">
+                <select name="child_sex[]" class="form-select" required>
+                    <option value="Male" ${prefillData?.sex === 'Male' ? 'selected' : ''}>Male</option>
+                    <option value="Female" ${prefillData?.sex === 'Female' ? 'selected' : ''}>Female</option>
+                </select>
+            </div>
 
-                    <label class="col-sm-1 col-form-label fw-bold">Sex:</label>
-                    <div class="col-sm-2">
-                        <select name="child_sex[]" class="form-select" required>
-                            <option value="">—</option>
-                            <option ${prefillData?.sex === 'Male' ? 'selected' : ''}>Male</option>
-                            <option ${prefillData?.sex === 'Female' ? 'selected' : ''}>Female</option>
-                            <option ${prefillData?.sex === 'Other' ? 'selected' : ''}>Other</option>
-                        </select>
-                    </div>
+            <label class="col-form-label fw-bold" style="width: 110px;">Birthdate</label>
+            <div class="col-sm-2">
+                <input type="date" name="child_birthdate[]" class="form-control child-birthdate" 
+                    value="${prefillData?.birthdate || ''}" max="${today}" required>
+            </div>
 
-                    <div class="col-sm-1 d-flex gap-1">
-                        <button type="button" class="btn btn-outline-danger btn-sm remove-child" style="white-space: nowrap;">DELETE</button>
-                        <button type="button" class="btn btn-outline-primary btn-sm add-child" style="white-space: nowrap;">+ Add</button>
-                    </div>`;
-                container.appendChild(row);
+            <div class="col d-flex gap-2 justify-content-end align-items-center" style="max-width: 120px;">
+                <button type="button" class="btn btn-outline-danger btn-sm remove-child d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; padding: 0;">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">delete</span>
+                </button>
+                <button type="button" class="btn btn-outline-success btn-sm add-child d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; padding: 0;">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">add</span>
+                </button>
+            </div>`;
+            container.appendChild(row);
                 
                 // Update button visibility
                 updateChildButtons();

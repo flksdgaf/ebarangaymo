@@ -76,6 +76,10 @@ if ($transactionId) {
             // NEW: capture parent_sex & parent_address if available
             $existingParentSex = $row['parent_sex'] ?? '';
             $existingParentAddress = $row['parent_address'] ?? '';
+            $childrenDataJson = '';
+            if (!empty($existingRequestRow['children_data'])) {
+                $childrenDataJson = $existingRequestRow['children_data'];
+            }
             $q->close();
             break;
         }
@@ -593,9 +597,8 @@ if (!empty($existingRequestRow)) {
     window._claimOptions = <?php echo json_encode($claimOptions, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
     window._existingClaimObj = <?php echo json_encode(['date' => $existingClaimDate, 'part' => $existingClaimPart], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
 
-    // NEW: expose existing parent sex & address so client-side can prefill the parent sex dropdown and show previously-entered address
-    window.existingParentSex = <?php echo json_encode($existingParentSex, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
-    window.existingParentAddress = <?php echo json_encode($existingParentAddress, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
+    // NEW: expose existing children data for Solo Parent prefill
+    window.existingChildrenData = <?php echo !empty($childrenDataJson) ? $childrenDataJson : 'null'; ?>;
 
     window.existingChildrenData = <?php echo json_encode($childrenDataJson ?? '', JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); ?>;
 </script>
@@ -785,24 +788,28 @@ document.addEventListener('DOMContentLoaded', function () {
         if (type === 'solo parent') {
             const parentSex = document.querySelector('[name="parent_sex"]')?.value || window.existingParentSex || '—';
             rows.push(['Parent Sex:', parentSex]);
+            
             const childNames = Array.from(document.querySelectorAll('[name="child_name[]"]')).map(el => el.value.trim()).filter(Boolean);
-            const childAges  = Array.from(document.querySelectorAll('[name="child_age[]"]')).map(el => el.value.trim()).filter(Boolean);
             const childSexes = Array.from(document.querySelectorAll('[name="child_sex[]"]')).map(el => el.value.trim()).filter(Boolean);
+            const childBirthdates = Array.from(document.querySelectorAll('[name="child_birthdate[]"]')).map(el => el.value.trim()).filter(Boolean);
 
             childNames.forEach((name, i) => {
                 rows.push([`Child ${i + 1} Name:`, name || '—']);
-                rows.push([`Child ${i + 1} Age:`, childAges[i] || '—']);
                 rows.push([`Child ${i + 1} Sex:`, childSexes[i] || '—']);
+                
+                // Format birthdate nicely if available
+                let birthdateDisplay = childBirthdates[i] || '—';
+                if (birthdateDisplay !== '—') {
+                    const d = new Date(birthdateDisplay);
+                    if (!isNaN(d.getTime())) {
+                        birthdateDisplay = d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                    }
+                }
+                rows.push([`Child ${i + 1} Birthdate:`, birthdateDisplay]);
             });
 
             const years = document.querySelector('[name="years_solo_parent"]')?.value || '—';
             rows.push(['Years as Solo Parent:', years]);
-
-            if (!empty($existingRequestRow['children_data'])) {
-                $childrenDataJson = $existingRequestRow['children_data'];
-            } else {
-                $childrenDataJson = '';
-            }
         }
 
         // Guardianship: Child names only

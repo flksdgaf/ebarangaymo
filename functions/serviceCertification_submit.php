@@ -179,14 +179,49 @@ if ($type === 'Guardianship') {
 if ($type === 'Solo Parent') {
     $childrenArray = [];
     $childNames = $_POST['child_name'] ?? [];
-    $childAges = $_POST['child_age'] ?? [];
+    $childBirthdates = $_POST['child_birthdate'] ?? [];
     $childSexes = $_POST['child_sex'] ?? [];
+    
+    // Helper function to calculate age from birthdate
+    function calculateAgeFromBirthdate($birthdate) {
+        if (empty($birthdate)) return 0;
+        
+        $birth = new DateTime($birthdate);
+        $today = new DateTime('now', new DateTimeZone('Asia/Manila'));
+        
+        $years = $today->diff($birth)->y;
+        $months = $today->diff($birth)->m;
+        $days = $today->diff($birth)->days;
+        
+        // Return years if >= 1 year old
+        if ($years > 0) {
+            return $years;
+        }
+        
+        // Return fractional year for infants (months/12 or weeks/52)
+        if ($months > 0) {
+            return round($months / 12, 2);
+        }
+        
+        // For newborns less than a month, use weeks
+        $weeks = floor($days / 7);
+        if ($weeks > 0) {
+            return round($weeks / 52, 2);
+        }
+        
+        // For very new babies, use days
+        return round($days / 365, 2);
+    }
     
     for ($i = 0; $i < count($childNames); $i++) {
         if (!empty(trim($childNames[$i]))) {
+            $birthdate = isset($childBirthdates[$i]) ? trim($childBirthdates[$i]) : '';
+            $age = $birthdate ? calculateAgeFromBirthdate($birthdate) : 0;
+            
             $childrenArray[] = [
                 'name' => trim($childNames[$i]),
-                'age' => isset($childAges[$i]) ? trim($childAges[$i]) : '',
+                'birthdate' => $birthdate,
+                'age' => $age,  // Calculated age stored for backward compatibility
                 'sex' => isset($childSexes[$i]) ? trim($childSexes[$i]) : ''
             ];
         }
@@ -196,7 +231,8 @@ if ($type === 'Solo Parent') {
     $data['years_solo_parent'] = $_POST['years_solo_parent'] ?? null;
     $fields = array_merge($fields, ['children_data', 'years_solo_parent']);
 
-    $fields = array_diff($fields, ['child_name', 'child_age', 'child_sex']);
+    // Remove old field names from fields array
+    $fields = array_diff($fields, ['child_name', 'child_age', 'child_sex', 'child_birthdate']);
 
     $ps = isset($_POST['parent_sex']) ? trim($_POST['parent_sex']) : null;
     if ($ps === '') $ps = null;

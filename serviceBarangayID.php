@@ -421,38 +421,50 @@ if (!empty($existingRequest)) {
                 <div class="row mb-3">
                 <label class="col-md-4 text-start fw-bold">Full Name</label>
                 <div class="col-md-8">
-                    <input type="text" id="fullname" name="fullname"
+                    <input type="text" id="fullname" name="fullname" disabled
                         class="form-control custom-input"
                         readonly
                         value="<?php echo htmlspecialchars($fullName); ?>">
                 </div>
                 </div>
 
-                <!-- PUROK DROPDOWN (prefilled and required) -->
+                <!-- PUROK (readonly - fetched from database) -->
                 <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Purok</label>
-                <div class="col-md-8">
-                    <select id="purok" name="purok" class="form-control custom-input" required>
-                        <option value="">Select Purok</option>
-                        <?php
-                        $puroks = ['Purok 1', 'Purok 2', 'Purok 3', 'Purok 4', 'Purok 5', 'Purok 6'];
-                        foreach ($puroks as $p) {
-                            $selected = ($userPurok === $p) ? 'selected' : '';
-                            echo "<option value=\"$p\" $selected>$p</option>";
-                        }
-                        ?>
-                    </select>
-                </div>
+                    <label class="col-md-4 text-start fw-bold">Purok</label>
+                    <div class="col-md-8">
+                        <input type="text" id="purok" name="purok" disabled
+                            class="form-control custom-input" 
+                            readonly 
+                            required
+                            value="<?php echo htmlspecialchars($userPurok); ?>">
+                    </div>
                 </div>
 
                 <!-- BIRTHDATE (always readonly) -->
                 <div class="row mb-3">
                 <label class="col-md-4 text-start fw-bold">Date of Birth</label>
                 <div class="col-md-8">
-                    <input type="date" id="birthday" name="birthday"
+                    <input type="date" id="birthday" name="birthday" disabled
                         class="form-control custom-input"
                         readonly
                         value="<?php echo date('Y-m-d', strtotime($birthdate)); ?>">
+                </div>
+                </div>
+
+                <!-- CIVIL STATUS (editable always) -->
+                <div class="row mb-3">
+                <label class="col-md-4 text-start fw-bold">Civil Status</label>
+                <div class="col-md-8">
+                    <select id="civilstatus" name="civilstatus"
+                            class="form-control custom-input"
+                            required>
+                    <?php
+                    foreach (['Single','Married','Separated','Widowed'] as $opt) {
+                        $sel = ($opt === $civilstatus) ? 'selected' : '';
+                        echo "<option value=\"$opt\" $sel>$opt</option>";
+                    }
+                    ?>
+                    </select>
                 </div>
                 </div>
 
@@ -464,26 +476,7 @@ if (!empty($existingRequest)) {
                         class="form-control custom-input"
                         required placeholder="City, Province"
                         <?php echo $isRenewal ? 'readonly' : ''; ?>
-                        value="<?php echo htmlspecialchars($birthplace); ?>"
-                    >
-                </div>
-                </div>
-
-                <!-- CIVIL STATUS (editable always) -->
-                <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Marital Status</label>
-                <div class="col-md-8">
-                    <select id="civilstatus" name="civilstatus"
-                            class="form-control custom-input"
-                            required>
-                    <option value="">Select an option</option>
-                    <?php
-                    foreach (['Single','Married','Separated','Widowed'] as $opt) {
-                        $sel = ($opt === $civilstatus) ? 'selected' : '';
-                        echo "<option value=\"$opt\" $sel>$opt</option>";
-                    }
-                    ?>
-                    </select>
+                        value="<?php echo htmlspecialchars($birthplace); ?>">
                 </div>
                 </div>
 
@@ -526,38 +519,36 @@ if (!empty($existingRequest)) {
                   </div>
                 </div>
 
-                <!-- CONTACT PERSON (editable always) -->
+                <!-- CONTACT PERSON (optional) -->
                 <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Name of Emergency Contact Person</label>
-                <div class="col-md-8">
-                    <input type="text" id="contactperson" name="contactperson"
-                        class="form-control custom-input"
-                        required placeholder="First Name MI. Surname (eg. Juan A. dela Cruz Sr.)"
-                        value="<?php echo htmlspecialchars($contactperson); ?>">
-                </div>
+                    <label class="col-md-4 text-start fw-bold">Name of Emergency Contact Person</label>
+                    <div class="col-md-8">
+                        <input type="text" id="contactperson" name="contactperson"
+                            class="form-control custom-input"
+                            placeholder="First Name MI. Surname (eg. Juan A. dela Cruz Sr.)"
+                            value="<?php echo htmlspecialchars($contactperson); ?>">
+                    </div>
                 </div>
 
-                <!-- CONTACT PERSON ADDRESS (editable) -->
+                <!-- CONTACT PERSON ADDRESS (optional) -->
                 <div class="row mb-3">
-                  <label class="col-md-4 text-start fw-bold">
-                    Address of Emergency Contact Person
-                  </label>
-                  <div class="col-md-8">
-                    <input
-                      type="text"
-                      id="contactAddress"
-                      name="emergency_contact_address"
-                      class="form-control custom-input"
-                      required
-                      placeholder="City, Province"
-                      value="<?php
-                        // if editing existing request, pre-fill:
-                        echo isset($existingRequest['emergency_contact_address'])
-                             ? htmlspecialchars($existingRequest['emergency_contact_address'])
-                             : '';
-                      ?>"
-                    >
-                  </div>
+                    <label class="col-md-4 text-start fw-bold">
+                        Address of Emergency Contact Person</span>
+                    </label>
+                    <div class="col-md-8">
+                        <input
+                            type="text"
+                            id="contactAddress"
+                            name="emergency_contact_address"
+                            class="form-control custom-input"
+                            placeholder="City, Province"
+                            value="<?php
+                                echo isset($existingRequest['emergency_contact_address'])
+                                    ? htmlspecialchars($existingRequest['emergency_contact_address'])
+                                    : '';
+                            ?>"
+                        >
+                    </div>
                 </div>
 
                 <!-- FORMAL PICTURE (always editable; required only on NEW) -->

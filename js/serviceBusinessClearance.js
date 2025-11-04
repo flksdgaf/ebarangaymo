@@ -316,28 +316,31 @@ document.addEventListener("DOMContentLoaded", function () {
                         dateMatchNew.checked = true;
                         dateMatchNew.dispatchEvent(new Event('change', { bubbles: true }));
                     } else {
-                        const dateMatchLegacy = claimOptionsGroup.querySelector(`input[name="claim_date"][value^="${d}"]`);
-                        if (dateMatchLegacy) {
-                            dateMatchLegacy.checked = true;
-                            dateMatchLegacy.dispatchEvent(new Event('change', { bubbles: true }));
+                        // best-effort legacy partial match
+                        const legacyCandidates = Array.from(claimOptionsGroup.querySelectorAll('input[name="claim_date"]'));
+                        for (const c of legacyCandidates) {
+                            if (c.value && c.value.indexOf(d) === 0) {
+                                c.checked = true;
+                                c.dispatchEvent(new Event('change', { bubbles: true }));
+                                break;
+                            }
                         }
                     }
                 }
             }
         } else {
-            // If server didn't provide existing selection, ensure first radio selected by default
-            const anyCheckedNew = claimOptionsGroup.querySelector('input[name="claim_slot"]:checked');
-            const anyCheckedLegacy = claimOptionsGroup.querySelector('input[name="claim_date"]:checked');
-            if (!anyCheckedNew && !anyCheckedLegacy) {
-                const firstRadio = claimOptionsGroup.querySelector('input[name="claim_slot"], input[name="claim_date"]');
-                if (firstRadio) {
-                    firstRadio.checked = true;
-                    firstRadio.dispatchEvent(new Event('change', { bubbles: true }));
+            // DEFAULT SELECTION: Always select first radio (Morning of first available date)
+            const firstRadio = claimOptionsGroup.querySelector('input[name="claim_slot"], input[name="claim_date"]');
+            if (firstRadio) {
+                firstRadio.checked = true;
+                // Trigger change event to update UI and hidden fields
+                firstRadio.dispatchEvent(new Event('change', { bubbles: true }));
+                // Also ensure the card shows as active
+                const parentLabel = firstRadio.closest('label');
+                if (parentLabel) {
+                    parentLabel.classList.add('active');
+                    parentLabel.setAttribute('aria-pressed', 'true');
                 }
-            } else {
-                // still ensure hidden fields are in sync if radio already checked
-                const already = claimOptionsGroup.querySelector('input[name="claim_slot"]:checked') || claimOptionsGroup.querySelector('input[name="claim_date"]:checked');
-                if (already) setHiddenFromRadio(already);
             }
         }
     }

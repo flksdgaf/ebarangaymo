@@ -158,6 +158,7 @@ label {
     /* override default border-radius so only outer corners are rounded */
     border-radius: 0;
     border-width: 2.5px;
+    margin: 0; /* Remove any margin between buttons */
 }
 .btn-group .payment-btn:first-child {
     border-top-left-radius: 20px;
@@ -167,7 +168,7 @@ label {
     border-top-right-radius: 20px;
     border-bottom-right-radius: 20px;
 }
-
+  
 /* larger clickable area & column layout */
 .payment-btn {
     display: flex;
@@ -176,11 +177,7 @@ label {
     justify-content: center;
     width: 200px;
     height: 90px;
-    gap: 6px;
-    padding: 8px 12px;
-    border: 2px solid rgba(0,0,0,0.06);
-    background: transparent;
-    transition: background .15s ease, transform .12s ease;
+    padding: 0.5rem; /* Add some internal padding */
 }
 
 .payment-btn .label {
@@ -198,7 +195,6 @@ label {
 .payment-btn.active {
     background-color: #28a745;
     color: white;
-    transform: translateY(-3px);
     border-color: #1f7a34;
 }
 

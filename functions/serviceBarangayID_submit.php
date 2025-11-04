@@ -53,8 +53,6 @@ if ($birthdate === '') $errors[] = 'Birthdate is required.';
 if ($birthplace === '') $errors[] = 'Birthplace is required.';
 if ($civilstatus === '') $errors[] = 'Civil status is required.';
 if ($religion === '') $errors[] = 'Religion is required.';
-if ($contactperson === '') $errors[] = 'Contact person is required.';
-if ($contactaddress === '') $errors[] = 'Contact person address is required.';
 
 // Validate optional valid ID length (if provided) - keep it reasonable
 if ($validIdNumber !== '' && mb_strlen($validIdNumber) > 100) {

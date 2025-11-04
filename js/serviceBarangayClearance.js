@@ -338,46 +338,55 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 
-        // Pre-select existing claim if server provided window._existingClaimObj
+        // Pre-select existing claim logic:
+        // Prefer server-provided object window._existingClaimObj {date, part}
         if (window._existingClaimObj && window._existingClaimObj.date) {
             const d = window._existingClaimObj.date;
             const p = window._existingClaimObj.part;
+            // try to find new-style radio first
             const desiredNew = claimOptionsGroup.querySelector(`input[name="claim_slot"][data-date="${d}"][data-part="${p}"]`);
             if (desiredNew) {
                 desiredNew.checked = true;
                 desiredNew.dispatchEvent(new Event('change', { bubbles: true }));
             } else {
+                // try legacy radio value match
                 const legacyVal = `${d}|${p}`;
                 const desiredLegacy = claimOptionsGroup.querySelector(`input[name="claim_date"][value="${legacyVal}"]`);
                 if (desiredLegacy) {
                     desiredLegacy.checked = true;
                     desiredLegacy.dispatchEvent(new Event('change', { bubbles: true }));
                 } else {
+                    // fallback: match by date only (prefer morning)
                     const dateMatchNew = claimOptionsGroup.querySelector(`input[name="claim_slot"][data-date="${d}"]`);
                     if (dateMatchNew) {
                         dateMatchNew.checked = true;
                         dateMatchNew.dispatchEvent(new Event('change', { bubbles: true }));
                     } else {
-                        const dateMatchLegacy = claimOptionsGroup.querySelector(`input[name="claim_date"][value^="${d}"]`);
-                        if (dateMatchLegacy) {
-                            dateMatchLegacy.checked = true;
-                            dateMatchLegacy.dispatchEvent(new Event('change', { bubbles: true }));
+                        // best-effort legacy partial match
+                        const legacyCandidates = Array.from(claimOptionsGroup.querySelectorAll('input[name="claim_date"]'));
+                        for (const c of legacyCandidates) {
+                            if (c.value && c.value.indexOf(d) === 0) {
+                                c.checked = true;
+                                c.dispatchEvent(new Event('change', { bubbles: true }));
+                                break;
+                            }
                         }
                     }
                 }
             }
         } else {
-            const anyCheckedNew = claimOptionsGroup.querySelector('input[name="claim_slot"]:checked');
-            const anyCheckedLegacy = claimOptionsGroup.querySelector('input[name="claim_date"]:checked');
-            if (!anyCheckedNew && !anyCheckedLegacy) {
-                const firstRadio = claimOptionsGroup.querySelector('input[name="claim_slot"], input[name="claim_date"]');
-                if (firstRadio) {
-                    firstRadio.checked = true;
-                    firstRadio.dispatchEvent(new Event('change', { bubbles: true }));
+            // DEFAULT SELECTION: Always select first radio (Morning of first available date)
+            const firstRadio = claimOptionsGroup.querySelector('input[name="claim_slot"], input[name="claim_date"]');
+            if (firstRadio) {
+                firstRadio.checked = true;
+                // Trigger change event to update UI and hidden fields
+                firstRadio.dispatchEvent(new Event('change', { bubbles: true }));
+                // Also ensure the card shows as active
+                const parentLabel = firstRadio.closest('label');
+                if (parentLabel) {
+                    parentLabel.classList.add('active');
+                    parentLabel.setAttribute('aria-pressed', 'true');
                 }
-            } else {
-                const already = claimOptionsGroup.querySelector('input[name="claim_slot"]:checked') || claimOptionsGroup.querySelector('input[name="claim_date"]:checked');
-                if (already) setHiddenFromRadio(already);
             }
         }
     }

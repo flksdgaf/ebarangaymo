@@ -297,7 +297,7 @@ if (!empty($existingRequest)) {
                 <div class="row mb-3">
                     <label class="col-md-4 text-start fw-bold">Full Name</label>
                     <div class="col-md-8">
-                        <input type="text" id="fullname" name="fullname"
+                        <input type="text" id="fullname" name="fullname" disabled
                             class="form-control custom-input"
                             readonly
                             value="<?php echo htmlspecialchars($fullName); ?>"
@@ -307,7 +307,7 @@ if (!empty($existingRequest)) {
 
                 <!-- STREET (optional) -->
                 <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Street (Optional)</label>
+                <label class="col-md-4 text-start fw-bold">Street <span class="small text-muted">(Optional)</span></label>
                 <div class="col-md-8">
                     <input type="text" id="street" name="street"
                         class="form-control custom-input"
@@ -320,38 +320,36 @@ if (!empty($existingRequest)) {
                 <div class="row mb-3">
                 <label class="col-md-4 text-start fw-bold">Purok</label>
                 <div class="col-md-8">
-                    <select id="purok" name="purok" class="form-control custom-input" required>
-                        <option value="">Select Purok</option>
-                        <?php
-                        $puroks = ['Purok 1', 'Purok 2', 'Purok 3', 'Purok 4', 'Purok 5', 'Purok 6'];
-                        foreach ($puroks as $p) {
-                            $selected = ($userPurok === $p || ($existingRequest['purok'] ?? '') === $p) ? 'selected' : '';
-                            echo "<option value=\"$p\" $selected>$p</option>";
-                        }
-                        ?>
-                    </select>
+                    <input type="text" id="purok" name="purok" disabled
+                        class="form-control custom-input"
+                        readonly
+                        required
+                        value="<?php echo htmlspecialchars($userPurok); ?>"
+                        placeholder="Purok">
                 </div>
                 </div>
 
-                <!-- BIRTHDATE -->
+                <!-- BIRTHDATE & AGE -->
                 <div class="row mb-3">
                 <label class="col-md-4 text-start fw-bold">Birthdate</label>
                 <div class="col-md-8">
-                    <input type="date" id="birthdate" name="birthdate"
-                        class="form-control custom-input"
-                        required
-                        value="<?php echo (!empty($birthdate) && $birthdate !== '0000-00-00') ? date('Y-m-d', strtotime($birthdate)) : ($existingRequest['birthdate'] ?? ''); ?>">
-                </div>
-                </div>
-
-                <!-- AGE -->
-                <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Age</label>
-                <div class="col-md-8">
-                    <input type="number" id="age" name="age"
-                        class="form-control custom-input"
-                        min="0" max="150" required
-                        value="<?php echo htmlspecialchars($age ?: ($existingRequest['age'] ?? '')); ?>">
+                    <div class="row g-4">
+                        <div class="col-md-7">
+                            <input type="date" id="birthdate" name="birthdate"
+                                class="form-control custom-input" disabled
+                                readonly
+                                required
+                                value="<?php echo (!empty($birthdate) && $birthdate !== '0000-00-00') ? date('Y-m-d', strtotime($birthdate)) : ($existingRequest['birthdate'] ?? ''); ?>">
+                        </div>
+                        <label class="col-md-1 text-start fw-bold">Age</label>
+                        <div class="col-md-4">
+                            <input type="number" id="age" name="age" disabled
+                                class="form-control custom-input"
+                                readonly
+                                placeholder="Age"
+                                    value="<?php echo htmlspecialchars($age ?: ($existingRequest['age'] ?? '')); ?>">
+                        </div>
+                    </div>
                 </div>
                 </div>
 
@@ -366,12 +364,11 @@ if (!empty($existingRequest)) {
                 </div>
                 </div>
 
-                <!-- MARITAL STATUS -->
+                <!-- CIVIL STATUS -->
                 <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Marital Status</label>
+                <label class="col-md-4 text-start fw-bold">Civil Status</label>
                 <div class="col-md-8">
                     <select id="maritalstatus" name="marital_status" class="form-control custom-input" required>
-                        <option value="">Select an option</option>
                         <?php
                         foreach (['Single','Married','Separated','Widowed'] as $opt) {
                             $sel = ($opt === $civilstatus || ($existingRequest['marital_status'] ?? '') === $opt) ? 'selected' : '';
@@ -404,7 +401,6 @@ if (!empty($existingRequest)) {
                     $prefill_other_value = $is_prefilled_in_list ? '' : $existingPurpose;
                     ?>
                     <select id="purposeSelect" name="purpose_select" class="form-control custom-input" required>
-                        <option value="">Select Purpose</option>
                         <?php
                         foreach ($purposes as $p) {
                             $sel = ($is_prefilled_in_list && $existingPurpose === $p) ? 'selected' : '';
@@ -636,7 +632,7 @@ if (!empty($existingRequest)) {
                     </li>
 
                     <li class="list-group-item d-flex justify-content-between">
-                        <span class="fw-bold">Marital Status:</span>
+                        <span class="fw-bold">Civil Status:</span>
                         <span class="text-success" id="summaryMaritalStatus">-</span>
                     </li>
 

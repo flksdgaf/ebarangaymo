@@ -431,10 +431,11 @@ if (!empty($existingRequest)) {
                 <div class="row mb-3">
                     <label class="col-md-4 text-start fw-bold">Full Name</label>
                     <div class="col-md-8">
-                        <input type="text" id="full_name" name="full_name"
-                               class="form-control custom-input"
-                               required
-                               value="<?php echo htmlspecialchars($displayFullName); ?>">
+                        <input type="text" id="full_name" name="full_name" disabled
+                            class="form-control custom-input"
+                            required
+                            readonly
+                            value="<?php echo htmlspecialchars($displayFullName); ?>">
                     </div>
                 </div>
 
@@ -447,8 +448,7 @@ if (!empty($existingRequest)) {
                 <div class="row mb-3">
                 <label class="col-md-4 text-start fw-bold">Purok</label>
                 <div class="col-md-8">
-                    <select id="purok" name="purok" class="form-control custom-input" required>
-                        <option value="">Select Purok</option>
+                    <select id="purok" name="purok" class="form-control custom-input" required disabled>
                         <?php
                         $puroks = ['Purok 1', 'Purok 2', 'Purok 3', 'Purok 4', 'Purok 5', 'Purok 6'];
                         foreach ($puroks as $p) {
@@ -457,33 +457,35 @@ if (!empty($existingRequest)) {
                         }
                         ?>
                     </select>
+                    <input type="hidden" name="purok" value="<?php echo htmlspecialchars($userPurok ?: ($existingRequest['purok'] ?? '')); ?>">
                 </div>
                 </div>
 
                 <!-- AGE -->
                 <div class="row mb-3">
                 <label class="col-md-4 text-start fw-bold">Age</label>
-                <div class="col-md-8">
-                    <input type="number" id="age" name="age"
+                <div class="col-md-8" >
+                    <input type="number" id="age" name="age" disabled
                         class="form-control custom-input"
                         min="0" max="150" required
+                        readonly
                         value="<?php echo htmlspecialchars($existingRequest['age'] ?? $age); ?>">
                 </div>
                 </div>
 
                 <!-- MARITAL STATUS -->
                 <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Marital Status</label>
+                <label class="col-md-4 text-start fw-bold">Civil Status</label>
                 <div class="col-md-8">
                     <select id="maritalstatus" name="marital_status" class="form-control custom-input" required>
-                        <option value="">Select an option</option>
-                        <?php
-                        foreach (['Single','Married','Separated','Widowed'] as $opt) {
-                            $sel = ($opt === $civilstatus || ($existingRequest['marital_status'] ?? '') === $opt) ? 'selected' : '';
-                            echo "<option value=\"$opt\" $sel>$opt</option>";
-                        }
-                        ?>
-                    </select>
+                    <?php
+                    foreach (['Single','Married','Separated','Widowed'] as $opt) {
+                        $sel = ($opt === $civilstatus || ($existingRequest['marital_status'] ?? '') === $opt) ? 'selected' : '';
+                        echo "<option value=\"$opt\" $sel>$opt</option>";
+                    }
+                    ?>
+                </select>
+                <input type="hidden" name="marital_status" value="<?php echo htmlspecialchars($existingRequest['marital_status'] ?? $civilstatus); ?>">
                 </div>
                 </div>
 

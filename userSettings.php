@@ -140,7 +140,6 @@ if (isset($_POST['personal_submit'])) {
                     $_SESSION['picMessage'] = '<div class="alert alert-danger alert-dismissible fade show">Profile picture upload failed.<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
                 }
             }
-            // $_SESSION['infoMessage'] = '<div class="alert alert-success alert-dismissible fade show" role="alert">Personal information updated successfully.<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
         } else {
             $_SESSION['infoMessage'] = '<div class="alert alert-danger alert-dismissible fade show" role="alert">Failed to update personal information.<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
         }
@@ -239,709 +238,626 @@ if (!empty($profile['profile_picture'])) $currentPic = $profile['profile_picture
 $profile_birthdate = $profile['birthdate'] ?? '';
 
 ?>
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>eBarangay Mo | User Settings</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    :root{
-      --ebg-dark:#234d2f;
-      --ebg-green:#2e8b57;
-    }
-    body { background:#f3f4f6; }
-    .full-page { min-height:100vh; }
-    .settings-tabs { display:flex; gap:0.6rem; justify-content:flex-start; align-items:center; margin-bottom:1rem; }
-    .tab-btn { 
-      border-radius: 40px; 
-      padding: 8px 20px; 
-      border: 2px solid var(--ebg-green); 
-      background: transparent; 
-      color: var(--ebg-green); 
-      cursor: pointer; 
-      font-weight: 600; 
-      transition: all 0.2s ease;
-      font-size: 0.95rem;
-    }
-    .tab-btn.active { background:var(--ebg-green); color:#fff; border-color:var(--ebg-green); }
-    .profile-hero { display:flex; gap:2rem; align-items:flex-start; padding:1.5rem; background:#fff; border-radius:6px; box-shadow:0 6px 18px rgba(0,0,0,0.06); }
-    .left-card { width:320px; height: 410px; background:var(--ebg-dark); color:#fff; padding:28px 22px; display:flex; flex-direction:column; align-items:center; border-radius:6px; }
-    .left-card img { width:180px; height:180px; object-fit:cover; border-radius:100px; border:4px solid #fff; background:#fff;}
-    .left-username { margin-top:18px; font-size:20px; font-weight:700; letter-spacing:0.5px; text-align:center; }
-    .left-id { opacity:0.9; margin-top:6px; color:#dfeee0; }
-    .right-form { flex:1; padding:4px 8px; }
-    .right-form h2 { color:var(--ebg-green); font-weight:700; margin-bottom:4px; }
-    .small-muted { font-size:0.86rem; color:#6c757d; }
-    .form-control[readonly], .form-select[disabled] { background:#f8f9fa; color:#212529; }
-    .upload-file-btn { display:inline-block; margin-top:8px; }
-    .upload-valid-link { font-size:0.9rem; color:#111827; text-decoration:none; }
-    .upload-valid-link a { text-decoration:none; color:inherit; cursor:pointer; font-weight:700; }
-    .profile-actions { display:flex; gap:12px; align-items:center; justify-content:flex-end; margin-top:12px; }
-    .edit-btn { border-radius:20px; padding:8px 20px; background:transparent; border:2px solid var(--ebg-green); color:var(--ebg-green); font-weight:600; transition: all 0.2s ease; cursor:pointer; }
-    .edit-btn.editing { background:var(--ebg-green); color:#fff; border-color:var(--ebg-green); }
-    .edit-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(46, 139, 87, 0.2); }
-    .valid-id-note { font-size:0.85rem; color:#6c757d; }
-    /* username/password section styling to align with profile */
-    .cred-wrap { display:flex; gap:1rem; align-items:flex-start; }
-    .cred-card { flex:1; background:#fff; border-radius:6px; padding:18px; box-shadow:0 4px 12px rgba(0,0,0,0.04); border:1px solid #e9ecef; }
-    .cred-card h5 { margin-bottom:12px; color:var(--ebg-green); font-weight:700; }
-    .btn-save { border-radius:20px; padding:8px 18px; }
-    .alert-area { margin-bottom:12px; }
 
-    /* ============================================
-      RESPONSIVE LAYOUT ADJUSTMENTS
-      ============================================ */
+<title>eBarangay Mo | User Settings</title>
 
-    /* Tablet view (768px - 991px) */
-    @media (max-width: 991px) {
-      .container-fluid.full-page { padding-left: 1rem; padding-right: 1rem; }
-      
-      .profile-hero { 
-        gap: 1.5rem; 
-        padding: 1.25rem; 
-      }
-      
-      .left-card { 
-        width: 280px; 
-        height: auto;
-        padding: 20px 18px;
-      }
-      
-      .left-card img { 
-        width: 150px; 
-        height: 150px; 
-        margin-top: 20px;
-      }
-      
-      .left-username { font-size: 18px; }
-      
-      .right-form { padding: 8px; }
-      
-      .right-form h2 { font-size: 1.5rem; }
-      
-      .settings-tabs { 
-        gap: 0.5rem; 
-        flex-wrap: wrap;
-      }
-      
-      .tab-btn { 
-        padding: 6px 16px; 
-        font-size: 0.95rem; 
-      }
-      
-      .cred-wrap { gap: 0.75rem; }
-      
-      .cred-card { padding: 16px; }
-    }
+<style>
+:root{
+  --ebg-dark:#234d2f;
+  --ebg-green:#2e8b57;
+}
+body { background:#f3f4f6; }
+.full-page { min-height:100vh; }
+.settings-tabs { display:flex; gap:0.6rem; justify-content:flex-start; align-items:center; margin-bottom:1rem; }
+.tab-btn { 
+  border-radius: 40px; 
+  padding: 8px 20px; 
+  border: 2px solid var(--ebg-green); 
+  background: transparent; 
+  color: var(--ebg-green); 
+  cursor: pointer; 
+  font-weight: 600; 
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+}
+.tab-btn.active { background:var(--ebg-green); color:#fff; border-color:var(--ebg-green); }
+.profile-hero { display:flex; gap:2rem; align-items:flex-start; padding:1.5rem; background:#fff; border-radius:6px; box-shadow:0 6px 18px rgba(0,0,0,0.06); }
+.left-card { width:320px; height: 410px; background:var(--ebg-dark); color:#fff; padding:28px 22px; display:flex; flex-direction:column; align-items:center; border-radius:6px; }
+.left-card img { width:180px; height:180px; object-fit:cover; border-radius:100px; border:4px solid #fff; background:#fff;}
+.left-username { margin-top:18px; font-size:20px; font-weight:700; letter-spacing:0.5px; text-align:center; }
+.left-id { opacity:0.9; margin-top:6px; color:#dfeee0; }
+.right-form { flex:1; padding:4px 8px; }
+.right-form h2 { color:var(--ebg-green); font-weight:700; margin-bottom:4px; }
+.small-muted { font-size:0.86rem; color:#6c757d; }
+.form-control[readonly], .form-select[disabled] { background:#f8f9fa; color:#212529; }
+.upload-file-btn { display:inline-block; margin-top:8px; }
+.upload-valid-link { font-size:0.9rem; color:#111827; text-decoration:none; }
+.upload-valid-link a { text-decoration:none; color:inherit; cursor:pointer; font-weight:700; }
+.profile-actions { display:flex; gap:12px; align-items:center; justify-content:flex-end; margin-top:12px; }
+.edit-btn { border-radius:20px; padding:8px 20px; background:transparent; border:2px solid var(--ebg-green); color:var(--ebg-green); font-weight:600; transition: all 0.2s ease; cursor:pointer; }
+.edit-btn.editing { background:var(--ebg-green); color:#fff; border-color:var(--ebg-green); }
+.edit-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(46, 139, 87, 0.2); }
+.valid-id-note { font-size:0.85rem; color:#6c757d; }
+/* username/password section styling to align with profile */
+.cred-wrap { display:flex; gap:1rem; align-items:flex-start; }
+.cred-card { flex:1; background:#fff; border-radius:6px; padding:18px; box-shadow:0 4px 12px rgba(0,0,0,0.04); border:1px solid #e9ecef; }
+.cred-card h5 { margin-bottom:12px; color:var(--ebg-green); font-weight:700; }
+.btn-save { border-radius:20px; padding:8px 18px; }
+.alert-area { margin-bottom:12px; }
 
-    /* Mobile view (below 768px) */
-    @media (max-width: 767px) {
-      .container-fluid.full-page { 
-        padding-left: 0.75rem; 
-        padding-right: 0.75rem; 
-        padding-top: 0.5rem;
-      }
-      
-      .profile-hero { 
-        flex-direction: column; 
-        align-items: center; 
-        padding: 1rem;
-      }
-      
-      .left-card { 
-        width: 100%; 
-        height: auto;
-        display: flex; 
-        flex-direction: row; 
-        gap: 16px; 
-        padding: 16px; 
-        align-items: center;
-      }
-      
-      .left-card img { 
-        width: 100px; 
-        height: 100px; 
-        margin-top: 0;
-      }
-      
-      .left-username { 
-        font-size: 1.1rem; 
-        margin-top: 0;
-        text-align: left;
-      }
-      
-      .left-id { font-size: 0.9rem; }
-      
-      .right-form { 
-        width: 100%; 
-        padding: 12px 8px; 
-      }
-      
-      .right-form h2 { 
-        font-size: 1.3rem; 
-        text-align: center;
-      }
-      
-      .small-muted { 
-        font-size: 0.8rem; 
-        text-align: center;
-      }
-      
-      .upload-valid-link { 
-        font-size: 0.85rem; 
-        text-align: center;
-        display: block;
-        margin-top: -5px;
-      }
+/* ============================================
+  RESPONSIVE LAYOUT ADJUSTMENTS
+  ============================================ */
 
-      /* Stack the info text and upload link vertically on mobile */
-      .col-12.d-flex.justify-content-between.align-items-start.mb-3 {
-        flex-direction: column !important;
-        align-items: center !important;
-        gap: 8px;
-      }
-      
-      .profile-actions { 
-        justify-content: center; 
-        margin-top: 16px; 
-      }
-      
-      .edit-btn { 
-        width: 100%; 
-        padding: 10px 20px; 
-      }
-      
-      .settings-tabs { 
-        justify-content: center; 
-        gap: 0.4rem; 
-      }
-      
-      .tab-btn { 
-        font-size: 0.8rem; 
-        padding: 7px 12px; 
-        flex: 1;
-        text-align: center;
-        white-space: nowrap;
-      }
-      
-      .cred-wrap { 
-        flex-direction: column; 
-      }
-      
-      .cred-card { 
-        padding: 14px; 
-        width: 100%;
-      }
-      
-      .cred-card h5 { 
-        font-size: 1.05rem; 
-        text-align: center;
-      }
-      
-      .btn-save { 
-        width: 100%; 
-        padding: 10px 18px; 
-      }
-      
-      /* Stack form fields better on mobile */
-      .col-md-6.mb-3.d-flex.gap-2 {
-        flex-direction: column !important;
-      }
-      
-      .col-md-6.mb-3.d-flex.gap-2 > div {
-        flex: 1 1 100% !important;
-      }
-      
-      /* Keep input groups horizontal on mobile for password fields */
-      .input-group { 
-        flex-direction: row !important; 
-      }
+/* Tablet view (768px - 991px) */
+@media (max-width: 991px) {
+  .container-fluid.full-page { padding-left: 1rem; padding-right: 1rem; }
+  
+  .profile-hero { 
+    gap: 1.5rem; 
+    padding: 1.25rem; 
+  }
+  
+  .left-card { 
+    width: 280px; 
+    height: auto;
+    padding: 20px 18px;
+  }
+  
+  .left-card img { 
+    width: 150px; 
+    height: 150px; 
+    margin-top: 20px;
+  }
+  
+  .left-username { font-size: 18px; }
+  
+  .right-form { padding: 8px; }
+  
+  .right-form h2 { font-size: 1.5rem; }
+  
+  .settings-tabs { 
+    gap: 0.5rem; 
+    flex-wrap: wrap;
+  }
+  
+  .tab-btn { 
+    padding: 6px 16px; 
+    font-size: 0.95rem; 
+  }
+  
+  .cred-wrap { gap: 0.75rem; }
+  
+  .cred-card { padding: 16px; }
+}
 
-      .input-group .form-control {
-        flex: 1;
-      }
+/* Mobile view (below 768px) */
+@media (max-width: 767px) {
+  .container-fluid.full-page { 
+    padding-left: 0.75rem; 
+    padding-right: 0.75rem; 
+    padding-top: 0.5rem;
+  }
+  
+  .profile-hero { 
+    flex-direction: column; 
+    align-items: center; 
+    padding: 1rem;
+  }
+  
+  .left-card { 
+    width: 100%; 
+    height: auto;
+    display: flex; 
+    flex-direction: row; 
+    gap: 16px; 
+    padding: 16px; 
+    align-items: center;
+  }
+  
+  .left-card img { 
+    width: 100px; 
+    height: 100px; 
+    margin-top: 0;
+  }
+  
+  .left-username { 
+    font-size: 1.1rem; 
+    margin-top: 0;
+    text-align: left;
+  }
+  
+  .left-id { font-size: 0.9rem; }
+  
+  .right-form { 
+    width: 100%; 
+    padding: 12px 8px; 
+  }
+  
+  .right-form h2 { 
+    font-size: 1.3rem; 
+    text-align: center;
+  }
+  
+  .small-muted { 
+    font-size: 0.8rem; 
+    text-align: center;
+  }
+  
+  .upload-valid-link { 
+    font-size: 0.85rem; 
+    text-align: center;
+    display: block;
+    margin-top: -5px;
+  }
 
-      .input-group .btn { 
-        width: auto !important;
-        border-radius: 0 0.375rem 0.375rem 0 !important;
-        padding: 0.5rem 0.75rem;
-      }
-    }
+  /* Stack the info text and upload link vertically on mobile */
+  .col-12.d-flex.justify-content-between.align-items-start.mb-3 {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 8px;
+  }
+  
+  .profile-actions { 
+    justify-content: center; 
+    margin-top: 16px; 
+  }
+  
+  .edit-btn { 
+    width: 100%; 
+    padding: 10px 20px; 
+  }
+  
+  .settings-tabs { 
+    justify-content: center; 
+    gap: 0.4rem; 
+  }
+  
+  .tab-btn { 
+    font-size: 0.8rem; 
+    padding: 7px 12px; 
+    flex: 1;
+    text-align: center;
+    white-space: nowrap;
+  }
+  
+  .cred-wrap { 
+    flex-direction: column; 
+  }
+  
+  .cred-card { 
+    padding: 14px; 
+    width: 100%;
+  }
+  
+  .cred-card h5 { 
+    font-size: 1.05rem; 
+    text-align: center;
+  }
+  
+  .btn-save { 
+    width: 100%; 
+    padding: 10px 18px; 
+  }
+  
+  /* Stack form fields better on mobile */
+  .col-md-6.mb-3.d-flex.gap-2 {
+    flex-direction: column !important;
+  }
+  
+  .col-md-6.mb-3.d-flex.gap-2 > div {
+    flex: 1 1 100% !important;
+  }
+  
+  /* Keep input groups horizontal on mobile for password fields */
+  .input-group { 
+    flex-direction: row !important; 
+  }
 
-    /* Extra small mobile (below 480px) */
-    @media (max-width: 479px) {
-      .container-fluid.full-page { 
-        padding-left: 0.5rem; 
-        padding-right: 0.5rem; 
-      }
-      
-      .profile-hero { 
-        padding: 0.75rem; 
-      }
-      
-      .left-card { 
-        flex-direction: column; 
-        text-align: center; 
-        padding: 14px;
-      }
-      
-      .left-card img { 
-        width: 110px; 
-        height: 110px; 
-        margin: 10px auto 0;
-      }
-      
-      .left-username { 
-        font-size: 1rem; 
-        text-align: center;
-        margin-top: 0;
-      }
+  .input-group .form-control {
+    flex: 1;
+  }
 
-      .left-id {
-        margin-top: -10px;
-      }
-      
-      .right-form { 
-        padding: 8px 4px; 
-      }
-      
-      .right-form h2 { 
-        font-size: 1.15rem; 
-      }
-      
-      .small-muted { 
-        font-size: 0.75rem; 
-      }
-      
-      .upload-valid-link { 
-        font-size: 0.78rem; 
-      }
-      
-      .tab-btn { 
-        font-size: 0.7rem; 
-        padding: 6px 8px; 
-        white-space: nowrap;
-      }
-      
-      .form-label { 
-        font-size: 0.8rem; 
-      }
-      
-      .form-control, .form-select { 
-        font-size: 0.85rem; 
-        padding: 0.5rem 0.75rem; 
-      }
-      
-      .edit-btn { 
-        font-size: 0.9rem; 
-        padding: 8px 16px; 
-      }
-      
-      .cred-card { 
-        padding: 12px; 
-      }
-      
-      .cred-card h5 { 
-        font-size: 0.95rem; 
-      }
-      
-      .btn-save { 
-        font-size: 0.9rem; 
-        padding: 8px 16px; 
-      }
+  .input-group .btn { 
+    width: auto !important;
+    border-radius: 0 0.375rem 0.375rem 0 !important;
+    padding: 0.5rem 0.75rem;
+  }
+}
 
-      /* Justify Data Privacy text on mobile */
-      #policySection .card-body p {
-        text-align: justify;
-      }
+/* Extra small mobile (below 480px) */
+@media (max-width: 479px) {
+  .container-fluid.full-page { 
+    padding-left: 0.5rem; 
+    padding-right: 0.5rem; 
+  }
+  
+  .profile-hero { 
+    padding: 0.75rem; 
+  }
+  
+  .left-card { 
+    flex-direction: column; 
+    text-align: center; 
+    padding: 14px;
+  }
+  
+  .left-card img { 
+    width: 110px; 
+    height: 110px; 
+    margin: 10px auto 0;
+  }
+  
+  .left-username { 
+    font-size: 1rem; 
+    text-align: center;
+    margin-top: 0;
+  }
 
-      /* Smaller checkbox label text on mobile */
-      #policySection .form-check-label {
-        font-size: 0.8rem;
-      }
+  .left-id {
+    margin-top: -10px;
+  }
+  
+  .right-form { 
+    padding: 8px 4px; 
+  }
+  
+  .right-form h2 { 
+    font-size: 1.15rem; 
+  }
+  
+  .small-muted { 
+    font-size: 0.75rem; 
+  }
+  
+  .upload-valid-link { 
+    font-size: 0.78rem; 
+  }
+  
+  .tab-btn { 
+    font-size: 0.7rem; 
+    padding: 6px 8px; 
+    white-space: nowrap;
+  }
+  
+  .form-label { 
+    font-size: 0.8rem; 
+  }
+  
+  .form-control, .form-select { 
+    font-size: 0.85rem; 
+    padding: 0.5rem 0.75rem; 
+  }
+  
+  .edit-btn { 
+    font-size: 0.9rem; 
+    padding: 8px 16px; 
+  }
+  
+  .cred-card { 
+    padding: 12px; 
+  }
+  
+  .cred-card h5 { 
+    font-size: 0.95rem; 
+  }
+  
+  .btn-save { 
+    font-size: 0.9rem; 
+    padding: 8px 16px; 
+  }
 
-      #changePicBtn {
-        margin-top: -20px;
-      }
-    }
-  </style>
-</head>
-<body class="no-scroll">
-  <div class="container-fluid full-page py-4">
-    <div class="row">
-      <div class="col-12 px-4">
+  /* Justify Data Privacy text on mobile */
+  #policySection .card-body p {
+    text-align: justify;
+  }
 
-        <!-- Tabs -->
-        <div class="settings-tabs mt-2 mb-3">
-          <button id="tabProfile" class="tab-btn active" data-target="profileSection">Profile</button>
-          <button id="tabPrivacy" class="tab-btn" data-target="privacySection">Username &amp; Password</button>
-          <button id="tabPolicy" class="tab-btn" data-target="policySection">Data Policy</button>
-        </div>
+  /* Smaller checkbox label text on mobile */
+  #policySection .form-check-label {
+    font-size: 0.8rem;
+  }
 
-        <!-- PROFILE SECTION -->
-        <div id="profileSection" class="settings-section mt-4">
-          <?= ($picMessage ?? '') . ($infoMessage ?? '') . ($idUploadMessage ?? '') ?>
+  #changePicBtn {
+    margin-top: -20px;
+  }
+}
+</style>
 
-          <div class="profile-hero mb-4">
-            <div class="left-card text-center">
-              <img src="profilePictures/<?= htmlspecialchars($currentPic) ?>" alt="Avatar">
-              <div class="left-username"><?= htmlspecialchars($profile['full_name'] ?: ($userAcct['username'] ?? '')) ?></div>
-              <div class="left-id">#<?= htmlspecialchars($profile['account_ID'] ?? '') ?></div>
+<div class="container-fluid full-page py-4">
+  <div class="row">
+    <div class="col-12 px-4">
 
-              <!-- Change Profile Picture button placed below Account ID -->
-              <div style="width:100%; display:flex; justify-content:center; margin-top: 20px;">
-                <button type="button" id="changePicBtn" class="edit-btn">Change Profile Picture</button>
+      <!-- Tabs -->
+      <div class="settings-tabs mt-2 mb-3">
+        <button id="tabProfile" class="tab-btn active" data-target="profileSection">Profile</button>
+        <button id="tabPrivacy" class="tab-btn" data-target="privacySection">Username &amp; Password</button>
+        <button id="tabPolicy" class="tab-btn" data-target="policySection">Data Policy</button>
+      </div>
+
+      <!-- PROFILE SECTION -->
+      <div id="profileSection" class="settings-section mt-4">
+        <?= ($picMessage ?? '') . ($infoMessage ?? '') . ($idUploadMessage ?? '') ?>
+
+        <div class="profile-hero mb-4">
+          <div class="left-card text-center">
+            <img src="profilePictures/<?= htmlspecialchars($currentPic) ?>" alt="Avatar">
+            <div class="left-username"><?= htmlspecialchars($profile['full_name'] ?: ($userAcct['username'] ?? '')) ?></div>
+            <div class="left-id">#<?= htmlspecialchars($profile['account_ID'] ?? '') ?></div>
+
+            <!-- Change Profile Picture button placed below Account ID -->
+            <div style="width:100%; display:flex; justify-content:center; margin-top: 20px;">
+              <button type="button" id="changePicBtn" class="edit-btn">Change Profile Picture</button>
+            </div>
+          </div>
+
+
+          <div class="right-form">
+            <h2>Personal Details</h2>
+
+            <form id="personalForm" method="POST" enctype="multipart/form-data" class="row" onkeydown="return handleFormKeydown(event)">
+              <input type="hidden" name="personal_submit" value="1">
+              <input type="hidden" name="birthdate" id="birthdateHidden" value="<?= htmlspecialchars($profile_birthdate) ?>">
+
+              <div class="col-12 d-flex justify-content-between align-items-start mb-3">
+                <div class="small-muted">Fill your personal information</div>
               </div>
-            </div>
 
-
-            <div class="right-form">
-              <h2>Personal Details</h2>
-
-              <form id="personalForm" method="POST" enctype="multipart/form-data" class="row" onkeydown="return handleFormKeydown(event)">
-                <input type="hidden" name="personal_submit" value="1">
-                <input type="hidden" name="birthdate" id="birthdateHidden" value="<?= htmlspecialchars($profile_birthdate) ?>">
-
-                <div class="col-12 d-flex justify-content-between align-items-start mb-3">
-                  <div class="small-muted">Fill your personal information</div>
-                  <!-- <div class="upload-valid-link">
-                    Want to fill these without typing? <a id="openValidId" data-bs-toggle="modal" data-bs-target="#uploadIDModal">Upload a Valid ID</a>
-                  </div> -->
-                </div>
-
-                <div class="col-md-6 mb-3">
-                  <label class="form-label small-muted">Full Name</label>
-                  <input name="full_name" id="full_name" class="form-control" value="<?= htmlspecialchars($profile['full_name'] ?? '') ?>" readonly required>
-                </div>
-
-                <div class="col-md-6 mb-3">
-                  <label class="form-label small-muted">Address</label>
-                  <input name="address_display" id="address_display" class="form-control" value="<?= htmlspecialchars($profile['address'] ?? $purokLabel) ?>" readonly>
-                </div>
-
-                <div class="col-md-6 mb-3 d-flex gap-2">
-                  <div style="flex:0 0 35%;">
-                    <label class="form-label small-muted">Birth Month</label>
-                    <input type="text" id="birth_m" class="form-control" readonly value="<?= $profile['birthdate'] ? date('M', strtotime($profile['birthdate'])) : '' ?>">
-                  </div>
-                  <div style="flex:0 0 25%;">
-                    <label class="form-label small-muted">Day</label>
-                    <input type="text" id="birth_d" class="form-control" readonly value="<?= $profile['birthdate'] ? date('d', strtotime($profile['birthdate'])) : '' ?>">
-                  </div>
-                  <div style="flex:0 0 35%;">
-                    <label class="form-label small-muted">Year</label>
-                    <input type="text" id="birth_y" class="form-control" readonly value="<?= $profile['birthdate'] ? date('Y', strtotime($profile['birthdate'])) : '' ?>">
-                  </div>
-                </div>
-
-                <div class="col-md-3 mb-3">
-                  <label class="form-label small-muted">Sex</label>
-                  <select name="sex" id="sex" class="form-select" disabled>
-                    <?php foreach (['Male', 'Female', 'Prefer not to say', 'Unknown'] as $sexOption): ?>
-                      <option value="<?= $sexOption ?>" <?= (isset($profile['sex']) && $profile['sex'] === $sexOption) ? 'selected' : '' ?>><?= $sexOption ?></option>
-                    <?php endforeach; ?>
-                  </select>
-                </div>
-                <div class="col-md-3 mb-3">
-                  <label class="form-label small-muted">Civil Status</label>
-                  <select name="civil_status" id="civil_status" class="form-select" disabled>
-                    <?php foreach (['Single','Married','Widowed','Separated','Divorced','Unknown'] as $status): ?>
-                      <option value="<?= $status ?>" <?= (isset($profile['civil_status']) && $profile['civil_status'] == $status) ? 'selected' : '' ?>><?= $status ?></option>
-                    <?php endforeach; ?>
-                  </select>
-                </div>
-                <!-- <div class="col-md-6 mb-3">
-                  <label class="form-label small-muted">Contact Number</label>
-                  <input name="contact_number_display" id="contact_number_display" class="form-control" value="<?= htmlspecialchars($profile['contact_number'] ?? '') ?>">
-                </div> -->
-
-                <!-- <div class="col-md-6 mb-3">
-                  <label class="form-label small-muted">Birth Registration No.</label>
-                  <input name="birth_registration_number" id="birth_registration_number" class="form-control" value="<?= htmlspecialchars($profile['birth_registration_number'] ?? '') ?>" readonly>
-                </div> -->
-
-                <!-- <div class="col-md-6 mb-3">
-                  <label class="form-label small-muted">Education</label>
-                  <select name="highest_educational_attainment" id="hea" class="form-select" disabled>
-                    <?php foreach (['Kindergarten','Elementary','High School','Senior High School','Undergraduate','College Graduate','Post-Graduate','Vocational','None','Unknown'] as $edu): ?>
-                      <option value="<?= $edu ?>" <?= (isset($profile['highest_educational_attainment']) && $profile['highest_educational_attainment'] == $edu) ? 'selected' : '' ?>><?= $edu ?></option>
-                    <?php endforeach; ?>
-                  </select>
-                </div> -->
-
-                <!-- <div class="col-md-6 mb-3">
-                  <label class="form-label small-muted">Occupation</label>
-                  <input name="occupation" id="occupation" class="form-control" value="<?= htmlspecialchars($profile['occupation'] ?? '') ?>" readonly>
-                </div> -->
-
-                <!-- Hidden file input (kept in DOM for the picker) -->
-                <input type="file" name="new_picture" id="new_picture" accept="image/*" style="display:none">
-
-                <!-- Small note below the button -->
-                <div class="col-12 mt-2">
-                  <div class="small-muted">To update any personal information, please visit the Barangay and process the change with a Barangay official.</div>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-
-        <!-- USERNAME & PASSWORD SECTION (NEW LAYOUT) -->
-        <div id="privacySection" class="settings-section d-none">
-          <?= $loginMessage ?>
-          <div class="cred-wrap mb-4">
-            <!-- Username card -->
-            <div class="cred-card">
-              <div id="usernameAlertArea" class="alert-area"></div>
-              <h5>Username</h5>
-              <form id="usernameForm" method="POST" class="mb-0" onsubmit="return validateUsernameForm(event)">
-                <input type="hidden" name="login_submit" value="1">
-                <div class="mb-3">
-                  <label class="form-label small-muted">Current Username</label>
-                  <input class="form-control bg-light" readonly value="<?= htmlspecialchars($userAcct['username'] ?? '') ?>">
-                </div>
-                <div class="mb-3">
-                  <label class="form-label small-muted">New Username</label>
-                  <input name="new_username" id="new_username" class="form-control" value="" placeholder="Enter a new username">
-                </div>
-                <div class="mb-3">
-                  <label class="form-label small-muted">Confirm Username</label>
-                  <input name="new_username_confirm" id="new_username_confirm" class="form-control" value="" placeholder="Confirm new username">
-                </div>
-                <div class="text-end">
-                  <button type="submit" class="edit-btn btn-save"><i class="fas fa-user-edit me-1"></i>Save Username</button>
-                </div>
-              </form>
-            </div>
-
-            <!-- Password card -->
-            <div class="cred-card">
-              <div id="passwordAlertArea" class="alert-area"></div>
-              <h5>Password</h5>
-              <form id="passwordForm" method="POST" class="mb-0" onsubmit="return validatePasswordForm(event)">
-                <input type="hidden" name="login_submit" value="1">
-                <div class="mb-3">
-                  <label class="form-label small-muted">Current Password</label>
-                  <div class="input-group">
-                    <input type="password" name="current_password" id="current_password" class="form-control" placeholder="Enter current password">
-                    <button class="btn btn-outline-secondary" type="button" onclick="toggle('current_password')"><i class="fas fa-eye"></i></button>
-                  </div>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label small-muted">New Password</label>
-                  <div class="input-group">
-                    <input type="password" name="new_password" id="new_password" class="form-control" placeholder="Enter new password">
-                    <button class="btn btn-outline-secondary" type="button" onclick="toggle('new_password')"><i class="fas fa-eye"></i></button>
-                  </div>
-                  <div class="small-muted mt-1">At least 8–15 characters, upper &amp; lowercase letters, a number and a special character.</div>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label small-muted">Confirm New Password</label>
-                  <div class="input-group">
-                    <input type="password" name="new_password_confirm" id="new_password_confirm" class="form-control" placeholder="Confirm new password">
-                    <button class="btn btn-outline-secondary" type="button" onclick="toggle('new_password_confirm')"><i class="fas fa-eye"></i></button>
-                  </div>
-                </div>
-                <div class="text-end">
-                  <button type="submit" class="edit-btn btn-save"><i class="fas fa-key me-1"></i>Save Password</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-
-        <!-- DATA POLICY SECTION -->
-        <div id="policySection" class="settings-section d-none">
-          <div class="card shadow-sm">
-            <div class="card-body">
-              <h5 class="mb-3" style="color:var(--ebg-green)">Data Privacy Policy</h5>
-              <p class="small-muted">eBarangay Mo is operated by the Barangay Local Government Unit to deliver online barangay services. We collect and process <strong> the minimum personal data</strong> necessary to provide your requested services (applications and certificates), for record-keeping, reports, and payment processing.<br>
-              <br>Your information will be kept <strong>strictly confidential</strong>, accessible only to authorized personnel with high-level access, and <strong>will not be shared with third parties</strong> except when required by law. We retain data only as long as needed to fulfill these purposes or to meet legal obligations.<br>
-              <br>By checking this box you consent to the collection, use, and retention of your personal data for the purposes stated above. If you have questions or wish to access, correct, or withdraw your data, please contact the Barangay Office.</p>
-              <div class="form-check mt-3">
-                <input type="checkbox" class="form-check-input" id="agreePolicy">
-                <label for="agreePolicy" class="form-check-label">I have read and agree to the eBarangay Mo Privacy & Data Privacy Policy.</label>
+              <div class="col-md-6 mb-3">
+                <label class="form-label small-muted">Full Name</label>
+                <input name="full_name" id="full_name" class="form-control" value="<?= htmlspecialchars($profile['full_name'] ?? '') ?>" readonly required>
               </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label small-muted">Address</label>
+                <input name="address_display" id="address_display" class="form-control" value="<?= htmlspecialchars($profile['address'] ?? $purokLabel) ?>" readonly>
+              </div>
+
+              <div class="col-md-6 mb-3 d-flex gap-2">
+                <div style="flex:0 0 35%;">
+                  <label class="form-label small-muted">Birth Month</label>
+                  <input type="text" id="birth_m" class="form-control" readonly value="<?= $profile['birthdate'] ? date('M', strtotime($profile['birthdate'])) : '' ?>">
+                </div>
+                <div style="flex:0 0 25%;">
+                  <label class="form-label small-muted">Day</label>
+                  <input type="text" id="birth_d" class="form-control" readonly value="<?= $profile['birthdate'] ? date('d', strtotime($profile['birthdate'])) : '' ?>">
+                </div>
+                <div style="flex:0 0 35%;">
+                  <label class="form-label small-muted">Year</label>
+                  <input type="text" id="birth_y" class="form-control" readonly value="<?= $profile['birthdate'] ? date('Y', strtotime($profile['birthdate'])) : '' ?>">
+                </div>
+              </div>
+
+              <div class="col-md-3 mb-3">
+                <label class="form-label small-muted">Sex</label>
+                <select name="sex" id="sex" class="form-select" disabled>
+                  <?php foreach (['Male', 'Female', 'Prefer not to say', 'Unknown'] as $sexOption): ?>
+                    <option value="<?= $sexOption ?>" <?= (isset($profile['sex']) && $profile['sex'] === $sexOption) ? 'selected' : '' ?>><?= $sexOption ?></option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label small-muted">Civil Status</label>
+                <select name="civil_status" id="civil_status" class="form-select" disabled>
+                  <?php foreach (['Single','Married','Widowed','Separated','Divorced','Unknown'] as $status): ?>
+                    <option value="<?= $status ?>" <?= (isset($profile['civil_status']) && $profile['civil_status'] == $status) ? 'selected' : '' ?>><?= $status ?></option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+
+              <!-- Hidden file input (kept in DOM for the picker) -->
+              <input type="file" name="new_picture" id="new_picture" accept="image/*" style="display:none">
+
+              <!-- Small note below the button -->
+              <div class="col-12 mt-2">
+                <div class="small-muted">To update any personal information, please visit the Barangay and process the change with a Barangay official.</div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- USERNAME & PASSWORD SECTION (NEW LAYOUT) -->
+      <div id="privacySection" class="settings-section d-none">
+        <?= $loginMessage ?>
+        <div class="cred-wrap mb-4">
+          <!-- Username card -->
+          <div class="cred-card">
+            <div id="usernameAlertArea" class="alert-area"></div>
+            <h5>Username</h5>
+            <form id="usernameForm" method="POST" class="mb-0" onsubmit="return validateUsernameForm(event)">
+              <input type="hidden" name="login_submit" value="1">
+              <div class="mb-3">
+                <label class="form-label small-muted">Current Username</label>
+                <input class="form-control bg-light" readonly value="<?= htmlspecialchars($userAcct['username'] ?? '') ?>">
+              </div>
+              <div class="mb-3">
+                <label class="form-label small-muted">New Username</label>
+                <input name="new_username" id="new_username" class="form-control" value="" placeholder="Enter a new username">
+              </div>
+              <div class="mb-3">
+                <label class="form-label small-muted">Confirm Username</label>
+                <input name="new_username_confirm" id="new_username_confirm" class="form-control" value="" placeholder="Confirm new username">
+              </div>
+              <div class="text-end">
+                <button type="submit" class="edit-btn btn-save"><i class="fas fa-user-edit me-1"></i>Save Username</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Password card -->
+          <div class="cred-card">
+            <div id="passwordAlertArea" class="alert-area"></div>
+            <h5>Password</h5>
+            <form id="passwordForm" method="POST" class="mb-0" onsubmit="return validatePasswordForm(event)">
+              <input type="hidden" name="login_submit" value="1">
+              <div class="mb-3">
+                <label class="form-label small-muted">Current Password</label>
+                <div class="input-group">
+                  <input type="password" name="current_password" id="current_password" class="form-control" placeholder="Enter current password">
+                  <button class="btn btn-outline-secondary" type="button" onclick="toggle('current_password')"><i class="fas fa-eye"></i></button>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small-muted">New Password</label>
+                <div class="input-group">
+                  <input type="password" name="new_password" id="new_password" class="form-control" placeholder="Enter new password">
+                  <button class="btn btn-outline-secondary" type="button" onclick="toggle('new_password')"><i class="fas fa-eye"></i></button>
+                </div>
+                <div class="small-muted mt-1">At least 8–15 characters, upper &amp; lowercase letters, a number and a special character.</div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small-muted">Confirm New Password</label>
+                <div class="input-group">
+                  <input type="password" name="new_password_confirm" id="new_password_confirm" class="form-control" placeholder="Confirm new password">
+                  <button class="btn btn-outline-secondary" type="button" onclick="toggle('new_password_confirm')"><i class="fas fa-eye"></i></button>
+                </div>
+              </div>
+              <div class="text-end">
+                <button type="submit" class="edit-btn btn-save"><i class="fas fa-key me-1"></i>Save Password</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- DATA POLICY SECTION -->
+      <div id="policySection" class="settings-section d-none">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="mb-3" style="color:var(--ebg-green)">Data Privacy Policy</h5>
+            <p class="small-muted">eBarangay Mo is operated by the Barangay Local Government Unit to deliver online barangay services. We collect and process <strong> the minimum personal data</strong> necessary to provide your requested services (applications and certificates), for record-keeping, reports, and payment processing.<br>
+            <br>Your information will be kept <strong>strictly confidential</strong>, accessible only to authorized personnel with high-level access, and <strong>will not be shared with third parties</strong> except when required by law. We retain data only as long as needed to fulfill these purposes or to meet legal obligations.<br>
+            <br>By checking this box you consent to the collection, use, and retention of your personal data for the purposes stated above. If you have questions or wish to access, correct, or withdraw your data, please contact the Barangay Office.</p>
+            <div class="form-check mt-3">
+              <input type="checkbox" class="form-check-input" id="agreePolicy">
+              <label for="agreePolicy" class="form-check-label">I have read and agree to the eBarangay Mo Privacy & Data Privacy Policy.</label>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Upload Valid ID Modal -->
-        <!-- <div class="modal fade" id="uploadIDModal" tabindex="-1" aria-hidden="true">
-          <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-              <form method="POST" enctype="multipart/form-data">
-                <div class="modal-header">
-                  <h5 class="modal-title">Upload a Valid ID</h5>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                  <p class="valid-id-note">Upload a clear scanned copy or photo of a valid ID (driver's license, passport, SSS/GSIS, UMID, etc.).</p>
-                  <div class="mb-3">
-                    <input type="file" name="valid_id_file" accept="image/*,.pdf" class="form-control" required>
-                  </div>
-                </div>
-                <div class="modal-footer">
-                  <input type="hidden" name="valid_id_submit" value="1">
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                  <button type="submit" class="btn btn-success">Upload</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div> -->
+    </div> <!-- /.col-12 -->
+  </div> <!-- /.row -->
+</div> <!-- /.container-fluid -->
 
-      </div> <!-- /.col-12 -->
-    </div> <!-- /.row -->
-  </div> <!-- /.container-fluid -->
+<script>
+// Tab switching with active state
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', function () {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    const target = this.dataset.target;
+    document.querySelectorAll('.settings-section').forEach(s => s.classList.add('d-none'));
+    document.getElementById(target).classList.remove('d-none');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
 
-  <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script> -->
-  <script>
-  // Tab switching with active state
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', function () {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      this.classList.add('active');
-      const target = this.dataset.target;
-      document.querySelectorAll('.settings-section').forEach(s => s.classList.add('d-none'));
-      document.getElementById(target).classList.remove('d-none');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
+// Toggle password visibility helper
+function toggle(id) {
+  const inp = document.getElementById(id);
+  if (!inp) return;
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+/* ----------------------------
+   Profile picture flow (hidden input + single button)
+   - Hidden file input (new_picture) is clicked when the button is pressed.
+   - When a file is picked, the form auto-submits so server code handles saving.
+   ---------------------------- */
+const personalForm = document.getElementById('personalForm');
+const changePicBtn = document.getElementById('changePicBtn');
+const newPictureInput = document.getElementById('new_picture');
+
+if (changePicBtn && newPictureInput && personalForm) {
+  // Open native file picker when button clicked
+  changePicBtn.addEventListener('click', function (e) {
+    e.preventDefault();
+    newPictureInput.click();
   });
 
-  // Toggle password visibility helper
-  function toggle(id) {
-    const inp = document.getElementById(id);
-    if (!inp) return;
-    inp.type = inp.type === 'password' ? 'text' : 'password';
-  }
-
-  /* ----------------------------
-     Profile picture flow (hidden input + single button)
-     - Hidden file input (new_picture) is clicked when the button is pressed.
-     - When a file is picked, the form auto-submits so server code handles saving.
-     ---------------------------- */
-  const personalForm = document.getElementById('personalForm');
-  const changePicBtn = document.getElementById('changePicBtn');
-  const newPictureInput = document.getElementById('new_picture');
-
-  if (changePicBtn && newPictureInput && personalForm) {
-    // Open native file picker when button clicked
-    changePicBtn.addEventListener('click', function (e) {
-      e.preventDefault();
-      newPictureInput.click();
-    });
-
-    // When a file is chosen, submit the form so your existing PHP handles it
-    newPictureInput.addEventListener('change', function () {
-      if (newPictureInput.files && newPictureInput.files.length) {
-        personalForm.submit();
-      }
-    });
-  }
-
-  // Prevent Enter from submitting the personal form accidentally.
-  // Form already has onkeydown="return handleFormKeydown(event)"
-  function handleFormKeydown(e) {
-    if (e.key === 'Enter') {
-      const tag = (e.target && e.target.tagName || '').toLowerCase();
-      const type = (e.target && e.target.type || '').toLowerCase();
-      // allow Enter in textarea and file input; block elsewhere to avoid accidental submit
-      if (tag === 'textarea' || type === 'file') return true;
-      e.preventDefault();
-      return false;
+  // When a file is chosen, submit the form so your existing PHP handles it
+  newPictureInput.addEventListener('change', function () {
+    if (newPictureInput.files && newPictureInput.files.length) {
+      personalForm.submit();
     }
-    return true;
-  }
-
-  /* ----------------------------
-     Username / Password helpers (unchanged logic)
-     ---------------------------- */
-  function showAlert(areaId, type, message) {
-    const area = document.getElementById(areaId);
-    if (!area) return;
-    area.innerHTML = '<div class="alert alert-' + type + ' alert-dismissible fade show" role="alert">' + message + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
-  }
-  function clearAlert(areaId) {
-    const area = document.getElementById(areaId);
-    if (area) area.innerHTML = '';
-  }
-
-  function validateUsernameForm(e) {
-    clearAlert('usernameAlertArea');
-    const newU = document.getElementById('new_username').value.trim();
-    const confirmU = document.getElementById('new_username_confirm').value.trim();
-    if (newU === '' && confirmU === '') {
-      showAlert('usernameAlertArea', 'info', 'Enter a new username to change it.');
-      return false;
-    }
-    if (newU !== confirmU) {
-      showAlert('usernameAlertArea', 'danger', 'Confirm Username does not match.');
-      return false;
-    }
-    return true;
-  }
-
-  function validatePasswordForm(e) {
-    clearAlert('passwordAlertArea');
-    const cur = document.getElementById('current_password').value;
-    const nw = document.getElementById('new_password').value;
-    const cnf = document.getElementById('new_password_confirm').value;
-
-    if (nw === '' && cnf === '') {
-      showAlert('passwordAlertArea', 'info', 'Enter a new password to change it.');
-      return false;
-    }
-    if (nw !== cnf) {
-      showAlert('passwordAlertArea', 'danger', 'Confirm New Password does not match.');
-      return false;
-    }
-    const pattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,15}$/;
-    if (!pattern.test(nw)) {
-      showAlert('passwordAlertArea', 'danger', 'Password must be 8-15 characters, include upper & lower case letters, at least one number and one special character.');
-      return false;
-    }
-    if (!cur) {
-      showAlert('passwordAlertArea', 'danger', 'Current password is required to change your password.');
-      return false;
-    }
-    return true;
-  }
-
-  /* ----------------------------
-     Modal safe-open handlers (keeps UX similar to before)
-     ---------------------------- */
-  const openValid = document.getElementById('openValidId');
-  if (openValid) {
-    openValid.addEventListener('click', function (e) {
-      e.preventDefault();
-      const modalEl = document.getElementById('uploadIDModal');
-      if (modalEl) {
-        const modal = new bootstrap.Modal(modalEl);
-        modal.show();
-      }
-    });
-  }
-
-  const uploadModalEl = document.getElementById('uploadIDModal');
-  if (uploadModalEl) {
-    uploadModalEl.addEventListener('show.bs.modal', function () {
-      document.body.classList.remove('no-scroll');
-    });
-    uploadModalEl.addEventListener('hidden.bs.modal', function () {
-      document.body.classList.add('no-scroll');
-    });
-  }
-
-  // auto-hide alerts after 8s
-  document.addEventListener('DOMContentLoaded', function () {
-    setTimeout(() => {
-      document.querySelectorAll('.alert').forEach(a => {
-        try { bootstrap.Alert.getOrCreateInstance(a).close(); } catch(e) {}
-      });
-    }, 8000);
   });
+}
+
+// Prevent Enter from submitting the personal form accidentally.
+// Form already has onkeydown="return handleFormKeydown(event)"
+function handleFormKeydown(e) {
+  if (e.key === 'Enter') {
+    const tag = (e.target && e.target.tagName || '').toLowerCase();
+    const type = (e.target && e.target.type || '').toLowerCase();
+    // allow Enter in textarea and file input; block elsewhere to avoid accidental submit
+    if (tag === 'textarea' || type === 'file') return true;
+    e.preventDefault();
+    return false;
+  }
+  return true;
+}
+
+/* ----------------------------
+   Username / Password helpers (unchanged logic)
+   ---------------------------- */
+function showAlert(areaId, type, message) {
+  const area = document.getElementById(areaId);
+  if (!area) return;
+  area.innerHTML = '<div class="alert alert-' + type + ' alert-dismissible fade show" role="alert">' + message + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
+}
+function clearAlert(areaId) {
+  const area = document.getElementById(areaId);
+  if (area) area.innerHTML = '';
+}
+
+function validateUsernameForm(e) {
+  clearAlert('usernameAlertArea');
+  const newU = document.getElementById('new_username').value.trim();
+  const confirmU = document.getElementById('new_username_confirm').value.trim();
+  if (newU === '' && confirmU === '') {
+    showAlert('usernameAlertArea', 'info', 'Enter a new username to change it.');
+    return false;
+  }
+  if (newU !== confirmU) {
+    showAlert('usernameAlertArea', 'danger', 'Confirm Username does not match.');
+    return false;
+  }
+  return true;
+}
+
+function validatePasswordForm(e) {
+  clearAlert('passwordAlertArea');
+  const cur = document.getElementById('current_password').value;
+  const nw = document.getElementById('new_password').value;
+  const cnf = document.getElementById('new_password_confirm').value;
+
+  if (nw === '' && cnf === '') {
+    showAlert('passwordAlertArea', 'info', 'Enter a new password to change it.');
+    return false;
+  }
+  if (nw !== cnf) {
+    showAlert('passwordAlertArea', 'danger', 'Confirm New Password does not match.');
+    return false;
+  }
+  const pattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,15}$/;
+  if (!pattern.test(nw)) {
+    showAlert('passwordAlertArea', 'danger', 'Password must be 8-15 characters, include upper & lower case letters, at least one number and one special character.');
+    return false;
+  }
+  if (!cur) {
+    showAlert('passwordAlertArea', 'danger', 'Current password is required to change your password.');
+    return false;
+  }
+  return true;
+}
+
+// auto-hide alerts after 8s
+document.addEventListener('DOMContentLoaded', function () {
+  setTimeout(() => {
+    document.querySelectorAll('.alert').forEach(a => {
+      try { bootstrap.Alert.getOrCreateInstance(a).close(); } catch(e) {}
+    });
+  }, 8000);
+});
 </script>
-</body>
-</html>

@@ -46,10 +46,10 @@ $certConfigs = [
 $map = [
     'Residency'    => ['table'=>'residency_requests',   'prefix'=>'RES-', 'amount'=>130],
     'Indigency'    => ['table'=>'indigency_requests',   'prefix'=>'IND-', 'amount'=>130],
-    'Good Moral'   => ['table'=>'good_moral_requests',  'prefix'=>'GM-',  'amount'=>130],
-    'Solo Parent'  => ['table'=>'solo_parent_requests', 'prefix'=>'SP-',  'amount'=>130],
+    'Good Moral'   => ['table'=>'good_moral_requests',  'prefix'=>'CGM-',  'amount'=>130], // GM
+    'Solo Parent'  => ['table'=>'solo_parent_requests', 'prefix'=>'CSP-',  'amount'=>130], // SP
     'Guardianship' => ['table'=>'guardianship_requests','prefix'=>'GUA-', 'amount'=>130],
-    'First Time Job Seeker' => ['table'=>'job_seeker_requests', 'prefix'=>'FTJS-', 'amount'=>130],
+    'First Time Job Seeker' => ['table'=>'job_seeker_requests', 'prefix'=>'FJS-', 'amount'=>130],  // FTJS
 ];
 
 $type = $_POST['certification_type'] ?? '';

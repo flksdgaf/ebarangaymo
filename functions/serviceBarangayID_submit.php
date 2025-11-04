@@ -202,7 +202,7 @@ if ($stmt) {
     $stmt->close();
 }
 $num = $lastNumber + 1;
-$transactionId = sprintf('BRGYID-%07d', $num);
+$transactionId = sprintf('BID-%07d', $num); // BRGYID
 
 // Detect if DB has 'claim_time' column (preferred) or older 'claim_part'
 $claimTimeColumn = null;
@@ -224,7 +224,7 @@ $columns = [
     'valid_id_number',
     'emergency_contact_person','emergency_contact_address','formal_picture','claim_date',
     // optionally claim_time/claim_part will be inserted next
-    'payment_method','amount','payment_status','document_status','created_at','updated_at','request_source'
+    'payment_method','amount','payment_status','document_status','created_at','updated_at','request_source','valid_until'
 ];
 
 if ($claimTimeColumn) {
@@ -241,6 +241,9 @@ $paymentStatus = 'Pending';
 $documentStatus = isset($_POST['document_status']) && $_POST['document_status'] !== '' ? trim($_POST['document_status']) : 'For Verification';
 $amount = (isset($_POST['amount']) && $_POST['amount'] !== '') ? floatval($_POST['amount']) : 20.00;
 $requestType = 'Barangay ID';
+
+// Calculate valid_until date (1 year from creation)
+$validUntil = date('Y-m-d', strtotime('+1 year', strtotime($createdAt)));
 
 // Map column -> value
 $colValues = [
@@ -268,7 +271,8 @@ $colValues = [
     'document_status' => $documentStatus,
     'created_at' => $createdAt,
     'updated_at' => $updatedAt,
-    'request_source' => $requestSource
+    'request_source' => $requestSource,
+    'valid_until' => $validUntil  // ADD THIS LINE
 ];
 
 // Add claim_time/claim_part value if DB supports it

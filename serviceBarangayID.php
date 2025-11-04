@@ -17,8 +17,10 @@ date_default_timezone_set('Asia/Manila'); // added for claim-date handling
 // --- 1) Check for existing Brgy-ID record: Renewal vs. New Application
 $stmtID = $conn->prepare("
     SELECT *  
-    FROM barangay_id_accounts  
-    WHERE account_id = ?  
+    FROM barangay_id_requests  
+    WHERE account_id = ? 
+    AND document_status = 'Released'
+    ORDER BY created_at DESC
     LIMIT 1
 ");
 $stmtID->bind_param("i", $userId);
@@ -26,20 +28,41 @@ $stmtID->execute();
 $resID = $stmtID->get_result();
 
 $isRenewal = false;
+$currentValidUntil = null;
+$isExpiredOrExpiring = false;
+
 if ($resID && $resID->num_rows === 1) {
-    $isRenewal = true;
     $rowID = $resID->fetch_assoc();
-    // *** ADDED: pull in existing values
-    $fullName       = $rowID['full_name'];
-    $userPurok      = $rowID['purok'];          // now fetch purok instead of full address
-    $height         = $rowID['height'];
-    $weight         = $rowID['weight'];
-    $birthdate      = $rowID['birthdate'];
-    $birthplace     = $rowID['birthplace'];
-    $civilstatus    = $rowID['civil_status'];
-    $religion       = $rowID['religion'];
-    $contactperson  = $rowID['contact_person'];
-    $formal_picture = $rowID['formal_picture'];
+    $currentValidUntil = $rowID['valid_until'];
+    
+    // Check if ID is expired or will expire within 30 days
+    if ($currentValidUntil) {
+        $validUntilDate = new DateTime($currentValidUntil);
+        $today = new DateTime('now', new DateTimeZone('Asia/Manila'));
+        $daysUntilExpiry = $today->diff($validUntilDate)->days;
+        $isExpired = $validUntilDate < $today;
+        
+        // Set as renewal if expired or expiring within 30 days
+        if ($isExpired || $daysUntilExpiry <= 30) {
+            $isExpiredOrExpiring = true;
+            $isRenewal = true;
+        }
+    }
+    
+    // If it's a renewal, pull existing values
+    if ($isRenewal) {
+        $fullName       = $rowID['full_name'];
+        $userPurok      = $rowID['purok'];
+        $height         = $rowID['height'];
+        $weight         = $rowID['weight'];
+        $birthdate      = $rowID['birth_date'];
+        $birthplace     = $rowID['birth_place'];
+        $civilstatus    = $rowID['civil_status'];
+        $religion       = $rowID['religion'];
+        $contactperson  = $rowID['emergency_contact_person'];
+        $emergencyAddress = $rowID['emergency_contact_address'];
+        $formal_picture = $rowID['formal_picture'];
+    }
 }
 $stmtID->close();
 
@@ -378,6 +401,21 @@ if (!empty($existingRequest)) {
                     <input type="hidden" id="transactiontype" name="transactiontype" value="<?php echo $transactionType; ?>">
                 </div>
                 </div>
+
+                <!-- ADD THIS NEW SECTION -->
+                <?php if ($isRenewal && $currentValidUntil): ?>
+                <div class="row mb-3">
+                    <label class="col-md-4 text-start fw-bold">Current ID Validity</label>
+                    <div class="col-md-8">
+                        <div class="alert alert-<?php echo $isExpiredOrExpiring ? 'warning' : 'info'; ?> mb-0">
+                            <strong>Valid Until:</strong> <?php echo date('F j, Y', strtotime($currentValidUntil)); ?>
+                            <?php if ($isExpiredOrExpiring): ?>
+                                <br><small class="text-danger">Your ID has expired or is expiring soon. Please proceed with renewal.</small>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
 
                 <!-- FULL NAME (always readonly) -->
                 <div class="row mb-3">

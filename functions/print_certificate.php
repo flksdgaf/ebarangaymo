@@ -73,7 +73,7 @@ $requestFields = [
   'barangay_id_requests' => [
     'transaction_id', 'barangay_id_number', 'request_type', 'transaction_type', 'full_name', 'purok', 'birth_date', 'birth_place', 
     'civil_status', 'religion', 'height', 'weight', 'emergency_contact_person', 'emergency_contact_address', 
-    'formal_picture', 'payment_method', 'amount', 'created_at'
+    'formal_picture', 'payment_method', 'amount', 'created_at', 'valid_until'
   ],
   'business_permit_requests' => [
     'transaction_id', 'request_type', 'transaction_type', 'full_name', 'purok', 'barangay', 'age', 

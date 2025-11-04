@@ -404,7 +404,7 @@ if ($download || $print) {
           </div>
           
           <div class="validity-box">
-            <div class="validity-date"><?= date('m-d-y', strtotime('+1 years', strtotime($createdAt))) ?></div>
+            <div class="validity-date"><?= date('m-d-y', strtotime($data['valid_until'])) ?></div>
             <div class="validity-label">Valid Until</div>
           </div>
           
@@ -902,7 +902,7 @@ if ($download || $print) {
       </div>
       
       <div class="validity-box">
-        <div class="validity-date"><?= date('m-d-y', strtotime('+1 years', strtotime($createdAt))) ?></div>
+        <div class="validity-date"><?= date('m-d-y', strtotime($data['valid_until'])) ?></div>
         <div class="validity-label">Valid Until</div>
       </div>
       

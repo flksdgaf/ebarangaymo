@@ -259,7 +259,7 @@ if ($download || $print) {
       <div class="title-section">
         <p><strong>TO WHOM IT MAY CONCERN</strong></p>
         <p style="margin-left: 17px;">This is to certify that the person whose name and right thumb prints appear hereon has requested a</p>
-        <p><strong>BUSINESS CLEARANCE</strong> from this office and the result(s) is/as listed below:</p>
+        <p><strong>BUSINESS CLEARANCE</strong> from this office as listed below:</p>
       </div>
 
       <div class="main-content">
@@ -494,7 +494,7 @@ if ($download || $print) {
     <div class="title-section">
       <p><strong>TO WHOM IT MAY CONCERN</strong></p>
       <p style="margin-left: 30px;">This is to certify that the person whose name and right thumb prints appear hereon has requested a</p>
-      <p><strong>BUSINESS CLEARANCE</strong> from this office and the result(s) is/as listed below:</p>
+      <p><strong>BUSINESS CLEARANCE</strong> from this office as listed below:</p>
     </div>
 
     <div class="main-content">

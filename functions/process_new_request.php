@@ -696,9 +696,9 @@ switch($requestType) {
 
     // 2) Other form inputs
     $purok = $_POST['business_purok'] ?? '';
-    $barangay = $_POST['business_barangay'] ?? 'MAGANG';
-    $municipality = $_POST['business_municipality'] ?? 'DAET';
-    $province = $_POST['business_province'] ?? 'CAMARINES NORTE';
+    $barangay = $_POST['business_barangay'] ?? '';
+    $municipality = $_POST['business_municipality'] ?? '';
+    $province = $_POST['business_province'] ?? '';
     $age = (int)($_POST['business_age'] ?? 0);
     $maritalStatus = $_POST['business_marital_status'] ?? '';
     $businessName = trim($_POST['business_name'] ?? '');

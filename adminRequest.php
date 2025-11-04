@@ -815,17 +815,17 @@ $result = $st->get_result();
                 </div>
                 <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">Barangay <span class="text-danger">*</span></label>
-                  <input name="business_barangay" type="text" class="form-control form-control-sm" value="MAGANG" required>
+                  <input name="business_barangay" type="text" class="form-control form-control-sm" placeholder="Barangay" required>
                 </div>
 
                 <!-- Municipality & Province -->
                 <div class="col-12 col-md-6">
                   <label class="form-label fw-bold">Municipality / City <span class="text-danger">*</span></label>
-                  <input name="business_municipality" type="text" class="form-control form-control-sm" value="DAET" required>
+                  <input name="business_municipality" type="text" class="form-control form-control-sm" placeholder="Municipality / City" required>
                 </div>
                 <div class="col-12 col-md-6">
                   <label class="form-label fw-bold">Province <span class="text-danger">*</span></label>
-                  <input name="business_province" type="text" class="form-control form-control-sm" value="CAMARINES NORTE" required>
+                  <input name="business_province" type="text" class="form-control form-control-sm" placeholder="Province" required>
                 </div>
 
                 <!-- Age & Marital Status -->

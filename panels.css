@@ -371,16 +371,16 @@
 /* ADMIN WEBSITE MODAL STYLES - Specific to Website Configuration Page Only */
 #adminAccordion .modal-content {
     border: none;
-    border-radius: 16px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    border-radius: 0;
+    box-shadow: none;
 }
 
 #adminAccordion .modal-header {
-    background: linear-gradient(135deg, #2A9245 0%, #61AD41 100%);
+    background-color: #13411F;
     color: white;
-    border-radius: 16px 16px 0 0 !important;
-    padding: 1.5rem 2rem !important;
-    border-bottom: none;
+    border-radius: 0 !important;
+    padding: 1rem 1.5rem !important;
+    border-bottom: 1px solid #dee2e6;
 }
 
 #adminAccordion .modal-header .modal-title {
@@ -423,10 +423,10 @@
 }
 
 #adminAccordion .modal-footer {
-    padding: 1.25rem 2rem !important;
-    border-top: 1px solid #e9ecef;
-    background-color: #f8f9fa;
-    border-radius: 0 0 16px 16px;
+    padding: 1rem 1.5rem !important;
+    border-top: 1px solid #dee2e6;
+    background-color: #ffffff;
+    border-radius: 0;
 }
 
 #adminAccordion .modal-footer .btn {
@@ -443,29 +443,31 @@
 
 #adminAccordion .modal-footer .btn-secondary:hover {
     background-color: #5a6268;
-    transform: translateY(-1px);
+    transform: none;
 }
 
 #adminAccordion .modal-footer .btn-primary {
-    background: linear-gradient(135deg, #2A9245 0%, #61AD41 100%);
-    border: none;
+    background-color: #28a745;
+    border-color: #28a745;
 }
 
 #adminAccordion .modal-footer .btn-primary:hover {
-    background: linear-gradient(135deg, #1e7e34 0%, #4a9d2f 100%);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(42, 146, 69, 0.3);
+    background-color: #218838;
+    border-color: #1e7e34;
+    transform: none;
+    box-shadow: none;
 }
 
 #adminAccordion .modal-footer .btn-success {
-    background: linear-gradient(135deg, #2A9245 0%, #61AD41 100%);
-    border: none;
+    background-color: #28a745;
+    border-color: #28a745;
 }
 
 #adminAccordion .modal-footer .btn-success:hover {
-    background: linear-gradient(135deg, #1e7e34 0%, #4a9d2f 100%);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(42, 146, 69, 0.3);
+    background-color: #218838;
+    border-color: #1e7e34;
+    transform: none;
+    box-shadow: none;
 }
 
 #adminAccordion .modal-footer .btn-danger {
@@ -475,8 +477,8 @@
 
 #adminAccordion .modal-footer .btn-danger:hover {
     background-color: #c82333;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+    transform: none;
+    box-shadow: none;
 }
 
 /* Delete confirmation modal special styling */
@@ -499,8 +501,8 @@
 
 /* Image preview in modals */
 #adminAccordion .modal-body img.img-fluid {
-    border-radius: 12px;
-    border: 2px solid #e0e0e0;
+    border-radius: 0;
+    border: 1px solid #dee2e6;
 }
 
 /* File input styling */
@@ -510,25 +512,26 @@
 }
 
 #adminAccordion .modal-body input[type="file"].form-control::-webkit-file-upload-button {
-    background: linear-gradient(135deg, #2A9245 0%, #61AD41 100%);
+    background-color: #28a745;
     color: white;
-    border: none;
+    border: 1px solid #28a745;
     padding: 0.375rem 1rem;
-    border-radius: 6px;
+    border-radius: 0.25rem;
     cursor: pointer;
     font-weight: 500;
     margin-right: 1rem;
 }
 
 #adminAccordion .modal-body input[type="file"].form-control::-webkit-file-upload-button:hover {
-    background: linear-gradient(135deg, #1e7e34 0%, #4a9d2f 100%);
+    background-color: #218838;
+    border-color: #1e7e34;
 }
 
 /* Logo modal specific styles */
 #editLogoModal .rounded-circle {
-    border: 3px solid #2A9245 !important;
+    border: 2px solid #dee2e6 !important;
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: none;
 }
 
 #logoPlaceholder {

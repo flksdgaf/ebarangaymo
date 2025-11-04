@@ -1018,10 +1018,18 @@ $result = $st->get_result();
                   <input name="first_time_job_seeker_last_name" type="text" class="form-control form-control-sm" required>
                 </div>
 
-                <!-- Row 2: Age & Civil Status -->
+                <!-- Row 2: Age, Sex & Civil Status -->
                 <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">Age <span class="text-danger">*</span></label>
                   <input name="first_time_job_seeker_age" type="number" min="0" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label fw-bold">Sex <span class="text-danger">*</span></label>
+                  <select name="first_time_job_seeker_sex" class="form-select form-select-sm" required>
+                    <option value="">Select…</option>
+                    <option>Male</option>
+                    <option>Female</option>
+                  </select>
                 </div>
                 <div class="col-12 col-md-3">
                   <label class="form-label fw-bold">Civil Status <span class="text-danger">*</span></label>

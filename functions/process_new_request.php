@@ -779,6 +779,7 @@ switch($requestType) {
 
     // 2) Other form inputs
     $age = (int)($_POST['first_time_job_seeker_age'] ?? 0);
+    $sex = $_POST['first_time_job_seeker_sex'] ?? '';
     $civilStatus = $_POST['first_time_job_seeker_civil_status'] ?? '';
     $purok = $_POST['first_time_job_seeker_purok'] ?? '';
     $documentStatus = 'For Verification';
@@ -796,10 +797,10 @@ switch($requestType) {
     $transactionId = sprintf('FJS-%07d', $num);
     $stmt->close();
 
-    // 4) Insert into job_seeker_requests (no claim_date, claim_time yet - Walk-In)
-    $sql = "INSERT INTO job_seeker_requests (account_id, transaction_id, full_name, age, civil_status, purok, payment_status, document_status, request_source) VALUES (?,?,?,?,?,?,'Free of Charge',?,'Walk-In')";
+    // 4) Insert into job_seeker_requests (added sex field)
+    $sql = "INSERT INTO job_seeker_requests (account_id, transaction_id, full_name, age, sex, civil_status, purok, payment_status, document_status, request_source) VALUES (?,?,?,?,?,?,?,'Free of Charge',?,'Walk-In')";
     $ins = $conn->prepare($sql);
-    $ins->bind_param('issssss', $userId, $transactionId, $fullName, $age, $civilStatus, $purok, $documentStatus);
+    $ins->bind_param('isssssss', $userId, $transactionId, $fullName, $age, $sex, $civilStatus, $purok, $documentStatus);
     $ins->execute();
     $ins->close();
 

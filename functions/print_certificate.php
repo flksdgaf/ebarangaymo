@@ -109,7 +109,7 @@ $requestFields = [
     'payment_method', 'created_at'
   ],
   'job_seeker_requests' => [
-    'transaction_id', 'request_type', 'full_name', 'age', 'civil_status', 'purok', 'created_at'
+    'transaction_id', 'request_type', 'full_name', 'age', 'sex', 'civil_status', 'purok', 'created_at'
   ]
 ];
 

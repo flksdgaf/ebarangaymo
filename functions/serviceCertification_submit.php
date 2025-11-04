@@ -434,10 +434,8 @@ if ($isPaidService && $isGCashPayment) {
         if ($amountToCharge < 20) {
             $amountToCharge = 130; // Default certification fee
         }
-
-        $temporaryAmount = 20.00;
         
-        $gcashResult = createGCashSource($transactionId, $temporaryAmount);
+        $gcashResult = createGCashSource($transactionId, $amountToCharge);
         
         if ($gcashResult['success'] && isset($gcashResult['checkout_url'])) {
             // Store transaction info in session for security

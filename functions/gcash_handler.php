@@ -34,7 +34,7 @@ class GCashPaymentHandler {
             $amountInCentavos = $amount * 100;
             
             // Build redirect URLs based on transaction type
-            $isCertification = !str_starts_with($transactionId, 'BRGYID-');
+            $isCertification = !str_starts_with($transactionId, 'BID-'); //BRGYID
 
             if ($isCertification) {
                 $successUrl = $this->baseDomain . '/functions/gcash_cert_success.php?transaction_id=' . $transactionId;
@@ -424,10 +424,10 @@ class GCashPaymentHandler {
         $certMap = [
             'RES-'  => 'residency_requests',
             'IND-'  => 'indigency_requests',
-            'GM-'   => 'good_moral_requests',
-            'SP-'   => 'solo_parent_requests',
+            'CGM-'   => 'good_moral_requests', // GM
+            'CSP-'   => 'solo_parent_requests', // SP
             'GUA-'  => 'guardianship_requests',
-            'FTJS-' => 'job_seeker_requests',
+            'FJS-' => 'job_seeker_requests', // FTJS
         ];
         
         foreach ($certMap as $prefix => $tbl) {

@@ -982,9 +982,13 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
 
+        // Validate payment method selection at payment step (but skip for GCash since it submits immediately)
         const paymentIndex = getPaymentStepIndex();
         if (paymentIndex > 0 && currentStep === paymentIndex) {
-            if (!hiddenPaymentInput.value) isValid = false;
+            const selectedMethod = hiddenPaymentInput?.value || '';
+            if (!selectedMethod) {
+                isValid = false;
+            }
         }
 
         if (!isValid) {
@@ -992,6 +996,27 @@ document.addEventListener("DOMContentLoaded", function () {
             validationModal.show();
             return;
         }
+
+        // === NEW: Handle GCash payment submission at Step 2 ===
+        if (paymentIndex > 0 && currentStep === paymentIndex) {
+            const selectedMethod = hiddenPaymentInput?.value || '';
+            const certType = (certInput.value || '').trim().toLowerCase();
+            const isPaidService = !(certType === 'indigency' || certType === 'first time job seeker');
+            
+            if (isPaidService && selectedMethod === 'GCash') {
+                // For GCash, submit the form directly - it will redirect to GCash checkout
+                const form = document.getElementById('certForm');
+                if (form) {
+                    // Show loading indicator
+                    nextBtn.disabled = true;
+                    nextBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+                    
+                    form.submit();
+                    return; // Stop here, don't proceed to next step
+                }
+            }
+        }
+        // === END GCash handling ===
 
         const summaryIndex = getSummaryStepIndex();
         const submissionIndex = getSubmissionStepIndex();
@@ -1335,6 +1360,44 @@ document.addEventListener("DOMContentLoaded", function () {
 
     (function initFromServer() {
         ensureHiddenPaymentFields();
+
+        // Handle URL step parameter (for GCash returns)
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlStep = urlParams.get('step');
+        
+        if (urlStep && window.initialStep) {
+            const targetStep = parseInt(urlStep);
+            if (targetStep > 0 && targetStep <= totalSteps()) {
+                currentStep = targetStep;
+                
+                // Update step display
+                refreshStepCollections();
+                steps.forEach((step, idx) => {
+                    if (idx < currentStep - 1) {
+                        step.classList.add('completed');
+                        step.classList.remove('active-step');
+                        if (circleSteps[idx]) circleSteps[idx].classList.add('completed');
+                        if (stepLabels[idx]) stepLabels[idx].classList.add('completed');
+                    } else if (idx === currentStep - 1) {
+                        step.classList.add('active-step');
+                        step.classList.remove('completed');
+                        if (circleSteps[idx]) circleSteps[idx].classList.add('active');
+                        if (stepLabels[idx]) stepLabels[idx].classList.add('active');
+                    } else {
+                        step.classList.remove('active-step', 'completed');
+                        if (circleSteps[idx]) circleSteps[idx].classList.remove('active', 'completed');
+                        if (stepLabels[idx]) stepLabels[idx].classList.remove('active', 'completed');
+                    }
+                });
+                
+                updateNavigation();
+                
+                // If arriving at step 3, populate summary
+                if (currentStep === getSummaryStepIndex()) {
+                    setTimeout(() => { populateSummary(); }, 100);
+                }
+            }
+        }
 
         if (window.existingPaymentMethod && hiddenPaymentInput && !hiddenPaymentInput.value) {
             hiddenPaymentInput.value = window.existingPaymentMethod;

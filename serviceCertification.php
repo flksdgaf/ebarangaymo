@@ -197,6 +197,38 @@ if (!empty($existingRequestRow)) {
     }
 }
 ?>
+<?php
+// Handle payment return messages
+$paymentSuccessMsg = '';
+$paymentErrorMsg = '';
+$paymentFailedMsg = '';
+
+if (isset($_SESSION['payment_success_message'])) {
+    $paymentSuccessMsg = $_SESSION['payment_success_message'];
+    unset($_SESSION['payment_success_message']);
+}
+
+if (isset($_SESSION['payment_error_message'])) {
+    $paymentErrorMsg = $_SESSION['payment_error_message'];
+    unset($_SESSION['payment_error_message']);
+}
+
+if (isset($_SESSION['payment_failed_message'])) {
+    $paymentFailedMsg = $_SESSION['payment_failed_message'];
+    unset($_SESSION['payment_failed_message']);
+}
+
+if (isset($_SESSION['svc_error'])) {
+    $paymentErrorMsg = $_SESSION['svc_error'];
+    unset($_SESSION['svc_error']);
+}
+
+// Handle step parameter from URL
+$urlStep = isset($_GET['step']) ? intval($_GET['step']) : null;
+if ($urlStep && $transactionId) {
+    $initial = $urlStep;
+}
+?>
 <link rel="stylesheet" href="serviceCertification.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -303,13 +335,34 @@ if (!empty($existingRequestRow)) {
     </div>
 
     <div class="card shadow-sm px-5 py-5 mb-5 mt-4">
+        <!-- Payment Success/Error Messages -->
+        <?php if ($paymentSuccessMsg): ?>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong><span class="material-symbols-outlined" style="vertical-align: middle;">check_circle</span> Success!</strong> <?php echo htmlspecialchars($paymentSuccessMsg); ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <?php endif; ?>
+        
+        <?php if ($paymentErrorMsg): ?>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong><span class="material-symbols-outlined" style="vertical-align: middle;">error</span> Error!</strong> <?php echo htmlspecialchars($paymentErrorMsg); ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <?php endif; ?>
+        
+        <?php if ($paymentFailedMsg): ?>
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <strong><span class="material-symbols-outlined" style="vertical-align: middle;">warning</span> Payment Cancelled</strong> <?php echo htmlspecialchars($paymentFailedMsg); ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <?php endif; ?>
         <div class="d-flex align-items-center position-relative mb-3">
             <!-- Back Button - Only shown on step 1 -->
             <button type="button" id="backToServicesBtn" class="btn btn-link text-success position-absolute start-0" style="display: none;">
                 <span class="material-symbols-outlined">chevron_left</span>
             </button>
             
-            <div class="flex-grow-1">
+            <div class="grow">
                 <h2 class="mb-1 text-success fw-bold" id="mainHeader"></h2>
             </div>
         </div>
@@ -396,6 +449,10 @@ if (!empty($existingRequestRow)) {
                         <!-- Instructions -->
                         <div id="payment-instructions">
                         <div class="payment-instruction d-none" data-method="GCash">
+                            <div class="alert alert-info mb-3" style="background-color: #e7f3ff; border-left: 4px solid #0066cc;">
+                                <strong><span class="material-symbols-outlined" style="vertical-align: middle; font-size: 20px;">info</span> Note:</strong> 
+                                Clicking "NEXT" will redirect you to GCash payment page. After successful payment, you'll return to review your application.
+                            </div>
                             <ol>
                             <h4 class="fw-bold mb-3 fs-6">HOW TO USE:</h4>
                             <li>Once redirected to GCash, send exactly <strong>₱130.00</strong>.</li>

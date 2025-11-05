@@ -37,11 +37,11 @@ $role = $_SESSION['loggedInUserRole'] ?? '';
         Complaint
       </button>
     </li>
-    <li class="nav-item" role="presentation">
+    <!-- <li class="nav-item" role="presentation">
       <button class="nav-link" id="katarungan-tab" data-bs-toggle="tab" data-bs-target="#katarungan-pane" type="button" role="tab">
         Katarungang Pambarangay
       </button>
-    </li>
+    </li> -->
   </ul>
 
   <div class="tab-content mt-3">

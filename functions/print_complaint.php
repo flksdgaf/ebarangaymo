@@ -26,25 +26,17 @@ if (!$tid) {
 // 3) Load complaint + latest summon schedule
 $sql = "
   SELECT
-    c.complainant_name,
-    c.complainant_address,
-    c.respondent_name,
-    c.respondent_address,
-    c.complaint_type,
-    c.complaint_affidavit,
-    c.pleading_statement,
-    DATE_FORMAT(c.created_at, '%M %e, %Y %l:%i %p') AS created_fmt,
-    CASE k.complaint_stage
-      WHEN 'Punong Barangay' THEN k.schedule_punong_barangay
-      WHEN 'Unang Patawag' THEN k.schedule_unang_patawag
-      WHEN 'Ikalawang Patawag' THEN k.schedule_ikalawang_patawag
-      ELSE k.schedule_ikatlong_patawag
-    END AS scheduled_at
-  FROM complaint_records c
-  LEFT JOIN katarungang_pambarangay_records k
-    ON k.transaction_id = c.transaction_id
-  WHERE c.transaction_id = ?
-  ORDER BY k.id DESC
+    complainant_name,
+    complainant_address,
+    respondent_name,
+    respondent_address,
+    complaint_title AS complaint_type,
+    complaint_affidavit,
+    pleading_statement,
+    DATE_FORMAT(created_at, '%M %e, %Y %l:%i %p') AS created_fmt,
+    schedule_pb_first AS scheduled_at
+  FROM barangay_complaints
+  WHERE transaction_id = ?
   LIMIT 1
 ";
 $stmt = $conn->prepare($sql);
@@ -52,6 +44,10 @@ $stmt->bind_param('s', $tid);
 $stmt->execute();
 $rec = $stmt->get_result()->fetch_assoc();
 $stmt->close();
+
+if (!$rec) {
+  exit('Complaint not found.');
+}
 
 // 3.1) Fetch Brgy. Captain name using account_id from purok tables
 $captainName = '';

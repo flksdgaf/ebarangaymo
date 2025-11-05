@@ -62,10 +62,16 @@ $updates = [];
 $types = '';
 $params = [];
 
+// Flag to check if we should update stage
+$shouldUpdateStage = false;
+
 if ($scheduleDatetime) {
     $updates[] = "{$scheduleColumn} = ?";
     $types .= 's';
     $params[] = $scheduleDatetime;
+    
+    // Only update stage if scheduling (not just updating affidavits)
+    $shouldUpdateStage = true;
 }
 
 if ($complainantAffidavit !== '') {
@@ -80,12 +86,39 @@ if ($respondentAffidavit !== '') {
     $params[] = $respondentAffidavit;
 }
 
-// Update complaint_stage and action_taken
-$updates[] = "complaint_stage = ?";
-$types .= 's';
-$params[] = $stageValue;
+// Update complaint_stage and action_taken only if scheduling
+if ($shouldUpdateStage) {
+    // Get current stage to check if we should update
+    $checkStmt = $conn->prepare("SELECT complaint_stage FROM barangay_complaints WHERE transaction_id = ?");
+    $checkStmt->bind_param('s', $tid);
+    $checkStmt->execute();
+    $currentStage = $checkStmt->get_result()->fetch_assoc()['complaint_stage'];
+    $checkStmt->close();
+    
+    // Stage hierarchy
+    $stageHierarchy = [
+        'Filing' => 0,
+        'Punong Barangay - 1st' => 1,
+        'Punong Barangay - 2nd' => 2,
+        'Punong Barangay - 3rd' => 3,
+        'Unang Patawag' => 4,
+        'Ikalawang Patawag' => 5,
+        'Ikatlong Patawag' => 6,
+        'Closed' => 7
+    ];
+    
+    $currentLevel = $stageHierarchy[$currentStage] ?? 0;
+    $newLevel = $stageHierarchy[$stageValue] ?? 0;
+    
+    // Only update stage if new stage is more advanced (higher level)
+    if ($newLevel > $currentLevel) {
+        $updates[] = "complaint_stage = ?";
+        $types .= 's';
+        $params[] = $stageValue;
+    }
 
-$updates[] = "action_taken = 'On-Going'";
+    $updates[] = "action_taken = 'On-Going'";
+}
 
 // Add transaction_id to params
 $types .= 's';

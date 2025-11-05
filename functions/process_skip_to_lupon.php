@@ -16,16 +16,9 @@ if (!$tid) {
     exit();
 }
 
-// UPDATE: Skip to Lupon stage (Unang Patawag)
-$sql = "UPDATE barangay_complaints 
-        SET complaint_stage = 'Unang Patawag', 
-            action_taken = 'On-Going' 
-        WHERE transaction_id = ?";
-
-$stmt = $conn->prepare($sql);
-$stmt->bind_param('s', $tid);
-$stmt->execute();
-$stmt->close();
+// DON'T UPDATE STAGE - just enable Lupon tab
+// The stage will be updated when the first Lupon schedule is created
+// No database update needed here
 
 // ACTIVITY LOG
 $logStmt = $conn->prepare("INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description) VALUES (?,?,?,?,?,?)");
@@ -33,7 +26,7 @@ $admin_id = $_SESSION['loggedInUserID'];
 $role = $_SESSION['loggedInUserRole'];
 $action = 'UPDATE';
 $table_name = 'barangay_complaints';
-$description = "Skipped Punong Barangay meetings, proceeded to Lupon for {$tid}";
+$description = "Enabled Lupon hearings for {$tid}";
 
 $logStmt->bind_param('isssss', $admin_id, $role, $action, $table_name, $tid, $description);
 $logStmt->execute();

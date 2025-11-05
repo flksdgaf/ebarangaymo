@@ -952,6 +952,10 @@ $stmt->close();
                     <div class="col-md-6 d-flex align-items-end justify-content-end gap-2">
                       <button type="submit" class="btn btn-primary btn-sm" id="btn-save-schedule-lupon-1st">Save Schedule</button>
                       <button type="button" class="btn btn-warning btn-sm" id="btn-edit-schedule-lupon-1st" style="display:none;">Edit Schedule</button>
+                      <button type="button" class="btn btn-success btn-sm" id="print-lupon-1st" style="display:none;">
+                        <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">print</span>
+                        Print Summon
+                      </button>
                     </div>
                   </div>
                 </form>
@@ -976,6 +980,14 @@ $stmt->close();
                     </div>
                   </div>
                 </form>
+
+                <!-- Action buttons shown only after hearing is scheduled -->
+                <div class="d-flex justify-content-end gap-2 mt-3" id="lupon-1st-actions" style="display:none;">
+                  <button type="button" class="btn btn-outline-primary btn-sm" id="proceed-to-ikalawang" disabled>
+                    <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">arrow_forward</span>
+                    Proceed to Ikalawang Patawag
+                  </button>
+                </div>
               </div>
 
               <!-- Ikalawang Patawag -->
@@ -996,6 +1008,10 @@ $stmt->close();
                     <div class="col-md-6 d-flex align-items-end justify-content-end gap-2">
                       <button type="submit" class="btn btn-primary btn-sm" id="btn-save-schedule-lupon-2nd">Save Schedule</button>
                       <button type="button" class="btn btn-warning btn-sm" id="btn-edit-schedule-lupon-2nd" style="display:none;">Edit Schedule</button>
+                      <button type="button" class="btn btn-success btn-sm" id="print-lupon-2nd" style="display:none;">
+                        <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">print</span>
+                        Print Summon
+                      </button>
                     </div>
                   </div>
                 </form>
@@ -1020,6 +1036,14 @@ $stmt->close();
                     </div>
                   </div>
                 </form>
+
+                <!-- Action buttons shown only after hearing is scheduled -->
+                <div class="d-flex justify-content-end gap-2 mt-3" id="lupon-2nd-actions" style="display:none;">
+                  <button type="button" class="btn btn-outline-primary btn-sm" id="proceed-to-ikatlong" disabled>
+                    <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">arrow_forward</span>
+                    Proceed to Ikatlong Patawag
+                  </button>
+                </div>
               </div>
 
               <!-- Ikatlong Patawag -->
@@ -1040,6 +1064,10 @@ $stmt->close();
                     <div class="col-md-6 d-flex align-items-end justify-content-end gap-2">
                       <button type="submit" class="btn btn-primary btn-sm" id="btn-save-schedule-lupon-3rd">Save Schedule</button>
                       <button type="button" class="btn btn-warning btn-sm" id="btn-edit-schedule-lupon-3rd" style="display:none;">Edit Schedule</button>
+                      <button type="button" class="btn btn-success btn-sm" id="print-lupon-3rd" style="display:none;">
+                        <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">print</span>
+                        Print Summon
+                      </button>
                     </div>
                   </div>
                 </form>
@@ -1327,22 +1355,95 @@ document.addEventListener('DOMContentLoaded', () => {
       const skipBtn = document.getElementById('skip-to-lupon-from-1st');
       
       if (data.schedule_pb_first) {
-        proceedBtn.disabled = false;
-        skipBtn.disabled = false;
+        // Hide both buttons if Unang Patawag is already scheduled
+        if (data.schedule_unang_patawag) {
+          proceedBtn.style.display = 'none';
+          skipBtn.style.display = 'none';
+        } else {
+          // Hide proceed button if already in 2nd or 3rd meeting stage
+          if (data.complaint_stage === 'Punong Barangay - 2nd' || data.complaint_stage === 'Punong Barangay - 3rd') {
+            proceedBtn.style.display = 'none';
+          } else {
+            proceedBtn.disabled = false;
+            proceedBtn.style.display = 'inline-block';
+          }
+          
+          // Hide skip button if 2nd meeting is scheduled
+          if (data.schedule_pb_second) {
+            skipBtn.style.display = 'none';
+          } else {
+            skipBtn.disabled = false;
+            skipBtn.style.display = 'inline-block';
+          }
+        }
       }
     } else if (meeting === 'pb-2nd') {
       const proceedBtn = document.getElementById('proceed-to-pb-3rd');
       const skipBtn = document.getElementById('skip-to-lupon-from-2nd');
       
       if (data.schedule_pb_second) {
-        proceedBtn.disabled = false;
-        skipBtn.disabled = false;
+        // Hide both buttons if Unang Patawag is already scheduled
+        if (data.schedule_unang_patawag) {
+          proceedBtn.style.display = 'none';
+          skipBtn.style.display = 'none';
+        } else {
+          // Hide proceed button if already in 3rd meeting stage
+          if (data.complaint_stage === 'Punong Barangay - 3rd') {
+            proceedBtn.style.display = 'none';
+          } else {
+            proceedBtn.disabled = false;
+            proceedBtn.style.display = 'inline-block';
+          }
+          
+          // Hide skip button if 3rd meeting is scheduled
+          if (data.schedule_pb_third) {
+            skipBtn.style.display = 'none';
+          } else {
+            skipBtn.disabled = false;
+            skipBtn.style.display = 'inline-block';
+          }
+        }
       }
     } else if (meeting === 'pb-3rd') {
       const proceedBtn = document.getElementById('proceed-to-lupon');
       
       if (data.schedule_pb_third) {
-        proceedBtn.disabled = false;
+        // Hide button if Unang Patawag is already scheduled
+        if (data.schedule_unang_patawag) {
+          proceedBtn.style.display = 'none';
+        } else {
+          proceedBtn.disabled = false;
+          proceedBtn.style.display = 'inline-block';
+        }
+      }
+    }
+  }
+
+  // Helper function to enable/disable Lupon proceed buttons
+  function updateLuponProceedButtons(hearing, data) {
+    if (hearing === 'lupon-1st') {
+      const proceedBtn = document.getElementById('proceed-to-ikalawang');
+      
+      if (data.schedule_unang_patawag && proceedBtn) {
+        // Hide button if already in Ikalawang or Ikatlong stage
+        if (data.complaint_stage === 'Ikalawang Patawag' || data.complaint_stage === 'Ikatlong Patawag') {
+          proceedBtn.style.display = 'none';
+        } else {
+          proceedBtn.disabled = false;
+          proceedBtn.style.display = 'inline-block';
+        }
+      }
+    } else if (hearing === 'lupon-2nd') {
+      const proceedBtn = document.getElementById('proceed-to-ikatlong');
+      
+      if (data.schedule_ikalawang_patawag && proceedBtn) {
+        // Hide button if already in Ikatlong stage
+        if (data.complaint_stage === 'Ikatlong Patawag') {
+          proceedBtn.style.display = 'none';
+        } else {
+          proceedBtn.disabled = false;
+          proceedBtn.style.display = 'inline-block';
+        }
       }
     }
   }
@@ -1518,6 +1619,23 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('lupon_1st_resp_aff').value = data.respondent_affidavit_unang_patawag || '';
       setupScheduleButtons('lupon-1st', data);
       setupAffidavitButtons('lupon-1st', data);
+      updateLuponProceedButtons('lupon-1st', data);
+
+      // Show print button if Unang Patawag is scheduled
+      const printBtnUnang = document.getElementById('print-lupon-1st');
+      const lupon1stActions = document.getElementById('lupon-1st-actions');
+      if (data.schedule_unang_patawag) {
+        printBtnUnang.style.display = 'inline-block';
+        printBtnUnang.onclick = function() {
+          const [schedDate, schedTime] = data.schedule_unang_patawag.split(' ');
+          const printUrl = `functions/print_complaint.php?transaction_id=${data.transaction_id}&stage=Lupon Tagapamayapa&date=${schedDate}&time=${schedTime}`;
+          window.open(printUrl, '_blank');
+        };
+        lupon1stActions.style.display = 'flex';
+      } else {
+        printBtnUnang.style.display = 'none';
+        lupon1stActions.style.display = 'none';
+      }
       
       // Lupon Ikalawang Patawag
       if (data.schedule_ikalawang_patawag) {
@@ -1529,6 +1647,23 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('lupon_2nd_resp_aff').value = data.respondent_affidavit_ikalawang_patawag || '';
       setupScheduleButtons('lupon-2nd', data);
       setupAffidavitButtons('lupon-2nd', data);
+      updateLuponProceedButtons('lupon-2nd', data);
+
+      // Show print button if Ikalawang Patawag is scheduled
+      const printBtnIkalawang = document.getElementById('print-lupon-2nd');
+      const lupon2ndActions = document.getElementById('lupon-2nd-actions');
+      if (data.schedule_ikalawang_patawag) {
+        printBtnIkalawang.style.display = 'inline-block';
+        printBtnIkalawang.onclick = function() {
+          const [schedDate, schedTime] = data.schedule_ikalawang_patawag.split(' ');
+          const printUrl = `functions/print_complaint.php?transaction_id=${data.transaction_id}&stage=Lupon Tagapamayapa&date=${schedDate}&time=${schedTime}`;
+          window.open(printUrl, '_blank');
+        };
+        lupon2ndActions.style.display = 'flex';
+      } else {
+        printBtnIkalawang.style.display = 'none';
+        lupon2ndActions.style.display = 'none';
+      }
       
       // Lupon Ikatlong Patawag
       if (data.schedule_ikatlong_patawag) {
@@ -1540,6 +1675,19 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('lupon_3rd_resp_aff').value = data.respondent_affidavit_ikatlong_patawag || '';
       setupScheduleButtons('lupon-3rd', data);
       setupAffidavitButtons('lupon-3rd', data);
+
+      // Show print button if Ikatlong Patawag is scheduled
+      const printBtnIkatlong = document.getElementById('print-lupon-3rd');
+      if (data.schedule_ikatlong_patawag) {
+        printBtnIkatlong.style.display = 'inline-block';
+        printBtnIkatlong.onclick = function() {
+          const [schedDate, schedTime] = data.schedule_ikatlong_patawag.split(' ');
+          const printUrl = `functions/print_complaint.php?transaction_id=${data.transaction_id}&stage=Lupon Tagapamayapa&date=${schedDate}&time=${schedTime}`;
+          window.open(printUrl, '_blank');
+        };
+      } else {
+        printBtnIkatlong.style.display = 'none';
+      }
       
       // DISABLE TABS BASED ON STAGE
       const pbTab = document.getElementById('pb-tab');
@@ -1638,8 +1786,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const skipModal = new bootstrap.Modal(document.getElementById('skipToLuponModal'));
     skipModal.show();
     document.getElementById('confirmSkipToLupon').onclick = function() {
-      const tid = document.getElementById('current_transaction_id').value;
-      window.location.href = `functions/process_skip_to_lupon.php?transaction_id=${tid}`;
+      // Enable Lupon tab before closing modal
+      const luponTab = document.getElementById('lupon-tab');
+      luponTab.classList.remove('disabled');
+      luponTab.removeAttribute('disabled');
+      
+      // Switch to Lupon tab
+      bootstrap.Tab.getInstance(luponTab)?.show() || new bootstrap.Tab(luponTab).show();
+      
+      // Close both modals
+      skipModal.hide();
+      bootstrap.Modal.getInstance(document.getElementById('manageCaseModal')).hide();
     };
   });
 
@@ -1658,8 +1815,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const skipModal = new bootstrap.Modal(document.getElementById('skipToLuponModal'));
     skipModal.show();
     document.getElementById('confirmSkipToLupon').onclick = function() {
-      const tid = document.getElementById('current_transaction_id').value;
-      window.location.href = `functions/process_skip_to_lupon.php?transaction_id=${tid}`;
+      // Enable Lupon tab before closing modal
+      const luponTab = document.getElementById('lupon-tab');
+      luponTab.classList.remove('disabled');
+      luponTab.removeAttribute('disabled');
+      
+      // Switch to Lupon tab
+      bootstrap.Tab.getInstance(luponTab)?.show() || new bootstrap.Tab(luponTab).show();
+      
+      // Close both modals
+      skipModal.hide();
+      bootstrap.Modal.getInstance(document.getElementById('manageCaseModal')).hide();
     };
   });
 
@@ -1668,9 +1834,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const skipModal = new bootstrap.Modal(document.getElementById('skipToLuponModal'));
     skipModal.show();
     document.getElementById('confirmSkipToLupon').onclick = function() {
-      const tid = document.getElementById('current_transaction_id').value;
-      window.location.href = `functions/process_skip_to_lupon.php?transaction_id=${tid}`;
+      // Enable Lupon tab before closing modal
+      const luponTab = document.getElementById('lupon-tab');
+      luponTab.classList.remove('disabled');
+      luponTab.removeAttribute('disabled');
+      
+      // Switch to Lupon tab
+      bootstrap.Tab.getInstance(luponTab)?.show() || new bootstrap.Tab(luponTab).show();
+      
+      // Close both modals
+      skipModal.hide();
+      bootstrap.Modal.getInstance(document.getElementById('manageCaseModal')).hide();
     };
+  });
+
+  // Proceed to Ikalawang Patawag from Unang
+  document.getElementById('proceed-to-ikalawang').addEventListener('click', () => {
+    const lupon2ndTab = document.querySelector('[data-bs-target="#lupon-2nd"]');
+    bootstrap.Tab.getInstance(lupon2ndTab)?.show() || new bootstrap.Tab(lupon2ndTab).show();
+  });
+
+  // Proceed to Ikatlong Patawag from Ikalawang
+  document.getElementById('proceed-to-ikatlong').addEventListener('click', () => {
+    const lupon3rdTab = document.querySelector('[data-bs-target="#lupon-3rd"]');
+    bootstrap.Tab.getInstance(lupon3rdTab)?.show() || new bootstrap.Tab(lupon3rdTab).show();
   });
 });
 </script>

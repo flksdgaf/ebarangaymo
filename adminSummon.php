@@ -909,13 +909,19 @@ $stmt->close();
             <div class="mb-4">
               <h6 class="fw-bold text-success">Pangkat Tagapagkasundo</h6>
               <hr class="mt-1">
-              <form method="POST" action="functions/process_update_pangkat.php">
+              <form method="POST" action="functions/process_update_pangkat.php" id="pangkat-form">
                 <input type="hidden" name="transaction_id" class="lupon-tid">
+                <input type="hidden" name="chosen_pangkat" id="chosen_pangkat_hidden">
                 <div class="row g-3">
                   <div class="col-md-10">
                     <label class="form-label">Chosen Pangkat Members</label>
-                    <input type="text" name="chosen_pangkat" id="chosen_pangkat" class="form-control form-control-sm" placeholder="Enter names separated by commas">
-                    <small class="text-muted">Members chosen for the Pangkat Tagapagkasundo</small>
+                    <select id="pangkat_members_dropdown" class="form-select form-select-sm" multiple style="height: 120px;">
+                      <option value="" disabled>Loading Lupon members...</option>
+                    </select>
+                    <small class="text-muted">Hold Ctrl/Cmd to select multiple members. Selected members will be saved as comma-separated names.</small>
+                    <div class="mt-2">
+                      <strong>Selected:</strong> <span id="selected_members_display" class="text-primary">None</span>
+                    </div>
                   </div>
                   <div class="col-md-2 d-flex align-items-end">
                     <button type="submit" class="btn btn-primary btn-sm w-100">Save Members</button>
@@ -1421,32 +1427,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Helper function to enable/disable Lupon proceed buttons
   function updateLuponProceedButtons(hearing, data) {
-    if (hearing === 'lupon-1st') {
-      const proceedBtn = document.getElementById('proceed-to-ikalawang');
-      
-      if (data.schedule_unang_patawag && proceedBtn) {
-        // Hide button if already in Ikalawang or Ikatlong stage
-        if (data.complaint_stage === 'Ikalawang Patawag' || data.complaint_stage === 'Ikatlong Patawag') {
-          proceedBtn.style.display = 'none';
-        } else {
-          proceedBtn.disabled = false;
-          proceedBtn.style.display = 'inline-block';
+      if (hearing === 'lupon-1st') {
+        const proceedBtn = document.getElementById('proceed-to-ikalawang');
+        
+        if (data.schedule_unang_patawag && proceedBtn) {
+          // Hide button if Ikalawang is already scheduled OR if already in Ikalawang/Ikatlong stage
+          if (data.schedule_ikalawang_patawag || data.complaint_stage === 'Ikalawang Patawag' || data.complaint_stage === 'Ikatlong Patawag') {
+            proceedBtn.style.display = 'none';
+          } else {
+            proceedBtn.disabled = false;
+            proceedBtn.style.display = 'inline-block';
+          }
         }
-      }
-    } else if (hearing === 'lupon-2nd') {
-      const proceedBtn = document.getElementById('proceed-to-ikatlong');
-      
-      if (data.schedule_ikalawang_patawag && proceedBtn) {
-        // Hide button if already in Ikatlong stage
-        if (data.complaint_stage === 'Ikatlong Patawag') {
-          proceedBtn.style.display = 'none';
-        } else {
-          proceedBtn.disabled = false;
-          proceedBtn.style.display = 'inline-block';
+      } else if (hearing === 'lupon-2nd') {
+        const proceedBtn = document.getElementById('proceed-to-ikatlong');
+        
+        if (data.schedule_ikalawang_patawag && proceedBtn) {
+          // Hide button if Ikatlong is already scheduled OR if already in Ikatlong stage
+          if (data.schedule_ikatlong_patawag || data.complaint_stage === 'Ikatlong Patawag') {
+            proceedBtn.style.display = 'none';
+          } else {
+            proceedBtn.disabled = false;
+            proceedBtn.style.display = 'inline-block';
+          }
         }
       }
     }
-  }
 
   // Helper function to populate dynamic action taken options
   function populateActionTaken(stage) {
@@ -1519,7 +1525,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       
       // Populate chosen_pangkat in Lupon tab
-      document.getElementById('chosen_pangkat').value = data.chosen_pangkat || '';
+      loadExistingPangkatMembers(data.chosen_pangkat || '');
       
       // Store current stage for action taken filtering
       document.getElementById('current_stage_hidden').value = data.complaint_stage;
@@ -1751,6 +1757,44 @@ document.addEventListener('DOMContentLoaded', () => {
         pb3rdTab.style.pointerEvents = '';
         pb3rdTab.style.opacity = '';
       }
+
+      // DISABLE LUPON SUB-TABS
+      const luponUnangTab = document.querySelector('[data-bs-target="#lupon-1st"]');
+      const luponIkalawangTab = document.querySelector('[data-bs-target="#lupon-2nd"]');
+      const luponIkatlongTab = document.querySelector('[data-bs-target="#lupon-3rd"]');
+
+      // Always enable Unang Patawag if Lupon tab is enabled
+      luponUnangTab.classList.remove('disabled');
+      luponUnangTab.removeAttribute('disabled');
+      luponUnangTab.style.pointerEvents = '';
+      luponUnangTab.style.opacity = '';
+
+      // Disable Ikalawang and Ikatlong by default
+      luponIkalawangTab.classList.add('disabled');
+      luponIkalawangTab.setAttribute('disabled', 'true');
+      luponIkalawangTab.style.pointerEvents = 'none';
+      luponIkalawangTab.style.opacity = '0.5';
+
+      luponIkatlongTab.classList.add('disabled');
+      luponIkatlongTab.setAttribute('disabled', 'true');
+      luponIkatlongTab.style.pointerEvents = 'none';
+      luponIkatlongTab.style.opacity = '0.5';
+
+      // Only enable tabs if there's ALREADY a schedule (not just enabled by proceed button)
+      // This prevents tabs from being clickable until proceed button is actually clicked
+      if (data.schedule_ikalawang_patawag) {
+        luponIkalawangTab.classList.remove('disabled');
+        luponIkalawangTab.removeAttribute('disabled');
+        luponIkalawangTab.style.pointerEvents = '';
+        luponIkalawangTab.style.opacity = '';
+      }
+
+      if (data.schedule_ikatlong_patawag) {
+        luponIkatlongTab.classList.remove('disabled');
+        luponIkatlongTab.removeAttribute('disabled');
+        luponIkatlongTab.style.pointerEvents = '';
+        luponIkatlongTab.style.opacity = '';
+      }
       
       // Show modal
       new bootstrap.Modal(document.getElementById('manageCaseModal')).show();
@@ -1851,13 +1895,104 @@ document.addEventListener('DOMContentLoaded', () => {
   // Proceed to Ikalawang Patawag from Unang
   document.getElementById('proceed-to-ikalawang').addEventListener('click', () => {
     const lupon2ndTab = document.querySelector('[data-bs-target="#lupon-2nd"]');
+    
+    // Enable the tab
+    lupon2ndTab.classList.remove('disabled');
+    lupon2ndTab.removeAttribute('disabled');
+    lupon2ndTab.style.pointerEvents = '';
+    lupon2ndTab.style.opacity = '';
+    
+    // Switch to it
     bootstrap.Tab.getInstance(lupon2ndTab)?.show() || new bootstrap.Tab(lupon2ndTab).show();
   });
 
   // Proceed to Ikatlong Patawag from Ikalawang
   document.getElementById('proceed-to-ikatlong').addEventListener('click', () => {
     const lupon3rdTab = document.querySelector('[data-bs-target="#lupon-3rd"]');
+    
+    // Enable the tab
+    lupon3rdTab.classList.remove('disabled');
+    lupon3rdTab.removeAttribute('disabled');
+    lupon3rdTab.style.pointerEvents = '';
+    lupon3rdTab.style.opacity = '';
+    
+    // Switch to it
     bootstrap.Tab.getInstance(lupon3rdTab)?.show() || new bootstrap.Tab(lupon3rdTab).show();
   });
+
+  // Fetch and populate Lupon members dropdown
+  let luponMembersData = [];
+
+  async function loadLuponMembers() {
+    try {
+      const response = await fetch('functions/fetch_lupon_members.php');
+      const data = await response.json();
+      luponMembersData = data;
+      
+      const dropdown = document.getElementById('pangkat_members_dropdown');
+      dropdown.innerHTML = '';
+      
+      if (data.length === 0) {
+        dropdown.innerHTML = '<option value="" disabled>No Lupon members found</option>';
+      } else {
+        data.forEach(member => {
+          const option = document.createElement('option');
+          option.value = member.full_name;
+          option.textContent = member.full_name;
+          dropdown.appendChild(option);
+        });
+      }
+    } catch (error) {
+      console.error('Error loading Lupon members:', error);
+      document.getElementById('pangkat_members_dropdown').innerHTML = '<option value="" disabled>Error loading members</option>';
+    }
+  }
+
+  // Update selected members display and hidden input
+  document.getElementById('pangkat_members_dropdown').addEventListener('change', function() {
+    const selectedOptions = Array.from(this.selectedOptions);
+    const selectedNames = selectedOptions.map(opt => opt.value);
+    
+    // Update display
+    const displaySpan = document.getElementById('selected_members_display');
+    if (selectedNames.length === 0) {
+      displaySpan.textContent = 'None';
+    } else {
+      displaySpan.textContent = selectedNames.join(', ');
+    }
+    
+    // Update hidden input (comma-separated)
+    document.getElementById('chosen_pangkat_hidden').value = selectedNames.join(', ');
+  });
+
+  // Load existing selected members when modal opens
+  function loadExistingPangkatMembers(chosenPangkat) {
+    const dropdown = document.getElementById('pangkat_members_dropdown');
+    
+    if (!chosenPangkat) {
+      // Clear all selections
+      Array.from(dropdown.options).forEach(opt => opt.selected = false);
+      document.getElementById('selected_members_display').textContent = 'None';
+      document.getElementById('chosen_pangkat_hidden').value = '';
+      return;
+    }
+    
+    // Split by comma and trim
+    const existingMembers = chosenPangkat.split(',').map(name => name.trim());
+    
+    // Select matching options
+    Array.from(dropdown.options).forEach(opt => {
+      if (existingMembers.includes(opt.value)) {
+        opt.selected = true;
+      }
+    });
+    
+    // Update display
+    document.getElementById('selected_members_display').textContent = existingMembers.join(', ');
+    document.getElementById('chosen_pangkat_hidden').value = chosenPangkat;
+  }
+
+  // Load Lupon members when page loads
+  loadLuponMembers();
 });
 </script>

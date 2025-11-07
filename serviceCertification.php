@@ -834,6 +834,11 @@ document.addEventListener('DOMContentLoaded', function () {
             ['Purok:', (document.querySelector('[name="purok"]')?.value) || '—']
         ];
 
+        // Add Sex field for First Time Job Seeker (right after Purok)
+        if (type === 'first time job seeker') {
+            rows.push(['Sex:', (document.querySelector('[name="sex"]')?.value) || '—']);
+        }
+
         if (type === 'good moral') {
             const parentSex = document.querySelector('[name="parent_sex"]')?.value || window.existingParentSex || '—';
             const parentAddress = document.querySelector('[name="parent_address"]')?.value || window.existingParentAddress || '—';
@@ -854,26 +859,49 @@ document.addEventListener('DOMContentLoaded', function () {
                 rows.push([`Child ${i + 1} Name:`, name || '—']);
                 rows.push([`Child ${i + 1} Sex:`, childSexes[i] || '—']);
                 
-                // Format birthdate nicely if available
-                let birthdateDisplay = childBirthdates[i] || '—';
-                if (birthdateDisplay !== '—') {
-                    const d = new Date(birthdateDisplay);
-                    if (!isNaN(d.getTime())) {
-                        birthdateDisplay = d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                // Calculate and display age from birthdate
+                let ageDisplay = '—';
+                const birthdateStr = childBirthdates[i];
+                if (birthdateStr) {
+                    const birthdate = new Date(birthdateStr);
+                    const today = new Date();
+                    
+                    if (!isNaN(birthdate.getTime())) {
+                        const years = today.getFullYear() - birthdate.getFullYear();
+                        const months = today.getMonth() - birthdate.getMonth();
+                        const days = today.getDate() - birthdate.getDate();
+                        
+                        let ageYears = years;
+                        let ageMonths = months;
+                        
+                        // Adjust if birthday hasn't occurred this year
+                        if (months < 0 || (months === 0 && days < 0)) {
+                            ageYears--;
+                            ageMonths = months + 12;
+                        }
+                        
+                        if (ageYears >= 1) {
+                            ageDisplay = ageYears + ' year' + (ageYears !== 1 ? 's' : '') + ' old';
+                        } else {
+                            ageDisplay = ageMonths + ' month' + (ageMonths !== 1 ? 's' : '') + ' old';
+                        }
                     }
                 }
-                rows.push([`Child ${i + 1} Birthdate:`, birthdateDisplay]);
+                rows.push([`Child ${i + 1} Age:`, ageDisplay]);
             });
 
             const years = document.querySelector('[name="years_solo_parent"]')?.value || '—';
             rows.push(['Years as Solo Parent:', years]);
         }
 
-        // Guardianship: Child names only
+        // Guardianship: Child names and relationships
         if (type === 'guardianship') {
             const childNames = Array.from(document.querySelectorAll('[name="child_name[]"]')).map(el => el.value.trim()).filter(Boolean);
+            const childRelationships = Array.from(document.querySelectorAll('[name="child_relationship[]"]')).map(el => el.value.trim()).filter(Boolean);
+            
             childNames.forEach((name, i) => {
                 rows.push([`Child ${i + 1} Name:`, name || '—']);
+                rows.push([`Child ${i + 1} Relationship:`, childRelationships[i] || '—']);
             });
         }
 
@@ -885,13 +913,11 @@ document.addEventListener('DOMContentLoaded', function () {
             ]);
         }
 
-        // Common fields for all types
-        // Note: summary reads hidden claim_date field populated by the claim widget above
+        // Claim Date - for all types
         const claimDateVal = document.querySelector('[name="claim_date"]')?.value;
         const claimTimeVal = document.querySelector('[name="claim_time"]')?.value;
         let claimDisplay = '—';
         if (claimDateVal && claimTimeVal) {
-            // try to find friendly label from window._claimOptions
             if (window._claimOptions && Array.isArray(window._claimOptions)) {
                 const found = window._claimOptions.find(c => c.date === claimDateVal);
                 const dateLabel = found ? found.label : claimDateVal;
@@ -902,42 +928,41 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
         rows.push(['Claim Date:', claimDisplay]);
-        const purposeHiddenEl = document.querySelector('[name="purpose"]');
-        const purposeDisplay = purposeHiddenEl?.value || '—';
-        rows.push(['Purpose:', purposeDisplay]);
 
-        // Payment details — different rules for Indigency vs others
+        // Purpose - ONLY for certificates that have purpose field (NOT First Time Job Seeker or Indigency)
+        if (type !== 'first time job seeker' && type !== 'indigency') {
+            const purposeHiddenEl = document.querySelector('[name="purpose"]');
+            const purposeDisplay = purposeHiddenEl?.value || '—';
+            rows.push(['Purpose:', purposeDisplay]);
+        }
+
+        // Payment details
         const paymentAmountEl = document.getElementById('paymentAmount');
         const paymentStatusEl = document.getElementById('paymentStatus');
 
         const clientAmount = paymentAmountEl?.value?.trim();
         const clientStatus = paymentStatusEl?.value?.trim();
 
-        // prefer client-side hidden inputs, fallback to server values exposed on window
         const amountVal = clientAmount || window.existingPaymentAmount || '';
         const statusVal = clientStatus || window.existingPaymentStatus || '';
 
-        if (type === 'indigency') {
-            // show payment_status for indigency (default to "Free of Charge")
+        // Payment display - different for free vs paid certificates
+        if (type === 'indigency' || type === 'first time job seeker') {
+            // Free certificates: show ONLY payment status, NO amount
             rows.push(['Payment Status:', statusVal || 'Free of Charge']);
         } else {
-            // for other certificates, include amount and payment_status.
-            // Format amount nicely if numeric
+            // Paid certificates: show both amount and payment status
             let amtDisplay = '—';
             if (amountVal !== null && String(amountVal).trim() !== '') {
-                // if numeric, prefix peso sign
                 if (!isNaN(Number(String(amountVal).replace(/[^0-9.-]+/g, '')))) {
                     amtDisplay = '₱' + Number(String(amountVal).replace(/[^0-9.-]+/g, '')).toFixed(2);
                 } else {
                     amtDisplay = String(amountVal);
                 }
             } else {
-                // fallback default amount (use 130 as your standard fee)
                 amtDisplay = '₱130.00';
             }
             rows.push(['Amount:', amtDisplay]);
-
-            // payment status - prefer server-existing, otherwise show 'Pending' as friendly default
             rows.push(['Payment Status:', statusVal || 'Pending']);
         }
 

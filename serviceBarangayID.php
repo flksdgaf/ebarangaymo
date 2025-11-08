@@ -1,4 +1,8 @@
 <?php
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 require 'functions/dbconn.php';
 
 // Ensure the user is authenticated.
@@ -421,10 +425,12 @@ if (!empty($existingRequest)) {
                 <div class="row mb-3">
                 <label class="col-md-4 text-start fw-bold">Full Name</label>
                 <div class="col-md-8">
-                    <input type="text" id="fullname" name="fullname" disabled
+                    <input type="text" id="fullname_display" 
                         class="form-control custom-input"
-                        readonly
+                        disabled
                         value="<?php echo htmlspecialchars($fullName); ?>">
+                    <!-- Hidden input to actually submit the value -->
+                    <input type="hidden" id="fullname" name="fullname" value="<?php echo htmlspecialchars($fullName); ?>">
                 </div>
                 </div>
 
@@ -432,11 +438,12 @@ if (!empty($existingRequest)) {
                 <div class="row mb-3">
                     <label class="col-md-4 text-start fw-bold">Purok</label>
                     <div class="col-md-8">
-                        <input type="text" id="purok" name="purok" disabled
+                        <input type="text" id="purok_display" 
                             class="form-control custom-input" 
-                            readonly 
-                            required
+                            disabled 
                             value="<?php echo htmlspecialchars($userPurok); ?>">
+                        <!-- Hidden input to actually submit the value -->
+                        <input type="hidden" id="purok" name="purok" value="<?php echo htmlspecialchars($userPurok); ?>" required>
                     </div>
                 </div>
 
@@ -444,10 +451,12 @@ if (!empty($existingRequest)) {
                 <div class="row mb-3">
                 <label class="col-md-4 text-start fw-bold">Date of Birth</label>
                 <div class="col-md-8">
-                    <input type="date" id="birthday" name="birthday" disabled
+                    <input type="date" id="birthday_display" 
                         class="form-control custom-input"
-                        readonly
+                        disabled
                         value="<?php echo date('Y-m-d', strtotime($birthdate)); ?>">
+                    <!-- Hidden input to actually submit the value -->
+                    <input type="hidden" id="birthday" name="birthday" value="<?php echo date('Y-m-d', strtotime($birthdate)); ?>">
                 </div>
                 </div>
 

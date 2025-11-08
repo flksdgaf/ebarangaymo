@@ -59,7 +59,7 @@ if ($validIdNumber !== '' && mb_strlen($validIdNumber) > 100) {
     $errors[] = 'Valid ID number is too long.';
 }
 
-// 2) Handle file upload (formal picture). Required per form.
+// 2) Handle file upload (formal picture). Now optional.
 $formalPicName = null;
 if (!empty($_FILES['brgyIDpicture']['name']) && isset($_FILES['brgyIDpicture']) && $_FILES['brgyIDpicture']['error'] === UPLOAD_ERR_OK) {
     $uploadDir = __DIR__ . '/../barangayIDpictures/';
@@ -87,10 +87,8 @@ if (!empty($_FILES['brgyIDpicture']['name']) && isset($_FILES['brgyIDpicture']) 
     } else {
         $errors[] = 'Unsupported formal picture file type.';
     }
-} else {
-    // no file provided or error
-    $errors[] = 'Formal picture is required.';
 }
+// If no file uploaded, that's okay - field is optional now
 
 // Parse claim inputs with graceful fallback
 $claimDate = null; // YYYY-MM-DD

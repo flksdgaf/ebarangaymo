@@ -354,20 +354,37 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 
-        let preDate = hiddenClaimDate?.value || null;
-        let prePart = hiddenClaimTime?.value || null;
-        const first = claimList.querySelector('input[type="radio"]');
-        if (preDate && prePart && isValidClaimSeparate(preDate, prePart)) {
-            const target = claimList.querySelector(`input[data-date="${preDate}"][data-part="${prePart}"]`);
-            if (target) {
-                target.checked = true;
-                target.dispatchEvent(new Event('change', { bubbles: true }));
-                return;
+        // Pre-select existing claim logic (prefer server-provided)
+        if (window._existingClaimObj && window._existingClaimObj.date) {
+            const d = window._existingClaimObj.date;
+            const p = window._existingClaimObj.part;
+            // Try to find new-style radio first
+            const desiredNew = claimList.querySelector(`input[name="claim_slot"][data-date="${d}"][data-part="${p}"]`);
+            if (desiredNew) {
+                desiredNew.checked = true;
+                desiredNew.dispatchEvent(new Event('change', { bubbles: true }));
+            } else {
+                // Fallback: match by date only (prefer morning)
+                const dateMatchNew = claimList.querySelector(`input[name="claim_slot"][data-date="${d}"]`);
+                if (dateMatchNew) {
+                    dateMatchNew.checked = true;
+                    dateMatchNew.dispatchEvent(new Event('change', { bubbles: true }));
+                }
             }
-        }
-        if (first && !claimList.querySelector('input[type="radio"]:checked')) {
-            first.checked = true;
-            first.dispatchEvent(new Event('change', { bubbles: true }));
+        } else {
+            // DEFAULT SELECTION: Always select first radio (Morning of first available date)
+            const firstRadio = claimList.querySelector('input[name="claim_slot"]');
+            if (firstRadio) {
+                firstRadio.checked = true;
+                // Trigger change event to update UI and hidden fields
+                firstRadio.dispatchEvent(new Event('change', { bubbles: true }));
+                // Also ensure the card shows as active
+                const parentLabel = firstRadio.closest('label');
+                if (parentLabel) {
+                    parentLabel.classList.add('active');
+                    parentLabel.setAttribute('aria-pressed', 'true');
+                }
+            }
         }
     }
 
@@ -392,8 +409,9 @@ document.addEventListener("DOMContentLoaded", function () {
         'first time job seeker': [
             { id: 'full_name',       label: 'Full Name',       type: 'text',     disabled: true },
             { id: 'age',             label: 'Age',             type: 'number',   disabled: true },
-            { id: 'civil_status',    label: 'Marital Status',  type: 'select',   options: ['Single','Married','Widowed','Separated','Divorced','Unknown']   },
+            { id: 'civil_status',    label: 'Civil Status',  type: 'select',   options: ['Single','Married','Widowed','Separated','Divorced','Unknown']   },
             { id: 'purok',           label: 'Purok',           type: 'select',   options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6']     },
+            { id: 'sex',             label: 'Sex',             type: 'select',   options: ['Male','Female']     },
             { id: 'claim_date',      label: 'Claim Date',      type: 'claim' }
         ],
         'good moral': [
@@ -408,7 +426,7 @@ document.addEventListener("DOMContentLoaded", function () {
             { id: 'full_name',       label: 'Full Name',       type: 'text',     disabled: true },
             { id: 'age',             label: 'Age',             type: 'number',   disabled: true },
             { id: 'civil_status',    label: 'Civil Status',    type: 'select',   options: ['Single','Married','Widowed','Separated','Divorced','Unknown']   },
-            { id: 'purok',           label: 'Purok',           type: 'select',   options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6']     }
+            { id: 'purok',           label: 'Purok',           type: 'select',   options: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5','Purok 6']     },
         ],
         guardianship: [
             { id: 'full_name',       label: 'Full Name',       type: 'text',     disabled: true },
@@ -431,21 +449,35 @@ document.addEventListener("DOMContentLoaded", function () {
                 <div class="col-sm-10" id="guardianClaimHolder"></div>
             </div>
 
-            <div class="row mb-3" id="purposeContainer_soloparent"></div>
+            <div class="row mb-3" id="purposeContainer_guardianship"></div>
             `;
             certFieldsHolder.appendChild(wrapper);
 
             const container = wrapper.querySelector('#guardianChildren');
 
-            function addChild(prefillName = '') {
+            function addChild(prefillData = null) {
                 const row = document.createElement('div');
                 row.className = 'row mb-3 child-row';
                 row.innerHTML = `
-                    <label class="col-sm-2 col-form-label fw-bold">Child's Name:</label>
-                    <div class="col-sm-9">
-                        <input type="text" name="child_name[]" class="form-control" value="${prefillName}" required>
+                    <label class="col-sm-2 col-form-label fw-bold">Child's Name</label>
+                    <div class="col-sm-3">
+                        <input type="text" name="child_name[]" class="form-control" 
+                            value="${prefillData?.name || ''}" required>
                     </div>
-                    <div class="col-sm-1 d-flex gap-2 justify-content-end align-items-center">
+                    
+                    <label class="col-form-label fw-bold" style="width: 250px;">Relationship to Guardian</label>
+                    <div class="col-sm-3">
+                        <select name="child_relationship[]" class="form-select" required>
+                            <option value="">Select Relationship</option>
+                            <option value="Mother" ${prefillData?.relationship === 'Mother' ? 'selected' : ''}>Mother</option>
+                            <option value="Father" ${prefillData?.relationship === 'Father' ? 'selected' : ''}>Father</option>
+                            <option value="Uncle" ${prefillData?.relationship === 'Uncle' ? 'selected' : ''}>Uncle</option>
+                            <option value="Aunt" ${prefillData?.relationship === 'Aunt' ? 'selected' : ''}>Aunt</option>
+                            <option value="Legal Guardian" ${prefillData?.relationship === 'Legal Guardian' ? 'selected' : ''}>Legal Guardian</option>
+                        </select>
+                    </div>
+
+                    <div class="col d-flex gap-2 justify-content-end align-items-center p-0" style="max-width: 100px;">
                         <button type="button" class="btn btn-outline-danger btn-sm remove-child d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; padding: 0;">
                             <span class="material-symbols-outlined" style="font-size: 20px;">delete</span>
                         </button>
@@ -465,20 +497,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 
                 row.querySelector('.add-child').onclick = () => addChild();
             }
-
-            // Validate birthdates to prevent future dates
-            container.addEventListener('change', function(e) {
-                if (e.target && e.target.classList.contains('child-birthdate')) {
-                    const selectedDate = new Date(e.target.value);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    
-                    if (selectedDate > today) {
-                        alert('Birthdate cannot be in the future. Please select a valid date.');
-                        e.target.value = '';
-                    }
-                }
-            });
             
             function updateChildButtons() {
                 const allRows = container.querySelectorAll('.child-row');
@@ -486,11 +504,11 @@ document.addEventListener("DOMContentLoaded", function () {
                     const deleteBtn = row.querySelector('.remove-child');
                     const addBtn = row.querySelector('.add-child');
                     
-                    // Hide delete button if only one row
+                    // Disable delete button if only one row exists, enable otherwise
                     if (allRows.length === 1) {
-                        deleteBtn.style.display = 'none';
+                        deleteBtn.disabled = true;
                     } else {
-                        deleteBtn.style.display = '';
+                        deleteBtn.disabled = false;
                     }
                     
                     // Only show add button on last row
@@ -502,118 +520,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
             }
 
-            // Add one empty child row initially
-            addChild();
-
-            buildClaimOptionsInto(wrapper.querySelector('#guardianClaimHolder'));
-        } else if (type === 'solo parent') {
-            const parentSexVal = (window.existingParentSex || window.currentUser?.sex || '').toString();
-            const parentSexHtml = `
-            <div class="row mb-3">
-                <label class="col-sm-2 col-form-label fw-bold">Parent Sex:</label>
-                <div class="col-sm-3">
-                    <select name="parent_sex" class="form-select" required>
-                        <option value="Male" ${parentSexVal === 'Male' ? 'selected' : ''}>Male</option>
-                        <option value="Female" ${parentSexVal === 'Female' ? 'selected' : ''}>Female</option>
-                    </select>
-                </div>
-                <label class="col-sm-3 col-form-label fw-bold text-end">Years as Solo Parent:</label>
-                <div class="col-sm-4">
-                    <input type="number" name="years_solo_parent" class="form-control" required>
-                </div>
-            </div>
-        `;
-            wrapper.innerHTML = parentSexHtml;
-            
-            wrapper.innerHTML += `
-            <div id="soloChildren"></div>
-
-            <div id="soloClaimContainer" class="row mb-3">
-                <label class="col-sm-2 fw-bold">Claim Date:</label>
-                <div class="col-sm-10" id="soloClaimHolder"></div>
-            </div>
-
-            <div class="row mb-3" id="purposeContainer_soloparent"></div>
-            `;
-            certFieldsHolder.appendChild(wrapper);
-
-            const container = wrapper.querySelector('#soloChildren');
-            
-            function addChild(prefillData = null) {
-            const row = document.createElement('div');
-            row.className = 'row mb-3 child-row';
-            
-            // Get today's date for max attribute
-            const today = new Date().toISOString().split('T')[0];
-            
-            row.innerHTML = `
-            <label class="col-sm-2 col-form-label fw-bold">Child's Name</label>
-            <div class="col-sm-3">
-                <input type="text" name="child_name[]" class="form-control" 
-                    value="${prefillData?.name || ''}" required>
-            </div>
-
-            <label class="col-form-label fw-bold" style="width: 55px;">Sex</label>
-            <div class="col-sm-2" style="min-width: 80px;">
-                <select name="child_sex[]" class="form-select" required>
-                    <option value="Male" ${prefillData?.sex === 'Male' ? 'selected' : ''}>Male</option>
-                    <option value="Female" ${prefillData?.sex === 'Female' ? 'selected' : ''}>Female</option>
-                </select>
-            </div>
-
-            <label class="col-form-label fw-bold" style="width: 110px;">Birthdate</label>
-            <div class="col-sm-2">
-                <input type="date" name="child_birthdate[]" class="form-control child-birthdate" 
-                    value="${prefillData?.birthdate || ''}" max="${today}" required>
-            </div>
-
-            <div class="col d-flex gap-2 justify-content-end align-items-center" style="max-width: 120px;">
-                <button type="button" class="btn btn-outline-danger btn-sm remove-child d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; padding: 0;">
-                    <span class="material-symbols-outlined" style="font-size: 20px;">delete</span>
-                </button>
-                <button type="button" class="btn btn-outline-success btn-sm add-child d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; padding: 0;">
-                    <span class="material-symbols-outlined" style="font-size: 20px;">add</span>
-                </button>
-            </div>`;
-            container.appendChild(row);
-                
-                // Update button visibility
-                updateChildButtons();
-                
-                row.querySelector('.remove-child').onclick = () => {
-                    row.remove();
-                    updateChildButtons();
-                };
-                
-                row.querySelector('.add-child').onclick = () => addChild();
-            }
-            
-            function updateChildButtons() {
-                const allRows = container.querySelectorAll('.child-row');
-                allRows.forEach((row, index) => {
-                    const deleteBtn = row.querySelector('.remove-child');
-                    const addBtn = row.querySelector('.add-child');
-                    
-                    // Hide delete button if only one row
-                    if (allRows.length === 1) {
-                        deleteBtn.style.display = 'none';
-                    } else {
-                        deleteBtn.style.display = '';
-                    }
-                    
-                    // Only show add button on last row
-                    if (index === allRows.length - 1) {
-                        addBtn.style.display = '';
-                    } else {
-                        addBtn.style.display = 'none';
-                    }
-                });
-            }
-            
-            // Parse and populate existing children data OR add one empty row
-            if (window.existingChildrenData && window.existingChildrenData.trim()) {
+            // Parse and populate existing children data if available
+            if (window.existingGuardianshipData && window.existingGuardianshipData.trim()) {
                 try {
-                    const childrenArray = JSON.parse(window.existingChildrenData);
+                    const childrenArray = JSON.parse(window.existingGuardianshipData);
                     if (Array.isArray(childrenArray) && childrenArray.length > 0) {
                         childrenArray.forEach(child => addChild(child));
                     } else {
@@ -626,8 +536,132 @@ document.addEventListener("DOMContentLoaded", function () {
                 addChild(); // Add one empty row for new form
             }
 
+            buildClaimOptionsInto(wrapper.querySelector('#guardianClaimHolder'));
+        }
+
+        // ========== INSERT SOLO PARENT CODE HERE (START) ==========
+        if (type === 'solo parent') {
+            wrapper.innerHTML += `
+            <div class="row mb-3" id="soloParentInfoRow">
+                <label class="col-sm-2 col-form-label fw-bold">Parent Sex:</label>
+                <div class="col-sm-4">
+                    <select name="parent_sex" class="form-select" required>
+                        <option value="">Select Parent Sex</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                    </select>
+                </div>
+                
+                <label class="col-sm-3 col-form-label fw-bold">Years as Solo Parent:</label>
+                <div class="col-sm-3">
+                    <input type="number" name="years_solo_parent" class="form-control" min="1" step="0.1" required>
+                </div>
+            </div>
+
+            <div id="soloParentChildren"></div>
+
+            <div id="soloClaimContainer" class="row mb-3">
+                <label class="col-sm-2 fw-bold">Claim Date:</label>
+                <div class="col-sm-10" id="soloClaimHolder"></div>
+            </div>
+
+            <div class="row mb-3" id="purposeContainer_solo_parent"></div>
+            `;
+            certFieldsHolder.appendChild(wrapper);
+
+            const container = wrapper.querySelector('#soloParentChildren');
+
+            function addSoloChild(prefillData = null) {
+                const row = document.createElement('div');
+                row.className = 'row mb-2 child-row';
+                row.innerHTML = `
+                    <label class="col-sm-2 col-form-label fw-bold">Child's Name</label>
+                    <div class="col-sm-3">
+                        <input type="text" name="child_name[]" class="form-control" 
+                            value="${prefillData?.name || ''}" required>
+                    </div>
+                    
+                    <label class="col-form-label fw-bold text-end" style="width: 60px;">Sex</label>
+                    <div class="col-sm-2">
+                        <select name="child_sex[]" class="form-select" required>
+                            <option value="">Select Sex</option>
+                            <option value="Male" ${prefillData?.sex === 'Male' ? 'selected' : ''}>Male</option>
+                            <option value="Female" ${prefillData?.sex === 'Female' ? 'selected' : ''}>Female</option>
+                        </select>
+                    </div>
+
+                    <label class="col-form-label fw-bold text-end" style="width: 110px;">Birthdate</label>
+                    <div class="col-sm-2">
+                        <input type="date" name="child_birthdate[]" class="form-control" 
+                            value="${prefillData?.birthdate || ''}" required>
+                    </div>
+
+                    <div class="col-auto d-flex gap-2 align-items-center">
+                        <button type="button" class="btn btn-outline-danger btn-sm remove-child d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; padding: 0;">
+                            <span class="material-symbols-outlined" style="font-size: 20px;">delete</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-success btn-sm add-child d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; padding: 0;">
+                            <span class="material-symbols-outlined" style="font-size: 20px;">add</span>
+                        </button>
+                    </div>`;
+                    container.appendChild(row);
+
+                    row.querySelector('.remove-child').onclick = () => {
+                        row.remove();
+                        updateChildButtons();
+                    };
+
+                    row.querySelector('.add-child').onclick = () => addSoloChild();
+
+                    updateChildButtons();
+            }
+            
+            function updateChildButtons() {
+                const allRows = container.querySelectorAll('.child-row');
+                allRows.forEach((row, index) => {
+                    const deleteBtn = row.querySelector('.remove-child');
+                    const addBtn = row.querySelector('.add-child');
+                    
+                    // Disable delete button if only one row exists, enable otherwise
+                    if (allRows.length === 1) {
+                        deleteBtn.disabled = true;
+                    } else {
+                        deleteBtn.disabled = false;
+                    }
+                    
+                    // Only show add button on last row
+                    if (index === allRows.length - 1) {
+                        addBtn.style.display = '';
+                    } else {
+                        addBtn.style.display = 'none';
+                    }
+                });
+            }
+
+            // Parse and populate existing children data if available
+            if (window.existingChildrenData && window.existingChildrenData.trim() && window.existingChildrenData !== 'null') {
+                try {
+                    const childrenArray = JSON.parse(window.existingChildrenData);
+                    if (Array.isArray(childrenArray) && childrenArray.length > 0) {
+                        childrenArray.forEach(child => addSoloChild(child));
+                    } else {
+                        addSoloChild();
+                    }
+                } catch (e) {
+                    addSoloChild();
+                }
+            } else {
+                addSoloChild();
+            }
+
+            // CRITICAL: Ensure button visibility is updated after all children are added
+            setTimeout(() => {
+                updateChildButtons();
+            }, 50);
+
             buildClaimOptionsInto(wrapper.querySelector('#soloClaimHolder'));
         }
+        // ========== INSERT SOLO PARENT CODE HERE (END) ==========
 
         const purposeFieldConfig = { id: 'purpose', label: 'Purpose', type: 'purpose_select' };
         const purposeRow = document.createElement('div');
@@ -695,12 +729,11 @@ document.addEventListener("DOMContentLoaded", function () {
         group.innerHTML = `
             <div class="row mb-3 gm-parent-sex-row">
                 <label class="col-sm-2 col-form-label fw-bold">Parent Sex:</label>
-                <div class="col-sm-4">
-                    <select name="parent_sex" class="form-select">
-                        <option value="" ${parentSexPref === '' ? 'selected' : ''}>-- Select --</option>
-                        <option value="Male" ${parentSexPref === 'Male' ? 'selected' : ''}>Male</option>
-                        <option value="Female" ${parentSexPref === 'Female' ? 'selected' : ''}>Female</option>
-                        <option value="Other" ${parentSexPref && parentSexPref !== 'Male' && parentSexPref !== 'Female' ? 'selected' : ''}>Other</option>
+                <div class="col-sm-10">
+                    <select name="parent_sex" class="form-select" required>
+                        <option value="">Select Parent Sex</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
                     </select>
                 </div>
             </div>
@@ -812,7 +845,9 @@ document.addEventListener("DOMContentLoaded", function () {
                     ${f.options.map(o => `<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join('')}
                     </select>`;
             } else {
-                inner += `<input type="${f.type}" id="${f.id}" name="${f.id}" class="form-control${isReadOnly ? ' bg-e9ecef' : ''}" value="${val}" ${isReadOnly ? 'readonly' : ''} required>`;
+                // Add min="1" for residing_years field
+                const extraAttrs = (f.id === 'residing_years') ? ' min="1"' : '';
+                inner += `<input type="${f.type}" id="${f.id}" name="${f.id}" class="form-control${isReadOnly ? ' bg-e9ecef' : ''}" value="${val}" ${isReadOnly ? 'readonly' : ''}${extraAttrs} required>`;
             }
 
             inner += `</div>`;
@@ -908,6 +943,32 @@ document.addEventListener("DOMContentLoaded", function () {
         setupPaymentControls();
     }
 
+    // Add event listener for residing_years validation
+    certFieldsHolder.addEventListener('input', function(e) {
+        if (e.target && e.target.id === 'residing_years') {
+            const value = parseFloat(e.target.value);
+            if (value <= 0 || isNaN(value)) {
+                e.target.setCustomValidity('Years residing must be greater than 0');
+                e.target.classList.add('is-invalid');
+            } else {
+                e.target.setCustomValidity('');
+                e.target.classList.remove('is-invalid');
+            }
+        }
+        
+        // Add validation for years_solo_parent
+        if (e.target && e.target.name === 'years_solo_parent') {
+            const value = parseFloat(e.target.value);
+            if (value <= 0 || isNaN(value)) {
+                e.target.setCustomValidity('Years as Solo Parent must be greater than 0');
+                e.target.classList.add('is-invalid');
+            } else {
+                e.target.setCustomValidity('');
+                e.target.classList.remove('is-invalid');
+            }
+        }
+    });
+
     function refreshFields() { renderCertFields(certInput.value, forSelect.value); }
 
     refreshFields();
@@ -965,21 +1026,27 @@ document.addEventListener("DOMContentLoaded", function () {
                 } else {
                     field.classList.remove("is-invalid");
                 }
-            });
-        }
-
-        const claimGroupInActive = activeStepEl ? activeStepEl.querySelector('.claim-list') : null;
-        if (claimGroupInActive) {
-            const cd = hiddenClaimDate?.value || '';
-            const ct = hiddenClaimTime?.value || '';
-            if (!isValidClaimSeparate(cd, ct)) {
-                isValid = false;
-                const firstCard = claimGroupInActive.querySelector('.claim-card');
-                if (firstCard) {
-                    firstCard.style.outline = '1px solid #dc3545';
-                    firstCard.setAttribute('aria-invalid', 'true');
+                
+                // Check for residing_years specific validation
+                if (field.id === 'residing_years') {
+                    const value = parseFloat(field.value);
+                    if (value <= 0 || isNaN(value)) {
+                        isValid = false;
+                        field.classList.add("is-invalid");
+                        field.setCustomValidity('Years residing must be greater than 0');
+                    }
                 }
-            }
+
+                // Validate years_solo_parent
+                if (field.name === 'years_solo_parent') {
+                    const value = parseFloat(field.value);
+                    if (value <= 0 || isNaN(value)) {
+                        isValid = false;
+                        field.classList.add("is-invalid");
+                        field.setCustomValidity('Years as Solo Parent must be greater than 0');
+                    }
+                }
+            });
         }
 
         // Validate payment method selection at payment step (but skip for GCash since it submits immediately)
@@ -1174,13 +1241,23 @@ document.addEventListener("DOMContentLoaded", function () {
         const container = document.getElementById('summaryContainer');
 
         const rows = [
-            ['Type of Certification:', certInput.value || '—'],
-            ['Requesting For:', forSelect.value === 'myself' ? 'Myself' : 'Others'],
+            ['Type of Certification:', certInput?.value || '—'],
+            ['Requesting For:', forSelect?.value === 'myself' ? 'Myself' : 'Others'],
             ['Full Name:', (document.querySelector('[name="full_name"]')?.value) || '—'],
             ['Age:', (document.querySelector('[name="age"]')?.value) || '—'],
             ['Civil Status:', (document.querySelector('[name="civil_status"]')?.value) || '—'],
             ['Purok:', (document.querySelector('[name="purok"]')?.value) || '—']
         ];
+
+        // Add Sex field for First Time Job Seeker
+        if (type === 'first time job seeker') {
+            rows.push(['Sex:', (document.querySelector('[name="sex"]')?.value) || '—']);
+        }
+
+        // if (type === 'first time job seeker') {
+        //     const sex = document.querySelector('[name="sex"]')?.value || '—';
+        //     rows.push(['Sex:', sex]);
+        // }
 
         if (type === 'good moral') {
             const parentSexGM = document.querySelector('[name="parent_sex"]')?.value || window.existingParentSex || window.currentUser.sex || '—';
@@ -1194,28 +1271,55 @@ document.addEventListener("DOMContentLoaded", function () {
             rows.push(['Parent Sex:', parentSex || '—']);
 
             const childNames = Array.from(document.querySelectorAll('[name="child_name[]"]')).map(el => el.value.trim()).filter(Boolean);
-            const childAges  = Array.from(document.querySelectorAll('[name="child_age[]"]')).map(el => el.value.trim()).filter(Boolean);
             const childSexes = Array.from(document.querySelectorAll('[name="child_sex[]"]')).map(el => el.value.trim()).filter(Boolean);
+            const childBirthdates = Array.from(document.querySelectorAll('[name="child_birthdate[]"]')).map(el => el.value.trim()).filter(Boolean);
+
+            // Function to calculate age display from birthdate
+            function calculateAgeDisplay(birthdate) {
+                if (!birthdate) return '—';
+                
+                const birth = new Date(birthdate);
+                const today = new Date();
+                
+                let years = today.getFullYear() - birth.getFullYear();
+                let months = today.getMonth() - birth.getMonth();
+                let days = today.getDate() - birth.getDate();
+                
+                // Adjust for negative days
+                if (days < 0) {
+                    months--;
+                    const lastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+                    days += lastMonth.getDate();
+                }
+                
+                // Adjust for negative months
+                if (months < 0) {
+                    years--;
+                    months += 12;
+                }
+                
+                // Format display based on age
+                if (years > 0) {
+                    return years + ' year' + (years !== 1 ? 's' : '') + ' old';
+                } else if (months > 0) {
+                    return months + ' month' + (months !== 1 ? 's' : '') + ' old';
+                } else {
+                    const weeks = Math.floor(days / 7);
+                    if (weeks > 0) {
+                        return weeks + ' week' + (weeks !== 1 ? 's' : '') + ' old';
+                    } else {
+                        return days + ' day' + (days !== 1 ? 's' : '') + ' old';
+                    }
+                }
+            }
 
             childNames.forEach((name, i) => {
                 rows.push([`Child ${i + 1} Name:`, name || '—']);
-                rows.push([`Child ${i + 1} Age:`, childAges[i] || '—']);
                 rows.push([`Child ${i + 1} Sex:`, childSexes[i] || '—']);
-            });
-
-            const years = document.querySelector('[name="years_solo_parent"]')?.value || '—';
-            rows.push(['Years as Solo Parent:', years]);
-        }
-
-        if (type === 'solo parent') {
-            const childNames = Array.from(document.querySelectorAll('[name="child_name[]"]')).map(el => el.value.trim()).filter(Boolean);
-            const childAges  = Array.from(document.querySelectorAll('[name="child_age[]"]')).map(el => el.value.trim()).filter(Boolean);
-            const childSexes = Array.from(document.querySelectorAll('[name="child_sex[]"]')).map(el => el.value.trim()).filter(Boolean);
-
-            childNames.forEach((name, i) => {
-                rows.push([`Child ${i + 1} Name:`, name || '—']);
-                rows.push([`Child ${i + 1} Age:`, childAges[i] || '—']);
-                rows.push([`Child ${i + 1} Sex:`, childSexes[i] || '—']);
+                
+                // Calculate age from birthdate
+                const ageDisplay = childBirthdates[i] ? calculateAgeDisplay(childBirthdates[i]) : '—';
+                rows.push([`Child ${i + 1} Age:`, ageDisplay]);
             });
 
             const years = document.querySelector('[name="years_solo_parent"]')?.value || '—';
@@ -1224,8 +1328,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (type === 'guardianship') {
             const childNames = Array.from(document.querySelectorAll('[name="child_name[]"]')).map(el => el.value.trim()).filter(Boolean);
+            const childRelationships = Array.from(document.querySelectorAll('[name="child_relationship[]"]')).map(el => el.value.trim()).filter(Boolean);
+            
             childNames.forEach((name, i) => {
                 rows.push([`Child ${i + 1} Name:`, name || '—']);
+                rows.push([`Child ${i + 1} Relationship:`, childRelationships[i] || '—']);
             });
         }
 
@@ -1249,9 +1356,12 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         rows.push(['Claim Date:', claimLabel]);
-        const purposeHiddenEl = document.querySelector('[name="purpose"]');
-        const purposeDisplay = purposeHiddenEl?.value || '—';
-        rows.push(['Purpose:', purposeDisplay]);
+        // Purpose - ONLY for certificates that have purpose field (NOT First Time Job Seeker)
+        if (type !== 'first time job seeker' && type !== 'indigency') {
+            const purposeHiddenEl = document.querySelector('[name="purpose"]');
+            const purposeDisplay = purposeHiddenEl?.value || '—';
+            rows.push(['Purpose:', purposeDisplay]);
+        }
 
         const clientAmount = (hiddenPaymentAmount?.value || '').toString().trim();
         const clientStatus = (hiddenPaymentStatus?.value || '').toString().trim();
@@ -1261,9 +1371,12 @@ document.addEventListener("DOMContentLoaded", function () {
         const amountVal = clientAmount || serverAmount || '';
         const statusVal = clientStatus || serverStatus || '';
 
-        if (type === 'indigency') {
+        // Payment display - different for free vs paid certificates
+        if (type === 'indigency' || type === 'first time job seeker') {
+            // Free certificates: show ONLY payment status, NO amount
             rows.push(['Payment Status:', statusVal || 'Free of Charge']);
         } else {
+            // Paid certificates: show both amount and payment status
             let amtDisplay = '—';
             if (amountVal !== null && String(amountVal).trim() !== '') {
                 const numeric = Number(String(amountVal).replace(/[^0-9.-]+/g, ''));

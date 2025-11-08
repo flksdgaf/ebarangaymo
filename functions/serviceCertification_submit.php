@@ -40,7 +40,7 @@ $certConfigs = [
     'Good Moral'   => ['full_name','age','civil_status','purok','claim_date','purpose'],
     'Solo Parent'  => ['full_name','age','civil_status','purok','claim_date','purpose'],
     'Guardianship' => ['full_name','age','civil_status','purok','claim_date','purpose'],
-    'First Time Job Seeker' => ['full_name','age','civil_status','purok','claim_date'],  
+    'First Time Job Seeker' => ['full_name','age','civil_status','purok','sex','claim_date'],
 ];
 
 $map = [
@@ -171,58 +171,123 @@ foreach ($fields as $field) {
 }
 
 if ($type === 'Guardianship') {
-    $childs = array_map('trim', $_POST['child_name'] ?? []);
-    $data['child_name'] = $childs ? implode(', ', $childs) : null;
+    $childrenArray = [];
+    $childNames = $_POST['child_name'] ?? [];
+    $childRelationships = $_POST['child_relationship'] ?? [];
+    
+    for ($i = 0; $i < count($childNames); $i++) {
+        if (!empty(trim($childNames[$i]))) {
+            $childrenArray[] = [
+                'name' => trim($childNames[$i]),
+                'relationship' => isset($childRelationships[$i]) ? trim($childRelationships[$i]) : ''
+            ];
+        }
+    }
+    
+    // Build comma-separated strings for backward compatibility with existing table structure
+    $childNamesList = [];
+    $childRelationshipsList = [];
+    
+    foreach ($childrenArray as $child) {
+        $childNamesList[] = $child['name'];
+        $childRelationshipsList[] = $child['relationship'];
+    }
+    
+    $data['child_name'] = !empty($childNamesList) ? implode(', ', $childNamesList) : null;
+    $data['child_relationship'] = !empty($childRelationshipsList) ? implode(', ', $childRelationshipsList) : null;
+    
     if (!in_array('child_name', $fields, true)) $fields[] = 'child_name';
+    if (!in_array('child_relationship', $fields, true)) $fields[] = 'child_relationship';
 }
 
 if ($type === 'Solo Parent') {
+    // Validate years_solo_parent
+    $yearsSoloParent = $_POST['years_solo_parent'] ?? null;
+    if ($yearsSoloParent === null || $yearsSoloParent === '' || !is_numeric($yearsSoloParent) || (float)$yearsSoloParent <= 0) {
+        header("HTTP/1.1 400 Bad Request");
+        exit("Years as Solo Parent must be greater than 0");
+    }
+    
     $childrenArray = [];
     $childNames = $_POST['child_name'] ?? [];
     $childBirthdates = $_POST['child_birthdate'] ?? [];
     $childSexes = $_POST['child_sex'] ?? [];
+    $childAgeDisplays = $_POST['child_age_display'] ?? [];
+    $childAgeValues = $_POST['child_age_value'] ?? [];
     
-    // Helper function to calculate age from birthdate
-    function calculateAgeFromBirthdate($birthdate) {
-        if (empty($birthdate)) return 0;
+    // Helper function to calculate age with display format (including weeks and days)
+    function calculateAgeWithDisplay($birthdate) {
+        if (empty($birthdate)) {
+            return ['age' => 0, 'age_display' => '0 years old'];
+        }
         
         $birth = new DateTime($birthdate);
         $today = new DateTime('now', new DateTimeZone('Asia/Manila'));
         
-        $years = $today->diff($birth)->y;
-        $months = $today->diff($birth)->m;
-        $days = $today->diff($birth)->days;
+        // Calculate differences
+        $years = $today->format('Y') - $birth->format('Y');
+        $months = $today->format('m') - $birth->format('m');
+        $days = $today->format('d') - $birth->format('d');
         
-        // Return years if >= 1 year old
+        // Adjust for negative days
+        if ($days < 0) {
+            $months--;
+            $lastMonth = new DateTime($today->format('Y-m') . '-01');
+            $lastMonth->modify('-1 day');
+            $days += (int)$lastMonth->format('d');
+        }
+        
+        // Adjust for negative months
+        if ($months < 0) {
+            $years--;
+            $months += 12;
+        }
+        
+        // Determine display format and value
         if ($years > 0) {
-            return $years;
+            $yearText = $years === 1 ? 'year' : 'years';
+            $ageDisplay = $years . ' ' . $yearText . ' old';
+            $ageValue = $years;
+        } elseif ($months > 0) {
+            $monthText = $months === 1 ? 'month' : 'months';
+            $ageDisplay = $months . ' ' . $monthText . ' old';
+            $ageValue = round($months / 12, 2);
+        } else {
+            $weeks = floor($days / 7);
+            if ($weeks > 0) {
+                $weekText = $weeks === 1 ? 'week' : 'weeks';
+                $ageDisplay = $weeks . ' ' . $weekText . ' old';
+                $ageValue = round($weeks / 52, 2);
+            } else {
+                $dayText = $days === 1 ? 'day' : 'days';
+                $ageDisplay = $days . ' ' . $dayText . ' old';
+                $ageValue = round($days / 365, 3);
+            }
         }
         
-        // Return fractional year for infants (months/12 or weeks/52)
-        if ($months > 0) {
-            return round($months / 12, 2);
-        }
-        
-        // For newborns less than a month, use weeks
-        $weeks = floor($days / 7);
-        if ($weeks > 0) {
-            return round($weeks / 52, 2);
-        }
-        
-        // For very new babies, use days
-        return round($days / 365, 2);
+        return ['age' => $ageValue, 'age_display' => $ageDisplay];
     }
     
     for ($i = 0; $i < count($childNames); $i++) {
         if (!empty(trim($childNames[$i]))) {
             $birthdate = isset($childBirthdates[$i]) ? trim($childBirthdates[$i]) : '';
-            $age = $birthdate ? calculateAgeFromBirthdate($birthdate) : 0;
+            
+            // Use submitted age data if available, otherwise calculate
+            if (!empty($childAgeDisplays[$i]) && !empty($childAgeValues[$i])) {
+                $ageDisplay = $childAgeDisplays[$i];
+                $ageValue = floatval($childAgeValues[$i]);
+            } else {
+                $ageData = calculateAgeWithDisplay($birthdate);
+                $ageDisplay = $ageData['age_display'];
+                $ageValue = $ageData['age'];
+            }
             
             $childrenArray[] = [
                 'name' => trim($childNames[$i]),
+                'sex' => isset($childSexes[$i]) ? trim($childSexes[$i]) : '',
                 'birthdate' => $birthdate,
-                'age' => $age,  // Calculated age stored for backward compatibility
-                'sex' => isset($childSexes[$i]) ? trim($childSexes[$i]) : ''
+                'age_display' => $ageDisplay,
+                'age' => $ageValue
             ];
         }
     }

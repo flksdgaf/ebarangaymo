@@ -169,7 +169,7 @@ if (in_array($role, $admin_roles)) {
 </head>
 <body>
     <nav class="navbar navbar-expand-lg border-bottom px-2 py-2 top-bar" style="background-color: #C4C4C4;">
-        <div class="container-fluid d-flex align-items-center justify-content-between p-0">
+        <div class="container-fluid d-flex align-items-center justify-content-between px-2">
             <!-- Left side: Hamburger + Title -->
             <div class="d-flex align-items-center gap-1 topbar-title" style="flex-shrink: 0; margin-left: 0px">
                 <!-- Hamburger button (only visible on mobile/tablet) -->
@@ -186,7 +186,7 @@ if (in_array($role, $admin_roles)) {
             <div class="flex-grow-1" style="min-width: 8px;"></div>
             
             <!-- Right side: User dropdown (compact on mobile) -->
-            <div class="dropdown d-flex align-items-center gap-1" style="flex-shrink: 0;">
+            <div class="dropdown d-flex align-items-center gap-2" style="flex-shrink: 0;">
                 <button class="btn btn-sm btn-outline-secondary dropdown-toggle user-dropdown-btn" type="button" id="adminDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     <!-- <span class="user-label">
                         <?= htmlspecialchars($fullName) ?>

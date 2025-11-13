@@ -335,41 +335,41 @@ if (!$stmt->execute()) {
 
 $stmt->close();
 
-// --- GCash Payment Integration ---
+// --- Universal GCash Payment Integration ---
 if ($paymentMethod === 'GCash') {
-    require_once __DIR__ . '/gcash_handler.php';
+    require_once __DIR__ . '/gcash/handler.php';
     
     try {
-        $gcashResult = createGCashSource($transactionId, $amount);
+        $handler = new UniversalGCashHandler($conn);
+        $gcashResult = $handler->createPaymentSource($transactionId, $amount);
         
         if ($gcashResult['success'] && isset($gcashResult['checkout_url'])) {
-            // Store transaction in session for security
-            $_SESSION['pending_gcash_transaction'] = $transactionId;
-            
-            // Redirect to GCash checkout
+            $_SESSION['pending_gcash_payment'] = $transactionId;
+            $conn->close();
             header("Location: " . $gcashResult['checkout_url']);
             exit();
         } else {
-            // GCash initialization failed
-            $errorMsg = $gcashResult['error'] ?? 'Failed to initialize GCash payment.';
-            $_SESSION['svc_error'] = $errorMsg . ' Please try another payment method.';
+            $_SESSION['svc_error'] = $gcashResult['error'] ?? 'Failed to initialize GCash payment';
             
-            // Update payment status to failed
             $stmtFail = $conn->prepare("UPDATE barangay_id_requests SET payment_status = 'failed' WHERE transaction_id = ?");
             $stmtFail->bind_param("s", $transactionId);
             $stmtFail->execute();
             $stmtFail->close();
             
+            $conn->close();
             header("Location: ../serviceBarangayID.php");
             exit();
         }
     } catch (Exception $e) {
-        error_log("GCash Integration Error: " . $e->getMessage());
-        $_SESSION['svc_error'] = 'Payment system error. Please try another payment method.';
+        error_log("GCash Error (Barangay ID): " . $e->getMessage());
+        $_SESSION['svc_error'] = 'Payment system error';
+        $conn->close();
         header("Location: ../serviceBarangayID.php");
         exit();
     }
 }
+
+$conn->close();
 
 // 5) Redirect back to the appropriate panel (support admin/superAdmin flows)
 if (!empty($_POST['superAdminRedirect'])) {

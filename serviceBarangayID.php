@@ -230,6 +230,13 @@ if (!empty($existingRequest)) {
     }
 }
 ?>
+<?php
+// Payment Status Messages
+$paymentSuccess = $_SESSION['payment_success'] ?? '';
+$paymentError = $_SESSION['payment_error'] ?? '';
+$paymentFailed = $_SESSION['payment_failed'] ?? '';
+unset($_SESSION['payment_success'], $_SESSION['payment_error'], $_SESSION['payment_failed']);
+?>
 <link rel="stylesheet" href="serviceBarangayID.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
@@ -338,6 +345,31 @@ if (!empty($existingRequest)) {
 </style>
 
 <div class="container px-3">
+    <!-- Payment Status Messages -->
+    <?php if ($paymentSuccess): ?>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong><span class="material-symbols-outlined" style="vertical-align: middle;">check_circle</span> Success!</strong>
+            <?php echo htmlspecialchars($paymentSuccess); ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
+    
+    <?php if ($paymentError): ?>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong><span class="material-symbols-outlined" style="vertical-align: middle;">error</span> Error!</strong>
+            <?php echo htmlspecialchars($paymentError); ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
+    
+    <?php if ($paymentFailed): ?>
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <strong><span class="material-symbols-outlined" style="vertical-align: middle;">warning</span> Payment Cancelled</strong>
+            <?php echo htmlspecialchars($paymentFailed); ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
+
     <div class="progress-container">
         <div class="stepss">
             <!-- STEP 1 -->
@@ -996,7 +1028,21 @@ if (!empty($existingRequest)) {
     </div>
 </div>
 
-<?php $initial = $transactionId ? 4 : 1; ?>
+<?php
+// Handle step parameter from URL (for GCash returns)
+$urlStep = isset($_GET['step']) ? intval($_GET['step']) : null;
+$initial = 1; // Default to step 1
+
+if ($transactionId) {
+    // If there's a URL step parameter, use it (for GCash redirect returns)
+    if ($urlStep && $urlStep >= 1 && $urlStep <= 4) {
+        $initial = $urlStep;
+    } else {
+        // No step parameter: default to final step (submission complete)
+        $initial = 4;
+    }
+}
+?>
 <script>
     // make the PHP values available to our claim JS
     window.initialStep = <?php echo $initial; ?>;

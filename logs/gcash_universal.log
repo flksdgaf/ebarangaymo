@@ -1,0 +1,30 @@
+2025-11-06 04:26:25 - Creating payment source - {"transaction_id":"BUS-0000001","type":"Business Clearance","amount":130}
+2025-11-06 04:26:26 - Payment source created - {"source_id":"src_zgDj99dkSK8D5KYrcJZhbp1U","transaction_id":"BUS-0000001"}
+2025-11-06 04:29:29 - Creating payment source - {"transaction_id":"BUS-0000002","type":"Business Clearance","amount":130}
+2025-11-06 04:29:30 - Payment source created - {"source_id":"src_2TczHutYyB2dxVNj5KH8mWwB","transaction_id":"BUS-0000002"}
+2025-11-06 04:34:26 - Creating payment source - {"transaction_id":"BUS-0000003","type":"Business Clearance","amount":130}
+2025-11-06 04:34:27 - Payment source created - {"source_id":"src_VLVRMi8NQERTsnReXme359KY","transaction_id":"BUS-0000003"}
+2025-11-06 04:35:38 - Creating payment source - {"transaction_id":"BUS-0000004","type":"Business Clearance","amount":20}
+2025-11-06 04:35:39 - Payment source created - {"source_id":"src_X6erD7nx1b2zx2vJhraMAc9o","transaction_id":"BUS-0000004"}
+2025-11-06 04:37:35 - Creating payment source - {"transaction_id":"BUS-0000005","type":"Business Clearance","amount":20}
+2025-11-06 04:37:36 - Payment source created - {"source_id":"src_G4ipqotyXFnBpcuSi44dB3CE","transaction_id":"BUS-0000005"}
+2025-11-06 04:38:38 - Processing success callback - {"transaction_id":"BUS-0000005","type":"Business Clearance","source_id":"src_G4ipqotyXFnBpcuSi44dB3CE"}
+2025-11-06 04:38:38 - Source status - {"status":"chargeable"}
+2025-11-06 04:38:39 - Payment created - {"payment_id":"pay_3FyYaRQP3ZLipHZCDWpxZQgM","reference":"GCASH-DWPXZQGM","status":"paid","type":"Business Clearance"}
+2025-11-08 01:18:52 - Creating payment source - {"transaction_id":"BUS-0000006","type":"Business Clearance","amount":20}
+2025-11-08 01:18:53 - Payment source created - {"source_id":"src_3rPtGkQAtCPsqYZSGNgd9V2T","transaction_id":"BUS-0000006"}
+2025-11-08 01:19:38 - Creating payment source - {"transaction_id":"BUS-0000007","type":"Business Clearance","amount":20}
+2025-11-08 01:19:39 - Payment source created - {"source_id":"src_2zjrYpmZiq2xcxVhB39DB5jP","transaction_id":"BUS-0000007"}
+2025-11-08 01:23:11 - Processing success callback - {"transaction_id":"BUS-0000007","type":"Business Clearance","source_id":"src_2zjrYpmZiq2xcxVhB39DB5jP"}
+2025-11-08 01:23:12 - Source status - {"status":"chargeable"}
+2025-11-08 01:23:13 - Payment created - {"payment_id":"pay_RsXQJkPeqx9VNjnmbAAXh8uW","reference":"GCASH-BAAXH8UW","status":"paid","type":"Business Clearance"}
+2025-11-08 01:29:47 - Creating payment source - {"transaction_id":"BUS-0000008","type":"Business Clearance","amount":20}
+2025-11-08 01:29:47 - Payment source created - {"source_id":"src_N9WvvqYV4izkjZHjVcxSHkFv","transaction_id":"BUS-0000008"}
+2025-11-08 01:33:23 - Creating payment source - {"transaction_id":"BUS-0000001","type":"Business Clearance","amount":20}
+2025-11-08 01:33:24 - Payment source created - {"source_id":"src_gCNWCAUhF1fuBCckFtY3ykWA","transaction_id":"BUS-0000001"}
+2025-11-08 18:41:22 - Creating payment source - {"transaction_id":"BUS-0000002","type":"Business Clearance","amount":20}
+2025-11-08 18:41:22 - Payment source created - {"source_id":"src_XQnLdayqDqBkx1bK28SwwLKa","transaction_id":"BUS-0000002"}
+2025-11-08 18:42:30 - Creating payment source - {"transaction_id":"BUS-0000003","type":"Business Clearance","amount":20}
+2025-11-08 18:42:31 - Payment source created - {"source_id":"src_RVd3npHUzXpknWKS8bT93Kbf","transaction_id":"BUS-0000003"}
+2025-11-08 18:47:41 - Creating payment source - {"transaction_id":"BUS-0000004","type":"Business Clearance","amount":20}
+2025-11-08 18:47:42 - Payment source created - {"source_id":"src_hcX5aVGAZwQDkviFE62YQZMB","transaction_id":"BUS-0000004"}

@@ -1201,7 +1201,7 @@ $result = $st->get_result();
                       </div>
                       <div class="col-12 col-md-6">
                         <label class="form-label fw-bold">Relationship to Guardian <small class="fw-normal">(optional)</small></label>
-                        <input name="guardianship_children[0][relationship]" type="text" class="form-control form-control-sm" placeholder="e.g., Son, Daughter, Nephew, Niece">
+                        <input name="guardianship_children[0][relationship]" type="text" class="form-control form-control-sm" placeholder="e.g., Mother, Father, Aunt, Uncle">
                       </div>
                     </div>
                   </div>

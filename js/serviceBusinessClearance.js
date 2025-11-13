@@ -1,6 +1,9 @@
 // js/serviceBusinessClearance.js
 document.addEventListener("DOMContentLoaded", function () {
     let currentStep = window.initialStep || 1;
+    
+    // Make goToStep accessible globally BEFORE any URL handler tries to use it
+    window.goToStep = null;
 
     const steps = document.querySelectorAll(".step");
     const circleSteps = document.querySelectorAll('.circle');
@@ -374,6 +377,18 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (validationModal) validationModal.show();
                 return;
             }
+            
+            // === GCash Payment Handling ===
+            if (hiddenPaymentInput.value === 'GCash') {
+                // Submit form directly - server will redirect to GCash
+                if (form) {
+                    nextBtn.disabled = true;
+                    nextBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+                    form.submit();
+                    return; // Stop here, don't proceed to step 3
+                }
+            }
+            // === End GCash Handling ===
         }
 
         if (currentStep === 3) {
@@ -434,6 +449,9 @@ document.addEventListener("DOMContentLoaded", function () {
         updateNavigation();
         if (currentStep === 3) populateSummary();
     }
+    
+    // Make function globally accessible after definition
+    window.goToStep = goToStep;
 
     function showStep(n) {
         steps.forEach((s, idx) => {
@@ -771,6 +789,62 @@ document.addEventListener("DOMContentLoaded", function () {
         if (sPayment && (!sPayment.textContent || sPayment.textContent.trim() === '')) {
             sPayment.textContent = pm ? (pm.value || '-') : '-';
         }
+    })();
+
+    // Handle URL step parameter and back button warnings
+    (function() {
+        // Check URL for step parameter (for GCash returns)
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlStep = urlParams.get('step');
+        const hasTid = urlParams.get('tid');
+        
+        if (urlStep && hasTid) {
+            const targetStep = parseInt(urlStep);
+            console.log('URL step detected:', targetStep);
+            
+            // Wait for goToStep to be defined
+            const checkAndNavigate = setInterval(function() {
+                if (typeof window.goToStep === 'function') {
+                    clearInterval(checkAndNavigate);
+                    console.log('Navigating to step:', targetStep);
+                    window.goToStep(targetStep);
+                }
+            }, 50);
+            
+            // Timeout after 2 seconds
+            setTimeout(function() {
+                clearInterval(checkAndNavigate);
+            }, 2000);
+        }
+        
+        // Back button warning for payment page
+        let isOnPaymentStep = false;
+        
+        // Detect payment step
+        document.addEventListener('DOMContentLoaded', function() {
+            const observer = new MutationObserver(function() {
+                const steps = document.querySelectorAll('.step');
+                const activeStep = Array.from(steps).findIndex(s => s.classList.contains('active-step'));
+                isOnPaymentStep = (activeStep === 1); // Step 2 (index 1) is payment
+            });
+            
+            document.querySelectorAll('.step').forEach(step => {
+                observer.observe(step, { attributes: true, attributeFilter: ['class'] });
+            });
+        });
+        
+        // Warn on back button
+        window.addEventListener('popstate', function(e) {
+            if (isOnPaymentStep) {
+                const paymentMethod = document.getElementById('paymentMethod');
+                if (paymentMethod && paymentMethod.value === 'GCash') {
+                    if (!confirm('Going back may cancel your payment. Continue?')) {
+                        window.history.pushState(null, null, window.location.href);
+                        e.preventDefault();
+                    }
+                }
+            }
+        });
     })();
 
 });

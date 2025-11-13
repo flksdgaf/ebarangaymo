@@ -264,7 +264,7 @@ if ($stmt) {
     $stmt->close();
 }
 $num = $lastNumber + 1;
-$transactionId = sprintf('BUSCLR-%07d', $num);
+$transactionId = sprintf('BUS-%07d', $num); // BUSCLR
 
 // Detect if DB has 'claim_time' column (preferred) or older 'claim_part'
 $claimTimeColumn = null;
@@ -314,7 +314,8 @@ $placeIssued = null;
 $orNumber = null;
 $paymentStatus = 'Pending';
 $documentStatus = isset($_POST['document_status']) && $_POST['document_status'] !== '' ? trim($_POST['document_status']) : 'For Verification';
-$amount = (isset($_POST['amount']) && $_POST['amount'] !== '') ? floatval($_POST['amount']) : 130.00;
+// $amount = (isset($_POST['amount']) && $_POST['amount'] !== '') ? floatval($_POST['amount']) : 130.00;
+$amount = (isset($_POST['amount']) && $_POST['amount'] !== '') ? floatval($_POST['amount']) : 20.00; // TESTING: was 130.00
 $requestType = 'Business Clearance';
 
 // Map column -> value
@@ -412,6 +413,41 @@ if (!$stmt->execute()) {
 
 $stmt->close();
 
+// --- Universal GCash Payment Integration ---
+if ($paymentMethod === 'GCash') {
+    require_once __DIR__ . '/gcash/handler.php';
+    
+    try {
+        $handler = new UniversalGCashHandler($conn);
+        $gcashResult = $handler->createPaymentSource($transactionId, $amount);
+        
+        if ($gcashResult['success'] && isset($gcashResult['checkout_url'])) {
+            $_SESSION['pending_gcash_payment'] = $transactionId;
+            $conn->close();
+            header("Location: " . $gcashResult['checkout_url']);
+            exit();
+        } else {
+            $_SESSION['svc_error'] = $gcashResult['error'] ?? 'Failed to initialize GCash payment';
+            
+            $stmtFail = $conn->prepare("UPDATE business_clearance_requests SET payment_status = 'failed' WHERE transaction_id = ?");
+            $stmtFail->bind_param("s", $transactionId);
+            $stmtFail->execute();
+            $stmtFail->close();
+            
+            $conn->close();
+            header("Location: ../serviceBusinessClearance.php");
+            exit();
+        }
+    } catch (Exception $e) {
+        error_log("GCash Error (Business Clearance): " . $e->getMessage());
+        $_SESSION['svc_error'] = 'Payment system error';
+        $conn->close();
+        header("Location: ../serviceBusinessClearance.php");
+        exit();
+    }
+}
+
+$conn->close();
 // Success -> redirect to submission view
 header("Location: ../userPanel.php?page=serviceBusinessClearance&tid=" . urlencode($transactionId));
 exit();

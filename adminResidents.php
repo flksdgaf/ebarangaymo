@@ -150,6 +150,16 @@ $endDisplay   = $offset + $shownCount;                       // 1-based end inde
         <?php endfor; ?>
       </select>
 
+      <button type="button" class="btn btn-sm btn-success ms-2" data-bs-toggle="modal" data-bs-target="#importCSVModal">
+        <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">upload_file</span>
+        Import CSV
+      </button>
+
+      <button type="button" class="btn btn-sm btn-primary ms-2" id="addResidentBtn">
+        <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">person_add</span>
+        Add Resident
+      </button>
+
       <!-- Search Form -->
       <form id="searchForm" method="get" class="d-flex ms-auto me-2">
         <input type="hidden" name="page" value="adminResidents">
@@ -279,6 +289,220 @@ $endDisplay   = $offset + $shownCount;                       // 1-based end inde
       </small>
     </div>
 
+  </div>
+
+  <!-- Import CSV Modal -->
+  <div class="modal fade" id="importCSVModal" tabindex="-1" aria-labelledby="importCSVLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header text-white" style="background-color:#13411F;">
+          <h5 class="modal-title" id="importCSVLabel">Import Residents from CSV</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="importCSVForm" enctype="multipart/form-data">
+            <div class="mb-3">
+              <label for="purokSelect" class="form-label">Select Purok</label>
+              <select id="purokSelect" name="purok" class="form-select" required>
+                <option value="">Choose Purok...</option>
+                <option value="1">Purok 1</option>
+                <option value="2">Purok 2</option>
+                <option value="3">Purok 3</option>
+                <option value="4">Purok 4</option>
+                <option value="5">Purok 5</option>
+                <option value="6">Purok 6</option>
+              </select>
+            </div>
+            
+            <div class="mb-3">
+              <label for="csvFile" class="form-label">CSV File</label>
+              <input type="file" class="form-control" id="csvFile" name="csv_file" accept=".csv,.xlsx,.xls" required>
+              <div class="form-text">
+                Accepts: CSV, Excel (.xlsx, .xls)<br>
+                Expected columns: No#, Relationship to Head, Fullname, Date of Birth, Gender, Civil Status, Blood Type, Birth Registration #, Highest Educational Attainment, Occupation, Reg#, Total Population
+              </div>
+            </div>
+
+            <div class="alert alert-info" role="alert">
+              <strong>Note:</strong> The CSV will be imported into the selected Purok table. Make sure your data matches the expected format.
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-success" id="importCSVBtn">Import</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Resident Modal -->
+  <div class="modal fade" id="addResidentModal" tabindex="-1" aria-labelledby="addResidentLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header text-white" style="background-color:#13411F;">
+          <h5 class="modal-title" id="addResidentLabel">Add New Resident</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-3" style="max-height:68vh; overflow-y:auto;">
+          <form id="addResidentForm" class="row g-2">
+            
+            <!-- Personal Info Section -->
+            <div class="col-12">
+              <h6 class="fw-bold fs-5" style="color:#13411F;">Personal Information</h6>
+              <hr class="my-2">
+            </div>
+
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-bold">First Name <span class="text-danger">*</span></label>
+              <input type="text" name="first_name" id="first_name" class="form-control form-control-sm" required>
+            </div>
+
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-bold">Middle Name</label>
+              <input type="text" name="middle_name" id="middle_name" class="form-control form-control-sm">
+            </div>
+            
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-bold">Last Name <span class="text-danger">*</span></label>
+              <input type="text" name="last_name" id="last_name" class="form-control form-control-sm" required>
+            </div>
+
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-bold">Birthdate <span class="text-danger">*</span></label>
+              <input type="date" name="birthdate" class="form-control form-control-sm" required>
+            </div>
+
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-bold">Sex <span class="text-danger">*</span></label>
+              <select name="sex" class="form-select form-select-sm" required>
+                <option value="">Select...</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Prefer not to say">Prefer not to say</option>
+                <option value="Unknown">Unknown</option>
+              </select>
+            </div>
+
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-bold">Civil Status <span class="text-danger">*</span></label>
+              <select name="civil_status" class="form-select form-select-sm" required>
+                <option value="">Select...</option>
+                <option value="Single">Single</option>
+                <option value="Married">Married</option>
+                <option value="Widowed">Widowed</option>
+                <option value="Separated">Separated</option>
+                <option value="Divorced">Divorced</option>
+                <option value="Unknown">Unknown</option>
+              </select>
+            </div>
+
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-bold">Blood Type</label>
+              <select name="blood_type" class="form-select form-select-sm">
+                <option value="">Select...</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+                <option value="Unknown">Unknown</option>
+              </select>
+            </div>
+
+            <!-- Address / Household Section -->
+            <div class="col-12 mt-3">
+              <h6 class="fw-bold fs-5" style="color:#13411F;">Address & Household</h6>
+              <hr class="my-2">
+            </div>
+
+            <div class="col-12 col-md-3">
+              <label class="form-label fw-bold">Purok <span class="text-danger">*</span></label>
+              <select name="purok" id="addPurokSelect" class="form-select form-select-sm" required>
+                <option value="">Select...</option>
+                <option value="1">Purok 1</option>
+                <option value="2">Purok 2</option>
+                <option value="3">Purok 3</option>
+                <option value="4">Purok 4</option>
+                <option value="5">Purok 5</option>
+                <option value="6">Purok 6</option>
+              </select>
+            </div>
+
+            <div class="col-12 col-md-3">
+              <label class="form-label fw-bold">House No.</label>
+              <input type="number" name="house_number" class="form-control form-control-sm">
+            </div>
+
+            <div class="col-12 col-md-3">
+              <label class="form-label fw-bold">Relationship to Head</label>
+              <input type="text" name="relationship_to_head" class="form-control form-control-sm" placeholder="e.g. Head, Spouse, Child">
+            </div>
+
+            <div class="col-12 col-md-3">
+              <label class="form-label fw-bold">Total Population</label>
+              <input type="number" name="total_population" class="form-control form-control-sm">
+            </div>
+
+            <!-- Other Info Section -->
+            <div class="col-12 mt-3">
+              <h6 class="fw-bold fs-5" style="color:#13411F;">Other Information</h6>
+              <hr class="my-2">
+            </div>
+
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-bold">Birth Registration No.</label>
+              <input type="text" name="birth_registration_number" class="form-control form-control-sm">
+            </div>
+
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-bold">Highest Educational Attainment</label>
+              <select name="highest_educational_attainment" class="form-select form-select-sm">
+                <option value="">Select...</option>
+                <option value="Kindergarten">Kindergarten</option>
+                <option value="Elementary">Elementary</option>
+                <option value="High School">High School</option>
+                <option value="Senior High School">Senior High School</option>
+                <option value="Undergraduate">Undergraduate</option>
+                <option value="College Graduate">College Graduate</option>
+                <option value="Post-Graduate">Post-Graduate</option>
+                <option value="Vocational">Vocational</option>
+                <option value="None">None</option>
+                <option value="Unknown">Unknown</option>
+              </select>
+            </div>
+
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-bold">Occupation</label>
+              <input type="text" name="occupation" class="form-control form-control-sm" placeholder="e.g. Teacher, Farmer">
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-bold">Registry No.</label>
+              <input type="number" name="registry_number" class="form-control form-control-sm">
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-bold">Remarks</label>
+              <select name="remarks" class="form-select form-select-sm">
+                <option value="">None</option>
+                <option value="On Hold">On Hold</option>
+                <option value="Transferred">Transferred</option>
+                <option value="Deceased">Deceased</option>
+              </select>
+            </div>
+
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="saveNewResidentBtn">Save Resident</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -657,30 +881,20 @@ $endDisplay   = $offset + $shownCount;                       // 1-based end inde
       }
 
       if (!json.success) {
-        return alert('Save failed: ' + (json.error||'unknown'));
+        showBootstrapAlert('Save failed: ' + (json.error||'unknown'), 'danger');
+        return;
       }
 
-      // update table row in the UI
-      const row = document.querySelector(
-        `.resident-row[data-name="${currentData.full_name.replace(/"/g,'\\"')}"]`
-      );
-      // columns: 1=full_name,2=birthdate,3=house_no,4=rel,5=regno,6=pop
-      ['full_name','birthdate','house_number','relationship_to_head','registry_number','total_population']
-        .forEach((k,idx) => {
-          row.children[idx+1].textContent = document.getElementById(`field_${k}`).value;
-        });
-
-      // flip back to readonly mode
-      isEditing = false;
-      editSaveBtn.textContent = 'Edit';
-      form.querySelectorAll('input').forEach(i => i.readOnly = true);
-      ['sex','civil_status','blood_type','highest_educational_attainment'].forEach(key=>{
-        const sel = document.getElementById(`field_${key}`);
-        if (sel && sel.tagName === 'SELECT') sel.disabled = true;
-      });
-
+      // Close modal
       modal.hide();
-      window.location.reload();
+      
+      // Show success message
+      showBootstrapAlert('Resident details updated successfully!', 'success');
+      
+      // Reload page to show updated data
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     });
 
     // Row click opens the modal
@@ -694,5 +908,176 @@ $endDisplay   = $offset + $shownCount;                       // 1-based end inde
         modal.show();
       });
     });
+
+    // --- Add Resident Handler ---
+    const addResidentBtn = document.getElementById('addResidentBtn');
+    const addResidentModal = new bootstrap.Modal(document.getElementById('addResidentModal'));
+    const addResidentForm = document.getElementById('addResidentForm');
+    const saveNewResidentBtn = document.getElementById('saveNewResidentBtn');
+    const addPurokSelect = document.getElementById('addPurokSelect');
+
+    // Open modal and pre-select current purok
+    addResidentBtn.addEventListener('click', () => {
+      addResidentForm.reset();
+      addPurokSelect.value = purokNum.toString();
+      addResidentModal.show();
+    });
+
+    // Save new resident
+    saveNewResidentBtn.addEventListener('click', async () => {
+      // Validate required fields
+      if (!addResidentForm.checkValidity()) {
+        addResidentForm.reportValidity();
+        return;
+      }
+
+      // Gather form data
+      const formData = new FormData(addResidentForm);
+
+      // Disable button while saving
+      saveNewResidentBtn.disabled = true;
+      saveNewResidentBtn.textContent = 'Saving...';
+
+      try {
+        const response = await fetch('functions/add_resident.php', {
+          method: 'POST',
+          body: formData
+        });
+
+        const text = await response.text();
+        console.log('Raw response:', text);
+
+        let json;
+        try {
+          json = JSON.parse(text);
+        } catch (e) {
+          showBootstrapAlert('Server error: Invalid response format. Check console for details.', 'danger');
+          console.error('Parse error:', e, 'Response:', text);
+          return;
+        }
+
+        if (json.success) {
+          addResidentModal.hide();
+          const lastName = formData.get('last_name');
+          const firstName = formData.get('first_name');
+          const middleName = formData.get('middle_name');
+          const displayName = middleName 
+            ? `${lastName}, ${firstName} ${middleName}` 
+            : `${lastName}, ${firstName}`;
+          showBootstrapAlert(`Resident <strong>${displayName}</strong> added successfully!`, 'success');
+          
+          // Reload if added to current purok, otherwise show info message
+          const addedToPurok = parseInt(formData.get('purok'));
+          if (addedToPurok === purokNum) {
+            setTimeout(() => window.location.reload(), 2000);
+          } else {
+            setTimeout(() => {
+              showBootstrapAlert(`Resident added to Purok ${addedToPurok}. Switch to that purok to view.`, 'info');
+            }, 500);
+          }
+        } else {
+          showBootstrapAlert(`Failed to add resident: ${json.error}`, 'danger');
+        }
+      } catch (error) {
+        showBootstrapAlert('Network error: Unable to add resident', 'danger');
+        console.error(error);
+      } finally {
+        saveNewResidentBtn.disabled = false;
+        saveNewResidentBtn.textContent = 'Save Resident';
+      }
+    });
+  });
+
+  // Replace the existing CSV import button click handler with this:
+  importCSVBtn.addEventListener('click', async () => {
+    const purokSelect = document.getElementById('purokSelect');
+    const csvFile = document.getElementById('csvFile');
+
+    if (!purokSelect.value) {
+      showBootstrapAlert('Please select a Purok', 'warning');
+      return;
+    }
+
+    if (!csvFile.files[0]) {
+      showBootstrapAlert('Please select a CSV file', 'warning');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('purok', purokSelect.value);
+    formData.append('csv_file', csvFile.files[0]);
+
+    importCSVBtn.disabled = true;
+    importCSVBtn.textContent = 'Importing...';
+
+    try {
+      const response = await fetch('functions/import_residents_csv.php', {
+        method: 'POST',
+        body: formData
+      });
+
+      const text = await response.text();
+      console.log('Raw response:', text);
+      
+      let json;
+      try {
+        json = JSON.parse(text);
+      } catch (e) {
+        showBootstrapAlert('Server error: Invalid response format. Check console for details.', 'danger');
+        console.error('Parse error:', e, 'Response:', text);
+        return;
+      }
+
+      if (json.success) {
+        let message = `Successfully imported ${json.imported_count} of ${json.total_rows} residents!`;
+        if (json.skipped_count > 0) {
+          message += `<br><small>${json.skipped_count} rows were skipped.</small>`;
+        }
+        if (json.errors && json.errors.length > 0) {
+          message += `<br><details><summary>View Errors (${json.errors.length})</summary><ul>`;
+          json.errors.slice(0, 10).forEach(err => {
+            message += `<li>${err}</li>`;
+          });
+          if (json.errors.length > 10) {
+            message += `<li>...and ${json.errors.length - 10} more</li>`;
+          }
+          message += `</ul></details>`;
+        }
+        
+        showBootstrapAlert(message, json.errors && json.errors.length > 0 ? 'warning' : 'success');
+        
+        // Close modal and reset form
+        const importModal = bootstrap.Modal.getInstance(document.getElementById('importCSVModal'));
+        importModal.hide();
+        importCSVForm.reset();
+        
+        // Only reload if importing to the currently selected purok
+        if (parseInt(purokSelect.value) === purokNum) {
+          // Always reload to show updated data
+          setTimeout(() => {
+            const url = new URL(window.location.href);
+            url.searchParams.set('purok', purokSelect.value);
+            url.searchParams.set('page_num', '1');
+            window.location.href = url;
+          }, 2000);
+        } else {
+          // Show message that data was imported to different purok
+          setTimeout(() => {
+            showBootstrapAlert(`Data imported to Purok ${purokSelect.value}. Switch to that purok to view the new residents.`, 'info');
+          }, 500);
+        }
+      } else {
+        showBootstrapAlert(`Import failed: ${json.error}`, 'danger');
+        if (json.trace) {
+          console.error('Stack trace:', json.trace);
+        }
+      }
+    } catch (error) {
+      showBootstrapAlert('Network error: Unable to import CSV', 'danger');
+      console.error(error);
+    } finally {
+      importCSVBtn.disabled = false;
+      importCSVBtn.textContent = 'Import';
+    }
   });
 </script>

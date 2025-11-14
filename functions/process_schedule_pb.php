@@ -155,7 +155,14 @@ $logStmt->bind_param('isssss', $admin_id, $role, $action, $table_name, $tid, $de
 $logStmt->execute();
 $logStmt->close();
 
-// REDIRECT
+// Return JSON for AJAX
+if (isset($_POST['ajax']) && $_POST['ajax'] === '1') {
+    header('Content-Type: application/json');
+    echo json_encode(['success' => true, 'message' => 'Schedule updated successfully']);
+    exit();
+}
+
+// REDIRECT (fallback)
 header("Location: ../adminPanel.php?page=adminComplaints&updated_complaint_id={$tid}");
 exit();
 ?>

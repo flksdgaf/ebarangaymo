@@ -15,6 +15,7 @@ $scheduleDate = trim($_POST['schedule_date'] ?? '');
 $scheduleTime = trim($_POST['schedule_time'] ?? '');
 $complainantAffidavit = trim($_POST['complainant_affidavit'] ?? '');
 $respondentAffidavit = trim($_POST['respondent_affidavit'] ?? '');
+$chosenPangkat = trim($_POST['chosen_pangkat'] ?? '');
 
 if (!$tid || !$hearingNumber) {
     header("Location: ../adminPanel.php?page=adminComplaints&error=missing_data");
@@ -64,6 +65,13 @@ $params = [];
 
 // Flag to check if we should update stage
 $shouldUpdateStage = false;
+
+// Update chosen_pangkat if this is Unang Patawag and pangkat members are provided
+if ($hearingNumber === 'unang' && $chosenPangkat !== '') {
+    $updates[] = "chosen_pangkat = ?";
+    $types .= 's';
+    $params[] = $chosenPangkat;
+}
 
 if ($scheduleDatetime) {
     $updates[] = "{$scheduleColumn} = ?";
@@ -153,7 +161,14 @@ $logStmt->bind_param('isssss', $admin_id, $role, $action, $table_name, $tid, $de
 $logStmt->execute();
 $logStmt->close();
 
-// REDIRECT
+// Return JSON for AJAX
+if (isset($_POST['ajax']) && $_POST['ajax'] === '1') {
+    header('Content-Type: application/json');
+    echo json_encode(['success' => true, 'message' => 'Schedule updated successfully']);
+    exit();
+}
+
+// REDIRECT (fallback)
 header("Location: ../adminPanel.php?page=adminComplaints&updated_complaint_id={$tid}");
 exit();
 ?>

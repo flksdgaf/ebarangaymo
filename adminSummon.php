@@ -174,6 +174,9 @@ $stmt->close();
     </div>
   <?php endif; ?>
 
+  <!-- DYNAMIC JAVASCRIPT ALERTS -->
+  <div id="js-alert-container"></div>
+
   <div class="card shadow-sm p-3">
     <div class="d-flex align-items-center mb-3">
       <!-- Filter dropdown -->
@@ -273,7 +276,7 @@ $stmt->close();
     <!-- COMPLAINTS TABLE -->
     <div class="table-responsive admin-table"> <!--  style="max-height:600px; overflow-y:auto;" -->
       <table class="table table-hover align-middle text-start">
-        <thead class="table-light sticky-top">
+        <thead class="table-light">
           <tr>
             <th>Case No.</th>
             <th>Complainant</th>
@@ -687,7 +690,7 @@ $stmt->close();
           
           <!-- TAB 1: CASE DETAILS -->
           <div class="tab-pane fade show active" id="tab-details">
-            <form id="editDetailsForm" method="POST" action="functions/process_edit_complaint.php">
+            <form id="editDetailsForm">
               <input type="hidden" name="transaction_id" id="edit_transaction_id">
               <div class="row g-3">
                 <div class="col-md-6">
@@ -905,31 +908,6 @@ $stmt->close();
 
           <!-- TAB 3: LUPON TAGAPAMAYAPA -->
           <div class="tab-pane fade" id="tab-lupon">
-            <!-- Chosen Pangkat Section -->
-            <div class="mb-4">
-              <h6 class="fw-bold text-success">Pangkat Tagapagkasundo</h6>
-              <hr class="mt-1">
-              <form method="POST" action="functions/process_update_pangkat.php" id="pangkat-form">
-                <input type="hidden" name="transaction_id" class="lupon-tid">
-                <input type="hidden" name="chosen_pangkat" id="chosen_pangkat_hidden">
-                <div class="row g-3">
-                  <div class="col-md-10">
-                    <label class="form-label">Chosen Pangkat Members</label>
-                    <select id="pangkat_members_dropdown" class="form-select form-select-sm" multiple style="height: 120px;">
-                      <option value="" disabled>Loading Lupon members...</option>
-                    </select>
-                    <small class="text-muted">Hold Ctrl/Cmd to select multiple members. Selected members will be saved as comma-separated names.</small>
-                    <div class="mt-2">
-                      <strong>Selected:</strong> <span id="selected_members_display" class="text-primary">None</span>
-                    </div>
-                  </div>
-                  <div class="col-md-2 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary btn-sm w-100">Save Members</button>
-                  </div>
-                </div>
-              </form>
-            </div>
-
             <h6 class="fw-bold text-success">Lupon Hearings</h6>
             <hr class="mt-1">
             
@@ -946,6 +924,8 @@ $stmt->close();
                 <form method="POST" action="functions/process_schedule_lupon.php" id="form-lupon-1st-schedule">
                   <input type="hidden" name="transaction_id" class="lupon-tid">
                   <input type="hidden" name="hearing_number" value="unang">
+                  <input type="hidden" name="chosen_pangkat" id="chosen_pangkat_hidden">
+                  
                   <div class="row g-3">
                     <div class="col-md-3">
                       <label class="form-label">Schedule Date *</label>
@@ -962,6 +942,22 @@ $stmt->close();
                         <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">print</span>
                         Print Summon
                       </button>
+                    </div>
+                    
+                    <!-- Pangkat Members Selection -->
+                    <div class="col-12 mt-3">
+                      <h6 class="fw-bold text-success">Pangkat Tagapagkasundo Members</h6>
+                      <hr class="mt-1">
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label">Choose Pangkat Members (Minimum: 3) *</label>
+                      <select id="pangkat_members_dropdown" name="pangkat_members[]" class="form-select form-select-sm" multiple style="height: 120px;" required>
+                        <option value="" disabled>Loading Lupon members...</option>
+                      </select>
+                      <small class="text-muted">Hold Ctrl/Cmd to select multiple members. Minimum of 3 members required.</small>
+                      <div class="mt-2">
+                        <strong>Selected:</strong> <span id="selected_members_display" class="text-primary">None</span>
+                      </div>
                     </div>
                   </div>
                 </form>
@@ -1182,6 +1178,37 @@ $stmt->close();
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+
+  // Dynamic Bootstrap Alert Function
+  function showAlert(message, type = 'success') {
+    const container = document.getElementById('js-alert-container');
+    const alertDiv = document.createElement('div');
+    
+    // Map alert types to Bootstrap classes
+    const alertClasses = {
+      'success': 'alert-success',
+      'danger': 'alert-danger',
+      'info': 'alert-info'
+    };
+    
+    const alertClass = alertClasses[type] || 'alert-info';
+    
+    alertDiv.className = `alert ${alertClass} alert-dismissible fade show`;
+    alertDiv.setAttribute('role', 'alert');
+    alertDiv.innerHTML = `
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    container.appendChild(alertDiv);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+      alertDiv.classList.remove('show');
+      setTimeout(() => alertDiv.remove(), 150);
+    }, 5000);
+  }
+  
   // Search functionality
   const searchBtn = document.getElementById('searchBtn');
   const searchInput = document.getElementById('searchInput');
@@ -1710,7 +1737,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const stage = data.complaint_stage;
 
       // ALWAYS disable Case Actions tab if no 1st PB meeting scheduled
-      if (!data.schedule_pb_first) {
+      // OR if case is already closed (action_taken is set to final status)
+      const finalStatuses = ['Mediated', 'Conciliated', 'Dismissed', 'Cancelled', 'CFA', 'Withdrawn', 'Arbitrated'];
+      if (!data.schedule_pb_first || finalStatuses.includes(data.action_taken)) {
         actionsTab.classList.add('disabled');
         actionsTab.setAttribute('disabled', 'true');
       }
@@ -1796,8 +1825,62 @@ document.addEventListener('DOMContentLoaded', () => {
         luponIkatlongTab.style.opacity = '';
       }
       
+      // Determine which tab to show based on current stage and schedules
+      let targetTabId = 'details-tab'; // Default to Case Details
+      let targetSubTabId = null;
+      
+      // Check if case is closed - if yes, ALWAYS show Case Details tab
+      // const finalStatuses = ['Mediated', 'Conciliated', 'Dismissed', 'Cancelled', 'CFA', 'Withdrawn', 'Arbitrated'];
+      const isCaseClosed = finalStatuses.includes(data.action_taken) || data.complaint_stage === 'Closed';
+      
+      if (!isCaseClosed) {
+        // Only auto-navigate to stages if case is NOT closed
+        // Check if there are any schedules - if yes, show the appropriate stage
+        if (data.schedule_ikatlong_patawag) {
+          targetTabId = 'lupon-tab';
+          targetSubTabId = 'lupon-3rd';
+        } else if (data.schedule_ikalawang_patawag) {
+          targetTabId = 'lupon-tab';
+          targetSubTabId = 'lupon-2nd';
+        } else if (data.schedule_unang_patawag) {
+          targetTabId = 'lupon-tab';
+          targetSubTabId = 'lupon-1st';
+        } else if (data.schedule_pb_third) {
+          targetTabId = 'pb-tab';
+          targetSubTabId = 'pb-3rd';
+        } else if (data.schedule_pb_second) {
+          targetTabId = 'pb-tab';
+          targetSubTabId = 'pb-2nd';
+        } else if (data.schedule_pb_first) {
+          targetTabId = 'pb-tab';
+          targetSubTabId = 'pb-1st';
+        }
+      }
+      // If case is closed, stays on Case Details tab
+      
       // Show modal
-      new bootstrap.Modal(document.getElementById('manageCaseModal')).show();
+      const manageCaseModal = new bootstrap.Modal(document.getElementById('manageCaseModal'));
+      manageCaseModal.show();
+      
+      // After modal is shown, activate the target tab
+      setTimeout(() => {
+        const targetTab = document.getElementById(targetTabId);
+        if (targetTab) {
+          const tabInstance = new bootstrap.Tab(targetTab);
+          tabInstance.show();
+          
+          // If there's a sub-tab to show, activate it
+          if (targetSubTabId) {
+            setTimeout(() => {
+              const subTab = document.querySelector(`[data-bs-target="#${targetSubTabId}"]`);
+              if (subTab) {
+                const subTabInstance = new bootstrap.Tab(subTab);
+                subTabInstance.show();
+              }
+            }, 100);
+          }
+        }
+      }, 100);
     });
   });
 
@@ -1829,18 +1912,34 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('skip-to-lupon-from-1st').addEventListener('click', () => {
     const skipModal = new bootstrap.Modal(document.getElementById('skipToLuponModal'));
     skipModal.show();
-    document.getElementById('confirmSkipToLupon').onclick = function() {
-      // Enable Lupon tab before closing modal
-      const luponTab = document.getElementById('lupon-tab');
-      luponTab.classList.remove('disabled');
-      luponTab.removeAttribute('disabled');
+    document.getElementById('confirmSkipToLupon').onclick = async function() {
+      const tid = document.getElementById('current_transaction_id').value;
       
-      // Switch to Lupon tab
-      bootstrap.Tab.getInstance(luponTab)?.show() || new bootstrap.Tab(luponTab).show();
-      
-      // Close both modals
-      skipModal.hide();
-      bootstrap.Modal.getInstance(document.getElementById('manageCaseModal')).hide();
+      try {
+        const response = await fetch(`functions/process_skip_to_lupon.php?transaction_id=${tid}&ajax=1`);
+        const result = await response.json();
+        
+        if (result.success) {
+          // Enable Lupon tab
+          const luponTab = document.getElementById('lupon-tab');
+          luponTab.classList.remove('disabled');
+          luponTab.removeAttribute('disabled');
+          
+          // Switch to Lupon tab
+          bootstrap.Tab.getInstance(luponTab)?.show() || new bootstrap.Tab(luponTab).show();
+          
+          // Close skip modal
+          skipModal.hide();
+          
+          const row = document.querySelector(`tr[data-id="${tid}"]`);
+          const caseNo = row ? (row.dataset.caseNo || tid) : tid;
+          showAlert(`Case <strong>${caseNo}</strong>: ${result.message}`, 'success');
+        } else {
+          showAlert('Error: ' + result.message, 'danger');
+        }
+      } catch (error) {
+        showAlert('Error: ' + error.message, 'danger');
+      }
     };
   });
 
@@ -1858,18 +1957,34 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('skip-to-lupon-from-2nd').addEventListener('click', () => {
     const skipModal = new bootstrap.Modal(document.getElementById('skipToLuponModal'));
     skipModal.show();
-    document.getElementById('confirmSkipToLupon').onclick = function() {
-      // Enable Lupon tab before closing modal
-      const luponTab = document.getElementById('lupon-tab');
-      luponTab.classList.remove('disabled');
-      luponTab.removeAttribute('disabled');
+    document.getElementById('confirmSkipToLupon').onclick = async function() {
+      const tid = document.getElementById('current_transaction_id').value;
       
-      // Switch to Lupon tab
-      bootstrap.Tab.getInstance(luponTab)?.show() || new bootstrap.Tab(luponTab).show();
-      
-      // Close both modals
-      skipModal.hide();
-      bootstrap.Modal.getInstance(document.getElementById('manageCaseModal')).hide();
+      try {
+        const response = await fetch(`functions/process_skip_to_lupon.php?transaction_id=${tid}&ajax=1`);
+        const result = await response.json();
+        
+        if (result.success) {
+          // Enable Lupon tab
+          const luponTab = document.getElementById('lupon-tab');
+          luponTab.classList.remove('disabled');
+          luponTab.removeAttribute('disabled');
+          
+          // Switch to Lupon tab
+          bootstrap.Tab.getInstance(luponTab)?.show() || new bootstrap.Tab(luponTab).show();
+          
+          // Close skip modal
+          skipModal.hide();
+          
+          const row = document.querySelector(`tr[data-id="${tid}"]`);
+          const caseNo = row ? (row.dataset.caseNo || tid) : tid;
+          showAlert(`Case <strong>${caseNo}</strong>: ${result.message}`, 'success');
+        } else {
+          showAlert('Error: ' + result.message, 'danger');
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
     };
   });
 
@@ -1877,18 +1992,34 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('proceed-to-lupon').addEventListener('click', () => {
     const skipModal = new bootstrap.Modal(document.getElementById('skipToLuponModal'));
     skipModal.show();
-    document.getElementById('confirmSkipToLupon').onclick = function() {
-      // Enable Lupon tab before closing modal
-      const luponTab = document.getElementById('lupon-tab');
-      luponTab.classList.remove('disabled');
-      luponTab.removeAttribute('disabled');
+    document.getElementById('confirmSkipToLupon').onclick = async function() {
+      const tid = document.getElementById('current_transaction_id').value;
       
-      // Switch to Lupon tab
-      bootstrap.Tab.getInstance(luponTab)?.show() || new bootstrap.Tab(luponTab).show();
-      
-      // Close both modals
-      skipModal.hide();
-      bootstrap.Modal.getInstance(document.getElementById('manageCaseModal')).hide();
+      try {
+        const response = await fetch(`functions/process_skip_to_lupon.php?transaction_id=${tid}&ajax=1`);
+        const result = await response.json();
+        
+        if (result.success) {
+          // Enable Lupon tab
+          const luponTab = document.getElementById('lupon-tab');
+          luponTab.classList.remove('disabled');
+          luponTab.removeAttribute('disabled');
+          
+          // Switch to Lupon tab
+          bootstrap.Tab.getInstance(luponTab)?.show() || new bootstrap.Tab(luponTab).show();
+          
+          // Close skip modal
+          skipModal.hide();
+          
+          const row = document.querySelector(`tr[data-id="${tid}"]`);
+          const caseNo = row ? (row.dataset.caseNo || tid) : tid;
+          showAlert(`Case <strong>${caseNo}</strong>: ${result.message}`, 'success');
+        } else {
+          showAlert('Error: ' + result.message, 'danger');
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
     };
   });
 
@@ -1994,5 +2125,200 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Load Lupon members when page loads
   loadLuponMembers();
+
+  // AJAX: Edit Details Form
+  document.getElementById('editDetailsForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    // If transaction_id is not in formData, get it from the hidden input
+    if (!formData.get('transaction_id')) {
+      const tid = document.getElementById('edit_transaction_id').value;
+      formData.append('transaction_id', tid);
+    }
+    
+    const btn = this.querySelector('button[type="submit"]');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = 'Saving...';
+    
+    try {
+      const response = await fetch('functions/process_edit_complaint.php', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+
+        // Update the row data in the table so reopening modal shows new data
+        const tid = document.getElementById('edit_transaction_id').value;
+        const row = document.querySelector(`tr[data-id="${tid}"]`);
+
+        // Close the modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('manageCaseModal'));
+        modal.hide();
+        
+        // Show alert after modal is closed (use type from response or default to 'success')
+        const alertType = result.type || 'success';
+        const caseNo = row ? (row.dataset.caseNo || tid) : tid;
+        setTimeout(() => {
+          showAlert(`Case <strong>${caseNo}</strong>: ${result.message}`, alertType);
+        }, 300);
+        
+        if (row) {
+          // Update the data attributes
+          row.setAttribute('data-complaint-title', formData.get('complaint_title'));
+          row.setAttribute('data-nature-of-case', formData.get('nature_of_case'));
+          row.setAttribute('data-complaint-affidavit', formData.get('complaint_affidavit'));
+          row.setAttribute('data-pleading-statement', formData.get('pleading_statement'));
+          
+          // Update the JSON data
+          const jsonData = JSON.parse(row.dataset.json);
+          jsonData.complaint_title = formData.get('complaint_title');
+          jsonData.nature_of_case = formData.get('nature_of_case');
+          jsonData.complaint_affidavit = formData.get('complaint_affidavit');
+          jsonData.pleading_statement = formData.get('pleading_statement');
+          row.setAttribute('data-json', JSON.stringify(jsonData));
+          
+          // Update the complaint title in the table cell
+          const titleCell = row.querySelector('td:nth-child(4)');
+          if (titleCell) {
+            titleCell.textContent = formData.get('complaint_title');
+          }
+        }
+      } else {
+        showAlert('Error: ' + result.message, 'danger');
+      }
+    } catch (error) {
+      showAlert('Error saving changes: ' + error.message, 'danger');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    }
+  });
+
+  // AJAX: PB Schedule Forms (all 6 forms)
+  ['form-pb-1st-schedule', 'form-pb-2nd-schedule', 'form-pb-3rd-schedule',
+   'form-pb-1st-affidavit', 'form-pb-2nd-affidavit', 'form-pb-3rd-affidavit'].forEach(formId => {
+    const form = document.getElementById(formId);
+    if (form) {
+      form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        formData.append('ajax', '1');
+        
+        const btn = this.querySelector('button[type="submit"]');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = 'Saving...';
+        
+        try {
+          const response = await fetch('functions/process_schedule_pb.php', {
+            method: 'POST',
+            body: formData
+          });
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            // Close the modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('manageCaseModal'));
+            modal.hide();
+            
+            // Get case number for alert
+            const tid = formData.get('transaction_id');
+            const row = document.querySelector(`tr[data-id="${tid}"]`);
+            const caseNo = row ? (row.dataset.caseNo || tid) : tid;
+            
+            // Show success alert after modal is closed
+            setTimeout(() => {
+              showAlert(`Case <strong>${caseNo}</strong>: ${result.message}`, 'success');
+              // Reload the page to refresh data after showing alert
+              setTimeout(() => window.location.reload(), 1500);
+            }, 300);
+          } else {
+            showAlert('Error: ' + result.message, 'danger');
+          }
+        } catch (error) {
+          showAlert('Error saving: ' + error.message, 'danger');
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+        }
+      });
+    }
+  });
+
+  // AJAX: Lupon Schedule Forms (all 6 forms)
+  ['form-lupon-1st-schedule', 'form-lupon-2nd-schedule', 'form-lupon-3rd-schedule',
+   'form-lupon-1st-affidavit', 'form-lupon-2nd-affidavit', 'form-lupon-3rd-affidavit'].forEach(formId => {
+    const form = document.getElementById(formId);
+    if (form) {
+      form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Special validation for Unang Patawag schedule form
+        if (formId === 'form-lupon-1st-schedule') {
+          const dropdown = document.getElementById('pangkat_members_dropdown');
+          const selectedOptions = Array.from(dropdown.selectedOptions).filter(opt => opt.value);
+          
+          if (selectedOptions.length < 3) {
+            showAlert('Please select at least 3 Pangkat members', 'danger');
+            return;
+          }
+          
+          // Update hidden field with selected members
+          const selectedNames = selectedOptions.map(opt => opt.value);
+          document.getElementById('chosen_pangkat_hidden').value = selectedNames.join(', ');
+        }
+        
+        const formData = new FormData(this);
+        formData.append('ajax', '1');
+        
+        const btn = this.querySelector('button[type="submit"]');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = 'Saving...';
+        
+        try {
+          const response = await fetch('functions/process_schedule_lupon.php', {
+            method: 'POST',
+            body: formData
+          });
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            // Close the modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('manageCaseModal'));
+            modal.hide();
+            
+            // Get case number for alert
+            const tid = formData.get('transaction_id');
+            const row = document.querySelector(`tr[data-id="${tid}"]`);
+            const caseNo = row ? (row.dataset.caseNo || tid) : tid;
+            
+            // Show success alert after modal is closed
+            setTimeout(() => {
+              showAlert(`Case <strong>${caseNo}</strong>: ${result.message}`, 'success');
+              // Reload the page to refresh data after showing alert
+              setTimeout(() => window.location.reload(), 1500);
+            }, 300);
+          } else {
+            showAlert('Error: ' + result.message, 'danger');
+          }
+        } catch (error) {
+          showAlert('Error saving: ' + error.message, 'danger');
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+        }
+      });
+    }
+  });
 });
 </script>

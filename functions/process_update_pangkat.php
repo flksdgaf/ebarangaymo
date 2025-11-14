@@ -2,9 +2,11 @@
 session_start();
 require 'dbconn.php';
 
+header('Content-Type: application/json');
+
 // AUTH CHECK
 if (!isset($_SESSION['auth']) || $_SESSION['auth'] !== true) {
-    header("Location: ../index.php");
+    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
     exit();
 }
 
@@ -13,7 +15,7 @@ $tid = trim($_POST['transaction_id'] ?? '');
 $chosenPangkat = trim($_POST['chosen_pangkat'] ?? '');
 
 if (!$tid) {
-    header("Location: ../adminPanel.php?page=adminComplaints&error=missing_data");
+    echo json_encode(['success' => false, 'message' => 'Missing transaction ID']);
     exit();
 }
 
@@ -34,6 +36,6 @@ $logStmt->bind_param('isssss', $admin_id, $role, $action, $table_name, $tid, $de
 $logStmt->execute();
 $logStmt->close();
 
-header("Location: ../adminPanel.php?page=adminComplaints&updated_complaint_id={$tid}");
+echo json_encode(['success' => true, 'message' => 'Pangkat members updated successfully']);
 exit();
 ?>

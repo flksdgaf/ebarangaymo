@@ -2,9 +2,11 @@
 session_start();
 require 'dbconn.php';
 
+header('Content-Type: application/json');
+
 // AUTH CHECK
 if (!isset($_SESSION['auth']) || $_SESSION['auth'] !== true) {
-    header("Location: ../index.php");
+    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
     exit();
 }
 
@@ -18,7 +20,7 @@ $complaintAffidavit = trim($_POST['complaint_affidavit'] ?? '');
 $pleadingStatement = trim($_POST['pleading_statement'] ?? '');
 
 if (!$tid) {
-    header("Location: ../adminPanel.php?page=adminComplaints&error=missing_data");
+    echo json_encode(['success' => false, 'message' => 'Missing transaction ID']);
     exit();
 }
 
@@ -49,10 +51,10 @@ if ($stmt->affected_rows > 0) {
     $logStmt->close();
     
     $stmt->close();
-    header("Location: ../adminPanel.php?page=adminComplaints&updated_complaint_id={$tid}");
+    echo json_encode(['success' => true, 'message' => 'Complaint details updated successfully']);
 } else {
     $stmt->close();
-    header("Location: ../adminPanel.php?page=adminComplaints&complaint_nochange=1");
+    echo json_encode(['success' => true, 'message' => 'No changes made', 'type' => 'info']);
 }
 
 exit();

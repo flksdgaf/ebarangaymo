@@ -2,9 +2,20 @@
 session_start();
 require 'dbconn.php';
 
+// Check if AJAX request
+$isAjax = isset($_GET['ajax']) && $_GET['ajax'] === '1';
+
+if ($isAjax) {
+    header('Content-Type: application/json');
+}
+
 // AUTH CHECK
 if (!isset($_SESSION['auth']) || $_SESSION['auth'] !== true) {
-    header("Location: ../index.php");
+    if ($isAjax) {
+        echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+    } else {
+        header("Location: ../index.php");
+    }
     exit();
 }
 
@@ -12,7 +23,11 @@ if (!isset($_SESSION['auth']) || $_SESSION['auth'] !== true) {
 $tid = trim($_GET['transaction_id'] ?? '');
 
 if (!$tid) {
-    header("Location: ../adminPanel.php?page=adminComplaints&error=missing_data");
+    if ($isAjax) {
+        echo json_encode(['success' => false, 'message' => 'Missing transaction ID']);
+    } else {
+        header("Location: ../adminPanel.php?page=adminComplaints&error=missing_data");
+    }
     exit();
 }
 
@@ -32,7 +47,10 @@ $logStmt->bind_param('isssss', $admin_id, $role, $action, $table_name, $tid, $de
 $logStmt->execute();
 $logStmt->close();
 
-// REDIRECT
-header("Location: ../adminPanel.php?page=adminComplaints&updated_complaint_id={$tid}");
+if ($isAjax) {
+    echo json_encode(['success' => true, 'message' => 'Lupon hearings enabled']);
+} else {
+    header("Location: ../adminPanel.php?page=adminComplaints&updated_complaint_id={$tid}");
+}
 exit();
 ?>

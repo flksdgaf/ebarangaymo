@@ -821,16 +821,14 @@ document.addEventListener("DOMContentLoaded", function () {
         let isOnPaymentStep = false;
         
         // Detect payment step
-        document.addEventListener('DOMContentLoaded', function() {
-            const observer = new MutationObserver(function() {
-                const steps = document.querySelectorAll('.step');
-                const activeStep = Array.from(steps).findIndex(s => s.classList.contains('active-step'));
-                isOnPaymentStep = (activeStep === 1); // Step 2 (index 1) is payment
-            });
-            
-            document.querySelectorAll('.step').forEach(step => {
-                observer.observe(step, { attributes: true, attributeFilter: ['class'] });
-            });
+        const observer = new MutationObserver(function() {
+            const steps = document.querySelectorAll('.step');
+            const activeStep = Array.from(steps).findIndex(s => s.classList.contains('active-step'));
+            isOnPaymentStep = (activeStep === 1); // Step 2 (index 1) is payment
+        });
+
+        document.querySelectorAll('.step').forEach(step => {
+            observer.observe(step, { attributes: true, attributeFilter: ['class'] });
         });
         
         // Warn on back button

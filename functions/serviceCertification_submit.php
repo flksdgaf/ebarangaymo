@@ -1,6 +1,5 @@
 <?php
 require_once 'dbconn.php';
-require_once 'gcash_handler.php';
 
 session_start();
 
@@ -487,38 +486,31 @@ if (!$stmt->execute()) exit("Insert failed: " . $stmt->error);
 
 $stmt->close();
 
-// --- GCash Payment Integration (only for paid services) ---
-// Check if this is a paid service AND GCash was selected
+// --- Universal GCash Payment Integration ---
 $isPaidService = !(strtolower($type) === 'indigency' || strtolower($type) === 'first time job seeker');
 $isGCashPayment = ($postPaymentMethod === 'GCash');
 
 if ($isPaidService && $isGCashPayment) {
+    require_once __DIR__ . '/gcash/handler.php';
+    
     try {
-        // Determine the amount to charge
+        $handler = new UniversalGCashHandler($conn);
         $amountToCharge = floatval($postPaymentAmount);
         if ($amountToCharge < 20) {
             $amountToCharge = 130; // Default certification fee
         }
         
-        $gcashResult = createGCashSource($transactionId, $amountToCharge);
+        $gcashResult = $handler->createPaymentSource($transactionId, $amountToCharge);
         
         if ($gcashResult['success'] && isset($gcashResult['checkout_url'])) {
-            // Store transaction info in session for security
-            $_SESSION['pending_gcash_transaction'] = $transactionId;
+            $_SESSION['pending_gcash_payment'] = $transactionId;
             $_SESSION['gcash_cert_type'] = $type;
-            
-            // Close connection before redirect
             $conn->close();
-            
-            // Redirect to GCash checkout
             header("Location: " . $gcashResult['checkout_url']);
             exit();
         } else {
-            // GCash initialization failed
-            $errorMsg = $gcashResult['error'] ?? 'Failed to initialize GCash payment.';
-            $_SESSION['svc_error'] = $errorMsg . ' Please try another payment method.';
+            $_SESSION['svc_error'] = $gcashResult['error'] ?? 'Failed to initialize GCash payment';
             
-            // Update payment status to failed
             $stmtFail = $conn->prepare("UPDATE `$table` SET payment_status = 'failed' WHERE transaction_id = ?");
             $stmtFail->bind_param("s", $transactionId);
             $stmtFail->execute();
@@ -529,8 +521,8 @@ if ($isPaidService && $isGCashPayment) {
             exit();
         }
     } catch (Exception $e) {
-        error_log("GCash Integration Error for {$type}: " . $e->getMessage());
-        $_SESSION['svc_error'] = 'Payment system error. Please try another payment method.';
+        error_log("GCash Error (Certification {$type}): " . $e->getMessage());
+        $_SESSION['svc_error'] = 'Payment system error';
         $conn->close();
         header("Location: ../serviceCertification.php");
         exit();

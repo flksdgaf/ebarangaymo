@@ -1543,4 +1543,66 @@ document.addEventListener("DOMContentLoaded", function () {
 
     refreshStepCollections();
     updateNavigation();
+
+    // Handle URL step parameter and back button warnings
+    (function() {
+        // Check URL for step parameter (for GCash returns)
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlStep = urlParams.get('step');
+        const hasTid = urlParams.get('tid');
+        
+        if (urlStep && hasTid) {
+            const targetStep = parseInt(urlStep);
+            console.log('URL step detected:', targetStep);
+            
+            // Navigate to the specified step
+            if (targetStep > 0 && targetStep <= totalSteps()) {
+                currentStep = targetStep;
+                refreshStepCollections();
+                
+                steps.forEach((step, idx) => {
+                    if (idx < currentStep - 1) {
+                        step.classList.add('completed');
+                        step.classList.remove('active-step');
+                    } else if (idx === currentStep - 1) {
+                        step.classList.add('active-step');
+                    } else {
+                        step.classList.remove('active-step', 'completed');
+                    }
+                });
+                
+                updateNavigation();
+                
+                if (currentStep === getSummaryStepIndex()) {
+                    setTimeout(() => populateSummary(), 100);
+                }
+            }
+        }
+        
+        // Back button warning for payment page
+        let isOnPaymentStep = false;
+        
+        // Detect payment step
+        const observer = new MutationObserver(function() {
+            const activeStep = Array.from(steps).findIndex(s => s.classList.contains('active-step'));
+            isOnPaymentStep = (activeStep === getPaymentStepIndex() - 1);
+        });
+        
+        steps.forEach(step => {
+            observer.observe(step, { attributes: true, attributeFilter: ['class'] });
+        });
+        
+        // Warn on back button
+        window.addEventListener('popstate', function(e) {
+            if (isOnPaymentStep) {
+                const paymentMethod = hiddenPaymentInput;
+                if (paymentMethod && paymentMethod.value === 'GCash') {
+                    if (!confirm('Going back may cancel your payment. Continue?')) {
+                        window.history.pushState(null, null, window.location.href);
+                        e.preventDefault();
+                    }
+                }
+            }
+        });
+    })();
 });

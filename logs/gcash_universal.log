@@ -28,3 +28,13 @@
 2025-11-08 18:42:31 - Payment source created - {"source_id":"src_RVd3npHUzXpknWKS8bT93Kbf","transaction_id":"BUS-0000003"}
 2025-11-08 18:47:41 - Creating payment source - {"transaction_id":"BUS-0000004","type":"Business Clearance","amount":20}
 2025-11-08 18:47:42 - Payment source created - {"source_id":"src_hcX5aVGAZwQDkviFE62YQZMB","transaction_id":"BUS-0000004"}
+2025-11-15 04:23:58 - Creating payment source - {"transaction_id":"CLR-0000001","type":"Barangay Clearance","amount":130}
+2025-11-15 04:23:58 - Payment source created - {"source_id":"src_RbjfT2MfriHUAPtb9W35Cbsz","transaction_id":"CLR-0000001"}
+2025-11-15 04:45:08 - Creating payment source - {"transaction_id":"CLR-0000002","type":"Barangay Clearance","amount":130}
+2025-11-15 04:45:09 - Payment source created - {"source_id":"src_hmqBNu1RXL8PUs8Kx8ydmRoR","transaction_id":"CLR-0000002"}
+2025-11-15 04:52:28 - Creating payment source - {"transaction_id":"RES-0000001","type":"Certificate of Residency","amount":130}
+2025-11-15 04:52:29 - Payment source created - {"source_id":"src_Nvf4wJiWUarrmJXeusHNrHbM","transaction_id":"RES-0000001"}
+2025-11-15 04:56:07 - Creating payment source - {"transaction_id":"CSP-0000001","type":"Solo Parent Certificate","amount":130}
+2025-11-15 04:56:07 - Payment source created - {"source_id":"src_sMeFk8QPFirSBg5uVEsemda9","transaction_id":"CSP-0000001"}
+2025-11-15 04:56:38 - Creating payment source - {"transaction_id":"GUA-0000001","type":"Certificate of Guardianship","amount":130}
+2025-11-15 04:56:39 - Payment source created - {"source_id":"src_cGJEaiGHTjFcvoCnM4PyPLjK","transaction_id":"GUA-0000001"}

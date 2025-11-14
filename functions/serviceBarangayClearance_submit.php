@@ -234,7 +234,7 @@ if ($stmt) {
     $stmt->close();
 }
 $num = $lastNumber + 1;
-$transactionId = sprintf('BRGYCLR-%07d', $num);
+$transactionId = sprintf('CLR-%07d', $num); //BRGYCLR
 
 // 4) Detect if DB has 'claim_time' column (preferred) or older 'claim_part'
 $claimTimeColumn = null;
@@ -366,6 +366,42 @@ if (!$stmt->execute()) {
 
 $stmt->close();
 
+// --- Universal GCash Payment Integration ---
+if ($paymentMethod === 'GCash') {
+    require_once __DIR__ . '/gcash/handler.php';
+    
+    try {
+        $handler = new UniversalGCashHandler($conn);
+        $gcashResult = $handler->createPaymentSource($transactionId, $amount);
+        
+        if ($gcashResult['success'] && isset($gcashResult['checkout_url'])) {
+            $_SESSION['pending_gcash_payment'] = $transactionId;
+            $conn->close();
+            header("Location: " . $gcashResult['checkout_url']);
+            exit();
+        } else {
+            $_SESSION['svc_error'] = $gcashResult['error'] ?? 'Failed to initialize GCash payment';
+            
+            $stmtFail = $conn->prepare("UPDATE barangay_clearance_requests SET payment_status = 'failed' WHERE transaction_id = ?");
+            $stmtFail->bind_param("s", $transactionId);
+            $stmtFail->execute();
+            $stmtFail->close();
+            
+            $conn->close();
+            header("Location: ../serviceBarangayClearance.php");
+            exit();
+        }
+    } catch (Exception $e) {
+        error_log("GCash Error (Barangay Clearance): " . $e->getMessage());
+        $_SESSION['svc_error'] = 'Payment system error';
+        $conn->close();
+        header("Location: ../serviceBarangayClearance.php");
+        exit();
+    }
+}
+
+$conn->close();
+
 // 7) Redirects (keep your original admin/superAdmin handling if present)
 if (!empty($_POST['superAdminRedirect'])) {
     header("Location: ../superAdminPanel.php?page=superAdminRequest&transaction_id=" . urlencode($transactionId));
@@ -377,6 +413,6 @@ if (!empty($_POST['adminRedirect'])) {
     exit();
 }
 
-// Default: user panel — show submission screen with tid
+// Default: user panel – show submission screen with tid
 header("Location: ../userPanel.php?page=serviceBarangayClearance&tid=" . urlencode($transactionId));
 exit();

@@ -60,6 +60,7 @@
   color: #ffffff;
   border-radius: 10px;
   transition: 0.3s ease;
+  font-size: 1rem !important;
 }
 
 .sidebar a:hover {
@@ -73,13 +74,13 @@
 }
 
 .sidebar h1 {
-  font-size: 23px;
+  font-size: 23px !important;
   font-weight: 600;
   color: #ffffff;
 }
 
 .sidebar h2 {
-  font-size: 12px;
+  font-size: 12px !important;
   font-weight: 400;
   color: #98C93C;
 }

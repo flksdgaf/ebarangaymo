@@ -1,5 +1,8 @@
 <?php
 require 'functions/dbconn.php';
+$userId = (int)$_SESSION['loggedInUserID'];
+$currentRole = $_SESSION['loggedInUserRole'] ?? '';
+
 // Fetch report types from database or define statically
 $reportTypes = ['All','Barangay ID', 'Business Permit', 'Good Moral', 'Guardianship', 'Indigency', 'Residency', 'Solo Parent'];
 ?>
@@ -48,7 +51,9 @@ $reportTypes = ['All','Barangay ID', 'Business Permit', 'Good Moral', 'Guardians
 
                   <div class="col-md-4 text-end">
                     <button type="button" id="previewResidentBtn" class="btn btn-outline-success me-2">Preview</button>
-                    <button type="submit" name="format" value="pdf" class="btn btn-success">PDF</button>
+                    <?php if ($currentRole !== 'Brgy Kagawad'): ?>
+                      <button type="submit" name="format" value="pdf" class="btn btn-success">PDF</button>
+                    <?php endif; ?>
                   </div>
                 </div>
               </form>
@@ -93,7 +98,9 @@ $reportTypes = ['All','Barangay ID', 'Business Permit', 'Good Moral', 'Guardians
                 </div>
                 <div class="col-md-3 text-end">
                   <button type="button" id="previewCollectionBtn" class="btn btn-outline-success me-2">Preview</button>
-                  <button type="submit" name="format" value="pdf" class="btn btn-success">PDF</button>
+                  <?php if ($currentRole !== 'Brgy Kagawad'): ?>
+                    <button type="submit" name="format" value="pdf" class="btn btn-success">PDF</button>
+                  <?php endif; ?>
                 </div>
               </div>
             </form>
@@ -133,9 +140,10 @@ $reportTypes = ['All','Barangay ID', 'Business Permit', 'Good Moral', 'Guardians
                   <div class="col-md-6 text-end">
                     <!-- Preview is handled by JS and will load HTML into #blotterPreviewOutput -->
                     <button type="button" id="previewBlotterBtn" class="btn btn-outline-success me-2">Preview</button>
-
-                    <!-- PDF submit posts the form with name="format" value="pdf" and opens in a new tab -->
-                    <button type="submit" name="format" value="pdf" class="btn btn-success">PDF</button>
+                    <?php if ($currentRole !== 'Brgy Kagawad'): ?>
+                      <!-- PDF submit posts the form with name="format" value="pdf" and opens in a new tab -->
+                      <button type="submit" name="format" value="pdf" class="btn btn-success">PDF</button>
+                    <?php endif; ?>
                   </div>
                 </div>
               </form>
@@ -230,7 +238,9 @@ $reportTypes = ['All','Barangay ID', 'Business Permit', 'Good Moral', 'Guardians
                   </div>
                   <div class="col-md-4 text-end">
                     <button type="button" id="previewKPBtn" class="btn btn-outline-success me-2">Preview</button>
-                    <button type="submit" name="format" value="pdf" class="btn btn-success">Print</button>
+                    <?php if ($currentRole !== 'Brgy Kagawad'): ?>
+                      <button type="submit" name="format" value="pdf" class="btn btn-success">Print</button>
+                    <?php endif; ?>
                   </div>
                 </div>
               </form>

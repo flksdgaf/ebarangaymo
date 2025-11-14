@@ -2,6 +2,8 @@
 // equipment.php
 require 'functions/dbconn.php';
 
+$currentRole = $_SESSION['loggedInUserRole'] ?? '';
+
 // GET params
 $search = trim($_GET['search'] ?? '');
 $filter_name = $_GET['filter_name'] ?? '';
@@ -423,10 +425,17 @@ if (!$brStmt) {
             </div>
           </div>
 
-          <button class="btn btn-sm btn-success ms-3" data-bs-toggle="modal" data-bs-target="#addEquipmentModal">
+          <!-- <button class="btn btn-sm btn-success ms-3" data-bs-toggle="modal" data-bs-target="#addEquipmentModal">
             <span class="material-symbols-outlined me-1" style="font-size:1rem; vertical-align:middle;">add</span>
             Add New Equipment
-          </button>
+          </button> -->
+
+          <?php if ($currentRole !== 'Brgy Kagawad'): ?>
+            <button class="btn btn-sm btn-success ms-3" data-bs-toggle="modal" data-bs-target="#addEquipmentModal">
+              <span class="material-symbols-outlined me-1" style="font-size:1rem; vertical-align:middle;">add</span>
+              Add New Equipment
+            </button>
+          <?php endif; ?>
 
           <form method="get" id="searchFormEquip" class="d-flex ms-auto me-2">
             <input type="hidden" name="page" value="adminEquipmentBorrowing">
@@ -457,7 +466,10 @@ if (!$brStmt) {
                 <th>Description</th>
                 <th>Avail Qty</th>
                 <th>Total Qty</th>
-                <th>Actions</th>
+                <!-- <th>Actions</th> -->
+                <?php if ($currentRole !== 'Brgy Kagawad'): ?>
+                  <th>Actions</th>
+                <?php endif; ?>
               </tr>
             </thead>
             <tbody>
@@ -472,14 +484,16 @@ if (!$brStmt) {
                     <?= (int)$eq['available_qty'] ?>
                   </td>
                   <td><?= (int)$eq['total_qty'] ?></td>
-                  <td>
-                    <button class="btn btn-sm btn-primary me-1 edit-equipment-btn" data-id="<?= $eq['id'] ?>" data-name="<?= htmlspecialchars($eq['name'], ENT_QUOTES) ?>" data-desc="<?= htmlspecialchars($eq['description'], ENT_QUOTES) ?>" data-total="<?= (int)$eq['total_qty'] ?>">
-                      <span class="material-symbols-outlined" style="font-size:13px">stylus</span>
-                    </button>
-                    <button class="btn btn-sm btn-danger delete-equipment-btn" data-id="<?= $eq['id'] ?>" data-name="<?= htmlspecialchars($eq['name'], ENT_QUOTES) ?>">
-                      <span class="material-symbols-outlined" style="font-size:13px">delete</span>
-                    </button>
-                  </td>
+                  <?php if ($currentRole !== 'Brgy Kagawad'): ?>
+                    <td>
+                      <button class="btn btn-sm btn-primary me-1 edit-equipment-btn" data-id="<?= $eq['id'] ?>" data-name="<?= htmlspecialchars($eq['name'], ENT_QUOTES) ?>" data-desc="<?= htmlspecialchars($eq['description'], ENT_QUOTES) ?>" data-total="<?= (int)$eq['total_qty'] ?>">
+                        <span class="material-symbols-outlined" style="font-size:13px">stylus</span>
+                      </button>
+                      <button class="btn btn-sm btn-danger delete-equipment-btn" data-id="<?= $eq['id'] ?>" data-name="<?= htmlspecialchars($eq['name'], ENT_QUOTES) ?>">
+                        <span class="material-symbols-outlined" style="font-size:13px">delete</span>
+                      </button>
+                    </td>
+                  <?php endif; ?>
                 </tr>
               <?php endforeach; endif; ?>
             </tbody>
@@ -530,10 +544,17 @@ if (!$brStmt) {
     <div class="tab-pane fade <?= (($_GET['tab'] ?? '') === 'borrows') ? 'show active' : '' ?>" id="tab-borrows" role="tabpanel" aria-labelledby="tab-borrows-btn">
       <div class="card shadow-sm p-3">
         <div class="d-flex align-items-center mb-3">
-          <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addBorrowModal">
+          <!-- <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addBorrowModal">
             <span class="material-symbols-outlined me-1" style="font-size:1rem; vertical-align:middle;">add</span>
             Borrow an Equipment
-          </button>
+          </button> -->
+
+          <?php if ($currentRole !== 'Brgy Kagawad'): ?>
+            <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addBorrowModal">
+              <span class="material-symbols-outlined me-1" style="font-size:1rem; vertical-align:middle;">add</span>
+              Borrow an Equipment
+            </button>
+          <?php endif; ?>
           
           <!-- Calendar Navigation -->
           <div class="ms-auto d-flex align-items-center">
@@ -557,7 +578,7 @@ if (!$brStmt) {
         </div>
 
         <!-- Calendar Container -->
-        <div class="table-responsive">
+        <div class="table-responsive" id="calendarContainer" style="height: calc(100vh - 400px); min-height: 500px; max-height: 700px; overflow-y: auto; overflow-x: hidden;">
           <table class="table table-bordered mb-0">
             <thead class="table-light">
               <tr>
@@ -591,7 +612,7 @@ if (!$brStmt) {
 
   <!-- Add Equipment Modal -->
   <div class="modal fade" id="addEquipmentModal" tabindex="-1" aria-labelledby="addEquipmentLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
       <form class="modal-content" method="POST" action="functions/equipment_add.php">
         <div class="modal-header text-white" style="background-color: #13411F;">
           <h5 class="modal-title" id="addEquipmentLabel">Add New Equipment</h5>
@@ -621,7 +642,7 @@ if (!$brStmt) {
 
   <!-- Edit Equipment Modal -->
   <div class="modal fade" id="editEquipmentModal" tabindex="-1" aria-labelledby="editEquipmentLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
       <form class="modal-content" method="POST" action="functions/equipment_edit.php">
         <div class="modal-header text-white" style="background-color: #13411F;">
           <h5 class="modal-title" id="editEquipmentLabel">
@@ -694,27 +715,21 @@ if (!$brStmt) {
         <div class="modal-body">
           <div class="row gy-3">
             <!-- First Name -->
-            <div class="col-md-3">
+            <div class="col-md-4">
               <label for="borrow-first-name" class="form-label">First Name</label>
               <input type="text" id="borrow-first-name" name="first_name" class="form-control" required>
             </div>
 
             <!-- Middle Name (Optional) -->
-            <div class="col-md-3">
+            <div class="col-md-4">
               <label for="borrow-middle-name" class="form-label">Middle Name <small class="text-muted">(optional)</small></label>
               <input type="text" id="borrow-middle-name" name="middle_name" class="form-control">
             </div>
 
             <!-- Last Name -->
-            <div class="col-md-3">
+            <div class="col-md-4">
               <label for="borrow-last-name" class="form-label">Last Name</label>
               <input type="text" id="borrow-last-name" name="last_name" class="form-control" required>
-            </div>
-
-            <!-- Suffix (Optional) -->
-            <div class="col-md-3">
-              <label for="borrow-suffix" class="form-label">Suffix <small class="text-muted">(optional)</small></label>
-              <input type="text" id="borrow-suffix" name="suffix" class="form-control" placeholder="Jr., Sr., III...">
             </div>
 
             <!-- Equipment Dropdown -->
@@ -792,49 +807,76 @@ if (!$brStmt) {
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
 
-        <div class="modal-body">
+        <div class="modal-body p-3" style="max-height: 65vh; overflow-y: auto;">
           <input type="hidden" id="editBorrowId" value="">
 
-          <dl class="row mb-0">
-            <dt class="col-sm-3">Transaction ID</dt>
-            <dd class="col-sm-9" id="editTransaction"></dd>
+          <div class="row g-2">
+            <!-- Transaction ID & Status -->
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-bold">Transaction ID</label>
+              <input type="text" class="form-control form-control-sm" id="editTransaction" disabled>
+            </div>
 
-            <dt class="col-sm-3">Resident's Name</dt>
-            <dd class="col-sm-9" id="editResident"></dd>
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-bold">Status</label>
+              <?php if ($currentRole !== 'Brgy Kagawad'): ?>
+                <select id="editStatus" class="form-select form-select-sm">
+                  <option value="Pending">Pending</option>
+                  <option value="Borrowed">Borrowed</option>
+                  <option value="Returned">Returned</option>
+                  <option value="Rejected">Rejected</option>
+                </select>
+              <?php else: ?>
+                <input type="text" class="form-control form-control-sm" id="editStatusReadonly" disabled>
+              <?php endif; ?>
+            </div>
 
-            <dt class="col-sm-3">Equipment</dt>
-            <dd class="col-sm-9" id="editEquipment"></dd>
+            <!-- Resident Name -->
+            <div class="col-12">
+              <label class="form-label fw-bold">Resident's Name</label>
+              <input type="text" class="form-control form-control-sm" id="editResident" disabled>
+            </div>
 
-            <dt class="col-sm-3">Quantity</dt>
-            <dd class="col-sm-9" id="editQty"></dd>
+            <!-- Equipment & Quantity -->
+            <div class="col-12 col-md-8">
+              <label class="form-label fw-bold">Equipment</label>
+              <input type="text" class="form-control form-control-sm" id="editEquipment" disabled>
+            </div>
 
-            <dt class="col-sm-3">Location</dt>
-            <dd class="col-sm-9" id="editLocation"></dd>
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-bold">Quantity</label>
+              <input type="text" class="form-control form-control-sm" id="editQty" disabled>
+            </div>
 
-            <dt class="col-sm-3">Used For</dt>
-            <dd class="col-sm-9" id="editUsedFor"></dd>
+            <!-- Location & Used For -->
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-bold">Location</label>
+              <input type="text" class="form-control form-control-sm" id="editLocation" disabled>
+            </div>
 
-            <dt class="col-sm-3">Borrow Date</dt>
-            <dd class="col-sm-9" id="editDates"></dd>
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-bold">Used For</label>
+              <input type="text" class="form-control form-control-sm" id="editUsedFor" disabled>
+            </div>
 
-            <dt class="col-sm-3">Pick-Up / Drop-Off</dt>
-            <dd class="col-sm-9" id="editPudo"></dd>
+            <!-- Borrow Period & Pick-Up/Drop-Off -->
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-bold">Borrow Period</label>
+              <input type="text" class="form-control form-control-sm" id="editDates" disabled>
+            </div>
 
-            <dt class="col-sm-3">Status</dt>
-            <dd class="col-sm-9">
-              <select id="editStatus" class="form-select form-select-sm" style="max-width: 200px;">
-                <option value="Pending">Pending</option>
-                <option value="Borrowed">Borrowed</option>
-                <option value="Returned">Returned</option>
-                <option value="Rejected">Rejected</option>
-              </select>
-            </dd>
-          </dl>
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-bold">Pick-Up / Drop-Off</label>
+              <input type="text" class="form-control form-control-sm" id="editPudo" disabled>
+            </div>
+          </div>
         </div>
 
         <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" id="saveStatusBtn" class="btn btn-success">Save Changes</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <?php if ($currentRole !== 'Brgy Kagawad'): ?>
+            <button type="button" id="saveStatusBtn" class="btn btn-success">Save Changes</button>
+          <?php endif; ?>
         </div>
       </div>
     </div>
@@ -849,35 +891,58 @@ if (!$brStmt) {
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
 
-        <div class="modal-body">
-          <dl class="row mb-0">
-            <dt class="col-sm-3">Transaction ID</dt>
-            <dd class="col-sm-9" id="viewTransaction"></dd>
+        <div class="modal-body p-3" style="max-height: 65vh; overflow-y: auto;">
+          <div class="row g-2">
+            <!-- Transaction ID & Status -->
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-bold">Transaction ID</label>
+              <input type="text" class="form-control form-control-sm" id="viewTransaction" disabled>
+            </div>
 
-            <dt class="col-sm-3">Resident's Name</dt>
-            <dd class="col-sm-9" id="viewResident"></dd>
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-bold">Status</label>
+              <input type="text" class="form-control form-control-sm" id="viewStatus" disabled>
+            </div>
 
-            <dt class="col-sm-3">Equipment</dt>
-            <dd class="col-sm-9" id="viewEquipment"></dd>
+            <!-- Resident Name -->
+            <div class="col-12">
+              <label class="form-label fw-bold">Resident's Name</label>
+              <input type="text" class="form-control form-control-sm" id="viewResident" disabled>
+            </div>
 
-            <dt class="col-sm-3">Quantity</dt>
-            <dd class="col-sm-9" id="viewQty"></dd>
+            <!-- Equipment & Quantity -->
+            <div class="col-12 col-md-8">
+              <label class="form-label fw-bold">Equipment</label>
+              <input type="text" class="form-control form-control-sm" id="viewEquipment" disabled>
+            </div>
 
-            <dt class="col-sm-3">Location</dt>
-            <dd class="col-sm-9" id="viewLocation"></dd>
+            <div class="col-12 col-md-4">
+              <label class="form-label fw-bold">Quantity</label>
+              <input type="text" class="form-control form-control-sm" id="viewQty" disabled>
+            </div>
 
-            <dt class="col-sm-3">Used For</dt>
-            <dd class="col-sm-9" id="viewUsedFor"></dd>
+            <!-- Location & Used For -->
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-bold">Location</label>
+              <input type="text" class="form-control form-control-sm" id="viewLocation" disabled>
+            </div>
 
-            <dt class="col-sm-3">Borrow Date</dt>
-            <dd class="col-sm-9" id="viewDates"></dd>
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-bold">Used For</label>
+              <input type="text" class="form-control form-control-sm" id="viewUsedFor" disabled>
+            </div>
 
-            <dt class="col-sm-3">Pick-Up / Drop-Off</dt>
-            <dd class="col-sm-9" id="viewPudo"></dd>
+            <!-- Borrow Period & Pick-Up/Drop-Off -->
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-bold">Borrow Period</label>
+              <input type="text" class="form-control form-control-sm" id="viewDates" disabled>
+            </div>
 
-            <dt class="col-sm-3">Status</dt>
-            <dd class="col-sm-9" id="viewStatus"></dd>
-          </dl>
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-bold">Pick-Up / Drop-Off</label>
+              <input type="text" class="form-control form-control-sm" id="viewPudo" disabled>
+            </div>
+          </div>
         </div>
 
         <div class="modal-footer">
@@ -1169,7 +1234,7 @@ if (!$brStmt) {
       });
     }
 
-    // ── Wire Edit button to show full details with editable status ─────────────────────────────
+    // Wire Edit button to show full details with editable status
     document.querySelectorAll('.borrow-edit-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const tr = btn.closest('tr');
@@ -1179,25 +1244,33 @@ if (!$brStmt) {
         
         // Populate modal with all details
         document.getElementById('editBorrowId').value = id;
-        document.getElementById('editTransaction').textContent = tr.dataset.transactionId || '—';
-        document.getElementById('editResident').textContent = tr.dataset.resident || '—';
-        document.getElementById('editEquipment').textContent = tr.dataset.equipment || tr.dataset.esn || '—';
-        document.getElementById('editQty').textContent = tr.dataset.qty || '—';
-        document.getElementById('editLocation').textContent = tr.dataset.location || '—';
-        document.getElementById('editUsedFor').textContent = tr.dataset.usedfor || '—';
+        document.getElementById('editTransaction').value = tr.dataset.transactionId || '—';
+        document.getElementById('editResident').value = tr.dataset.resident || '—';
+        document.getElementById('editEquipment').value = tr.dataset.equipment || tr.dataset.esn || '—';
+        document.getElementById('editQty').value = tr.dataset.qty || '—';
+        document.getElementById('editLocation').value = tr.dataset.location || '—';
+        document.getElementById('editUsedFor').value = tr.dataset.usedfor || '—';
         
         // Format dates
         const from = tr.dataset.borrowFrom || '';
         const to = tr.dataset.borrowTo || '';
-        document.getElementById('editDates').textContent = (from && to)
+        document.getElementById('editDates').value = (from && to)
           ? (from === to ? from : from + ' — ' + to)
           : '—';
         
-        document.getElementById('editPudo').textContent = tr.dataset.pudo || '—';
+        document.getElementById('editPudo').value = tr.dataset.pudo || '—';
         
-        // Set current status in dropdown
+        // Set current status
         const currentStatus = tr.dataset.status || 'Pending';
-        document.getElementById('editStatus').value = currentStatus;
+        const statusSelect = document.getElementById('editStatus');
+        const statusReadonly = document.getElementById('editStatusReadonly');
+        
+        if (statusSelect) {
+          statusSelect.value = currentStatus;
+        }
+        if (statusReadonly) {
+          statusReadonly.value = currentStatus;
+        }
 
         // Show modal
         const modalEl = document.getElementById('editBorrowModal');
@@ -1405,6 +1478,16 @@ if (!$brStmt) {
     }
 
     function generateWeekView(date) {
+      // Remove scroll constraints for week view
+      const calendarContainer = document.getElementById('calendarContainer');
+      if (calendarContainer) {
+        calendarContainer.style.height = 'auto';
+        calendarContainer.style.minHeight = 'auto';
+        calendarContainer.style.maxHeight = 'none';
+        calendarContainer.style.overflowY = 'visible';
+        calendarContainer.style.overflowX = 'visible';
+      }
+
       const weekStart = getWeekStart(new Date(date));
       const weekEnd = getWeekEnd(new Date(date));
       
@@ -1467,6 +1550,16 @@ if (!$brStmt) {
     }
 
     function generateMonthView(year, month) {
+      // Set scrollable container for month view
+      const calendarContainer = document.getElementById('calendarContainer');
+      if (calendarContainer) {
+        calendarContainer.style.height = 'calc(100vh - 400px)';
+        calendarContainer.style.minHeight = '500px';
+        calendarContainer.style.maxHeight = '700px';
+        calendarContainer.style.overflowY = 'auto';
+        calendarContainer.style.overflowX = 'hidden';
+      }
+
       const firstDay = new Date(year, month, 1);
       const lastDay = new Date(year, month + 1, 0);
       const daysInMonth = lastDay.getDate();
@@ -1652,21 +1745,21 @@ if (!$brStmt) {
             
             if (isViewOnly) {
               // Populate view-only modal
-              document.getElementById('viewTransaction').textContent = event.transaction_id || '—';
-              document.getElementById('viewResident').textContent = event.resident_name || '—';
-              document.getElementById('viewEquipment').textContent = event.equipment_name || event.equipment_sn || '—';
-              document.getElementById('viewQty').textContent = event.qty || '—';
-              document.getElementById('viewLocation').textContent = event.location || '—';
-              document.getElementById('viewUsedFor').textContent = event.used_for || '—';
-              
+              document.getElementById('viewTransaction').value = event.transaction_id || '—';
+              document.getElementById('viewResident').value = event.resident_name || '—';
+              document.getElementById('viewEquipment').value = event.equipment_name || event.equipment_sn || '—';
+              document.getElementById('viewQty').value = event.qty || '—';
+              document.getElementById('viewLocation').value = event.location || '—';
+              document.getElementById('viewUsedFor').value = event.used_for || '—';
+
               const from = event.borrow_date_from || '';
               const to = event.borrow_date_to || '';
-              document.getElementById('viewDates').textContent = (from && to)
+              document.getElementById('viewDates').value = (from && to)
                 ? (from === to ? formatDateForDisplay(from) : formatDateForDisplay(from) + ' — ' + formatDateForDisplay(to))
                 : '—';
-              
-              document.getElementById('viewPudo').textContent = event.pudo || '—';
-              document.getElementById('viewStatus').textContent = event.status || 'Pending';
+
+              document.getElementById('viewPudo').value = event.pudo || '—';
+              document.getElementById('viewStatus').value = event.status || 'Pending';
               
               // Show view-only modal
               const modal = new bootstrap.Modal(document.getElementById('viewBorrowModal'));
@@ -1674,21 +1767,32 @@ if (!$brStmt) {
             } else {
               // Populate editable modal
               document.getElementById('editBorrowId').value = event.id;
-              document.getElementById('editTransaction').textContent = event.transaction_id || '—';
-              document.getElementById('editResident').textContent = event.resident_name || '—';
-              document.getElementById('editEquipment').textContent = event.equipment_name || event.equipment_sn || '—';
-              document.getElementById('editQty').textContent = event.qty || '—';
-              document.getElementById('editLocation').textContent = event.location || '—';
-              document.getElementById('editUsedFor').textContent = event.used_for || '—';
-              
+              document.getElementById('editTransaction').value = event.transaction_id || '—';
+              document.getElementById('editResident').value = event.resident_name || '—';
+              document.getElementById('editEquipment').value = event.equipment_name || event.equipment_sn || '—';
+              document.getElementById('editQty').value = event.qty || '—';
+              document.getElementById('editLocation').value = event.location || '—';
+              document.getElementById('editUsedFor').value = event.used_for || '—';
+
               const from = event.borrow_date_from || '';
               const to = event.borrow_date_to || '';
-              document.getElementById('editDates').textContent = (from && to)
+              document.getElementById('editDates').value = (from && to)
                 ? (from === to ? formatDateForDisplay(from) : formatDateForDisplay(from) + ' — ' + formatDateForDisplay(to))
                 : '—';
-              
-              document.getElementById('editPudo').textContent = event.pudo || '—';
-              document.getElementById('editStatus').value = event.status || 'Pending';
+
+              document.getElementById('editPudo').value = event.pudo || '—';
+
+              // Set current status - handle both dropdown and readonly
+              const currentStatus = event.status || 'Pending';
+              const statusSelect = document.getElementById('editStatus');
+              const statusReadonly = document.getElementById('editStatusReadonly');
+
+              if (statusSelect) {
+                statusSelect.value = currentStatus;
+              }
+              if (statusReadonly) {
+                statusReadonly.value = currentStatus;
+              }
               
               // Show edit modal
               const modal = new bootstrap.Modal(document.getElementById('editBorrowModal'));
@@ -1753,21 +1857,21 @@ if (!$brStmt) {
               
               if (isViewOnly) {
                 // Populate view-only modal
-                document.getElementById('viewTransaction').textContent = eventData.transaction_id || '—';
-                document.getElementById('viewResident').textContent = eventData.resident_name || '—';
-                document.getElementById('viewEquipment').textContent = eventData.equipment_name || eventData.equipment_sn || '—';
-                document.getElementById('viewQty').textContent = eventData.qty || '—';
-                document.getElementById('viewLocation').textContent = eventData.location || '—';
-                document.getElementById('viewUsedFor').textContent = eventData.used_for || '—';
-                
+                document.getElementById('viewTransaction').value = eventData.transaction_id || '—';
+                document.getElementById('viewResident').value = eventData.resident_name || '—';
+                document.getElementById('viewEquipment').value = eventData.equipment_name || eventData.equipment_sn || '—';
+                document.getElementById('viewQty').value = eventData.qty || '—';
+                document.getElementById('viewLocation').value = eventData.location || '—';
+                document.getElementById('viewUsedFor').value = eventData.used_for || '—';
+
                 const from = eventData.borrow_date_from || '';
                 const to = eventData.borrow_date_to || '';
-                document.getElementById('viewDates').textContent = (from && to)
+                document.getElementById('viewDates').value = (from && to)
                   ? (from === to ? formatDateForDisplay(from) : formatDateForDisplay(from) + ' — ' + formatDateForDisplay(to))
                   : '—';
-                
-                document.getElementById('viewPudo').textContent = eventData.pudo || '—';
-                document.getElementById('viewStatus').textContent = eventData.status || 'Pending';
+
+                document.getElementById('viewPudo').value = eventData.pudo || '—';
+                document.getElementById('viewStatus').value = eventData.status || 'Pending';
                 
                 // Show view-only modal
                 const modal = new bootstrap.Modal(document.getElementById('viewBorrowModal'));
@@ -1775,21 +1879,32 @@ if (!$brStmt) {
               } else {
                 // Populate editable modal
                 document.getElementById('editBorrowId').value = eventData.id;
-                document.getElementById('editTransaction').textContent = eventData.transaction_id || '—';
-                document.getElementById('editResident').textContent = eventData.resident_name || '—';
-                document.getElementById('editEquipment').textContent = eventData.equipment_name || eventData.equipment_sn || '—';
-                document.getElementById('editQty').textContent = eventData.qty || '—';
-                document.getElementById('editLocation').textContent = eventData.location || '—';
-                document.getElementById('editUsedFor').textContent = eventData.used_for || '—';
-                
+                document.getElementById('editTransaction').value = eventData.transaction_id || '—';
+                document.getElementById('editResident').value = eventData.resident_name || '—';
+                document.getElementById('editEquipment').value = eventData.equipment_name || eventData.equipment_sn || '—';
+                document.getElementById('editQty').value = eventData.qty || '—';
+                document.getElementById('editLocation').value = eventData.location || '—';
+                document.getElementById('editUsedFor').value = eventData.used_for || '—';
+
                 const from = eventData.borrow_date_from || '';
                 const to = eventData.borrow_date_to || '';
-                document.getElementById('editDates').textContent = (from && to)
+                document.getElementById('editDates').value = (from && to)
                   ? (from === to ? formatDateForDisplay(from) : formatDateForDisplay(from) + ' — ' + formatDateForDisplay(to))
                   : '—';
-                
-                document.getElementById('editPudo').textContent = eventData.pudo || '—';
-                document.getElementById('editStatus').value = eventData.status || 'Pending';
+
+                document.getElementById('editPudo').value = eventData.pudo || '—';
+
+                // Set current status - handle both dropdown and readonly
+                const currentStatus = eventData.status || 'Pending';
+                const statusSelect = document.getElementById('editStatus');
+                const statusReadonly = document.getElementById('editStatusReadonly');
+
+                if (statusSelect) {
+                  statusSelect.value = currentStatus;
+                }
+                if (statusReadonly) {
+                  statusReadonly.value = currentStatus;
+                }
                 
                 // Show edit modal
                 const modal = new bootstrap.Modal(document.getElementById('editBorrowModal'));
@@ -1821,28 +1936,39 @@ if (!$brStmt) {
         if (event) {
           // Populate edit modal with event data
           document.getElementById('editBorrowId').value = event.id;
-          document.getElementById('editTransaction').textContent = event.transaction_id || '—';
-          document.getElementById('editResident').textContent = event.resident_name || '—';
-          document.getElementById('editEquipment').textContent = event.equipment_name || event.equipment_sn || '—';
-          document.getElementById('editQty').textContent = event.qty || '—';
-          document.getElementById('editLocation').textContent = event.location || '—';
-          document.getElementById('editUsedFor').textContent = event.used_for || '—';
+          document.getElementById('editTransaction').value = event.transaction_id || '—';
+          document.getElementById('editResident').value = event.resident_name || '—';
+          document.getElementById('editEquipment').value = event.equipment_name || event.equipment_sn || '—';
+          document.getElementById('editQty').value = event.qty || '—';
+          document.getElementById('editLocation').value = event.location || '—';
+          document.getElementById('editUsedFor').value = event.used_for || '—';
           
           const from = event.borrow_date_from || '';
           const to = event.borrow_date_to || '';
-          document.getElementById('editDates').textContent = (from && to)
+          document.getElementById('editDates').value = (from && to)
             ? (from === to ? formatDateForDisplay(from) : formatDateForDisplay(from) + ' — ' + formatDateForDisplay(to))
             : '—';
           
-          document.getElementById('editPudo').textContent = event.pudo || '—';
-          document.getElementById('editStatus').value = event.status || 'Pending';
+          document.getElementById('editPudo').value = event.pudo || '—';
+          
+          // Set current status
+          const currentStatus = event.status || 'Pending';
+          const statusSelect = document.getElementById('editStatus');
+          const statusReadonly = document.getElementById('editStatusReadonly');
+          
+          if (statusSelect) {
+            statusSelect.value = currentStatus;
+          }
+          if (statusReadonly) {
+            statusReadonly.value = currentStatus;
+          }
           
           // Show modal
           const modal = new bootstrap.Modal(document.getElementById('editBorrowModal'));
           modal.show();
         }
       }
-      
+
       // Handle view button
       if (e.target.closest('.view-event-btn')) {
         const btn = e.target.closest('.view-event-btn');
@@ -1850,21 +1976,21 @@ if (!$brStmt) {
         const event = borrowsData.find(b => b.id == eventId);
         if (event) {
           // Populate view-only modal with event data
-          document.getElementById('viewTransaction').textContent = event.transaction_id || '—';
-          document.getElementById('viewResident').textContent = event.resident_name || '—';
-          document.getElementById('viewEquipment').textContent = event.equipment_name || event.equipment_sn || '—';
-          document.getElementById('viewQty').textContent = event.qty || '—';
-          document.getElementById('viewLocation').textContent = event.location || '—';
-          document.getElementById('viewUsedFor').textContent = event.used_for || '—';
+          document.getElementById('viewTransaction').value = event.transaction_id || '—';
+          document.getElementById('viewResident').value = event.resident_name || '—';
+          document.getElementById('viewEquipment').value = event.equipment_name || event.equipment_sn || '—';
+          document.getElementById('viewQty').value = event.qty || '—';
+          document.getElementById('viewLocation').value = event.location || '—';
+          document.getElementById('viewUsedFor').value = event.used_for || '—';
           
           const from = event.borrow_date_from || '';
           const to = event.borrow_date_to || '';
-          document.getElementById('viewDates').textContent = (from && to)
+          document.getElementById('viewDates').value = (from && to)
             ? (from === to ? formatDateForDisplay(from) : formatDateForDisplay(from) + ' — ' + formatDateForDisplay(to))
             : '—';
           
-          document.getElementById('viewPudo').textContent = event.pudo || '—';
-          document.getElementById('viewStatus').textContent = event.status || 'Pending';
+          document.getElementById('viewPudo').value = event.pudo || '—';
+          document.getElementById('viewStatus').value = event.status || 'Pending';
           
           // Show view-only modal
           const modal = new bootstrap.Modal(document.getElementById('viewBorrowModal'));
@@ -1918,6 +2044,15 @@ if (!$brStmt) {
     if ((<?= json_encode($_GET['tab'] ?? '') ?>) === 'borrows') {
       updateCalendar();
     }
+
+    // Auto-dismiss all Bootstrap alerts after 5 seconds
+    const alerts = document.querySelectorAll('.alert-dismissible');
+    alerts.forEach(alert => {
+      setTimeout(() => {
+        alert.classList.remove('show');
+        setTimeout(() => alert.remove(), 150);
+      }, 5000); // 5 seconds
+    });
   });
 </script>
 <?php

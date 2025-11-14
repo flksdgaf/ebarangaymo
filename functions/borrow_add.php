@@ -19,21 +19,16 @@ function valid_date(string $d): bool {
 }
 
 // Helper function to build full name from components
-function buildFullName($first, $middle, $last, $suffix) {
+function buildFullName($first, $middle, $last) {
     $first = trim($first);
     $middle = trim($middle);
     $last = trim($last);
-    $suffix = trim($suffix);
     
-    // Build name: "Last, First Middle Suffix" format
+    // Build name: "Last, First Middle" format
     $name = $last . ', ' . $first;
     
     if ($middle !== '') {
         $name .= ' ' . $middle;
-    }
-    
-    if ($suffix !== '') {
-        $name .= ' ' . $suffix;
     }
     
     return $name;
@@ -45,14 +40,13 @@ if (!isset($_SESSION['loggedInUserID'])) {
 }
 $userId = (int) ($_SESSION['loggedInUserID'] ?? 0);
 
-// 1) Collect & sanitize inputs - NEW separate name fields
+// 1) Collect & sanitize inputs - separate name fields
 $firstName       = trim($_POST['first_name'] ?? '');
 $middleName      = trim($_POST['middle_name'] ?? '');  // optional
 $lastName        = trim($_POST['last_name'] ?? '');
-$suffix          = trim($_POST['suffix'] ?? '');      // optional
 
 // Build the full name for storage
-$resident = buildFullName($firstName, $middleName, $lastName, $suffix);
+$resident = buildFullName($firstName, $middleName, $lastName);
 
 // Other existing fields
 $esn             = trim($_POST['equipment_sn'] ?? '');

@@ -2,32 +2,86 @@
 // adminResidents.php (updated)
 require_once 'functions/dbconn.php';
 
-// Determine purok (default=1)
-$purokNum = isset($_GET['purok']) && in_array((int)$_GET['purok'], [1,2,3,4,5,6]) ? (int)$_GET['purok'] : 1;
-
-// --- Search setup ---
+// --- Search setup (must come BEFORE purok determination) ---
 $search = trim($_GET['search'] ?? '');
+$foundInPurok = null;
+
+// If there's a search query, find which purok has the resident
+if ($search !== '') {
+    $searchCols = [
+      'r.account_ID',
+      'r.full_name',
+      'r.house_number',
+      'r.relationship_to_head',
+      'r.registry_number',
+      'r.total_population',
+      'ua.role',
+      'r.remarks'
+    ];
+    
+    // Check each purok for matches
+    for ($p = 1; $p <= 6; $p++) {
+        $tempTable = "purok{$p}_rbi";
+        $tempWhere = [];
+        $tempParams = [];
+        
+        foreach ($searchCols as $col) {
+            $tempWhere[] = "$col LIKE ?";
+            $tempParams[] = "%{$search}%";
+        }
+        
+        $tempWhereSQL = '(' . implode(' OR ', $tempWhere) . ')';
+        $checkSQL = "SELECT COUNT(*) AS cnt FROM `{$tempTable}` AS r 
+                     LEFT JOIN user_accounts AS ua ON r.account_ID = ua.account_id 
+                     WHERE {$tempWhereSQL}";
+        
+        $checkStmt = $conn->prepare($checkSQL);
+        if ($checkStmt !== false) {
+            $types = str_repeat('s', count($tempParams));
+            $refs = [];
+            foreach ($tempParams as $i => $v) {
+                $refs[$i] = &$tempParams[$i];
+            }
+            array_unshift($refs, $types);
+            call_user_func_array([$checkStmt, 'bind_param'], $refs);
+            $checkStmt->execute();
+            $result = $checkStmt->get_result()->fetch_assoc();
+            $checkStmt->close();
+            
+            if ($result['cnt'] > 0) {
+                $foundInPurok = $p;
+                break; // Found in this purok, stop searching
+            }
+        }
+    }
+}
+
+// Determine purok: use found purok if search result exists, otherwise use GET param or default to 1
+if ($foundInPurok !== null) {
+    $purokNum = $foundInPurok;
+} else {
+    $purokNum = isset($_GET['purok']) && in_array((int)$_GET['purok'], [1,2,3,4,5,6]) ? (int)$_GET['purok'] : 1;
+}
 
 // Build WHERE clauses
 $where = [];
 $params = [];
 $types = '';
 
-// columns you want to search
-$searchCols = [
-  'r.account_ID',
-  'r.full_name',
-  'r.house_number',
-  'r.relationship_to_head',
-  'r.registry_number',
-  'r.total_population',
-  'ua.role',
-  'r.remarks'
-];
-
-
 // Global search 
 if ($search !== '') {
+    // Re-define searchCols for the actual query
+    $searchCols = [
+      'r.account_ID',
+      'r.full_name',
+      'r.house_number',
+      'r.relationship_to_head',
+      'r.registry_number',
+      'r.total_population',
+      'ua.role',
+      'r.remarks'
+    ];
+    
     // build a placeholder for each column
     $likes = [];
     foreach ($searchCols as $col) {
@@ -175,6 +229,12 @@ $endDisplay   = $offset + $shownCount;                       // 1-based end inde
         </div>
       </form>
     </div>
+
+    <?php if ($search !== '' && $foundInPurok !== null && $foundInPurok != ($_GET['purok'] ?? 1)): ?>
+      <div class="alert alert-info fade show mb-2" role="alert" id="searchResultAlert">
+        Search results found in <strong>Purok <?= $foundInPurok ?></strong>
+      </div>
+    <?php endif; ?>
 
     <div class="table-responsive admin-table" style="height:500px;overflow-y:hidden;"><!-- style="height:500px;overflow-y:auto;"  -->
       <table class="table table-hover align-middle resident-table">
@@ -602,6 +662,7 @@ $endDisplay   = $offset + $shownCount;                       // 1-based end inde
       const url = new URL(window.location.href);
       url.searchParams.set('purok', this.value);
       url.searchParams.set('page_num', '1');
+      url.searchParams.delete('search'); // Clear search when changing purok
       window.location.href = url;
     });
 
@@ -609,10 +670,28 @@ $endDisplay   = $offset + $shownCount;                       // 1-based end inde
     const Sform = document.getElementById('searchForm');
     const input = document.getElementById('searchInput');
     const btn = document.getElementById('searchBtn');
+    const purokInput = Sform.querySelector('input[name="purok"]');
     let hasSearch = <?= json_encode($search !== '') ?>;
+
     btn.addEventListener('click', () => {
-      if (hasSearch) input.value = '';
+      if (hasSearch) {
+        // Clearing search - always return to Purok 1
+        input.value = '';
+        purokInput.value = 1;
+      } else {
+        // Searching - keep current purok
+        purokInput.value = purokNum;
+      }
       Sform.submit();
+    });
+
+    // Also handle Enter key in search input
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        purokInput.value = purokNum;
+        Sform.submit();
+      }
     });
 
     document.querySelectorAll('.remarks-select').forEach(sel => {
@@ -1080,4 +1159,13 @@ $endDisplay   = $offset + $shownCount;                       // 1-based end inde
       importCSVBtn.textContent = 'Import';
     }
   });
+
+  // Auto-dismiss search result alert after 5 seconds (no countdown display)
+  const searchAlert = document.getElementById('searchResultAlert');
+  if (searchAlert) {
+    setTimeout(() => {
+      searchAlert.classList.remove('show');
+      setTimeout(() => searchAlert.remove(), 150);
+    }, 5000); // 5 seconds
+  }
 </script>

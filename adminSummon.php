@@ -132,7 +132,7 @@ $sql = "
     
   FROM barangay_complaints
   $whereSQL
-  ORDER BY date_filed DESC, id DESC
+  ORDER BY date_filed ASC, id ASC
   LIMIT ? OFFSET ?
 ";
 
@@ -278,15 +278,15 @@ $stmt->close();
       <table class="table table-hover align-middle text-start">
         <thead class="table-light">
           <tr>
-            <th>Case No.</th>
-            <th>Complainant</th>
-            <th>Respondent</th>
-            <th>Complaint Title</th>
-            <th>Nature of Case</th>
-            <th>Date Filed</th>
-            <th>Action Taken</th>
+            <th class="text-nowrap">Case No.</th>
+            <th class="text-nowrap">Complainant</th>
+            <th class="text-nowrap">Respondent</th>
+            <th class="text-nowrap">Complaint Title</th>
+            <th class="text-nowrap">Nature of Case</th>
+            <th class="text-nowrap">Date Filed</th>
+            <th class="text-nowrap">Action Taken</th>
             <?php if ($currentRole !== 'Brgy Kagawad'): ?>
-              <th class="text-center">Action</th>
+              <th class="text-center text-nowrap">Action</th>
             <?php endif; ?>
           </tr>
         </thead>
@@ -335,7 +335,7 @@ $stmt->close();
                 <td><?= htmlspecialchars($row['formatted_date_filed']) ?></td>
                 <td><span class="badge <?= $badgeClass ?>"><?= htmlspecialchars($row['action_taken']) ?></span></td>
                 <?php if ($currentRole !== 'Brgy Kagawad'): ?>
-                  <td class="text-center">
+                  <td class="text-center text-nowrap">
                     <button class="btn btn-sm btn-info view-btn" title="View Details">
                       <span class="material-symbols-outlined" style="font-size: 14px;">visibility</span>
                     </button>

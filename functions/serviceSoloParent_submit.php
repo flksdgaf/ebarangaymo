@@ -49,7 +49,7 @@ if ($res && $res->num_rows === 1) {
 } else {
     $num = 1;
 }
-$transactionId = sprintf('SP-%07d', $num);
+$transactionId = sprintf('CSP-%07d', $num); // SP
 $stmt->close();
 
 // 5) Insert into solo_parent_requests

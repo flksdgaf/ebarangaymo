@@ -43,7 +43,7 @@ if ($res && $res->num_rows === 1) {
 } else {
     $num = 1;
 }
-$transactionId = sprintf('GM-%07d', $num);
+$transactionId = sprintf('CGM-%07d', $num); // GM
 $stmt->close();
 
 // 5) Insert into good_moral_requests

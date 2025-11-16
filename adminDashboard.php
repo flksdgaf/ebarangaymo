@@ -667,16 +667,104 @@ if ($queryString) {
     $firstDayWeek = date('w', $firstDay); // 0 = Sunday, 1 = Monday, etc.
     $daysInMonth = date('t', $firstDay);
     
-    // Sample meeting data - you can replace this with actual database queries
-    $meetings = [
-        '2025-04-04' => [
-            ['time' => '8:00 AM', 'title' => 'Yamada vs Beltran', 'type' => 'katarungan', 'status' => 'scheduled'],
-            ['time' => '9:30 AM', 'title' => 'Yamada vs Beltran', 'type' => 'katarungan', 'status' => 'scheduled'],
-            ['time' => '1:00 PM', 'title' => 'Yamada vs Beltran', 'type' => 'katarungan', 'status' => 'scheduled'],
-            ['time' => '3:00 PM', 'title' => 'Yamada vs Beltran', 'type' => 'katarungan', 'status' => 'scheduled'],
-        ],
-        // Add more sample data as needed
-    ];
+    // Fetch actual meetings from katarungang_pambarangay_records
+    $meetings = [];
+
+    // Query to get all scheduled meetings for the current month/year
+    $meetingsQuery = "
+        SELECT 
+            kpr.transaction_id,
+            kpr.schedule_punong_barangay,
+            kpr.schedule_unang_patawag,
+            kpr.schedule_ikalawang_patawag,
+            kpr.schedule_ikatlong_patawag,
+            kpr.complaint_stage,
+            cr.complainant_name,
+            cr.respondent_name
+        FROM katarungang_pambarangay_records kpr
+        LEFT JOIN complaint_records cr ON kpr.transaction_id = cr.transaction_id
+        WHERE (
+            (YEAR(kpr.schedule_punong_barangay) = {$currentYear} AND MONTH(kpr.schedule_punong_barangay) = {$currentMonth})
+            OR (YEAR(kpr.schedule_unang_patawag) = {$currentYear} AND MONTH(kpr.schedule_unang_patawag) = {$currentMonth})
+            OR (YEAR(kpr.schedule_ikalawang_patawag) = {$currentYear} AND MONTH(kpr.schedule_ikalawang_patawag) = {$currentMonth})
+            OR (YEAR(kpr.schedule_ikatlong_patawag) = {$currentYear} AND MONTH(kpr.schedule_ikatlong_patawag) = {$currentMonth})
+        )
+        ORDER BY kpr.created_at DESC
+    ";
+
+    $meetingsResult = $conn->query($meetingsQuery);
+
+    if ($meetingsResult && $meetingsResult->num_rows > 0) {
+        while ($row = $meetingsResult->fetch_assoc()) {
+            // Extract last names
+            $complainantParts = explode(',', $row['complainant_name']);
+            $complainantLastName = trim($complainantParts[0]);
+            
+            $respondentParts = explode(',', $row['respondent_name']);
+            $respondentLastName = trim($respondentParts[0]);
+            
+            $title = $row['transaction_id'] . ': ' . $complainantLastName . ' vs ' . $respondentLastName;
+            
+            // Add Punong Barangay meeting
+            if ($row['schedule_punong_barangay']) {
+                $date = date('Y-m-d', strtotime($row['schedule_punong_barangay']));
+                $time = date('g:i A', strtotime($row['schedule_punong_barangay']));
+                $meetings[$date][] = [
+                    'time' => $time,
+                    'title' => $title,
+                    'type' => 'punong_barangay',
+                    'status' => 'scheduled',
+                    'transaction_id' => $row['transaction_id']
+                ];
+            }
+            
+            // Add Unang Patawag meeting
+            if ($row['schedule_unang_patawag']) {
+                $date = date('Y-m-d', strtotime($row['schedule_unang_patawag']));
+                $time = date('g:i A', strtotime($row['schedule_unang_patawag']));
+                $meetings[$date][] = [
+                    'time' => $time,
+                    'title' => $title,
+                    'type' => 'unang_patawag',
+                    'status' => 'scheduled',
+                    'transaction_id' => $row['transaction_id']
+                ];
+            }
+            
+            // Add Ikalawang Patawag meeting
+            if ($row['schedule_ikalawang_patawag']) {
+                $date = date('Y-m-d', strtotime($row['schedule_ikalawang_patawag']));
+                $time = date('g:i A', strtotime($row['schedule_ikalawang_patawag']));
+                $meetings[$date][] = [
+                    'time' => $time,
+                    'title' => $title,
+                    'type' => 'ikalawang_patawag',
+                    'status' => 'scheduled',
+                    'transaction_id' => $row['transaction_id']
+                ];
+            }
+            
+            // Add Ikatlong Patawag meeting
+            if ($row['schedule_ikatlong_patawag']) {
+                $date = date('Y-m-d', strtotime($row['schedule_ikatlong_patawag']));
+                $time = date('g:i A', strtotime($row['schedule_ikatlong_patawag']));
+                $meetings[$date][] = [
+                    'time' => $time,
+                    'title' => $title,
+                    'type' => 'ikatlong_patawag',
+                    'status' => 'scheduled',
+                    'transaction_id' => $row['transaction_id']
+                ];
+            }
+        }
+        
+        // Sort meetings by time for each date
+        foreach ($meetings as $date => &$dayMeetings) {
+            usort($dayMeetings, function($a, $b) {
+                return strtotime($a['time']) - strtotime($b['time']);
+            });
+        }
+    }
     
     // Get today's date for highlighting
     $today = date('Y-m-d');
@@ -750,7 +838,7 @@ if ($queryString) {
                                         ?>
                                             <!-- Day Number -->
                                             <div class="d-flex justify-content-between align-items-start mb-1">
-                                                <span class="fw-bold <?= $isToday ? 'text-white bg-success rounded-circle px-2 py-1' : 'text-dark' ?>" 
+                                                <span class="fw-bold <?= $isToday ? 'text-white bg-secondary rounded-circle px-2 py-1' : 'text-dark' ?>" 
                                                       style="font-size: 0.875rem; min-width: 24px; text-align: center;">
                                                     <?= $dayNumber ?>
                                                 </span>
@@ -761,16 +849,24 @@ if ($queryString) {
                                                 <div style="font-size: 0.75rem;">
                                                     <?php foreach (array_slice($meetings[$currentDate], 0, 3) as $meeting): ?>
                                                         <div class="mb-1">
-                                                            <?php if ($meeting['type'] === 'katarungan'): ?>
-                                                                <div class="badge bg-success text-white w-100 text-start p-1" style="font-size: 0.7rem;">
-                                                                    Katarungan Meeting
+                                                            <?php if ($meeting['type'] === 'punong_barangay'): ?>
+                                                                <div class="badge bg-warning text-dark text-start p-1" style="font-size: 0.65rem; line-height: 1.2; white-space: normal; word-wrap: break-word;">
+                                                                    Punong Barangay
                                                                 </div>
-                                                            <?php elseif ($meeting['type'] === 'mediation'): ?>
-                                                                <div class="badge bg-primary text-white w-100 text-start p-1" style="font-size: 0.7rem;">
-                                                                    Mediation Session  
+                                                            <?php elseif ($meeting['type'] === 'unang_patawag'): ?>
+                                                                <div class="badge bg-success text-white text-start p-1" style="font-size: 0.65rem; line-height: 1.2; white-space: normal; word-wrap: break-word;">
+                                                                    Unang Patawag
+                                                                </div>
+                                                            <?php elseif ($meeting['type'] === 'ikalawang_patawag'): ?>
+                                                                <div class="badge bg-primary text-white text-start p-1" style="font-size: 0.65rem; line-height: 1.2; white-space: normal; word-wrap: break-word;">
+                                                                    Ikalawang Patawag
+                                                                </div>
+                                                            <?php elseif ($meeting['type'] === 'ikatlong_patawag'): ?>
+                                                                <div class="badge bg-dark text-white text-start p-1" style="font-size: 0.65rem; line-height: 1.2; white-space: normal; word-wrap: break-word;">
+                                                                    Ikatlong Patawag
                                                                 </div>
                                                             <?php else: ?>
-                                                                <div class="badge bg-secondary text-white w-100 text-start p-1" style="font-size: 0.7rem;">
+                                                                <div class="badge bg-secondary text-white text-start p-1" style="font-size: 0.65rem; line-height: 1.2; white-space: normal; word-wrap: break-word;">
                                                                     General Meeting
                                                                 </div>
                                                             <?php endif; ?>
@@ -788,7 +884,11 @@ if ($queryString) {
                 </div>
                 
                 <!-- Legend -->
-                <div class="d-flex justify-content-center mt-3" style="gap: 2rem;">
+                <div class="d-flex flex-wrap justify-content-center mt-3" style="gap: 1rem;">
+                    <div class="d-flex align-items-center">
+                        <div class="badge bg-warning me-2">●</div>
+                        <small class="text-muted">Punong Barangay</small>
+                    </div>
                     <div class="d-flex align-items-center">
                         <div class="badge bg-success me-2">●</div>
                         <small class="text-muted">Unang Patawag</small>
@@ -825,11 +925,22 @@ if ($queryString) {
                             <div class="d-flex align-items-start mb-3">
                                 <div class="badge bg-success rounded-circle me-3 mt-1" style="width: 12px; height: 12px;"></div>
                                 <div class="flex-grow-1">
-                                    <div class="fw-bold text-success" style="font-size: 0.875rem;">
-                                        <?= htmlspecialchars($meeting['time']) ?> 
+                                    <div class="fw-bold text-tertiary" style="font-size: 0.875rem;">
+                                        <?= htmlspecialchars($meeting['time']) ?>
+                                    </div>
+                                    <div style="font-size: 0.875rem;">
                                         <?= htmlspecialchars($meeting['title']) ?>
                                     </div>
-                                    <small class="text-muted">Katarungang Pambarangay</small>
+                                    <small class="text-muted">
+                                        <?php 
+                                        switch($meeting['type']) {
+                                            case 'punong_barangay': echo 'Punong Barangay'; break;
+                                            case 'unang_patawag': echo 'Unang Patawag'; break;
+                                            case 'ikalawang_patawag': echo 'Ikalawang Patawag'; break;
+                                            case 'ikatlong_patawag': echo 'Ikatlong Patawag'; break;
+                                        }
+                                        ?>
+                                    </small>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -898,68 +1009,90 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Payment Methods Bar Chart (Treasurer Dashboard)
+  // Payment Methods Line Chart (Treasurer Dashboard)
   if (document.getElementById('paymentMethodsChart')) {
-    const barCtx = document.getElementById('paymentMethodsChart').getContext('2d');
+    const lineCtx = document.getElementById('paymentMethodsChart').getContext('2d');
     
-    new Chart(barCtx, {
-        type: 'bar',
-        data: {
-            labels: ['GCash', 'Brgy Payment Device', 'Over-the-Counter'],
-            datasets: [{
-                label: 'Number of ORs',
-                data: <?= json_encode(array_values($paymentMethodCounts)) ?>,
-                backgroundColor: [
-                    '#28a745',  // GCash - green
-                    '#20c997',  // Payment Device - teal
-                    '#343a40'   // Over-the-Counter - dark
-                ],
-                borderWidth: 0,
-                borderRadius: 6
-            }]
+    new Chart(lineCtx, {
+      type: 'line',
+      data: {
+        labels: <?= isset($dates) ? json_encode($dates) : '[]' ?>,
+        datasets: [
+          {
+            label: 'GCash',
+            data: <?= isset($gcashData) ? json_encode($gcashData) : '[]' ?>,
+            borderColor: '#28a745',
+            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+            fill: false,
+            tension: 0.4,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          },
+          {
+            label: 'Payment Device',
+            data: <?= isset($paymentDeviceData) ? json_encode($paymentDeviceData) : '[]' ?>,
+            borderColor: '#20c997',
+            backgroundColor: 'rgba(32, 201, 151, 0.1)',
+            fill: false,
+            tension: 0.4,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          },
+          {
+            label: 'Over-the-Counter',
+            data: <?= isset($overCounterData) ? json_encode($overCounterData) : '[]' ?>,
+            borderColor: '#343a40',
+            backgroundColor: 'rgba(52, 58, 64, 0.1)',
+            fill: false,
+            tension: 0.4,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false // Using custom legend below
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+          }
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return 'ORs Created: ' + context.parsed.y;
-                        }
-                    }
-                }
+        scales: {
+          x: {
+            grid: {
+              color: 'rgba(0,0,0,0.1)'
             },
-            scales: {
-                x: {
-                    grid: {
-                        display: false
-                    },
-                    ticks: {
-                        color: '#6c757d',
-                        font: {
-                            size: 12
-                        }
-                    }
-                },
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        stepSize: 1,
-                        color: '#6c757d',
-                        font: {
-                            size: 12
-                        }
-                    },
-                    grid: {
-                        color: 'rgba(0,0,0,0.1)'
-                    }
-                }
+            ticks: {
+              color: '#6c757d',
+              font: {
+                size: 12
+              }
             }
+          },
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: 'rgba(0,0,0,0.1)'
+            },
+            ticks: {
+              color: '#6c757d',
+              font: {
+                size: 12
+              }
+            }
+          }
+        },
+        interaction: {
+          mode: 'nearest',
+          axis: 'x',
+          intersect: false
         }
+      }
     });
   }
 });

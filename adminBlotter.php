@@ -1,6 +1,7 @@
 <?php
 require 'functions/dbconn.php';
 $userId = (int)$_SESSION['loggedInUserID'];
+$currentRole = $_SESSION['loggedInUserRole'] ?? '';
 $newTid = $_GET['transaction_id'] ?? '';
 
 // FILTER + SEARCH SETUP
@@ -169,12 +170,22 @@ $stmt->close();
       </div>
 
       <!-- Add New Blotter button -->
-      <div class="dropdown ms-3">
+      <!-- <div class="dropdown ms-3">
         <button class="btn btn-sm btn-success" type="button" id="addBlotterBtn" data-bs-toggle="modal" data-bs-target="#addBlotterModal">
           <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">add</span>
           Add New Blotter
         </button>
-      </div>
+      </div> -->
+
+      <!-- Add New Blotter button -->
+      <?php if ($currentRole !== 'Brgy Kagawad'): ?>
+        <div class="dropdown ms-3">
+          <button class="btn btn-sm btn-success" type="button" id="addBlotterBtn" data-bs-toggle="modal" data-bs-target="#addBlotterModal">
+            <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">add</span>
+            Add New Blotter
+          </button>
+        </div>
+      <?php endif; ?>
 
       <form method="get" action="?page=adminComplaints" id="searchFormBlotter" class="d-flex ms-auto me-2">
         <input type="hidden" name="page" value="adminComplaints">
@@ -514,7 +525,10 @@ $stmt->close();
             <th class="text-nowrap">Respondent</th>
             <th class="text-nowrap">Complaint Nature</th>
             <th class="text-nowrap">Date & Time Occurred</th>
-            <th class="text-nowrap text-center">Action</th>
+            <?php if ($currentRole !== 'Brgy Kagawad'): ?>
+              <th class="text-nowrap text-center">Action</th>
+            <?php endif; ?>
+            <!-- <th class="text-nowrap text-center">Action</th> -->
           </tr>
         </thead>
         <tbody>
@@ -539,33 +553,35 @@ $stmt->close();
                   <?= htmlspecialchars($row['formatted_date']) ?>
                   <?= htmlspecialchars($row['formatted_time']) ?>
                 </td>
-                <td class="text-nowrap text-center">
+                <?php if ($currentRole !== 'Brgy Kagawad'): ?>
+                  <td class="text-nowrap text-center">
 
-                  <!-- View -->
-                  <button class="btn btn-sm btn-warning blotter-view-btn" data-id="<?= $tid ?>">
-                    <span class="material-symbols-outlined" style="font-size: 12px;">
-                      visibility
-                    </span>
-                  </button>
-                  
-                  <!-- Edit -->
-                  <button class="btn btn-sm btn-primary blotter-edit-btn">
-                    <span class="material-symbols-outlined" style="font-size: 12px;">
-                      stylus
-                    </span>
-                  </button>
+                    <!-- View -->
+                    <button class="btn btn-sm btn-warning blotter-view-btn" data-id="<?= $tid ?>">
+                      <span class="material-symbols-outlined" style="font-size: 12px;">
+                        visibility
+                      </span>
+                    </button>
+                    
+                    <!-- Edit -->
+                    <button class="btn btn-sm btn-primary blotter-edit-btn">
+                      <span class="material-symbols-outlined" style="font-size: 12px;">
+                        stylus
+                      </span>
+                    </button>
 
-                  <!-- Delete -->
-                  <button class="btn btn-sm btn-danger blotter-delete-btn" data-id="<?= $tid ?>" data-bs-toggle="modal" data-bs-target="#deleteBlotterModal">
-                    <span class="material-symbols-outlined" style="font-size: 12px;">
-                      delete
-                    </span>
-                  </button>
-                </td>
+                    <!-- Delete -->
+                    <button class="btn btn-sm btn-danger blotter-delete-btn" data-id="<?= $tid ?>" data-bs-toggle="modal" data-bs-target="#deleteBlotterModal">
+                      <span class="material-symbols-outlined" style="font-size: 12px;">
+                        delete
+                      </span>
+                    </button>
+                  </td>
+                <?php endif; ?>
               </tr>
             <?php endwhile; ?>
           <?php else: ?>
-            <tr><td colspan="7" class="text-center">No Blotter Records Found.</td></tr>
+            <tr><td colspan="<?= $currentRole !== 'Brgy Kagawad' ? '6' : '5' ?>" class="text-center">No Blotter Records Found.</td></tr>
           <?php endif; ?>
         </tbody>
       </table>

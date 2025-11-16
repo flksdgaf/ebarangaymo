@@ -309,11 +309,6 @@ if ($type === 'Good Moral') {
     if ($ps === '') $ps = null;
     $data['sex'] = $ps;
     if (!in_array('sex', $fields, true)) $fields[] = 'sex';
-
-    $pa = isset($_POST['parent_address']) ? trim($_POST['parent_address']) : null;
-    if ($pa === '') $pa = null;
-    $data['address'] = $pa;
-    if (!in_array('address', $fields, true)) $fields[] = 'address';
 }
 
 $postPaymentMethod = isset($_POST['paymentMethod']) ? trim($_POST['paymentMethod']) : null;

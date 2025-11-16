@@ -840,10 +840,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (type === 'good moral') {
-            const parentSex = document.querySelector('[name="parent_sex"]')?.value || window.existingParentSex || '—';
-            const parentAddress = document.querySelector('[name="parent_address"]')?.value || window.existingParentAddress || '—';
-            rows.push(['Parent Sex:', parentSex]);
-            rows.push(['Parent Address:', parentAddress]);
+            const sex = document.querySelector('[name="parent_sex"]')?.value || window.existingParentSex || '—';
+            rows.push(['Sex:', sex]);
         }
 
         // Solo Parent: include Parent Sex, Child details + years

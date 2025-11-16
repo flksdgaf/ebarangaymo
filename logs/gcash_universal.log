@@ -40,3 +40,15 @@
 2025-11-15 04:56:39 - Payment source created - {"source_id":"src_cGJEaiGHTjFcvoCnM4PyPLjK","transaction_id":"GUA-0000001"}
 2025-11-16 17:50:08 - Creating payment source - {"transaction_id":"BID-0000003","type":"Barangay ID","amount":20}
 2025-11-16 17:50:09 - Payment source created - {"source_id":"src_rmHoJEpuLnyKVS3DegdDgjDU","transaction_id":"BID-0000003"}
+2025-11-16 18:10:42 - Creating payment source - {"transaction_id":"CLR-0000003","type":"Barangay Clearance","amount":130}
+2025-11-16 18:10:43 - Payment source created - {"source_id":"src_XPBQRbAMnoWcyUQNY3D4to3o","transaction_id":"CLR-0000003"}
+2025-11-16 18:13:10 - Creating payment source - {"transaction_id":"BUS-0000003","type":"Business Clearance","amount":20}
+2025-11-16 18:13:10 - Payment source created - {"source_id":"src_nX6bdXTemVzZJNE6g9kGTU2D","transaction_id":"BUS-0000003"}
+2025-11-16 18:15:48 - Creating payment source - {"transaction_id":"RES-0000003","type":"Certificate of Residency","amount":130}
+2025-11-16 18:15:49 - Payment source created - {"source_id":"src_EVKpgMhenvawMQJgWxAbpGDs","transaction_id":"RES-0000003"}
+2025-11-16 18:25:23 - Creating payment source - {"transaction_id":"CGM-0000003","type":"Certificate of Good Moral","amount":130}
+2025-11-16 18:25:23 - Payment source created - {"source_id":"src_ppXs2Udtdys5z1iCpkmBbP9K","transaction_id":"CGM-0000003"}
+2025-11-16 18:27:25 - Creating payment source - {"transaction_id":"CSP-0000003","type":"Solo Parent Certificate","amount":130}
+2025-11-16 18:27:25 - Payment source created - {"source_id":"src_fMbQFZ2EhMHxDWSNs18utxh4","transaction_id":"CSP-0000003"}
+2025-11-16 18:28:49 - Creating payment source - {"transaction_id":"GUA-0000003","type":"Certificate of Guardianship","amount":130}
+2025-11-16 18:28:49 - Payment source created - {"source_id":"src_pL64ct2WcCSGA4T4EF6dmXhx","transaction_id":"GUA-0000003"}

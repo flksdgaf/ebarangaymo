@@ -329,91 +329,95 @@ unset($_SESSION['payment_success'], $_SESSION['payment_error'], $_SESSION['payme
                 <div class="row mb-3">
                     <label class="col-md-4 text-start fw-bold">Full Name</label>
                     <div class="col-md-8">
-                        <input type="text" id="fullname" name="fullname" disabled
+                        <input type="text" id="fullname" name="fullname_display" disabled
                             class="form-control custom-input"
-                            readonly
                             value="<?php echo htmlspecialchars($fullName); ?>"
                             placeholder="First Middle Surname">
+                        <!-- Hidden input to submit the value -->
+                        <input type="hidden" name="fullname" value="<?php echo htmlspecialchars($fullName); ?>">
+                    </div>
+                </div>
+
+                <!-- PUROK -->
+                <div class="row mb-3">
+                    <label class="col-md-4 text-start fw-bold">Purok</label>
+                    <div class="col-md-8">
+                        <input type="text" id="purok" name="purok_display" disabled
+                            class="form-control custom-input"
+                            required
+                            value="<?php echo htmlspecialchars($userPurok); ?>"
+                            placeholder="Purok">
+                        <!-- Hidden input to submit the value -->
+                        <input type="hidden" name="purok" value="<?php echo htmlspecialchars($userPurok); ?>">
+                    </div>
+                </div>
+
+                <!-- BIRTHDATE & AGE -->
+                <div class="row mb-3">
+                    <label class="col-md-4 text-start fw-bold">Birthdate</label>
+                    <div class="col-md-8">
+                        <div class="row g-4">
+                            <div class="col-md-7">
+                                <input type="date" id="birthdate" name="birthdate_display" disabled
+                                    class="form-control custom-input"
+                                    required
+                                    value="<?php echo (!empty($birthdate) && $birthdate !== '0000-00-00') ? date('Y-m-d', strtotime($birthdate)) : ($existingRequest['birthdate'] ?? ''); ?>">
+                                <!-- Hidden input to submit the value -->
+                                <input type="hidden" name="birthdate" value="<?php echo (!empty($birthdate) && $birthdate !== '0000-00-00') ? date('Y-m-d', strtotime($birthdate)) : ($existingRequest['birthdate'] ?? ''); ?>">
+                            </div>
+                            <label class="col-md-1 text-start fw-bold">Age</label>
+                            <div class="col-md-4">
+                                <input type="number" id="age" name="age_display" disabled
+                                    class="form-control custom-input"
+                                    placeholder="Age"
+                                    value="<?php echo htmlspecialchars($age ?: ($existingRequest['age'] ?? '')); ?>">
+                                <!-- Hidden input to submit the value -->
+                                <input type="hidden" name="age" value="<?php echo htmlspecialchars($age ?: ($existingRequest['age'] ?? '')); ?>">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CIVIL STATUS -->
+                <div class="row mb-3">
+                    <label class="col-md-4 text-start fw-bold">Civil Status</label>
+                    <div class="col-md-8">
+                        <select id="maritalstatus" name="marital_status" class="form-control custom-input" required>
+                            <?php
+                            foreach (['Single','Married','Separated','Widowed'] as $opt) {
+                                $sel = ($opt === $civilstatus || ($existingRequest['marital_status'] ?? '') === $opt) ? 'selected' : '';
+                                echo "<option value=\"$opt\" $sel>$opt</option>";
+                            }
+                            ?>
+                        </select>
                     </div>
                 </div>
 
                 <!-- STREET (optional) -->
                 <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Street <span class="small text-muted">(Optional)</span></label>
-                <div class="col-md-8">
-                    <input type="text" id="street" name="street"
-                        class="form-control custom-input"
-                        placeholder="Street (optional)"
-                        value="<?php echo htmlspecialchars($existingRequest['street'] ?? ''); ?>">
-                </div>
-                </div>
-
-                <!-- PUROK -->
-                <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Purok</label>
-                <div class="col-md-8">
-                    <input type="text" id="purok" name="purok" disabled
-                        class="form-control custom-input"
-                        readonly
-                        required
-                        value="<?php echo htmlspecialchars($userPurok); ?>"
-                        placeholder="Purok">
-                </div>
-                </div>
-
-                <!-- BIRTHDATE & AGE -->
-                <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Birthdate</label>
-                <div class="col-md-8">
-                    <div class="row g-4">
-                        <div class="col-md-7">
-                            <input type="date" id="birthdate" name="birthdate"
-                                class="form-control custom-input" disabled
-                                readonly
-                                required
-                                value="<?php echo (!empty($birthdate) && $birthdate !== '0000-00-00') ? date('Y-m-d', strtotime($birthdate)) : ($existingRequest['birthdate'] ?? ''); ?>">
-                        </div>
-                        <label class="col-md-1 text-start fw-bold">Age</label>
-                        <div class="col-md-4">
-                            <input type="number" id="age" name="age" disabled
-                                class="form-control custom-input"
-                                readonly
-                                placeholder="Age"
-                                    value="<?php echo htmlspecialchars($age ?: ($existingRequest['age'] ?? '')); ?>">
-                        </div>
+                    <label class="col-md-4 text-start fw-bold">Street <span class="small text-muted">(Optional)</span></label>
+                    <div class="col-md-8">
+                        <input type="text" id="street" name="street"
+                            class="form-control custom-input"
+                            placeholder="Street (optional)"
+                            value="<?php echo htmlspecialchars($existingRequest['street'] ?? ''); ?>">
                     </div>
-                </div>
                 </div>
 
                 <!-- BIRTHPLACE -->
                 <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Birthplace</label>
-                <div class="col-md-8">
-                    <input type="text" id="birthplace" name="birth_place"
-                        class="form-control custom-input"
-                        required placeholder="City, Province"
-                        value="<?php echo htmlspecialchars($existingRequest['birth_place'] ?? ''); ?>">
-                </div>
-                </div>
-
-                <!-- CIVIL STATUS -->
-                <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">Civil Status</label>
-                <div class="col-md-8">
-                    <select id="maritalstatus" name="marital_status" class="form-control custom-input" required>
-                        <?php
-                        foreach (['Single','Married','Separated','Widowed'] as $opt) {
-                            $sel = ($opt === $civilstatus || ($existingRequest['marital_status'] ?? '') === $opt) ? 'selected' : '';
-                            echo "<option value=\"$opt\" $sel>$opt</option>";
-                        }
-                        ?>
-                    </select>
-                </div>
+                    <label class="col-md-4 text-start fw-bold">Birthplace</label>
+                    <div class="col-md-8">
+                        <input type="text" id="birthplace" name="birth_place"
+                            class="form-control custom-input"
+                            required placeholder="City, Province"
+                            value="<?php echo htmlspecialchars($existingRequest['birth_place'] ?? ''); ?>">
+                    </div>
                 </div>
 
                 <!-- CTC NUMBER -->
                 <div class="row mb-3">
-                <label class="col-md-4 text-start fw-bold">CTC Number</label>
+                <label class="col-md-4 text-start fw-bold">CTC Number <span class="small text-muted">(Optional)</span></label>
                 <div class="col-md-8">
                     <input type="text" id="ctcnumber" name="ctc_number"
                         class="form-control custom-input"

@@ -722,36 +722,29 @@ document.addEventListener("DOMContentLoaded", function () {
         const existingGroup = document.getElementById('goodMoralParentFields');
         if (existingGroup) existingGroup.remove();
 
-        const parentSexPref = (window.existingParentSex || window.currentUser.sex || '').toString();
+        const sexPref = (window.existingParentSex || window.currentUser.sex || '').toString();
         const group = document.createElement('div');
         group.id = 'goodMoralParentFields';
 
         group.innerHTML = `
-            <div class="row mb-3 gm-parent-sex-row">
-                <label class="col-sm-2 col-form-label fw-bold">Parent Sex:</label>
+            <div class="row mb-3 gm-sex-row">
+                <label class="col-sm-2 col-form-label fw-bold">Sex:</label>
                 <div class="col-sm-10">
                     <select name="parent_sex" class="form-select" required>
-                        <option value="">Select Parent Sex</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
+                        <option value="">Select Sex</option>
+                        <option value="Male" ${sexPref === 'Male' ? 'selected' : ''}>Male</option>
+                        <option value="Female" ${sexPref === 'Female' ? 'selected' : ''}>Female</option>
                     </select>
-                </div>
-            </div>
-
-            <div class="row mb-3 gm-parent-address-row">
-                <label class="col-sm-2 col-form-label fw-bold">Parent Address:</label>
-                <div class="col-sm-10">
-                    <input type="text" name="parent_address" class="form-control" placeholder="Optional">
                 </div>
             </div>
         `;
 
-        // try to insert right after the civil_status row; otherwise append at end
-        const civilEl = certFieldsHolder.querySelector('[name="civil_status"]');
-        if (civilEl) {
-            const civilRow = civilEl.closest('.row');
-            if (civilRow && civilRow.parentNode) {
-                civilRow.parentNode.insertBefore(group, civilRow.nextSibling);
+        // Insert right after the purok row
+        const purokEl = certFieldsHolder.querySelector('[name="purok"]');
+        if (purokEl) {
+            const purokRow = purokEl.closest('.row');
+            if (purokRow && purokRow.parentNode) {
+                purokRow.parentNode.insertBefore(group, purokRow.nextSibling);
                 return;
             }
         }
@@ -1305,10 +1298,8 @@ document.addEventListener("DOMContentLoaded", function () {
         // }
 
         if (type === 'good moral') {
-            const parentSexGM = document.querySelector('[name="parent_sex"]')?.value || window.existingParentSex || window.currentUser.sex || '—';
-            const parentAddressGM = document.querySelector('[name="parent_address"]')?.value || window.existingParentAddress || '—';
-            rows.push(['Parent Sex:', parentSexGM || '—']);
-            rows.push(['Parent Address:', parentAddressGM || '—']);
+            const sex = document.querySelector('[name="parent_sex"]')?.value || window.existingParentSex || window.currentUser.sex || '—';
+            rows.push(['Sex:', sex || '—']);
         }
 
         if (type === 'solo parent') {

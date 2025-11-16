@@ -1009,6 +1009,51 @@ document.addEventListener("DOMContentLoaded", function () {
     forSelect.addEventListener('change', refreshFields);
 
     setupPaymentControls();
+    
+    // Make goToStep globally accessible for URL navigation
+    function goToStep(targetStep) {
+        refreshStepCollections();
+        const tSteps = totalSteps();
+        
+        if (targetStep < 1) targetStep = 1;
+        if (targetStep > tSteps) targetStep = tSteps;
+        
+        // Update step display
+        steps.forEach((step, idx) => {
+            step.classList.remove('active-step');
+            if (idx === targetStep - 1) {
+                step.classList.add('active-step');
+            }
+        });
+        
+        circleSteps.forEach((c, idx) => {
+            c.classList.remove('active', 'completed');
+            if (idx < targetStep - 1) c.classList.add('completed');
+            if (idx === targetStep - 1) c.classList.add('active');
+        });
+        
+        stepLabels.forEach((l, idx) => {
+            l.classList.remove('active', 'completed');
+            if (idx < targetStep - 1) l.classList.add('completed');
+            if (idx === targetStep - 1) l.classList.add('active');
+        });
+        
+        const pct = computeProgressPercent(targetStep, tSteps);
+        if (progressFill) {
+            progressFill.style.width = pct + '%';
+            progressFill.setAttribute('aria-valuenow', String(pct));
+        }
+        
+        currentStep = targetStep;
+        updateNavigation();
+        
+        if (getSummaryStepIndex() === currentStep) {
+            populateSummary();
+        }
+    }
+
+    // Expose globally for URL navigation
+    window.goToStep = goToStep;
 
     nextBtn.addEventListener('click', () => {
         refreshStepCollections();
@@ -1474,42 +1519,13 @@ document.addEventListener("DOMContentLoaded", function () {
     (function initFromServer() {
         ensureHiddenPaymentFields();
 
-        // Handle URL step parameter (for GCash returns)
+        // URL step handling is now done by the global handler at the end of file
+        // Just set initial step if provided from server
         const urlParams = new URLSearchParams(window.location.search);
-        const urlStep = urlParams.get('step');
-        
-        if (urlStep && window.initialStep) {
-            const targetStep = parseInt(urlStep);
-            if (targetStep > 0 && targetStep <= totalSteps()) {
-                currentStep = targetStep;
-                
-                // Update step display
-                refreshStepCollections();
-                steps.forEach((step, idx) => {
-                    if (idx < currentStep - 1) {
-                        step.classList.add('completed');
-                        step.classList.remove('active-step');
-                        if (circleSteps[idx]) circleSteps[idx].classList.add('completed');
-                        if (stepLabels[idx]) stepLabels[idx].classList.add('completed');
-                    } else if (idx === currentStep - 1) {
-                        step.classList.add('active-step');
-                        step.classList.remove('completed');
-                        if (circleSteps[idx]) circleSteps[idx].classList.add('active');
-                        if (stepLabels[idx]) stepLabels[idx].classList.add('active');
-                    } else {
-                        step.classList.remove('active-step', 'completed');
-                        if (circleSteps[idx]) circleSteps[idx].classList.remove('active', 'completed');
-                        if (stepLabels[idx]) stepLabels[idx].classList.remove('active', 'completed');
-                    }
-                });
-                
-                updateNavigation();
-                
-                // If arriving at step 3, populate summary
-                if (currentStep === getSummaryStepIndex()) {
-                    setTimeout(() => { populateSummary(); }, 100);
-                }
-            }
+        if (window.initialStep && !urlParams.get('step')) {
+            currentStep = window.initialStep;
+            refreshStepCollections();
+            updateNavigation();
         }
 
         if (window.existingPaymentMethod && hiddenPaymentInput && !hiddenPaymentInput.value) {
@@ -1555,28 +1571,19 @@ document.addEventListener("DOMContentLoaded", function () {
             const targetStep = parseInt(urlStep);
             console.log('URL step detected:', targetStep);
             
-            // Navigate to the specified step
-            if (targetStep > 0 && targetStep <= totalSteps()) {
-                currentStep = targetStep;
-                refreshStepCollections();
-                
-                steps.forEach((step, idx) => {
-                    if (idx < currentStep - 1) {
-                        step.classList.add('completed');
-                        step.classList.remove('active-step');
-                    } else if (idx === currentStep - 1) {
-                        step.classList.add('active-step');
-                    } else {
-                        step.classList.remove('active-step', 'completed');
-                    }
-                });
-                
-                updateNavigation();
-                
-                if (currentStep === getSummaryStepIndex()) {
-                    setTimeout(() => populateSummary(), 100);
+            // Wait for goToStep to be defined
+            const checkAndNavigate = setInterval(function() {
+                if (typeof window.goToStep === 'function') {
+                    clearInterval(checkAndNavigate);
+                    console.log('Navigating to step:', targetStep);
+                    window.goToStep(targetStep);
                 }
-            }
+            }, 50);
+            
+            // Timeout after 2 seconds
+            setTimeout(function() {
+                clearInterval(checkAndNavigate);
+            }, 2000);
         }
         
         // Back button warning for payment page

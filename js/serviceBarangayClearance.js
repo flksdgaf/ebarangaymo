@@ -612,6 +612,9 @@ document.addEventListener("DOMContentLoaded", function () {
         if (currentStep === 3) populateSummary();
     }
 
+    // ADD THIS LINE HERE:
+    window.goToStep = goToStep;
+
     function updateNavigation() {
         if (backBtn) backBtn.style.visibility = currentStep === 1 ? 'hidden' : 'visible';
 

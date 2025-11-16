@@ -38,3 +38,5 @@
 2025-11-15 04:56:07 - Payment source created - {"source_id":"src_sMeFk8QPFirSBg5uVEsemda9","transaction_id":"CSP-0000001"}
 2025-11-15 04:56:38 - Creating payment source - {"transaction_id":"GUA-0000001","type":"Certificate of Guardianship","amount":130}
 2025-11-15 04:56:39 - Payment source created - {"source_id":"src_cGJEaiGHTjFcvoCnM4PyPLjK","transaction_id":"GUA-0000001"}
+2025-11-16 17:50:08 - Creating payment source - {"transaction_id":"BID-0000003","type":"Barangay ID","amount":20}
+2025-11-16 17:50:09 - Payment source created - {"source_id":"src_rmHoJEpuLnyKVS3DegdDgjDU","transaction_id":"BID-0000003"}

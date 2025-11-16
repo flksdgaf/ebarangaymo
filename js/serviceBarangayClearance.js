@@ -652,7 +652,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function validateStep1() {
         let ok = true;
         document.querySelectorAll(".step.active-step input[required], .step.active-step select[required], .step.active-step textarea[required]")
-          .forEach(field => {
+        .forEach(field => {
             if (field.type === 'file') {
                 if (!field.files || field.files.length === 0) {
                     if (field.hasAttribute('required')) { ok = false; field.classList.add('is-invalid'); }
@@ -667,8 +667,14 @@ document.addEventListener("DOMContentLoaded", function () {
         // purpose validation (if present)
         if (purposeSelect) {
             const selectVal = (purposeSelect.value || '').trim();
-            if (!selectVal) { ok = false; purposeSelect.classList.add('is-invalid'); }
-            else purposeSelect.classList.remove('is-invalid');
+            
+            // Check if value is empty OR is "Select Purpose"
+            if (!selectVal || selectVal === 'Select Purpose') { 
+                ok = false; 
+                purposeSelect.classList.add('is-invalid'); 
+            } else {
+                purposeSelect.classList.remove('is-invalid');
+            }
 
             if (selectVal === 'Others') {
                 const oth = (purposeOther && purposeOther.value || '').trim();
@@ -676,7 +682,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 else purposeOther && purposeOther.classList.remove('is-invalid');
             }
 
-            if (purposeHidden && (!purposeHidden.value || !purposeHidden.value.trim())) {
+            if (purposeHidden && (!purposeHidden.value || !purposeHidden.value.trim() || purposeHidden.value === 'Select Purpose')) {
                 ok = false; purposeSelect.classList.add('is-invalid');
             }
         }

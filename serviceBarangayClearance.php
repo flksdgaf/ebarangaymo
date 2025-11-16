@@ -437,6 +437,7 @@ unset($_SESSION['payment_success'], $_SESSION['payment_error'], $_SESSION['payme
                     $prefill_other_value = $is_prefilled_in_list ? '' : $existingPurpose;
                     ?>
                     <select id="purposeSelect" name="purpose_select" class="form-control custom-input" required>
+                        <option value="">Select Purpose</option>
                         <?php
                         foreach ($purposes as $p) {
                             $sel = ($is_prefilled_in_list && $existingPurpose === $p) ? 'selected' : '';
@@ -1001,6 +1002,12 @@ document.addEventListener('DOMContentLoaded', function(){
 
     function togglePurposeOther(){
         if(!purposeSelect) return;
+        
+        // Clear invalid state when user makes a selection
+        if(purposeSelect.value && purposeSelect.value !== 'Select Purpose') {
+            purposeSelect.classList.remove('is-invalid');
+        }
+        
         if(purposeSelect.value === 'Others'){
             purposeOther.classList.remove('d-none');
             purposeOther.required = true;
@@ -1009,7 +1016,11 @@ document.addEventListener('DOMContentLoaded', function(){
         } else {
             purposeOther.classList.add('d-none');
             purposeOther.required = false;
-            if(purposeSelect.value) purposeHidden.value = purposeSelect.value;
+            if(purposeSelect.value && purposeSelect.value !== 'Select Purpose') {
+                purposeHidden.value = purposeSelect.value;
+            } else {
+                purposeHidden.value = '';
+            }
         }
         updateSummary();
     }

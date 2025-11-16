@@ -562,7 +562,7 @@ unset($_SESSION['payment_success'], $_SESSION['payment_error'], $_SESSION['payme
 
                 <!-- CONTACT PERSON (optional) -->
                 <div class="row mb-3">
-                    <label class="col-md-4 text-start fw-bold">Name of Emergency Contact Person</label>
+                    <label class="col-md-4 text-start fw-bold">Name of Emergency Contact Person <span class="small text-muted">(Optional)</span></label>
                     <div class="col-md-8">
                         <input type="text" id="contactperson" name="contactperson"
                             class="form-control custom-input"
@@ -573,9 +573,7 @@ unset($_SESSION['payment_success'], $_SESSION['payment_error'], $_SESSION['payme
 
                 <!-- CONTACT PERSON ADDRESS (optional) -->
                 <div class="row mb-3">
-                    <label class="col-md-4 text-start fw-bold">
-                        Address of Emergency Contact Person</span>
-                    </label>
+                    <label class="col-md-4 text-start fw-bold">Address of Emergency Contact Person <span class="small text-muted">(Optional)</span></label>
                     <div class="col-md-8">
                         <input
                             type="text"
@@ -594,7 +592,7 @@ unset($_SESSION['payment_success'], $_SESSION['payment_error'], $_SESSION['payme
 
                 <!-- FORMAL PICTURE (always editable; required only on NEW) -->
                 <div class="row mb-3">
-                    <label class="col-md-4 text-start fw-bold">1x1 Formal Picture</label>
+                    <label class="col-md-4 text-start fw-bold">1x1 Formal Picture <span class="small text-muted">(Optional)</span></label>
                     <div class="col-md-8">
                         <div class="d-flex gap-2 align-items-start flex-wrap">
                             <!-- Hidden file input -->

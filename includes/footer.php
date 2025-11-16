@@ -15,24 +15,24 @@
                     <h5 class="mb-1">Daet, Camarines Norte,</h5>
                     <h5 class="mb-1">Philippines</h5>
                     <h5 class="mb-1">Telephone No: 721-00-52</h5>
-                    <h5 class="mb-1">Email: barangaymagangdcn@yahoo.com</h5>
+                    <h5 class="mb-1">Email: barangaymagangdcn@gmail.com</h5>
                 </div>
 
                 <!-- Quick Links -->
                 <div class="col-12 col-md-2 mb-3">
                     <h5>Quick Links</h5>
                     <ul class="list-unstyled">
-                        <li><a href="#" class="text-decoration-none text-light quick-link">Downloads</a></li>
-                        <li><a href="#" class="text-decoration-none text-light quick-link">Archives</a></li>
-                        <li><a href="#" class="text-decoration-none text-light quick-link">FAQs</a></li>
-                        <li><a href="#" class="text-decoration-none text-light quick-link">Site Map</a></li>
+                        <li><a href="#" target="_blank" class="text-decoration-none text-light quick-link">Downloads</a></li>
+                        <li><a href="#" target="_blank" class="text-decoration-none text-light quick-link">Archives</a></li>
+                        <li><a href="#" target="_blank" class="text-decoration-none text-light quick-link">FAQs</a></li>
+                        <li><a href="#" target="_blank" class="text-decoration-none text-light quick-link">Site Map</a></li>
                     </ul>
                 </div>
 
                 <!-- Socials -->
                 <div class="col-12 col-md-2 mb-3 text-center text-md-start footer-socials">
                     <h5>Follow Us</h5>
-                    <a href="https://www.facebook.com/barangay.magang"><i class="bi bi-facebook icon text-light"></i></a>
+                    <a href="https://www.facebook.com/barangay.magang" target="_blank"><i class="bi bi-facebook icon text-light"></i></a>
                 </div>
 
             </div>

@@ -487,7 +487,7 @@ $stmt->close();
 
 <!-- VIEW CASE MODAL (Read-Only) -->
 <div class="modal fade" id="viewCaseModal" data-bs-backdrop="static" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width: 95vw;">
+  <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width: 90vw;">
     <div class="modal-content">
       <div class="modal-header text-white" style="background-color: #13411F;">
         <h5 class="modal-title">View Case: <span id="view_case_no"></span></h5>
@@ -653,7 +653,7 @@ $stmt->close();
 
 <!-- MANAGE/EDIT CASE MODAL -->
 <div class="modal fade" id="manageCaseModal" data-bs-backdrop="static" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width: 95vw;">
+  <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width: 90vw;">
     <div class="modal-content">
       <div class="modal-header text-white" style="background-color: #13411F;">
         <h5 class="modal-title">Manage Case: <span id="modal_case_no"></span></h5>
@@ -953,8 +953,8 @@ $stmt->close();
                           <strong>Selected:</strong> <span id="selected_members_display" class="text-primary">None</span>
                         </div>
                         <div class="d-flex gap-2">
-                          <button type="submit" class="btn btn-primary btn-sm" id="btn-save-schedule-lupon-1st">Save Schedule</button>
-                          <button type="button" class="btn btn-warning btn-sm" id="btn-edit-schedule-lupon-1st" style="display:none;">Edit Schedule</button>
+                          <button type="submit" class="btn btn-primary btn-sm" id="btn-save-schedule-lupon-1st">Save Schedule/Members</button>
+                          <button type="button" class="btn btn-warning btn-sm" id="btn-edit-schedule-lupon-1st" style="display:none;">Edit Schedule/Members</button>
                           <button type="button" class="btn btn-success btn-sm" id="print-lupon-1st" style="display:none;">Print Summon</button>
                         </div>
                       </div>

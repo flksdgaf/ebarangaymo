@@ -24,6 +24,7 @@ $height        = $data['height'] ?? '';
 $weight        = $data['weight'] ?? '';
 $emergencyName = $data['emergency_contact_person'] ?? '';
 $emergencyAddress   = $data['emergency_contact_address'] ?? '';
+$idNumber      = $data['valid_id_number'] ?? '';
 $formalPic     = $data['formal_picture'] ?? '';
 $paymentMethod = $data['payment_method'] ?? '';
 $amount        = $data['amount'] ?? '';
@@ -31,8 +32,27 @@ $createdAt     = $data['created_at'] ?? '';
 $download = isset($_GET['download']) && $_GET['download'] === '1';
 $print = isset($_GET['print']) && $_GET['print'] === '1';
 $includeHeader = isset($_GET['includeHeader']) && $_GET['includeHeader'] === '1';
-$nameParts = explode(' ', $fullName);
-$formattedName = strtoupper($fullName);
+// Format name from "Lastname, Firstname, Middlename" to "Firstname Middlename Lastname"
+function formatDisplayName($fullName) {
+    $parts = explode(',', $fullName);
+    
+    if (count($parts) < 2) {
+        return trim($fullName);
+    }
+    
+    $lastname = trim($parts[0]);
+    $remaining = trim($parts[1]);
+    
+    if (isset($parts[2])) {
+        $firstname = $remaining;
+        $middlename = trim($parts[2]);
+        return "{$firstname} {$middlename} {$lastname}";
+    } else {
+        return "{$remaining} {$lastname}";
+    }
+}
+
+$formattedName = strtoupper(formatDisplayName($fullName));
 
 if ($download || $print) {
     ob_start();
@@ -485,7 +505,7 @@ if ($download || $print) {
                   </div>
                   
                   <div class="back-field">
-                    <div class="back-field-value">&nbsp;</div>
+                    <div class="back-field-value"><?= htmlspecialchars($idNumber) ?></div>
                     <div class="back-field-line"></div>
                     <div class="back-field-label">SSS/GSIS/Postal ID No.</div>
                   </div>
@@ -983,7 +1003,7 @@ if ($download || $print) {
               </div>
               
               <div class="back-field">
-                <div class="back-field-value">&nbsp;</div>
+                <div class="back-field-value"><?= htmlspecialchars($idNumber) ?></div>
                 <div class="back-field-line"></div>
                 <div class="back-field-label">SSS/GSIS/Postal ID No.</div>
               </div>

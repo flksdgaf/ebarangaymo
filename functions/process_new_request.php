@@ -29,7 +29,7 @@ switch($requestType) {
     $fn = trim($_POST['barangay_id_first_name'] ?? '');
     $mn = trim($_POST['barangay_id_middle_name'] ?? '');
     $ln = trim($_POST['barangay_id_last_name'] ?? '');
-    $middlePart = $mn ? " {$mn}" : '';
+    $middlePart = $mn ? ", {$mn}" : '';
     $fullName = "{$ln}, {$fn}{$middlePart}";
 
     $purok = trim($_POST['barangay_id_purok'] ?? '');
@@ -41,6 +41,7 @@ switch($requestType) {
     $weight = isset($_POST['barangay_id_weight']) && $_POST['barangay_id_weight'] !== '' ? (float) $_POST['barangay_id_weight'] : null;
     $contactPerson = trim($_POST['barangay_id_emergency_contact_person'] ?? '');
     $contactAddress = trim($_POST['barangay_id_emergency_contact_address'] ?? '');
+    $idNumber = trim($_POST['barangay_id_id_number'] ?? '');
     $paymentMethod = 'Over-the-Counter';
     $documentStatus = 'For Verification';
     $claimDate = null;
@@ -129,8 +130,8 @@ switch($requestType) {
     try {
         $sql = "INSERT INTO barangay_id_requests 
           (account_id, transaction_id, transaction_type, full_name, purok, birth_date, birth_place, civil_status, religion, 
-          height, weight, emergency_contact_person, emergency_contact_address, formal_picture, claim_date, payment_method, 
-          document_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,NULLIF(?, ''),NULLIF(?, ''),?,?)";
+          height, weight, emergency_contact_person, emergency_contact_address, valid_id_number, formal_picture, claim_date, payment_method, 
+          document_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULLIF(?, ''),NULLIF(?, ''),?,?)";
 
         $ins = $conn->prepare($sql);
         if (!$ins) {
@@ -140,8 +141,8 @@ switch($requestType) {
         $heightVal = $height !== null ? $height : null;
         $weightVal = $weight !== null ? $weight : null;
 
-        $ins->bind_param('issssssssddssssss',$userId,$transactionId,$transactionType,$fullName,$purok,$birthDate,$birthPlace,
-          $civilStatus,$religion,$heightVal,$weightVal,$contactPerson,$contactAddress,$formalPicName,$claimDate,$paymentMethod,
+        $ins->bind_param('issssssssddsssssss',$userId,$transactionId,$transactionType,$fullName,$purok,$birthDate,$birthPlace,
+          $civilStatus,$religion,$heightVal,$weightVal,$contactPerson,$contactAddress,$idNumber,$formalPicName,$claimDate,$paymentMethod,
           $documentStatus
         );
 
@@ -202,9 +203,8 @@ switch($requestType) {
     $mn = trim($_POST['business_permit_middle_name'] ?? '');
     $ln = trim($_POST['business_permit_last_name'] ?? '');
     $sn = trim($_POST['business_permit_suffix'] ?? '');
-    $middlePart = $mn ? " {$mn}" : '';
-    $suffixPart = $sn ? " {$sn}" : '';
-    $fullName = "{$ln}{$suffixPart}, {$fn}{$middlePart}";
+    $middlePart = $mn ? ",{$mn}" : '';
+    $fullName = "{$ln},{$fn}{$middlePart}";
     // $fullName = trim($_POST['full_name'] ?? '');
 
     // 2) Other form inputs

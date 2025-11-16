@@ -18,7 +18,7 @@ if (strlen($search) < 2) {
 
 // Search for existing Barangay ID records
 $sql = "SELECT transaction_id, full_name, purok, birth_date, birth_place, civil_status, religion, 
-        height, weight, emergency_contact_person, emergency_contact_address, formal_picture
+        height, weight, emergency_contact_person, emergency_contact_address, valid_id_number, formal_picture
         FROM barangay_id_requests 
         WHERE full_name LIKE ? AND document_status = 'Released'
         ORDER BY full_name ASC LIMIT 10";

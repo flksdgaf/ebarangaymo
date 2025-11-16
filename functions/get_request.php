@@ -27,7 +27,10 @@ if (!$viewRow) {
 // adjust these keys if your request_type values are different (e.g. "Barangay ID" vs "barangay_id_requests")
 $map = [
     'barangay_id_requests' => 'barangay_id_requests',
+    'barangay_clearance_requests' => 'barangay_clearance_requests',
+    'business_clearance_requests' => 'business_clearance_requests',
     'business_permit_requests' => 'business_permit_requests',
+    'job_seeker_requests' => 'job_seeker_requests',
     'good_moral_requests' => 'good_moral_requests',
     'guardianship_requests' => 'guardianship_requests',
     'indigency_requests' => 'indigency_requests',
@@ -76,12 +79,31 @@ if ($tableToQuery) {
 $merged = array_replace((array)$viewRow, (array)$detailRow);
 
 // 5) Tidy up file paths (optional): if you store only filenames in DB, create URL path
+// Handle both 'formal_picture' (Barangay ID) and 'picture' (Clearances)
+
+// Handle formal_picture (Barangay ID)
 if (!empty($merged['formal_picture'])) {
     $fp = $merged['formal_picture'];
-    // If it already looks like a full URL, leave it
-    if (!preg_match('#^https?://#i', $fp)) {
-        // adjust this prefix to wherever you store pictures on your server
+    if (!preg_match('#^https?://#i', $fp) && !preg_match('#^/#', $fp)) {
         $merged['formal_picture'] = '/barangayIDpictures/' . ltrim($fp, '/');
+    }
+}
+
+// Handle picture field (for clearances)
+if (!empty($merged['picture'])) {
+    $pic = $merged['picture'];
+    if (!preg_match('#^https?://#i', $pic) && !preg_match('#^/#', $pic)) {
+        // Determine folder based on request type
+        $requestType = strtolower(trim($merged['request_type'] ?? ''));
+        
+        if (strpos($requestType, 'barangay clearance') !== false) {
+            $merged['picture'] = '/barangayClearancePictures/' . ltrim($pic, '/');
+        } elseif (strpos($requestType, 'business clearance') !== false) {
+            $merged['picture'] = '/businessClearancePictures/' . ltrim($pic, '/');
+        } else {
+            // Fallback to barangayIDpictures if type unknown
+            $merged['picture'] = '/barangayIDpictures/' . ltrim($pic, '/');
+        }
     }
 }
 

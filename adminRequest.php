@@ -29,6 +29,35 @@ if (! function_exists('status_class')) {
     }
 }
 
+// Name Format Helper - converts "Lastname, Firstname, Middlename" to "Firstname Middlename Lastname"
+if (! function_exists('format_display_name')) {
+    function format_display_name(string $fullName): string {
+        // Split by comma
+        $parts = explode(',', $fullName);
+        
+        if (count($parts) < 2) {
+            // If no comma found, return as-is
+            return trim($fullName);
+        }
+        
+        // Get lastname (first part before comma)
+        $lastname = trim($parts[0]);
+        
+        // Get remaining part (firstname and optional middlename)
+        $remaining = trim($parts[1]);
+        
+        // Check if there's a middlename (another comma)
+        if (isset($parts[2])) {
+            $firstname = $remaining;
+            $middlename = trim($parts[2]);
+            return "{$firstname} {$middlename} {$lastname}";
+        } else {
+            // No middlename, just firstname
+            return "{$remaining} {$lastname}";
+        }
+    }
+}
+
 // New Walk-In requests are considered ones that are in "Processing"
 $walkInCount = (int) $conn->query(
   "SELECT COUNT(*) FROM view_request WHERE request_source = 'Walk-In' AND payment_status = 'Unpaid'"
@@ -604,9 +633,15 @@ $result = $st->get_result();
                     <option>Roman Catholic</option>
                     <option>Islam</option>
                     <option>Iglesia ni Cristo</option>
+                    <option>Evangelical</option>
+                    <option>Baptist</option>
+                    <option>Seventh-day Adventist</option>
                     <option value="Other">Others</option>
                   </select>
-                  <input name="barangay_id_religion_other" id="bid_religion_other" type="text" class="form-control form-control-sm mt-2 d-none" placeholder="Please specify religion">
+                </div>
+                <div class="col-12 col-md-3 d-none" id="bid_religion_other_container">
+                  <label class="form-label fw-bold">Specify Religion <span class="text-danger">*</span></label>
+                  <input name="barangay_id_religion_other" id="bid_religion_other" type="text" class="form-control form-control-sm" placeholder="Please specify religion">
                 </div>
                 <div class="col-12 col-md-2">
                   <label class="form-label fw-bold">Height (ft) <span class="text-danger">*</span></label>
@@ -627,9 +662,15 @@ $result = $st->get_result();
                   <input name="barangay_id_emergency_contact_address" id="bid_emergency_address" type="text" class="form-control form-control-sm">
                 </div>    
 
+                <!-- SSS / GSIS / Postal ID Number -->
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-bold">SSS / GSIS / Postal ID Number <small class="fw-normal">(optional)</small></label>
+                  <input name="barangay_id_id_number" id="bid_id_number" type="text" class="form-control form-control-sm" placeholder="Enter ID Number">
+                </div>
+
                 <!-- Formal Picture -->
                 <div class="col-12 col-md-12">
-                  <label class="form-label fw-bold">Formal Picture <span class="text-danger">*</span></label>
+                  <label class="form-label fw-bold">Formal Picture <small class="fw-normal">(optional)</small></label>
                   <div class="d-flex gap-2 align-items-start flex-wrap">
                     <!-- Hidden file input -->
                     <input type="file" id="photoInput" name="barangay_id_photo" class="form-control form-control-sm d-none" accept="image/*">
@@ -1933,7 +1974,7 @@ $result = $st->get_result();
               ?>
                 <tr data-id="<?= $tid ?>">
                   <td><?= $tid ?></td>
-                  <td><?= htmlspecialchars($row['full_name']) ?></td>
+                  <td><?= htmlspecialchars(format_display_name($row['full_name'])) ?></td>
                   <td><?= htmlspecialchars($row['request_type']) ?></td>
                   <?php if ($processing_type !== 'Document Records'): ?>
                     <td><span class="badge <?= $c ?>"><?= htmlspecialchars($ps ?: '—') ?></span></td>
@@ -2098,21 +2139,25 @@ document.addEventListener('DOMContentLoaded', () => {
         dynamicFields.innerHTML = '<div class="col-12 text-muted">No template found.</div>';
       }
 
-      const sel = dynamicFields.querySelector('#religionSelect');
-      const other = dynamicFields.querySelector('#religionOtherInput');
-      if (sel && other) {
-        sel.addEventListener('change', () => {
-          other.classList.toggle('d-none', sel.value !== 'Other');
-        });
+      // Handle religion "Other" option for Barangay ID
+      if (type === 'Barangay ID') {
+        const religionSelect = document.getElementById('bid_religion');
+        const religionOtherContainer = document.getElementById('bid_religion_other_container');
+        const religionOtherInput = document.getElementById('bid_religion_other');
+        
+        if (religionSelect && religionOtherContainer && religionOtherInput) {
+          religionSelect.addEventListener('change', function() {
+            if (this.value === 'Other') {
+              religionOtherContainer.classList.remove('d-none');
+              religionOtherInput.required = true;
+            } else {
+              religionOtherContainer.classList.add('d-none');
+              religionOtherInput.required = false;
+              religionOtherInput.value = '';
+            }
+          });
+        }
       }
-
-      // const chk = dynamicFields.querySelector('#requirePhotoCheck');
-      // const photo = dynamicFields.querySelector('#photoInput');
-      // if (chk && photo) {
-      //   chk.addEventListener('change', () => {
-      //     photo.disabled = !chk.checked;
-      //   });
-      // }
 
       // Initialize camera functionality based on request type
       if (type === 'Barangay ID') {
@@ -2132,56 +2177,55 @@ document.addEventListener('DOMContentLoaded', () => {
       { title: 'Personal Information', fields: ['full_name','purok','birth_date','birth_place','civil_status','religion','height','weight'] },
       { title: 'Emergency Contact', fields: ['emergency_contact_person','emergency_contact_address'] },
       { title: 'Photo', fields: ['formal_picture'] },
-      { title: 'Request Details', fields: ['transaction_id','request_type','transaction_type','payment_method','created_at'] }, //'amount',
-    ],
-
-    business_permit_requests: [
-      { title: 'Owner Information', fields: ['full_name','age','civil_status','purok','barangay'] },
-      { title: 'Business Information', fields: ['name_of_business','type_of_business','full_address'] },
-      { title: 'Request Details', fields: ['transaction_id','request_type','transaction_type','payment_method','created_at'] }, //'amount',
-    ],
-
-    good_moral_requests: [
-      { title: 'Personal Information', fields: ['full_name','sex','age','civil_status','purok','address'] },
-      { title: 'Request Details', fields: ['purpose','transaction_id','request_type','payment_method','created_at'] }, //'amount',
-    ],
-
-    guardianship_requests: [
-      { title: 'Applicant Information', fields: ['full_name','age','civil_status','purok'] },
-      { title: 'Children Details', fields: ['child_name','child_relationship','purpose'] },
-      { title: 'Request Details', fields: ['transaction_id','request_type','payment_method','created_at'] }, //'amount',
-    ],
-
-    indigency_requests: [
-      { title: 'Personal Information', fields: ['full_name','age','civil_status','purok'] },
-      { title: 'Request Details', fields: ['purpose','transaction_id','request_type','created_at'] },
-    ],
-
-    residency_requests: [
-      { title: 'Personal Information', fields: ['full_name','age','civil_status','purok'] },
-      { title: 'Residency Information', fields: ['residing_years','purpose'] },
-      { title: 'Request Details', fields: ['transaction_id','request_type','payment_method','created_at'] }, //'amount',
-    ],
-
-    solo_parent_requests: [
-      { title: 'Personal Information', fields: ['full_name','age','civil_status','purok','years_solo_parent'] },
-      { title: 'Child Information', fields: ['child_name','child_age','child_sex'] },
-      { title: 'Request Details', fields: ['purpose','transaction_id','request_type','payment_method','created_at'] }, //'amount',
+      { title: 'Request Details', fields: ['transaction_id','request_type','transaction_type','payment_method','amount','payment_status','document_status','created_at'] },
     ],
 
     barangay_clearance_requests: [
-      { title: 'Personal Information', fields: ['full_name','age','civil_status','purok'] },
-      { title: 'Request Details', fields: ['transaction_id','request_type','created_at'] }
+      { title: 'Personal Information', fields: ['full_name','street','purok','barangay','municipality','province'] },
+      { title: 'Birth Details', fields: ['birth_date','age','birth_place','marital_status'] },
+      { title: 'Certificate Details', fields: ['purpose','ctc_number','date_issued','place_issued','remarks'] },
+      { title: 'Photo', fields: ['picture'] },
+      { title: 'Request Details', fields: ['transaction_id','request_type','payment_method','amount','payment_status','document_status','claim_date','claim_time','created_at'] },
     ],
 
     business_clearance_requests: [
-      { title: 'Personal Information', fields: ['full_name','age','civil_status','purok'] },
-      { title: 'Request Details', fields: ['transaction_id','request_type','created_at'] }
+      { title: 'Owner Information', fields: ['full_name','age','marital_status','purok','barangay','municipality','province'] },
+      { title: 'Business Information', fields: ['business_name','business_type','address','ctc_number','date_issued','place_issued'] },
+      { title: 'Photo', fields: ['picture'] },
+      { title: 'Request Details', fields: ['transaction_id','request_type','payment_method','amount','payment_status','document_status','claim_date','claim_time','created_at'] },
     ],
 
     job_seeker_requests: [
-      { title: 'Personal Information', fields: ['full_name','age','civil_status','purok'] },
-      { title: 'Request Details', fields: ['transaction_id','request_type','created_at'] }
+      { title: 'Personal Information', fields: ['full_name','age','sex','civil_status','purok'] },
+      { title: 'Request Details', fields: ['transaction_id','request_type','payment_status','document_status','claim_date','claim_time','created_at'] },
+    ],
+
+    good_moral_requests: [
+      { title: 'Personal Information', fields: ['full_name','sex','age','civil_status','purok','request_for'] },
+      { title: 'Request Details', fields: ['purpose','transaction_id','request_type','payment_method','amount','payment_status','document_status','claim_date','claim_time','created_at'] },
+    ],
+
+    guardianship_requests: [
+      { title: 'Applicant Information', fields: ['full_name','age','civil_status','purok','request_for'] },
+      { title: 'Children Details', fields: ['child_name','child_relationship','purpose'] },
+      { title: 'Request Details', fields: ['transaction_id','request_type','payment_method','amount','payment_status','document_status','claim_date','claim_time','created_at'] },
+    ],
+
+    indigency_requests: [
+      { title: 'Personal Information', fields: ['full_name','age','civil_status','purok','request_for'] },
+      { title: 'Request Details', fields: ['purpose','transaction_id','request_type','payment_status','document_status','claim_date','claim_time','created_at'] },
+    ],
+
+    residency_requests: [
+      { title: 'Personal Information', fields: ['full_name','age','civil_status','purok','request_for'] },
+      { title: 'Residency Information', fields: ['residing_years','purpose'] },
+      { title: 'Request Details', fields: ['transaction_id','request_type','payment_method','amount','payment_status','document_status','claim_date','claim_time','created_at'] },
+    ],
+
+    solo_parent_requests: [
+      { title: 'Personal Information', fields: ['full_name','age','sex','civil_status','purok','years_solo_parent','request_for'] },
+      { title: 'Children Information', fields: ['children_data'] },
+      { title: 'Request Details', fields: ['purpose','transaction_id','request_type','payment_method','amount','payment_status','document_status','claim_date','claim_time','created_at'] },
     ],
   };
 
@@ -2238,11 +2282,46 @@ document.addEventListener('DOMContentLoaded', () => {
     const input = document.createElement('input');
     input.type = 'text';
     input.className = 'form-control form-control-sm';
-    input.readOnly = true; // not editable but not heavily greyed like disabled
-    // formatting rules
-    if (/date|created_at|birth_date/i.test(key)) input.value = formatDate(value);
-    else if (/amount|price|fee/i.test(key)) input.value = formatCurrency(value);
-    else input.value = (value === null || value === undefined || value === '') ? '—' : String(value);
+    input.readOnly = true;
+    
+    // Special handling for different field types
+    if (key === 'children_data') {
+      // Handle JSON children data for solo parent
+      wrapper.className = 'col-12'; // Full width
+      try {
+        const children = JSON.parse(value || '[]');
+        if (Array.isArray(children) && children.length > 0) {
+          const childList = document.createElement('div');
+          childList.className = 'border rounded p-2 bg-light';
+          children.forEach((child, idx) => {
+            const childDiv = document.createElement('div');
+            childDiv.className = 'mb-2';
+            childDiv.innerHTML = `
+              <strong>Child ${idx + 1}:</strong><br>
+              Name: ${child.name || '—'}<br>
+              Sex: ${child.sex || '—'}<br>
+              Birthdate: ${child.birthdate ? formatDate(child.birthdate) : '—'}<br>
+              Age: ${child.age || '—'}
+            `;
+            childList.appendChild(childDiv);
+          });
+          wrapper.appendChild(label);
+          wrapper.appendChild(childList);
+          return wrapper;
+        }
+      } catch (e) {
+        input.value = '—';
+      }
+    } else if (/date|created_at|birth_date|claim_date|date_issued/i.test(key)) {
+      input.value = formatDate(value);
+    } else if (/amount|price|fee/i.test(key)) {
+      input.value = formatCurrency(value);
+    } else if (key === 'picture' || key === 'formal_picture') {
+      // Skip these, they're handled separately
+      return null;
+    } else {
+      input.value = (value === null || value === undefined || value === '') ? '—' : String(value);
+    }
 
     wrapper.appendChild(label);
     wrapper.appendChild(input);
@@ -2282,7 +2361,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const headerRow = document.createElement('div');
       headerRow.className = 'col-12';
       const h = document.createElement('h6');
-      h.className = 'fw-bold fs-6';
+      h.className = 'fw-bold fs-6 mt-2';
       h.style.color = '#13411F';
       h.textContent = group.title;
       headerRow.appendChild(h);
@@ -2290,10 +2369,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // fields container for this group
       group.fields.forEach(key => {
-        // if the key is formal_picture, skip here — handle below
-        if (key === 'formal_picture') return;
+        // if the key is formal_picture or picture, skip here – handle below
+        if (key === 'formal_picture' || key === 'picture') return;
+        
         const el = makeReadonlyField(key, data[key]);
-        container.appendChild(el);
+        if (el) container.appendChild(el);
       });
 
       // small spacer between groups
@@ -2303,22 +2383,23 @@ document.addEventListener('DOMContentLoaded', () => {
       container.appendChild(spacer);
     });
 
-    // show image(s) if any (formal_picture)
-    if (data.formal_picture) {
+    // show image(s) if any (formal_picture or picture)
+    const imageField = data.formal_picture || data.picture;
+    if (imageField) {
       const wrapper = document.createElement('div');
       wrapper.className = 'col-12';
       const cap = document.createElement('div');
-      cap.className = 'mb-1 fw-bold';
-      cap.textContent = 'Formal Picture';
+      cap.className = 'mb-2 fw-bold';
+      cap.textContent = 'Photo';
       const img = document.createElement('img');
-      img.src = data.formal_picture;
-      img.alt = 'Formal Picture';
+      img.src = imageField;
+      img.alt = 'Request Photo';
       img.style.maxWidth = '220px';
       img.style.maxHeight = '220px';
       img.className = 'img-thumbnail';
       // open in new tab when clicked
       img.style.cursor = 'pointer';
-      img.onclick = () => window.open(data.formal_picture, '_blank');
+      img.onclick = () => window.open(imageField, '_blank');
       wrapper.appendChild(cap);
       wrapper.appendChild(img);
       imageContainer.appendChild(wrapper);
@@ -2636,7 +2717,8 @@ document.addEventListener('DOMContentLoaded', () => {
         'bid_first_name', 'bid_middle_name', 'bid_last_name',
         'bid_purok', 'bid_dob', 'bid_birth_place',
         'bid_civil_status', 'bid_religion', 'bid_height',
-        'bid_weight', 'bid_emergency_contact', 'bid_emergency_address'
+        'bid_weight', 'bid_emergency_contact', 'bid_emergency_address',
+        'bid_id_number'
       ];
       
       if (isRenewal) {
@@ -2658,6 +2740,15 @@ document.addEventListener('DOMContentLoaded', () => {
           religionSelect.disabled = true;
           religionSelect.style.backgroundColor = '#e9ecef';
           religionSelect.style.cursor = 'not-allowed';
+        }
+
+        // Also handle the "Other" container
+        const religionOtherContainer = document.getElementById('bid_religion_other_container');
+        const religionOtherInput = document.getElementById('bid_religion_other');
+        if (religionOtherContainer && religionOtherInput) {
+          religionOtherInput.readOnly = true;
+          religionOtherInput.style.backgroundColor = '#e9ecef';
+          religionOtherInput.style.cursor = 'not-allowed';
         }
       } else {
         searchContainer.style.display = 'none';
@@ -2682,6 +2773,15 @@ document.addEventListener('DOMContentLoaded', () => {
           religionSelect.disabled = false;
           religionSelect.style.backgroundColor = '';
           religionSelect.style.cursor = '';
+        }
+        
+        // ALSO RE-ENABLE the "Other" religion input field
+        const religionOtherContainer = document.getElementById('bid_religion_other_container');
+        const religionOtherInput = document.getElementById('bid_religion_other');
+        if (religionOtherInput) {
+          religionOtherInput.readOnly = false;
+          religionOtherInput.style.backgroundColor = '';
+          religionOtherInput.style.cursor = '';
         }
       }
     }
@@ -2976,11 +3076,26 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('bid_dob').value = record.birth_date || '';
     document.getElementById('bid_birth_place').value = record.birth_place || '';
     document.getElementById('bid_civil_status').value = record.civil_status || '';
-    document.getElementById('bid_religion').value = record.religion || '';
+    // Handle religion field (including "Other" option)
+    const religionSelect = document.getElementById('bid_religion');
+    const religionOtherContainer = document.getElementById('bid_religion_other_container');
+    const religionOtherInput = document.getElementById('bid_religion_other');
+
+    const religionValue = record.religion || '';
+    const commonReligions = ['Roman Catholic', 'Islam', 'Iglesia ni Cristo', 'Evangelical', 'Baptist', 'Seventh-day Adventist'];
+
+    if (commonReligions.includes(religionValue)) {
+      religionSelect.value = religionValue;
+    } else if (religionValue) {
+      religionSelect.value = 'Other';
+      religionOtherContainer.classList.remove('d-none');
+      religionOtherInput.value = religionValue;
+    }
     document.getElementById('bid_height').value = record.height || '';
     document.getElementById('bid_weight').value = record.weight || '';
     document.getElementById('bid_emergency_contact').value = record.emergency_contact_person || '';
     document.getElementById('bid_emergency_address').value = record.emergency_contact_address || '';
+    document.getElementById('bid_id_number').value = record.id_number || '';
     
     // Store transaction ID and existing photo
     document.getElementById('renewalTransactionId').value = record.transaction_id;
@@ -3002,11 +3117,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const fields = ['bid_first_name', 'bid_middle_name', 'bid_last_name',
                     'bid_purok', 'bid_dob', 'bid_birth_place', 'bid_civil_status', 
                     'bid_religion', 'bid_height', 'bid_weight', 'bid_emergency_contact', 
-                    'bid_emergency_address'];
+                    'bid_emergency_address', 'bid_id_number', 'bid_religion_other'];
     fields.forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
+    
+    // Hide the "Other" religion container
+    const religionOtherContainer = document.getElementById('bid_religion_other_container');
+    if (religionOtherContainer) {
+      religionOtherContainer.classList.add('d-none');
+    }
+    
     document.getElementById('renewalTransactionId').value = '';
     document.getElementById('bid_existing_photo').value = '';
     document.getElementById('currentPhotoName').classList.add('d-none');

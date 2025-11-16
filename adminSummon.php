@@ -174,6 +174,13 @@ $stmt->close();
     </div>
   <?php endif; ?>
 
+  <?php if (isset($_GET['cancelled_complaint_id'])): ?>
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+      Case <strong><?= htmlspecialchars($_GET['cancelled_complaint_id']) ?></strong> has been cancelled.
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <?php endif; ?>
+
   <!-- DYNAMIC JAVASCRIPT ALERTS -->
   <div id="js-alert-container"></div>
 
@@ -339,12 +346,20 @@ $stmt->close();
                     <button class="btn btn-sm btn-info view-btn" title="View Details">
                       <span class="material-symbols-outlined" style="font-size: 14px;">visibility</span>
                     </button>
-                    <button class="btn btn-sm btn-success edit-btn" title="Edit Case">
-                      <span class="material-symbols-outlined" style="font-size: 14px;">edit</span>
-                    </button>
-                    <button class="btn btn-sm btn-danger delete-btn" title="Delete">
-                      <span class="material-symbols-outlined" style="font-size: 14px;">delete</span>
-                    </button>
+                    <?php 
+                    // Hide edit and cancel buttons if case is closed
+                    $finalStatuses = ['Cancelled', 'Mediated', 'Conciliated', 'Dismissed', 'CFA', 'Withdrawn', 'Arbitrated'];
+                    $isClosed = in_array($row['action_taken'], $finalStatuses) || $row['complaint_stage'] === 'Closed';
+                    
+                    if (!$isClosed): 
+                    ?>
+                      <button class="btn btn-sm btn-success edit-btn" title="Manage Case">
+                        <span class="material-symbols-outlined" style="font-size: 14px;">edit</span>
+                      </button>
+                      <button class="btn btn-sm btn-warning cancel-btn" title="Cancel Case">
+                        <span class="material-symbols-outlined" style="font-size: 14px;">cancel</span>
+                      </button>
+                    <?php endif; ?>
                   </td>
                 <?php endif; ?>
               </tr>
@@ -746,10 +761,7 @@ $stmt->close();
                     <div class="col-md-6 d-flex align-items-end justify-content-end gap-2">
                       <button type="submit" class="btn btn-primary btn-sm" id="btn-save-schedule-pb-1st">Save Schedule</button>
                       <button type="button" class="btn btn-warning btn-sm" id="btn-edit-schedule-pb-1st" style="display:none;">Edit Schedule</button>
-                      <button type="button" class="btn btn-success btn-sm" id="print-pb-1st" style="display:none;">
-                        <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">print</span>
-                        Print Summon
-                      </button>
+                      <button type="button" class="btn btn-success btn-sm" id="print-pb-1st" style="display:none;">Print Summon</button>
                     </div>
                   </div>
                 </form>
@@ -778,11 +790,9 @@ $stmt->close();
                 <!-- Action buttons shown only after meeting is scheduled -->
                 <div class="d-flex justify-content-end gap-2 mt-3" id="pb-1st-actions" style="display:none;">
                   <button type="button" class="btn btn-outline-primary btn-sm" id="proceed-to-pb-2nd" disabled>
-                    <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">arrow_forward</span>
                     Proceed to 2nd Meeting
                   </button>
                   <button type="button" class="btn btn-outline-warning btn-sm" id="skip-to-lupon-from-1st" disabled>
-                    <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">fast_forward</span>
                     Skip to Lupon
                   </button>
                 </div>
@@ -806,10 +816,7 @@ $stmt->close();
                     <div class="col-md-6 d-flex align-items-end justify-content-end gap-2">
                       <button type="submit" class="btn btn-primary btn-sm" id="btn-save-schedule-pb-2nd">Save Schedule</button>
                       <button type="button" class="btn btn-warning btn-sm" id="btn-edit-schedule-pb-2nd" style="display:none;">Edit Schedule</button>
-                      <button type="button" class="btn btn-success btn-sm" id="print-pb-2nd" style="display:none;">
-                        <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">print</span>
-                        Print Summon
-                      </button>
+                      <button type="button" class="btn btn-success btn-sm" id="print-pb-2nd" style="display:none;">Print Summon</button>
                     </div>
                   </div>
                 </form>
@@ -838,11 +845,9 @@ $stmt->close();
                 <!-- Action buttons -->
                 <div class="d-flex justify-content-end gap-2 mt-3" id="pb-2nd-actions" style="display:none;">
                   <button type="button" class="btn btn-outline-primary btn-sm" id="proceed-to-pb-3rd" disabled>
-                    <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">arrow_forward</span>
                     Proceed to 3rd Meeting
                   </button>
                   <button type="button" class="btn btn-outline-warning btn-sm" id="skip-to-lupon-from-2nd" disabled>
-                    <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">fast_forward</span>
                     Skip to Lupon
                   </button>
                 </div>
@@ -866,10 +871,7 @@ $stmt->close();
                     <div class="col-md-6 d-flex align-items-end justify-content-end gap-2">
                       <button type="submit" class="btn btn-primary btn-sm" id="btn-save-schedule-pb-3rd">Save Schedule</button>
                       <button type="button" class="btn btn-warning btn-sm" id="btn-edit-schedule-pb-3rd" style="display:none;">Edit Schedule</button>
-                      <button type="button" class="btn btn-success btn-sm" id="print-pb-3rd" style="display:none;">
-                        <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">print</span>
-                        Print Summon
-                      </button>
+                      <button type="button" class="btn btn-success btn-sm" id="print-pb-3rd" style="display:none;">Print Summon</button>
                     </div>
                   </div>
                 </form>
@@ -898,7 +900,6 @@ $stmt->close();
                 <!-- Action buttons -->
                 <div class="d-flex justify-content-end mt-3" id="pb-3rd-actions" style="display:none;">
                   <button type="button" class="btn btn-success btn-sm" id="proceed-to-lupon" disabled>
-                    <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">check_circle</span>
                     Proceed to Lupon
                   </button>
                 </div>
@@ -935,14 +936,6 @@ $stmt->close();
                       <label class="form-label">Schedule Time *</label>
                       <input type="time" name="schedule_time" id="lupon_1st_time" class="form-control form-control-sm" required>
                     </div>
-                    <div class="col-md-6 d-flex align-items-end justify-content-end gap-2">
-                      <button type="submit" class="btn btn-primary btn-sm" id="btn-save-schedule-lupon-1st">Save Schedule</button>
-                      <button type="button" class="btn btn-warning btn-sm" id="btn-edit-schedule-lupon-1st" style="display:none;">Edit Schedule</button>
-                      <button type="button" class="btn btn-success btn-sm" id="print-lupon-1st" style="display:none;">
-                        <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">print</span>
-                        Print Summon
-                      </button>
-                    </div>
                     
                     <!-- Pangkat Members Selection -->
                     <div class="col-12 mt-3">
@@ -955,8 +948,15 @@ $stmt->close();
                         <option value="" disabled>Loading Lupon members...</option>
                       </select>
                       <small class="text-muted">Hold Ctrl/Cmd to select multiple members. Minimum of 3 members required.</small>
-                      <div class="mt-2">
-                        <strong>Selected:</strong> <span id="selected_members_display" class="text-primary">None</span>
+                      <div class="mt-2 d-flex justify-content-between align-items-center">
+                        <div>
+                          <strong>Selected:</strong> <span id="selected_members_display" class="text-primary">None</span>
+                        </div>
+                        <div class="d-flex gap-2">
+                          <button type="submit" class="btn btn-primary btn-sm" id="btn-save-schedule-lupon-1st">Save Schedule</button>
+                          <button type="button" class="btn btn-warning btn-sm" id="btn-edit-schedule-lupon-1st" style="display:none;">Edit Schedule</button>
+                          <button type="button" class="btn btn-success btn-sm" id="print-lupon-1st" style="display:none;">Print Summon</button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -986,7 +986,6 @@ $stmt->close();
                 <!-- Action buttons shown only after hearing is scheduled -->
                 <div class="d-flex justify-content-end gap-2 mt-3" id="lupon-1st-actions" style="display:none;">
                   <button type="button" class="btn btn-outline-primary btn-sm" id="proceed-to-ikalawang" disabled>
-                    <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">arrow_forward</span>
                     Proceed to Ikalawang Patawag
                   </button>
                 </div>
@@ -1010,10 +1009,7 @@ $stmt->close();
                     <div class="col-md-6 d-flex align-items-end justify-content-end gap-2">
                       <button type="submit" class="btn btn-primary btn-sm" id="btn-save-schedule-lupon-2nd">Save Schedule</button>
                       <button type="button" class="btn btn-warning btn-sm" id="btn-edit-schedule-lupon-2nd" style="display:none;">Edit Schedule</button>
-                      <button type="button" class="btn btn-success btn-sm" id="print-lupon-2nd" style="display:none;">
-                        <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">print</span>
-                        Print Summon
-                      </button>
+                      <button type="button" class="btn btn-success btn-sm" id="print-lupon-2nd" style="display:none;">Print Summon</button>
                     </div>
                   </div>
                 </form>
@@ -1042,7 +1038,6 @@ $stmt->close();
                 <!-- Action buttons shown only after hearing is scheduled -->
                 <div class="d-flex justify-content-end gap-2 mt-3" id="lupon-2nd-actions" style="display:none;">
                   <button type="button" class="btn btn-outline-primary btn-sm" id="proceed-to-ikatlong" disabled>
-                    <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">arrow_forward</span>
                     Proceed to Ikatlong Patawag
                   </button>
                 </div>
@@ -1066,10 +1061,7 @@ $stmt->close();
                     <div class="col-md-6 d-flex align-items-end justify-content-end gap-2">
                       <button type="submit" class="btn btn-primary btn-sm" id="btn-save-schedule-lupon-3rd">Save Schedule</button>
                       <button type="button" class="btn btn-warning btn-sm" id="btn-edit-schedule-lupon-3rd" style="display:none;">Edit Schedule</button>
-                      <button type="button" class="btn btn-success btn-sm" id="print-lupon-3rd" style="display:none;">
-                        <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">print</span>
-                        Print Summon
-                      </button>
+                      <button type="button" class="btn btn-success btn-sm" id="print-lupon-3rd" style="display:none;">Print Summon</button>
                     </div>
                   </div>
                 </form>
@@ -1100,6 +1092,52 @@ $stmt->close();
 
           <!-- TAB 4: CASE ACTIONS -->
           <div class="tab-pane fade" id="tab-actions">
+            <!-- Respondent Hold Status Section -->
+            <div class="card mb-4" id="hold-status-section">
+              <div class="card-header bg-light">
+                <h6 class="mb-0 fw-bold text-dark">Respondent Hold Status</h6>
+              </div>
+              <div class="card-body">
+                <div id="hold-status-loading" class="text-center py-3">
+                  <div class="spinner-border spinner-border-sm text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                  <span class="ms-2">Checking respondent status...</span>
+                </div>
+                
+                <div id="hold-status-content" style="display:none;">
+                  <div class="row g-3">
+                    <div class="col-md-4">
+                      <label class="form-label text-muted small">Respondent Name</label>
+                      <div class="fw-bold" id="hold-respondent-name"></div>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label text-muted small">Found in Purok</label>
+                      <div class="fw-bold" id="hold-purok-location"></div>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label text-muted small">Current Status</label>
+                      <div id="hold-current-status"></div>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                      <button type="button" class="btn btn-warning btn-sm w-100" id="btn-hold-respondent" style="display:none;">
+                        Hold
+                      </button>
+                      <button type="button" class="btn btn-success btn-sm w-100" id="btn-release-hold" style="display:none;">
+                        Clear Hold Status
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div id="hold-status-not-found" style="display:none;">
+                  <div class="alert alert-info mb-0">
+                    <strong>Note:</strong> Respondent <span class="fw-bold" id="hold-respondent-name-nf"></span> is not registered in any Purok RBI table.
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <form method="POST" action="functions/process_case_action.php">
               <input type="hidden" name="transaction_id" class="action-tid">
               <input type="hidden" name="current_stage" id="current_stage_hidden">
@@ -1128,22 +1166,25 @@ $stmt->close();
   </div>
 </div>
 
-<!-- DELETE CONFIRMATION MODAL -->
-<div class="modal fade" id="deleteModal" tabindex="-1">
+<!-- CANCEL CASE CONFIRMATION MODAL -->
+<div class="modal fade" id="cancelModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header bg-danger text-white">
-        <h5 class="modal-title">Confirm Deletion</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      <div class="modal-header bg-warning">
+        <h5 class="modal-title">
+          Confirm Cancellation
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <form method="POST" action="functions/delete_complaint.php">
+      <form method="POST" action="functions/cancel_complaint.php">
         <div class="modal-body">
-          <p>Are you sure you want to permanently delete case <strong id="delete_case_no"></strong>?</p>
-          <input type="hidden" name="transaction_id" id="delete_transaction_id">
+          <p class="mb-2"><strong>Are you sure you want to cancel case <span id="cancel_case_no"></span>?</strong></p>
+          <p class="text-muted small mb-0">This will set the case status to "Cancelled" and close the case.</p>
+          <input type="hidden" name="transaction_id" id="cancel_transaction_id">
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-danger">Delete</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Go Back</button>
+          <button type="submit" class="btn btn-warning">Yes, Cancel Case</button>
         </div>
       </form>
     </div>
@@ -1156,7 +1197,6 @@ $stmt->close();
     <div class="modal-content">
       <div class="modal-header bg-warning">
         <h5 class="modal-title">
-          <span class="material-symbols-outlined" style="font-size:1.5rem; vertical-align:middle;">fast_forward</span>
           Skip to Lupon Tagapamayapa
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -1168,8 +1208,63 @@ $stmt->close();
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
         <button type="button" class="btn btn-warning" id="confirmSkipToLupon">
-          <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">fast_forward</span>
           Yes, Skip to Lupon
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HOLD RESPONDENT CONFIRMATION MODAL -->
+<div class="modal fade" id="holdRespondentModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-warning">
+        <h5 class="modal-title">
+          Confirm Hold Respondent
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-2"><strong>Are you sure you want to place this respondent on hold?</strong></p>
+        <div class="alert alert-warning mb-2">
+          <small><strong>Respondent:</strong> <span id="hold-confirm-name"></span></small><br>
+          <small><strong>Location:</strong> <span id="hold-confirm-purok"></span></small>
+        </div>
+        <p class="text-muted small mb-0">This will update the respondent's status in the RBI system to "On Hold".</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-warning" id="confirmHoldRespondent">
+          Yes, Place On Hold
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REMOVE HOLD CONFIRMATION MODAL -->
+<div class="modal fade" id="removeHoldModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title">
+          Clear Hold Status
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-2"><strong>Are you sure you want to clear the hold status?</strong></p>
+        <div class="alert alert-info mb-2">
+          <small><strong>Respondent:</strong> <span id="remove-hold-confirm-name"></span></small><br>
+          <small><strong>Location:</strong> <span id="remove-hold-confirm-purok"></span></small>
+        </div>
+        <p class="text-muted small mb-0">This will clear the "On Hold" status from the respondent's RBI record.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success" id="confirmRemoveHold">
+          Yes, Clear Hold Status
         </button>
       </div>
     </div>
@@ -1308,6 +1403,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const dateInput = document.getElementById(dateId);
     const timeInput = document.getElementById(timeId);
     
+    // For Lupon 1st meeting, also handle pangkat dropdown
+    const pangkatDropdown = meeting === 'lupon-1st' ? document.getElementById('pangkat_members_dropdown') : null;
+    
     if (data[schedField]) {
       // Schedule exists - show edit button, hide save button, disable inputs
       saveBtn.style.display = 'none';
@@ -1315,12 +1413,22 @@ document.addEventListener('DOMContentLoaded', () => {
       dateInput.disabled = true;
       timeInput.disabled = true;
       
+      // Disable pangkat dropdown if this is Lupon 1st meeting
+      if (pangkatDropdown) {
+        pangkatDropdown.disabled = true;
+      }
+      
       editBtn.onclick = function() {
         // Enable editing
         dateInput.disabled = false;
         timeInput.disabled = false;
         saveBtn.style.display = 'inline-block';
         editBtn.style.display = 'none';
+        
+        // Enable pangkat dropdown if this is Lupon 1st meeting
+        if (pangkatDropdown) {
+          pangkatDropdown.disabled = false;
+        }
       };
     } else {
       // No schedule - show save button, hide edit button, enable inputs
@@ -1328,6 +1436,11 @@ document.addEventListener('DOMContentLoaded', () => {
       editBtn.style.display = 'none';
       dateInput.disabled = false;
       timeInput.disabled = false;
+      
+      // Enable pangkat dropdown if this is Lupon 1st meeting
+      if (pangkatDropdown) {
+        pangkatDropdown.disabled = false;
+      }
     }
   }
 
@@ -1559,6 +1672,102 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Populate dynamic action taken options
       populateActionTaken(data.complaint_stage);
+      
+      // Function to get next available weekday (excluding weekends)
+      function getNextWeekday(dateString) {
+        const date = new Date(dateString);
+        date.setDate(date.getDate() + 1); // Start from next day
+        
+        // Skip to Monday if it's Saturday or Sunday
+        while (date.getDay() === 0 || date.getDay() === 6) {
+          date.setDate(date.getDate() + 1);
+        }
+        
+        return date.toISOString().split('T')[0];
+      }
+      
+      // Function to disable weekends on date input
+      function setupWeekdayOnly(inputId, minDate) {
+        const input = document.getElementById(inputId);
+        input.setAttribute('min', minDate);
+        
+        // Add change listener to prevent weekend selection
+        input.addEventListener('input', function(e) {
+          const selectedDate = new Date(e.target.value);
+          const dayOfWeek = selectedDate.getDay();
+          
+          // If weekend selected, move to next Monday
+          if (dayOfWeek === 0 || dayOfWeek === 6) {
+            let nextDate = new Date(selectedDate);
+            while (nextDate.getDay() === 0 || nextDate.getDay() === 6) {
+              nextDate.setDate(nextDate.getDate() + 1);
+            }
+            e.target.value = nextDate.toISOString().split('T')[0];
+          }
+        });
+      }
+      
+      // Set minimum dates based on previous meeting schedules
+      const today = new Date().toISOString().split('T')[0];
+      
+      // PB 1st Meeting - minimum is today (if no schedule) or keep existing
+      if (!data.schedule_pb_first) {
+        setupWeekdayOnly('pb_1st_date', today);
+      } else {
+        setupWeekdayOnly('pb_1st_date', data.schedule_pb_first.split(' ')[0]);
+      }
+      
+      // PB 2nd Meeting - minimum is day after 1st meeting
+      if (data.schedule_pb_first) {
+        const minDate2nd = getNextWeekday(data.schedule_pb_first.split(' ')[0]);
+        setupWeekdayOnly('pb_2nd_date', minDate2nd);
+      } else {
+        setupWeekdayOnly('pb_2nd_date', today);
+      }
+      
+      // PB 3rd Meeting - minimum is day after 2nd meeting (or 1st if 2nd not scheduled)
+      if (data.schedule_pb_second) {
+        const minDate3rd = getNextWeekday(data.schedule_pb_second.split(' ')[0]);
+        setupWeekdayOnly('pb_3rd_date', minDate3rd);
+      } else if (data.schedule_pb_first) {
+        const minDate3rd = getNextWeekday(data.schedule_pb_first.split(' ')[0]);
+        setupWeekdayOnly('pb_3rd_date', minDate3rd);
+      } else {
+        setupWeekdayOnly('pb_3rd_date', today);
+      }
+      
+      // Lupon 1st - minimum is day after PB 3rd (or 2nd, or 1st, or today)
+      if (data.schedule_pb_third) {
+        const minDateLupon1st = getNextWeekday(data.schedule_pb_third.split(' ')[0]);
+        setupWeekdayOnly('lupon_1st_date', minDateLupon1st);
+      } else if (data.schedule_pb_second) {
+        const minDateLupon1st = getNextWeekday(data.schedule_pb_second.split(' ')[0]);
+        setupWeekdayOnly('lupon_1st_date', minDateLupon1st);
+      } else if (data.schedule_pb_first) {
+        const minDateLupon1st = getNextWeekday(data.schedule_pb_first.split(' ')[0]);
+        setupWeekdayOnly('lupon_1st_date', minDateLupon1st);
+      } else {
+        setupWeekdayOnly('lupon_1st_date', today);
+      }
+      
+      // Lupon 2nd - minimum is day after Lupon 1st
+      if (data.schedule_unang_patawag) {
+        const minDateLupon2nd = getNextWeekday(data.schedule_unang_patawag.split(' ')[0]);
+        setupWeekdayOnly('lupon_2nd_date', minDateLupon2nd);
+      } else {
+        setupWeekdayOnly('lupon_2nd_date', today);
+      }
+      
+      // Lupon 3rd - minimum is day after Lupon 2nd
+      if (data.schedule_ikalawang_patawag) {
+        const minDateLupon3rd = getNextWeekday(data.schedule_ikalawang_patawag.split(' ')[0]);
+        setupWeekdayOnly('lupon_3rd_date', minDateLupon3rd);
+      } else if (data.schedule_unang_patawag) {
+        const minDateLupon3rd = getNextWeekday(data.schedule_unang_patawag.split(' ')[0]);
+        setupWeekdayOnly('lupon_3rd_date', minDateLupon3rd);
+      } else {
+        setupWeekdayOnly('lupon_3rd_date', today);
+      }
       
       // PB 1st Meeting
       if (data.schedule_pb_first) {
@@ -1861,6 +2070,9 @@ document.addEventListener('DOMContentLoaded', () => {
       // Show modal
       const manageCaseModal = new bootstrap.Modal(document.getElementById('manageCaseModal'));
       manageCaseModal.show();
+
+      // Check respondent hold status when Case Actions tab is clicked
+      checkRespondentHoldStatus(data.transaction_id);
       
       // After modal is shown, activate the target tab
       setTimeout(() => {
@@ -1884,17 +2096,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Delete button
-  document.querySelectorAll('.delete-btn').forEach(btn => {
+  // Cancel button
+  document.querySelectorAll('.cancel-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const row = btn.closest('tr');
       const tid = row.dataset.id;
       const caseNo = row.dataset.caseNo || tid;
       
-      document.getElementById('delete_transaction_id').value = tid;
-      document.getElementById('delete_case_no').textContent = caseNo;
+      document.getElementById('cancel_transaction_id').value = tid;
+      document.getElementById('cancel_case_no').textContent = caseNo;
       
-      new bootstrap.Modal(document.getElementById('deleteModal')).show();
+      new bootstrap.Modal(document.getElementById('cancelModal')).show();
     });
   });
 
@@ -2183,10 +2395,16 @@ document.addEventListener('DOMContentLoaded', () => {
           jsonData.pleading_statement = formData.get('pleading_statement');
           row.setAttribute('data-json', JSON.stringify(jsonData));
           
-          // Update the complaint title in the table cell
+          // Update the complaint title in the table cell (4th column)
           const titleCell = row.querySelector('td:nth-child(4)');
           if (titleCell) {
             titleCell.textContent = formData.get('complaint_title');
+          }
+          
+          // Update the nature of case in the table cell (5th column)
+          const natureCell = row.querySelector('td:nth-child(5)');
+          if (natureCell) {
+            natureCell.textContent = formData.get('nature_of_case');
           }
         }
       } else {
@@ -2318,6 +2536,163 @@ document.addEventListener('DOMContentLoaded', () => {
           btn.innerHTML = originalText;
         }
       });
+    }
+  });
+
+  // Function to check and display respondent hold status
+  async function checkRespondentHoldStatus(transactionId) {
+    const loadingDiv = document.getElementById('hold-status-loading');
+    const contentDiv = document.getElementById('hold-status-content');
+    const notFoundDiv = document.getElementById('hold-status-not-found');
+    
+    loadingDiv.style.display = 'block';
+    contentDiv.style.display = 'none';
+    notFoundDiv.style.display = 'none';
+    
+    try {
+      const formData = new FormData();
+      formData.append('transaction_id', transactionId);
+      formData.append('action', 'check');
+      
+      const response = await fetch('functions/check_respondent_status.php', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const result = await response.json();
+      
+      loadingDiv.style.display = 'none';
+      
+      if (result.found) {
+        contentDiv.style.display = 'block';
+        document.getElementById('hold-respondent-name').textContent = result.respondent_name;
+        document.getElementById('hold-purok-location').textContent = result.purok.replace('_rbi', '').toUpperCase();
+        
+        const statusDiv = document.getElementById('hold-current-status');
+        const holdBtn = document.getElementById('btn-hold-respondent');
+        const releaseBtn = document.getElementById('btn-release-hold');
+        
+        if (result.current_status === 'On Hold') {
+          statusDiv.innerHTML = '<span class="badge bg-warning">On Hold</span>';
+          holdBtn.style.display = 'none';
+          releaseBtn.style.display = 'block';
+        } else {
+          statusDiv.innerHTML = '<span class="badge bg-secondary">' + (result.current_status || 'None') + '</span>';
+          holdBtn.style.display = 'block';
+          releaseBtn.style.display = 'none';
+        }
+      } else {
+        notFoundDiv.style.display = 'block';
+        document.getElementById('hold-respondent-name-nf').textContent = result.respondent_name;
+      }
+    } catch (error) {
+      loadingDiv.style.display = 'none';
+      console.error('Error checking respondent status:', error);
+      showAlert('Error checking respondent status', 'danger');
+    }
+  }
+
+  // Hold Respondent Button - Show confirmation modal
+  document.getElementById('btn-hold-respondent').addEventListener('click', function() {
+    const respondentName = document.getElementById('hold-respondent-name').textContent;
+    const purokLocation = document.getElementById('hold-purok-location').textContent;
+    
+    document.getElementById('hold-confirm-name').textContent = respondentName;
+    document.getElementById('hold-confirm-purok').textContent = purokLocation;
+    
+    const holdModal = new bootstrap.Modal(document.getElementById('holdRespondentModal'));
+    holdModal.show();
+  });
+
+  // Confirm Hold Respondent - Actual processing
+  document.getElementById('confirmHoldRespondent').addEventListener('click', async function() {
+    const tid = document.getElementById('current_transaction_id').value;
+    
+    const btn = this;
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
+    
+    try {
+      const formData = new FormData();
+      formData.append('transaction_id', tid);
+      formData.append('action', 'hold');
+      
+      const response = await fetch('functions/process_hold_respondent.php', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // Close the confirmation modal
+        const holdModal = bootstrap.Modal.getInstance(document.getElementById('holdRespondentModal'));
+        holdModal.hide();
+        
+        showAlert(result.message, 'success');
+        // Refresh the hold status display
+        await checkRespondentHoldStatus(tid);
+      } else {
+        showAlert('Error: ' + result.message, 'danger');
+      }
+    } catch (error) {
+      showAlert('Error: ' + error.message, 'danger');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    }
+  });
+
+  // Remove Hold Button - Show confirmation modal
+  document.getElementById('btn-release-hold').addEventListener('click', function() {
+    const respondentName = document.getElementById('hold-respondent-name').textContent;
+    const purokLocation = document.getElementById('hold-purok-location').textContent;
+    
+    document.getElementById('remove-hold-confirm-name').textContent = respondentName;
+    document.getElementById('remove-hold-confirm-purok').textContent = purokLocation;
+    
+    const removeHoldModal = new bootstrap.Modal(document.getElementById('removeHoldModal'));
+    removeHoldModal.show();
+  });
+
+  // Confirm Remove Hold - Actual processing
+  document.getElementById('confirmRemoveHold').addEventListener('click', async function() {
+    const tid = document.getElementById('current_transaction_id').value;
+    
+    const btn = this;
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
+    
+    try {
+      const formData = new FormData();
+      formData.append('transaction_id', tid);
+      formData.append('action', 'release');
+      
+      const response = await fetch('functions/process_hold_respondent.php', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // Close the confirmation modal
+        const removeHoldModal = bootstrap.Modal.getInstance(document.getElementById('removeHoldModal'));
+        removeHoldModal.hide();
+        
+        showAlert(result.message, 'success');
+        // Refresh the hold status display
+        await checkRespondentHoldStatus(tid);
+      } else {
+        showAlert('Error: ' + result.message, 'danger');
+      }
+    } catch (error) {
+      showAlert('Error: ' + error.message, 'danger');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
     }
   });
 });

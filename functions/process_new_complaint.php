@@ -69,7 +69,7 @@ $sql = "INSERT INTO barangay_complaints
     (account_id, transaction_id, case_no, complainant_name, complainant_address, 
      respondent_name, respondent_address, complaint_title, nature_of_case, 
      complaint_affidavit, pleading_statement, date_filed, action_taken, complaint_stage) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), 'Incoming', 'Filing')";
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), 'Pending', 'Filing')";
 
 $ins = $conn->prepare($sql);
 $ins->bind_param(

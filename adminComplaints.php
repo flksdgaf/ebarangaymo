@@ -8,25 +8,9 @@ $role = $_SESSION['loggedInUserRole'] ?? '';
 <title>eBarangay Mo | Complaints</title>
 
 <div class="container-fluid p-3">
-  <?php if ($role === 'Brgy Treasurer'): ?>
-  <!-- Show only the Complaint Transactions tab for Treasurer -->
-  <ul class="nav nav-tabs" id="complaintTabs" role="tablist">
-    <li class="nav-item" role="presentation">
-      <button class="nav-link active" id="transactions-tab" data-bs-toggle="tab" data-bs-target="#transactions-pane" type="button" role="tab">
-        Complaint Transactions
-      </button>
-    </li>
-  </ul>
-
-  <div class="tab-content mt-3">
-    <div class="tab-pane fade show active" id="transactions-pane" role="tabpanel">
-      <?php include 'adminComplaintTransactions.php'; ?>
-    </div>
-  </div>
-
-<?php else: ?>
   <!-- Show all other tabs for non-Treasurers -->
   <ul class="nav nav-tabs" id="complaintTabs" role="tablist">
+    <?php if ($role !== 'Brgy Treasurer'): ?>
     <li class="nav-item" role="presentation">
       <button class="nav-link active" id="blotter-tab" data-bs-toggle="tab" data-bs-target="#blotter-pane" type="button" role="tab">
         Blotter
@@ -37,30 +21,43 @@ $role = $_SESSION['loggedInUserRole'] ?? '';
         Complaint
       </button>
     </li>
-    <!-- <li class="nav-item" role="presentation">
-      <button class="nav-link" id="katarungan-tab" data-bs-toggle="tab" data-bs-target="#katarungan-pane" type="button" role="tab">
-        Katarungang Pambarangay
+    <?php else: ?>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="transactions-tab" data-bs-toggle="tab" data-bs-target="#transactions-pane" type="button" role="tab">
+        Complaint Transactions
       </button>
-    </li> -->
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="complaint-receipts-tab" data-bs-toggle="tab" data-bs-target="#complaint-receipts-pane" type="button" role="tab">
+        Official Receipt Logs
+      </button>
+    </li>
+    <?php endif; ?>
   </ul>
 
   <div class="tab-content mt-3">
+    <?php if ($role !== 'Brgy Treasurer'): ?>
     <div class="tab-pane fade show active" id="blotter-pane" role="tabpanel">
       <?php include 'adminBlotter.php'; ?>
     </div>
     <div class="tab-pane fade" id="summon-pane" role="tabpanel">
       <?php include 'adminSummon.php'; ?>
     </div>
-    <div class="tab-pane fade" id="katarungan-pane" role="tabpanel">
-      <?php include 'adminKatarungangPambarangay.php'; ?>
+    <?php else: ?>
+    <div class="tab-pane fade show active" id="transactions-pane" role="tabpanel">
+      <?php include 'adminComplaintTransactions.php'; ?>
     </div>
+    <div class="tab-pane fade" id="complaint-receipts-pane" role="tabpanel">
+      <?php include 'adminComplaintReceipts.php'; ?>
+    </div>
+    <?php endif; ?>
   </div>
-<?php endif; ?>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', ()=>{
   const params = new URLSearchParams(window.location.search);
+  const isTreasurer = <?= json_encode($role === 'Brgy Treasurer') ?>;
   
   // Check if we're navigating FROM another page (not a refresh)
   const isFromOtherPage = !sessionStorage.getItem('complaintTabVisited');
@@ -74,22 +71,34 @@ document.addEventListener('DOMContentLoaded', ()=>{
   // Decide which pane to show
   let pane = null;
   
-  if (params.has('summon_search') || params.has('summon_page') || params.has('new_complaint_id') || params.has('updated_complaint_id') || params.has('deleted_complaint_id')) {
-    pane = 'summon';
-  } else if (params.has('katarungan_search') || params.has('katarungan_page')) {
-    pane = 'katarungan';
-  } else if (params.has('transactions_page')) {
-    pane = 'transactions';
-  } else if (isFromOtherPage) {
-    // Coming from another page - always show blotter first
-    pane = 'blotter';
-    sessionStorage.removeItem('activeComplaintTab'); // Clear saved tab
-  } else if (savedTab) {
-    // Use saved tab (during refresh)
-    pane = savedTab;
+  if (isTreasurer) {
+    // Treasurer tabs
+    if (params.has('receipts_search') || params.has('receipts_page')) {
+      pane = 'complaint-receipts';
+    } else if (params.has('transactions_search') || params.has('transactions_page') || params.has('payment_complaint_id')) {
+      pane = 'transactions';
+    } else if (isFromOtherPage) {
+      pane = 'transactions';
+      sessionStorage.removeItem('activeComplaintTab');
+    } else if (savedTab) {
+      pane = savedTab;
+    } else {
+      pane = 'transactions';
+    }
   } else {
-    // Default to blotter
-    pane = 'blotter';
+    // Non-treasurer tabs
+    if (params.has('summon_search') || params.has('summon_page') || params.has('new_complaint_id') || params.has('updated_complaint_id') || params.has('deleted_complaint_id')) {
+      pane = 'summon';
+    } else if (params.has('katarungan_search') || params.has('katarungan_page')) {
+      pane = 'katarungan';
+    } else if (isFromOtherPage) {
+      pane = 'blotter';
+      sessionStorage.removeItem('activeComplaintTab');
+    } else if (savedTab) {
+      pane = savedTab;
+    } else {
+      pane = 'blotter';
+    }
   }
 
   // Show that pane
@@ -108,7 +117,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   
   // Clear the 'visited' flag when navigating away from this page
   window.addEventListener('beforeunload', function(e) {
-    // Don't clear if it's just a refresh (check if Ctrl+R or F5)
+    // Don't clear if it's just a refresh
     if (!e.currentTarget.performance.navigation.type === 1) {
       sessionStorage.removeItem('complaintTabVisited');
     }

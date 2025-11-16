@@ -64,11 +64,10 @@ $menuItems = [
   ],
   [
     'id' => 'adminComplaints',
-    // 'label' => 'Blotter & Complaints',
     'label' => ($_SESSION['loggedInUserRole'] === 'Brgy Treasurer') ? 'Complaint Transactions' : 'Blotter & Complaints',
     'icon' => 'gavel',
     'href' => 'adminComplaints.php',
-    'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Lupon Tagapamayapa'] //,'Brgy Treasurer'
+    'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad','Lupon Tagapamayapa','Brgy Treasurer']
   ],
   [
     'id' => 'adminResidents',

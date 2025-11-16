@@ -128,8 +128,9 @@ $sql = "
     respondent_affidavit_ikalawang_patawag,
     respondent_affidavit_ikatlong_patawag,
     
-    DATE_FORMAT(date_filed, '%b %e, %Y') AS formatted_date_filed
-    
+    DATE_FORMAT(date_filed, '%b %e, %Y') AS formatted_date_filed,
+    payment_status
+
   FROM barangay_complaints
   $whereSQL
   ORDER BY date_filed ASC, id ASC
@@ -347,11 +348,12 @@ $stmt->close();
                       <span class="material-symbols-outlined" style="font-size: 14px;">visibility</span>
                     </button>
                     <?php 
-                    // Hide edit and cancel buttons if case is closed
+                    // Hide edit and cancel buttons if case is closed OR payment is pending
                     $finalStatuses = ['Cancelled', 'Mediated', 'Conciliated', 'Dismissed', 'CFA', 'Withdrawn', 'Arbitrated'];
                     $isClosed = in_array($row['action_taken'], $finalStatuses) || $row['complaint_stage'] === 'Closed';
+                    $paymentPending = ($row['payment_status'] === 'Pending');
                     
-                    if (!$isClosed): 
+                    if (!$isClosed && !$paymentPending): 
                     ?>
                       <button class="btn btn-sm btn-success edit-btn" title="Manage Case">
                         <span class="material-symbols-outlined" style="font-size: 14px;">edit</span>

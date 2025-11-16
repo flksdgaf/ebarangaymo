@@ -695,38 +695,68 @@ $endDisplay   = $offset + $shownCount;                       // 1-based end inde
     });
 
     document.querySelectorAll('.remarks-select').forEach(sel => {
-      sel.addEventListener('change', async function () {
-        const row = this.closest('tr');
-        const name = row.dataset.name;
-        const newRemark = this.value;
-        const color = remarkColor[newRemark] || '';
+    // Store original value so we can revert on error
+    sel.dataset.original = sel.value;
+    
+    sel.addEventListener('change', async function () {
+      const row = this.closest('tr');
+      const name = row.dataset.name;
+      const newRemark = this.value;
+      const oldRemark = this.dataset.original;
+      
+      // Disable dropdown while processing
+      this.disabled = true;
 
-        // Check if resident has pending blotter
-        const res = await fetch('functions/check_pending.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({ full_name: name })
-        });
-        const json = await res.json();
-
-        // If pending and admin tries to change to something else
-        if (json.has_pending && newRemark !== 'On Hold') {
-          showBootstrapAlert(`<strong>${name}</strong> has a pending complaint case. Remarks must remain as <strong>On Hold</strong>.`, 'danger');
-          this.value = 'On Hold'; // revert back
-          return;
-        }
-
-        // update row color
-        row.querySelectorAll('td').forEach(td => td.style.backgroundColor = color);
-
-        // persist
-        await fetch('functions/update_remarks.php', {
+      try {
+        // Try to update the remarks
+        const updateRes = await fetch('functions/update_remarks.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: new URLSearchParams({ full_name: name, purok: purokNum, remarks: newRemark })
         });
-      });
+
+        const updateJson = await updateRes.json();
+
+        if (!updateJson.success) {
+          // Revert to original value
+          this.value = oldRemark;
+          
+          // Show appropriate error message
+          if (updateJson.has_active_complaint) {
+            showBootstrapAlert(
+              `<strong>${name}</strong>: ${updateJson.error}`, 
+              'warning'
+            );
+          } else {
+            showBootstrapAlert(
+              `<strong>Error:</strong> ${updateJson.error}`, 
+              'danger'
+            );
+          }
+          return;
+        }
+
+        // Success - update the color and baseline
+        const color = remarkColor[newRemark] || '';
+        row.querySelectorAll('td').forEach(td => td.style.backgroundColor = color);
+        this.dataset.original = newRemark;
+        
+        // Optional: show success message
+        showBootstrapAlert(`Remarks updated for <strong>${name}</strong>`, 'success');
+        
+      } catch (error) {
+        // Network error - revert
+        this.value = oldRemark;
+        showBootstrapAlert(
+          `<strong>Network Error:</strong> Unable to update remarks. Please try again.`, 
+          'danger'
+        );
+        console.error(error);
+      } finally {
+        this.disabled = false;
+      }
     });
+  });
 
     // --- Role dropdown handler (replacement)
     document.querySelectorAll('.role-select').forEach(sel => {

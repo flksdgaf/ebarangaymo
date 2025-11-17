@@ -29,6 +29,12 @@ switch($requestType) {
     $fn = trim($_POST['barangay_id_first_name'] ?? '');
     $mn = trim($_POST['barangay_id_middle_name'] ?? '');
     $ln = trim($_POST['barangay_id_last_name'] ?? '');
+
+    // Convert to proper title case (First Letter Uppercase, rest lowercase)
+    $fn = ucwords(strtolower($fn));
+    $mn = $mn ? ucwords(strtolower($mn)) : '';
+    $ln = ucwords(strtolower($ln));
+    
     $middlePart = $mn ? ", {$mn}" : '';
     $fullName = "{$ln}, {$fn}{$middlePart}";
 

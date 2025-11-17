@@ -21,9 +21,9 @@ $bindParams = [];
 
 if ($search !== '') {
     $term = "%{$search}%";
-    $whereClauses[] = "(bc.transaction_id LIKE ? OR bc.case_no LIKE ? OR bc.complainant_name LIKE ? OR bc.respondent_name LIKE ? OR orr.or_number LIKE ?)";
-    $bindTypes .= str_repeat('s', 5);
-    $bindParams = array_merge($bindParams, array_fill(0, 5, $term));
+    $whereClauses[] = "(bc.transaction_id LIKE ? OR bc.complaint_title LIKE ? OR bc.complainant_name LIKE ? OR orr.or_number LIKE ?)";
+    $bindTypes .= str_repeat('s', 4);
+    $bindParams = array_merge($bindParams, array_fill(0, 4, $term));
 }
 
 $whereSQL = 'WHERE ' . implode(' AND ', $whereClauses);
@@ -53,15 +53,11 @@ $countStmt->close();
 $sql = "
     SELECT 
         bc.transaction_id,
-        bc.case_no,
-        bc.complainant_name,
-        bc.respondent_name,
         bc.complaint_title,
+        bc.complainant_name,
         orr.payment_method,
         orr.or_number,
         orr.amount_paid,
-        orr.issued_date,
-        orr.reference_number,
         DATE_FORMAT(orr.issued_date, '%b %e, %Y') AS formatted_issued_date
     FROM barangay_complaints bc
     JOIN official_receipt_records orr ON bc.transaction_id = orr.transaction_id
@@ -110,15 +106,12 @@ $stmt->close();
                 <thead class="table-light">
                     <tr>
                         <th class="text-nowrap">Transaction ID</th>
-                        <th class="text-nowrap">Case No.</th>
-                        <th class="text-nowrap">Complainant</th>
-                        <th class="text-nowrap">Respondent</th>
                         <th class="text-nowrap">Complaint Title</th>
+                        <th class="text-nowrap">Complainant Name</th>
                         <th class="text-nowrap">Payment Method</th>
                         <th class="text-nowrap">OR Number</th>
                         <th class="text-nowrap">Amount Paid</th>
                         <th class="text-nowrap">Issued Date</th>
-                        <th class="text-nowrap">Reference No.</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -126,19 +119,16 @@ $stmt->close();
                         <?php while ($row = $result->fetch_assoc()): ?>
                             <tr>
                                 <td><?= htmlspecialchars($row['transaction_id']) ?></td>
-                                <td><?= htmlspecialchars($row['case_no']) ?></td>
-                                <td><?= htmlspecialchars($row['complainant_name']) ?></td>
-                                <td><?= htmlspecialchars($row['respondent_name']) ?></td>
                                 <td><?= htmlspecialchars($row['complaint_title']) ?></td>
+                                <td><?= htmlspecialchars($row['complainant_name']) ?></td>
                                 <td><?= htmlspecialchars($row['payment_method']) ?></td>
                                 <td><?= htmlspecialchars($row['or_number']) ?></td>
                                 <td>₱<?= number_format($row['amount_paid'], 2) ?></td>
                                 <td><?= htmlspecialchars($row['formatted_issued_date']) ?></td>
-                                <td><?= htmlspecialchars($row['reference_number'] ?: '—') ?></td>
                             </tr>
                         <?php endwhile; ?>
                     <?php else: ?>
-                        <tr><td colspan="10" class="text-center">No official receipts recorded yet.</td></tr>
+                        <tr><td colspan="7" class="text-center">No official receipts recorded yet.</td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>

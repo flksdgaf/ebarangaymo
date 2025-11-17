@@ -48,8 +48,7 @@ $countStmt->close();
 // Fetch records
 $sql = "
     SELECT 
-        transaction_id, case_no, complainant_name, respondent_name,
-        complaint_title, amount, payment_method, payment_status,
+        transaction_id, case_no, amount, payment_method,
         DATE_FORMAT(date_filed, '%b %e, %Y') AS formatted_date_filed
     FROM barangay_complaints
     $whereSQL
@@ -107,9 +106,6 @@ $stmt->close();
                     <tr>
                         <th class="text-nowrap">Transaction ID</th>
                         <th class="text-nowrap">Case No.</th>
-                        <th class="text-nowrap">Complainant</th>
-                        <th class="text-nowrap">Respondent</th>
-                        <th class="text-nowrap">Complaint Title</th>
                         <th class="text-nowrap">Amount</th>
                         <th class="text-nowrap">Payment Method</th>
                         <th class="text-nowrap">Date Filed</th>
@@ -122,9 +118,6 @@ $stmt->close();
                             <tr>
                                 <td><?= htmlspecialchars($row['transaction_id']) ?></td>
                                 <td><?= htmlspecialchars($row['case_no']) ?></td>
-                                <td><?= htmlspecialchars($row['complainant_name']) ?></td>
-                                <td><?= htmlspecialchars($row['respondent_name']) ?></td>
-                                <td><?= htmlspecialchars($row['complaint_title']) ?></td>
                                 <td>₱<?= number_format($row['amount'], 2) ?></td>
                                 <td><?= htmlspecialchars($row['payment_method']) ?></td>
                                 <td><?= htmlspecialchars($row['formatted_date_filed']) ?></td>
@@ -141,7 +134,7 @@ $stmt->close();
                             </tr>
                         <?php endwhile; ?>
                     <?php else: ?>
-                        <tr><td colspan="9" class="text-center">No pending complaint payments found.</td></tr>
+                        <tr><td colspan="6" class="text-center">No pending complaint payments found.</td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>

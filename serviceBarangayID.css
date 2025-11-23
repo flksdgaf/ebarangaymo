@@ -1,8 +1,8 @@
 .progress-container {
     position: relative;
     margin: auto;
-    width: 90%;
-    max-width: 800px;
+    width: 55%;
+    padding-top: 5px;
 }
 
 .progress-line {
@@ -23,7 +23,7 @@
     right: 0px;
     height: 8px;
     background-color: #13411F;
-    width: 0%;
+    width: 0%;  /* ← Must be 0% */
     z-index: -1;
     transition: width 0.5s ease-in-out;
     opacity: 100%;
@@ -202,7 +202,7 @@ h4 {
     text-align: left; /* keep each item’s text left‑aligned within its box */
 }
 
-/* ---------- Step 4: “Request Submitted” Screen ---------- */
+/* ---------- Step 4: “Request Submitted” Screen ---------- */
 
 .submission-screen {
     padding: 2rem 1rem;
@@ -314,247 +314,84 @@ h4 {
    RESPONSIVE STYLES FOR PROGRESS SECTION
    ============================================ */
 
-/* Desktop and larger tablets */
-@media (min-width: 992px) {
-    .progress-container {
-        width: 70%;
-        padding: 2rem 1rem;
+@media (max-width: 1025px) {
+    .step-label {
+        font-size: 12px;
+        margin-left: 3px;
     }
     
-    .stepss {
-        gap: 1rem;
+    .steps {
+        width: 50px;
+    }
+    
+    .circle {
+        width: 55px;
+        height: 55px;
+        font-size: 20px;
+    }
+    
+    #backToServicesBtn .material-symbols-outlined {
+        font-size: 40px;
     }
 }
 
-/* Tablets and smaller desktops (991px and below) */
-@media (max-width: 991px) {
-    .progress-container {
-        width: 85%;
-        padding: 1.5rem 0.5rem;
+@media (max-width: 769px) {
+    .step-label {
+        font-size: 10px;
+        margin-left: 2px;
     }
     
-    .stepss {
-        gap: 1rem;
+    .steps {
+        width: 45px;
     }
     
     .circle {
         width: 50px;
         height: 50px;
-        font-size: 1.1rem;
+        font-size: 18px;
     }
     
-    .step-label {
-        font-size: 0.75rem;
-        margin-top: 0.5rem;
+    .progress-container {
+        width: 70%;
     }
-    
-    .progress-line,
-    .progress-fill {
-        height: 6px;
-        top: 25px;
+
+    #backToServicesBtn .material-symbols-outlined {
+        font-size: 36px;
+        margin-top: 50px;
     }
 }
 
-/* Tablets (768px and below) */
-@media (max-width: 767px) {
-    .progress-container {
-        width: 92%;
-        padding: 1.25rem 0.5rem;
-        margin-bottom: 1rem;
-    }
-    
-    .stepss {
-        gap: 0.75rem;
+@media (max-width: 426px) {
+    .step-label {
+        font-size: 8px;
+        margin-left: 0px;
+        margin-top: 8px;
     }
     
     .steps {
-        flex: 1;
-        min-width: 0;
+        width: 35px;
     }
     
     .circle {
-        width: 45px;
-        height: 45px;
-        font-size: 1rem;
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
     }
     
-    .step-label {
-        font-size: 0.65rem;
-        margin-top: 0.4rem;
-        line-height: 1.2;
-        word-break: break-word;
+    .progress-container {
+        width: 85%;
     }
     
     .progress-line,
     .progress-fill {
-        height: 5px;
-        top: 22px;
-    }
-}
-
-/* Mobile devices (576px and below) */
-@media (max-width: 576px) {
-    .progress-container {
-        width: 95%;
-        padding: 1rem 0.25rem;
-        margin-bottom: 0.75rem;
-    }
-    
-    .stepss {
-        gap: 0.5rem;
-    }
-    
-    .steps {
-        flex: 1;
-        min-width: 0;
-    }
-    
-    .circle {
-        width: 38px;
-        height: 38px;
-        font-size: 0.9rem;
-    }
-    
-    .step-label {
-        font-size: 0.55rem;
-        margin-top: 0.3rem;
-        line-height: 1.1;
-        word-break: break-word;
-        padding: 0 2px;
-    }
-    
-    .progress-line,
-    .progress-fill {
-        height: 4px;
         top: 19px;
+        height: 6px;
     }
-}
 
-/* Extra small devices (below 400px) */
-@media (max-width: 399px) {
-    .progress-container {
-        width: 96%;
-        padding: 0.85rem 0.15rem;
-    }
-    
-    .stepss {
-        gap: 0.4rem;
-    }
-    
-    .circle {
-        width: 34px;
-        height: 34px;
-        font-size: 0.85rem;
-    }
-    
-    .step-label {
-        font-size: 0.5rem;
-        margin-top: 0.25rem;
-        line-height: 1;
-        padding: 0 1px;
-    }
-    
-    .progress-line,
-    .progress-fill {
-        height: 3px;
-        top: 17px;
-    }
-}
-
-/* Very small devices (below 360px) */
-@media (max-width: 359px) {
-    .progress-container {
-        width: 98%;
-        padding: 0.75rem 0;
-    }
-    
-    .stepss {
-        gap: 0.15rem;
-        padding: 0 0.25rem;
-    }
-    
-    .steps {
-        flex: 1;
-        min-width: 0;
-        max-width: 25%;
-    }
-    
-    .circle {
-        width: 26px;
-        height: 26px;
-        font-size: 0.6rem;
-        margin: 0 auto;
-    }
-    
-    .step-label {
-        font-size: 0.32rem;
-        margin-top: 0.25rem;
-        margin-left: 0;
-        line-height: 1.1;
-        padding: 0;
-        word-break: break-word;
-        white-space: normal;
-        max-width: 100%;
-        overflow-wrap: break-word;
-        hyphens: auto;
-    }
-    
-    .progress-line,
-    .progress-fill {
-        height: 2px;
-        top: 13px;
-        left: 13px;
-        right: 13px;
-        width: auto;
-    }
-}
-
-/* MY DEVICE (below 320px) */
-@media (max-width: 320px) {
-    .progress-container {
-        width: 98%;
-        padding: 0.6rem 0;
-        margin-top: 0px;
-    }
-    
-    .stepss {
-        gap: 0.1rem;
-        padding: 0 0.2rem;
-    }
-    
-    .steps {
-        flex: 1;
-        min-width: 0;
-        max-width: 25%;
-    }
-    
-    .circle {
-        width: 30px;
-        height: 30px;
-        font-size: 0.55rem;
-        margin: 0 auto;
-    }
-    
-    .step-label {
-        font-size: 0.28rem;
-        margin-top: 0.2rem;
-        margin-left: 0;
-        line-height: 1.05;
-        padding: 0;
-        word-break: break-word;
-        white-space: normal;
-        max-width: 100%;
-        overflow-wrap: break-word;
-        hyphens: auto;
-    }
-    
-    .progress-line,
-    .progress-fill {
-        height: 2px;
-        top: 12px;
-        left: 12px;
-        right: 12px;
-        width: auto;
+    #backToServicesBtn .material-symbols-outlined {
+        font-size: 20px;
+        margin-left: 5px;
+        margin-top: 110px;
     }
 }
 
@@ -754,45 +591,6 @@ h4 {
   }
 }
 
-/* Desktop/tablet keep original behaviour (no change) */
-.summary-container .list-group-item > span:first-child,
-.summary-container .list-group-item > span:last-child {
-  /* ensure default on larger screens remains unchanged */
-}
-
-/* -------------------------------------------
-   Fix: Progress fill cap at <=425px (visual cap)
-   ------------------------------------------- */
-
-/* On very narrow screens the dark fill visually overshoots the intended step;
-   cap it to roughly the 3rd step (66%) so it stops under the 3rd circle.
-   NOTE: this overrides inline width using !important. Remove if server/JS sets accurate widths. */
-@media (max-width: 425px) {
-  .progress-fill {
-    width: 66% !important;
-  }
-
-  /* also tighten the progress track insets for small screens so circles align */
-  .progress-line {
-    left: 10px;
-    right: 10px;
-  }
-
-  /* slightly smaller circles on very narrow phones for spacing */
-  .circle {
-    width: clamp(26px, 16vw, 36px);
-    height: clamp(26px, 16vw, 36px);
-    font-size: clamp(0.55rem, 3.5vw, 0.9rem);
-  }
-
-  /* ensure labels don't push horizontally and wrap under the circle */
-  .step-label {
-    font-size: 0.55rem;
-    max-width: 70px;
-    white-space: normal;
-  }
-}
-
 /* -------------------------------------------
    Fix: Payment "How to use" - smaller & readable
    ------------------------------------------- */
@@ -867,22 +665,185 @@ h4 {
 
 #backToServicesBtn .material-symbols-outlined {
     font-size: 50px;
-}
+} 
 
-@media (max-width: 767px) {
-    #backToServicesBtn .material-symbols-outlined {
-        font-size: 40px;
+/* CARD PADDING */
+@media (max-width: 1025px) {
+    .container.py-4.px-3 {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+    
+    .card.shadow-sm.px-5.py-5.mb-5.mt-4 {
+        padding-left: 1.5rem !important;
+        padding-right: 1.5rem !important;
+        padding-top: 1.5rem !important;
+        padding-bottom: 1.5rem !important;
     }
 }
 
-@media (max-width: 576px) {
-    #backToServicesBtn .material-symbols-outlined {
-        font-size: 36px;
+@media (max-width: 769px) {
+    .container.py-4.px-3 {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+    }
+    
+    .card.shadow-sm.px-5.py-5.mb-5.mt-4 {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
     }
 }
 
-@media (max-width: 399px) {
-    #backToServicesBtn .material-symbols-outlined {
-        font-size: 30px;
+@media (max-width: 426px) {
+    #mainHeader {
+        font-size: 1.6rem;
+        margin-top: 10px;
     }
-}    
+    
+    #subHeader {
+        font-size: 0.7rem;
+        margin-top: -20px;
+    }
+
+    .card .px-5 .py-5 {
+        padding-left: 0px;
+        padding-right: 0px;
+    }
+}
+
+/* ============================================
+   RESPONSIVE SUMMARY LAYOUT FOR MOBILE
+   ============================================ */
+
+/* Tablets (769px and below) - Stack label and value */
+@media (max-width: 769px) {
+    .summary-container .list-group-item {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        padding: 1rem 0.75rem;
+    }
+    
+    .summary-container .list-group-item > span:first-child {
+        margin-bottom: 0.5rem;
+        width: 100%;
+    }
+    
+    .summary-container .list-group-item > span:last-child {
+        width: 100%;
+    }
+}
+
+/* Mobile devices (426px and below) - Stack label and value */
+@media (max-width: 426px) {
+    .summary-container .list-group-item {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        padding: 0.875rem 0.5rem;
+    }
+    
+    .summary-container .list-group-item > span:first-child {
+        margin-bottom: 0.4rem;
+        width: 100%;
+        font-size: 0.95rem;
+    }
+    
+    .summary-container .list-group-item > span:last-child {
+        width: 100%;
+        font-size: 0.9rem;
+    }
+}
+
+/* ============================================
+   FIX TRANSACTION NUMBER DISPLAY
+   ============================================ */
+
+/* Default: Single row for screens 769px and above */
+.txn-display {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+    margin-bottom: 1.5rem;
+}
+
+.txn-row {
+    display: flex;
+    justify-content: center;
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+}
+
+.txn-char {
+    background: #2E7D32;
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: bold;
+    width: 3rem;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+/* Responsive transaction number sizing */
+/* Tablets and mobile (769px and below) - Two rows: BID- on first row, numbers on second */
+@media (max-width: 769px) {
+    .txn-display {
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+    
+    .txn-char {
+        font-size: 1.3rem;
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+    
+    .txn-row {
+        gap: 0.3rem;
+    }
+}
+
+/* Mobile devices (426px and below) */
+@media (max-width: 426px) {
+    .txn-char {
+        font-size: 1.1rem;
+        width: 2rem;
+        height: 2rem;
+    }
+    
+    .txn-row {
+        gap: 0.25rem;
+    }
+    
+    .txn-display {
+        gap: 0.35rem;
+    }
+
+    .submission-footer {
+        font-size: 0.8rem;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 376px) {
+    .txn-char {
+        font-size: 1rem;
+        width: 1.75rem;
+        height: 1.75rem;
+    }
+    
+    .txn-row {
+        gap: 0.2rem;
+    }
+
+    .submission-footer {
+        font-size: 0.6rem;
+    }
+}

@@ -824,9 +824,23 @@ unset($_SESSION['payment_success'], $_SESSION['payment_error'], $_SESSION['payme
                     <div class="txn-display">
                         <?php
                         $chars = str_split($transactionId);
-                        foreach ($chars as $char): ?>
-                            <span class="txn-char"><?php echo htmlspecialchars($char); ?></span>
-                        <?php endforeach; ?>
+                        $prefix = array_slice($chars, 0, 4); // BUS-
+                        $numbers = array_slice($chars, 4);   // Remaining digits
+                        ?>
+                        
+                        <!-- First row: BUS- -->
+                        <div class="txn-row">
+                            <?php foreach ($prefix as $char): ?>
+                                <span class="txn-char"><?php echo htmlspecialchars($char); ?></span>
+                            <?php endforeach; ?>
+                        </div>
+                        
+                        <!-- Second row: Numbers -->
+                        <div class="txn-row">
+                            <?php foreach ($numbers as $char): ?>
+                                <span class="txn-char"><?php echo htmlspecialchars($char); ?></span>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
 
                     <!-- QR CODE OR HOURGLASS -->

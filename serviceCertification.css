@@ -320,47 +320,376 @@ h4 {
   }
 }
 
-/* Back button styling - matches Barangay ID style */
+/* Back button styling - matches Barangay Clearance style EXACTLY */
 #backToServicesBtn {
     z-index: 6;
-    text-decoration: none;
-    padding: 0;
-    background: transparent;
-    border: none;
-    color: #198754;
+    text-decoration: none !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    color: #198754 !important;
     transition: all 0.3s ease;
     margin-top: -300px;
     margin-left: -50px;
+    line-height: 1 !important;
+    display: inline-block;
 }
 
 #backToServicesBtn:hover {
-    color: #157347;
+    color: #157347 !important;
     transform: translateX(-3px);
+    background: transparent !important;
+    border: none !important;
+}
+
+#backToServicesBtn:focus {
+    box-shadow: none !important;
+    outline: none !important;
 }
 
 #backToServicesBtn .material-symbols-outlined {
-    font-size: 50px;
-    font-variation-settings:
-        'FILL' 0,
-        'wght' 400,
-        'GRAD' 0,
-        'opsz' 48;
+    font-size: 50px !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    display: block;
 }
 
-@media (max-width: 767px) {
+/* ============================================
+   RESPONSIVE STYLES FOR PROGRESS SECTION
+   ============================================ */
+
+@media (max-width: 1025px) {
+    .step-label {
+        font-size: 12px;
+        margin-left: 3px;
+    }
+    
+    .steps {
+        width: 50px;
+    }
+    
+    .circle {
+        width: 55px;
+        height: 55px;
+        font-size: 20px;
+    }
+    
     #backToServicesBtn .material-symbols-outlined {
-        font-size: 40px;
+        font-size: 40px !important;
+        font-weight: 700 !important;
     }
 }
 
-@media (max-width: 576px) {
+@media (max-width: 769px) {
+    .step-label {
+        font-size: 10px;
+        margin-left: 2px;
+    }
+    
+    .steps {
+        width: 45px;
+    }
+    
+    .circle {
+        width: 50px;
+        height: 50px;
+        font-size: 18px;
+    }
+    
+    .progress-container {
+        width: 70%;
+    }
+
     #backToServicesBtn .material-symbols-outlined {
-        font-size: 36px;
+        font-size: 36px !important;
+        font-weight: 700 !important;
+    }
+    
+    #backToServicesBtn {
+        margin-top: -250px;
     }
 }
 
-@media (max-width: 399px) {
+@media (max-width: 426px) {
+    .step-label {
+        font-size: 8px;
+        margin-left: 0px;
+        margin-top: 8px;
+    }
+    
+    .steps {
+        width: 35px;
+    }
+    
+    .circle {
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
+    }
+    
+    .progress-container {
+        width: 85%;
+    }
+    
+    .progress-line,
+    .progress-fill {
+        top: 19px;
+        height: 6px;
+    }
+
     #backToServicesBtn .material-symbols-outlined {
-        font-size: 30px;
+        font-size: 40px !important;
+        font-weight: 700 !important;
+    }
+    
+    #backToServicesBtn {
+        margin-left: -30px;
+        margin-top: -200px;
+    }
+}
+
+/* ============================================
+   RESPONSIVE STYLES FOR NAVIGATION BUTTONS
+   ============================================ */
+
+/* Default button styles */
+.next-btn,
+.back-btn {
+    transition: all 0.2s ease;
+}
+
+/* Tablets and smaller laptops (1025px and below) */
+@media (max-width: 1025px) {
+    .next-btn,
+    .back-btn {
+        padding: 0.7rem 2rem;
+        font-size: 0.95rem;
+        min-width: 130px;
+    }
+}
+
+/* Tablets (769px and below) */
+@media (max-width: 769px) {
+    .d-flex.justify-content-between.w-100.mt-4 {
+        gap: 0.75rem;
+    }
+    
+    .next-btn,
+    .back-btn {
+        padding: 0.65rem 1.5rem;
+        font-size: 0.9rem;
+        min-width: 110px;
+    }
+}
+
+/* Mobile devices (426px and below) */
+@media (max-width: 426px) {
+    .d-flex.justify-content-between.w-100.mt-4 {
+        flex-direction: column-reverse;
+        gap: 0.5rem;
+        width: 100% !important;
+    }
+    
+    .next-btn,
+    .back-btn {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0.875rem 1.5rem;
+        font-size: 1rem;
+        min-width: auto;
+        min-height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        box-sizing: border-box;
+    }
+    
+    .back-btn {
+        margin-top: 0.5rem;
+    }
+}
+
+/* ============================================
+   CARD PADDING RESPONSIVE STYLES
+   ============================================ */
+
+@media (max-width: 1025px) {
+    .container.py-4.px-3 {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+    
+    .card.shadow-sm.px-5.py-5.mb-5.mt-4 {
+        padding-left: 1.5rem !important;
+        padding-right: 1.5rem !important;
+        padding-top: 1.5rem !important;
+        padding-bottom: 1.5rem !important;
+    }
+}
+
+@media (max-width: 769px) {
+    .container.py-4.px-3 {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+    }
+    
+    .card.shadow-sm.px-5.py-5.mb-5.mt-4 {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+    }
+}
+
+@media (max-width: 426px) {
+    #mainHeader {
+        font-size: 1.6rem;
+        margin-top: 10px;
+    }
+    
+    #subHeader {
+        font-size: 0.7rem;
+        margin-top: -20px;
+    }
+
+    .card .px-5 .py-5 {
+        padding-left: 0px !important;
+        padding-right: 0px !important;
+    }
+}
+
+/* ============================================
+   RESPONSIVE SUMMARY LAYOUT FOR MOBILE
+   ============================================ */
+
+/* Tablets (769px and below) - Stack label and value */
+@media (max-width: 769px) {
+    .summary-container .list-group-item {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        padding: 1rem 0.75rem;
+    }
+    
+    .summary-container .list-group-item > span:first-child {
+        margin-bottom: 0.5rem;
+        width: 100%;
+    }
+    
+    .summary-container .list-group-item > span:last-child {
+        width: 100%;
+    }
+}
+
+/* Mobile devices (426px and below) - Stack label and value */
+@media (max-width: 426px) {
+    .summary-container .list-group-item {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        padding: 0.875rem 0.5rem;
+    }
+    
+    .summary-container .list-group-item > span:first-child {
+        margin-bottom: 0.4rem;
+        width: 100%;
+        font-size: 0.95rem;
+    }
+    
+    .summary-container .list-group-item > span:last-child {
+        width: 100%;
+        font-size: 0.9rem;
+    }
+}
+
+/* ============================================
+   FIX TRANSACTION NUMBER DISPLAY
+   ============================================ */
+
+/* Default: Single row for screens 769px and above */
+.txn-display {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+    margin-bottom: 1.5rem;
+}
+
+.txn-row {
+    display: flex;
+    justify-content: center;
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+}
+
+.txn-char {
+    background: #2E7D32;
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: bold;
+    width: 3rem;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+/* Responsive transaction number sizing */
+/* Tablets and mobile (769px and below) - Two rows: prefix on first row, numbers on second */
+@media (max-width: 769px) {
+    .txn-display {
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+    
+    .txn-char {
+        font-size: 1.3rem;
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+    
+    .txn-row {
+        gap: 0.3rem;
+    }
+}
+
+/* Mobile devices (426px and below) */
+@media (max-width: 426px) {
+    .txn-char {
+        font-size: 1.1rem;
+        width: 2rem;
+        height: 2rem;
+    }
+    
+    .txn-row {
+        gap: 0.25rem;
+    }
+    
+    .txn-display {
+        gap: 0.35rem;
+    }
+
+    .submission-footer {
+        font-size: 0.8rem;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 376px) {
+    .txn-char {
+        font-size: 1rem;
+        width: 1.75rem;
+        height: 1.75rem;
+    }
+    
+    .txn-row {
+        gap: 0.2rem;
+    }
+
+    .submission-footer {
+        font-size: 0.6rem;
     }
 }

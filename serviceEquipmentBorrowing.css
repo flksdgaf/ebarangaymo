@@ -2,9 +2,10 @@
 .progress-container {
     position: relative;
     margin: auto;
-    width: 42%;
+    width: 55%;
     padding-top: 5px ;
 }
+
 .progress-line {
     position: absolute;
     top: 27px;
@@ -13,8 +14,9 @@
     height: 8px;
     background-color: #61AD41;
     z-index: -1;
-    opacity: 0.8;
+    opacity: 80%;
 }
+
 .progress-fill {
     position: absolute;
     top: 27px;
@@ -25,7 +27,7 @@
     width: 0%;
     z-index: -1;
     transition: width 0.5s ease-in-out;
-    opacity: 1;
+    opacity: 100%;
 }
 
 .progress-fill {
@@ -138,7 +140,12 @@ label { padding-top: 5px; }
     transition: transform 0.6s ease, box-shadow 0.6s ease;
     will-change: transform;
 }
-.next-btn:hover { transform: scale(1.05); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25); color: #fff; }
+
+.next-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+    color: #fff;
+}
 .btn-green {
     background: linear-gradient(90deg, #2E7D32 0%, #388E3C 100%);
     color: #fff;
@@ -151,6 +158,74 @@ label { padding-top: 5px; }
 }
 .btn-green:hover { opacity: .95; }
 
+/* ============================================
+   RESPONSIVE STYLES FOR NAVIGATION BUTTONS
+   ============================================ */
+
+/* Default button styles */
+.next-btn,
+.back-btn {
+    transition: all 0.2s ease;
+}
+
+/* Tablets and smaller laptops (1025px and below) */
+@media (max-width: 1025px) {
+    .next-btn,
+    .back-btn {
+        padding: 0.7rem 2rem;
+        font-size: 0.95rem;
+        min-width: 130px;
+        /* Removed width: auto - keeping the original 210px */
+    }
+}
+
+/* Tablets (769px and below) */
+@media (max-width: 769px) {
+    .row.mt-4 .col {
+        padding: 0 0.375rem;
+    }
+    
+    .next-btn,
+    .back-btn {
+        padding: 0.65rem 1.5rem;
+        font-size: 0.9rem;
+        min-width: 110px;
+        /* Removed width: auto - keeping the original 210px */
+    }
+}
+
+/* Mobile devices (426px and below) */
+@media (max-width: 426px) {
+    .row.mt-4 {
+        flex-direction: column-reverse;
+        gap: 0.5rem;
+    }
+    
+    .row.mt-4 .col {
+        max-width: 100%;
+        padding: 0;
+    }
+    
+    .next-btn,
+    .back-btn {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0.875rem 1.5rem;
+        font-size: 1rem;
+        min-width: auto;
+        min-height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        box-sizing: border-box;
+    }
+    
+    .back-btn {
+        margin-top: 0.5rem;
+    }
+}
+
 /* Misc visuals */
 .fee-box { display:flex; flex-direction:column; align-items:center; justify-content:center; border-left: 5px solid #2A9245; }
 .submission-screen { padding: 2rem 1rem; }
@@ -159,60 +234,314 @@ label { padding-top: 5px; }
 .submission-footer { color: #555; font-size: 0.9rem; margin-top: 1rem; line-height: 1.4; }
 .qr-container img { width:200px; height:200px; border:2px solid #2E7D32; border-radius:8px; margin:auto; }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .progress-container { width: 90%; }
-}
-@media (max-width: 576px) {
-  .circle { width: 38px; height: 38px; font-size: 0.9rem; }
-  .txn-char { width: 2.6rem; height: 2.6rem; font-size: 1rem; }
-  .progress-container { width: 95%; }
-}
-
 /* readonly input style */
 .form-card .form-control[readonly] { background-color: #f8f9fa; }
 
-/* Back button styling - matches Barangay ID style */
+/* Back button styling - matches Barangay Clearance style EXACTLY */
 #backToServicesBtn {
     z-index: 6;
-    text-decoration: none;
-    padding: 0;
-    background: transparent;
-    border: none;
-    color: #198754;
+    text-decoration: none !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    color: #198754 !important;
     transition: all 0.3s ease;
     margin-top: -300px;
     margin-left: -50px;
+    line-height: 1 !important;
+    display: inline-block;
 }
 
 #backToServicesBtn:hover {
-    color: #157347;
+    color: #157347 !important;
     transform: translateX(-3px);
+    background: transparent !important;
+    border: none !important;
+}
+
+#backToServicesBtn:focus {
+    box-shadow: none !important;
+    outline: none !important;
 }
 
 #backToServicesBtn .material-symbols-outlined {
-    font-size: 50px;
-    font-variation-settings:
-        'FILL' 0,
-        'wght' 400,
-        'GRAD' 0,
-        'opsz' 48;
+    font-size: 50px !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    display: block;
 }
 
-@media (max-width: 767px) {
+/* ============================================
+   RESPONSIVE STYLES FOR PROGRESS SECTION
+   ============================================ */
+
+@media (max-width: 1025px) {
+    .step-label {
+        font-size: 12px;
+        margin-left: 3px;
+    }
+    
+    .steps {
+        width: 50px;
+    }
+    
+    .circle {
+        width: 55px;
+        height: 55px;
+        font-size: 20px;
+    }
+    
     #backToServicesBtn .material-symbols-outlined {
         font-size: 40px;
+        font-weight: 700 !important;
     }
 }
 
-@media (max-width: 576px) {
+@media (max-width: 769px) {
+    .step-label {
+        font-size: 10px;
+        margin-left: 2px;
+    }
+    
+    .steps {
+        width: 45px;
+    }
+    
+    .circle {
+        width: 50px;
+        height: 50px;
+        font-size: 18px;
+    }
+    
+    .progress-container {
+        width: 70%;
+    }
+
     #backToServicesBtn .material-symbols-outlined {
         font-size: 36px;
+        font-weight: 700 !important;
+        margin-top: 50px;
     }
 }
 
-@media (max-width: 399px) {
+@media (max-width: 426px) {
+    .step-label {
+        font-size: 8px;
+        margin-left: 0px;
+        margin-top: 8px;
+    }
+    
+    .steps {
+        width: 35px;
+    }
+    
+    .circle {
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
+    }
+    
+    .progress-container {
+        width: 75%;
+    }
+    
+    .progress-line,
+    .progress-fill {
+        top: 19px;
+        height: 6px;
+    }
+
     #backToServicesBtn .material-symbols-outlined {
-        font-size: 30px;
+        font-size: 40px;
+        font-weight: 700 !important;
+        margin-left: 5px;
+        margin-top: 110px;
+    }
+}
+
+/* ============================================
+   CARD PADDING RESPONSIVE STYLES
+   ============================================ */
+
+@media (max-width: 1025px) {
+    .container.py-4.px-3 {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+    
+    .card.shadow-sm.px-5.py-5.mb-5.mt-4,
+    .card.form-card {
+        padding-left: 1.5rem !important;
+        padding-right: 1.5rem !important;
+        padding-top: 1.5rem !important;
+        padding-bottom: 1.5rem !important;
+    }
+}
+
+@media (max-width: 769px) {
+    .container.py-4.px-3 {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+    }
+    
+    .card.shadow-sm.px-5.py-5.mb-5.mt-4,
+    .card.form-card {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+    }
+}
+
+@media (max-width: 426px) {
+    #mainHeader {
+        font-size: 1.6rem;
+        margin-top: 10px;
+    }
+    
+    #subHeader {
+        font-size: 0.7rem;
+        margin-top: -20px;
+    }
+
+    .card .px-5 .py-5,
+    .card.form-card {
+        padding-left: 0px !important;
+        padding-right: 0px !important;
+    }
+}
+
+/* ============================================
+   RESPONSIVE SUMMARY LAYOUT FOR MOBILE
+   ============================================ */
+
+/* Tablets (769px and below) - Stack label and value */
+@media (max-width: 769px) {
+    .summary-container .list-group-item {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        padding: 1rem 0.75rem;
+    }
+    
+    .summary-container .list-group-item > span:first-child {
+        margin-bottom: 0.5rem;
+        width: 100%;
+    }
+    
+    .summary-container .list-group-item > span:last-child {
+        width: 100%;
+    }
+}
+
+/* Mobile devices (426px and below) - Stack label and value */
+@media (max-width: 426px) {
+    .summary-container .list-group-item {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        padding: 0.875rem 0.5rem;
+    }
+    
+    .summary-container .list-group-item > span:first-child {
+        margin-bottom: 0.4rem;
+        width: 100%;
+        font-size: 0.95rem;
+    }
+    
+    .summary-container .list-group-item > span:last-child {
+        width: 100%;
+        font-size: 0.9rem;
+    }
+}
+
+/* ============================================
+   FIX TRANSACTION NUMBER DISPLAY
+   ============================================ */
+
+/* Default: Single row for screens 769px and above */
+.txn-display {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+    margin-bottom: 1.5rem;
+}
+
+.txn-row {
+    display: flex;
+    justify-content: center;
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+}
+
+.txn-char {
+    background: #2E7D32;
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: bold;
+    width: 3rem;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+/* Responsive transaction number sizing */
+/* Tablets and mobile (769px and below) - Two rows: BRW- on first row, numbers on second */
+@media (max-width: 769px) {
+    .txn-display {
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+    
+    .txn-char {
+        font-size: 1.3rem;
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+    
+    .txn-row {
+        gap: 0.3rem;
+    }
+}
+
+/* Mobile devices (426px and below) */
+@media (max-width: 426px) {
+    .txn-char {
+        font-size: 1.1rem;
+        width: 2rem;
+        height: 2rem;
+    }
+    
+    .txn-row {
+        gap: 0.25rem;
+    }
+    
+    .txn-display {
+        gap: 0.35rem;
+    }
+
+    .submission-footer {
+        font-size: 0.8rem;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 376px) {
+    .txn-char {
+        font-size: 1rem;
+        width: 1.75rem;
+        height: 1.75rem;
+    }
+    
+    .txn-row {
+        gap: 0.2rem;
+    }
+
+    .submission-footer {
+        font-size: 0.6rem;
     }
 }

@@ -519,11 +519,24 @@ if ($urlStep && $transactionId) {
                     <!-- Transaction ID boxes -->
                     <div class="txn-display">
                         <?php
-                        // Split e.g. "BRGYID-0000003" into chars
                         $chars = str_split($transactionId);
-                        foreach ($chars as $char): ?>
-                            <span class="txn-char"><?php echo htmlspecialchars($char); ?></span>
-                        <?php endforeach; ?>
+                        $prefix = array_slice($chars, 0, 4); // First 4 chars (e.g., RES-)
+                        $numbers = array_slice($chars, 4);   // Remaining digits
+                        ?>
+                        
+                        <!-- First row: Prefix (RES-, IND-, etc.) -->
+                        <div class="txn-row">
+                            <?php foreach ($prefix as $char): ?>
+                                <span class="txn-char"><?php echo htmlspecialchars($char); ?></span>
+                            <?php endforeach; ?>
+                        </div>
+                        
+                        <!-- Second row: Numbers -->
+                        <div class="txn-row">
+                            <?php foreach ($numbers as $char): ?>
+                                <span class="txn-char"><?php echo htmlspecialchars($char); ?></span>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
                     
                     <!-- QR CODE HERE OR THE HOUR GLASS GIF-->
@@ -564,7 +577,7 @@ if ($urlStep && $transactionId) {
                         </script>
                     <?php else: ?>
                         <!-- HOURGLASS LOTTIE for GCash or OTC -->
-                        <div class="hourglass-container">
+                        <!-- <div class="hourglass-container">
                         <canvas id="canvas" width="300" height="300"></canvas>
                         <script type="module">
                             import { DotLottie } from "https://cdn.jsdelivr.net/npm/@lottiefiles/dotlottie-web/+esm";
@@ -577,7 +590,7 @@ if ($urlStep && $transactionId) {
                             });
                         </script>
                         <p>Please wait… your request is being verified.</p>
-                        </div>
+                        </div> -->
                     <?php endif; ?>
 
                     <!-- Footer note -->

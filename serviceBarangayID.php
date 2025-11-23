@@ -344,7 +344,7 @@ unset($_SESSION['payment_success'], $_SESSION['payment_error'], $_SESSION['payme
     }
 </style>
 
-<div class="container px-3">
+<div class="container py-4 px-3">
     <!-- Payment Status Messages -->
     <?php if ($paymentSuccess): ?>
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -409,7 +409,7 @@ unset($_SESSION['payment_success'], $_SESSION['payment_error'], $_SESSION['payme
         </div>
     </div>
 
-    <div class="card shadow-sm px-5 py-5 mb-5">
+    <div class="card shadow-sm px-5 py-5 mb-5 mt-4">
         <div class="d-flex align-items-center position-relative mb-3">
             <!-- Back Button - Only shown on step 1 -->
             <button type="button" id="backToServicesBtn" class="btn btn-link text-success position-absolute start-0" style="display: none;">
@@ -874,11 +874,24 @@ unset($_SESSION['payment_success'], $_SESSION['payment_error'], $_SESSION['payme
                     <!-- Transaction ID boxes -->
                     <div class="txn-display">
                         <?php
-                        // Split e.g. "BRGYID-0000003" into chars
                         $chars = str_split($transactionId);
-                        foreach ($chars as $char): ?>
-                            <span class="txn-char"><?php echo htmlspecialchars($char); ?></span>
-                        <?php endforeach; ?>
+                        $prefix = array_slice($chars, 0, 4); // BID-
+                        $numbers = array_slice($chars, 4);   // Remaining digits
+                        ?>
+                        
+                        <!-- First row: BID- -->
+                        <div class="txn-row">
+                            <?php foreach ($prefix as $char): ?>
+                                <span class="txn-char"><?php echo htmlspecialchars($char); ?></span>
+                            <?php endforeach; ?>
+                        </div>
+                        
+                        <!-- Second row: Numbers -->
+                        <div class="txn-row">
+                            <?php foreach ($numbers as $char): ?>
+                                <span class="txn-char"><?php echo htmlspecialchars($char); ?></span>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
                     
                     <!-- QR CODE HERE OR THE HOUR GLASS GIF-->

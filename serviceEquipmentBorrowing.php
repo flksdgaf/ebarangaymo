@@ -428,12 +428,33 @@ if ($equipment_sn) {
           const txnBox = document.getElementById('txnBox');
           txnBox.innerHTML = '';
           const idStr = 'BRW-' + String(data.id || '').padStart(6, '0');
-          for (const ch of idStr) {
+
+          // Split into prefix (BRW-) and numbers
+          const chars = idStr.split('');
+          const prefix = chars.slice(0, 4); // BRW-
+          const numbers = chars.slice(4);   // Remaining digits
+
+          // Create first row for BRW-
+          const row1 = document.createElement('div');
+          row1.className = 'txn-row';
+          for (const ch of prefix) {
             const sp = document.createElement('span');
             sp.className = 'txn-char';
             sp.textContent = ch;
-            txnBox.appendChild(sp);
+            row1.appendChild(sp);
           }
+          txnBox.appendChild(row1);
+
+          // Create second row for numbers
+          const row2 = document.createElement('div');
+          row2.className = 'txn-row';
+          for (const ch of numbers) {
+            const sp = document.createElement('span');
+            sp.className = 'txn-char';
+            sp.textContent = ch;
+            row2.appendChild(sp);
+          }
+          txnBox.appendChild(row2);
         } else {
           alert(data.message || 'Submission failed.');
         }

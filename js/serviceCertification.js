@@ -1508,7 +1508,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // certInput.addEventListener('input', onCertTypeChange);
 
     (function initFromServer() {
-        ensureHiddenPaymentFields();
+    ensureHiddenPaymentFields();
 
         // URL step handling is now done by the global handler at the end of file
         // Just set initial step if provided from server
@@ -1537,6 +1537,21 @@ document.addEventListener("DOMContentLoaded", function () {
             if (hiddenPaymentStatus && (!hiddenPaymentStatus.value || !hiddenPaymentStatus.value.trim())) {
                 hiddenPaymentStatus.value = 'Free of Charge';
             }
+            
+            // CRITICAL FIX: Remove payment step and renumber for free certificates
+            const pStep = document.getElementById('paymentStep');
+            if (pStep && pStep.parentNode) {
+                pStep.parentNode.removeChild(pStep);
+            }
+            const pProgress = document.querySelector('.payment-progress-step');
+            if (pProgress && pProgress.parentNode) {
+                pProgress.parentNode.removeChild(pProgress);
+            }
+            
+            // Renumber the circles after removing payment step
+            renumberSteps();
+            refreshStepCollections();
+            
             if (progressFill) {
                 progressFill.style.width = '100%';
                 progressFill.setAttribute('aria-valuenow', '100');

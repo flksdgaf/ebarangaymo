@@ -78,9 +78,9 @@ if ($bd) {
 }
 
 // Build the optional pieces
-$middlePart = $mn ? " {$mn}" : '';
+$middlePart = $mn ? ", {$mn}" : '';
 
-// Format: LastName, FirstName MiddleName
+// Format: LastName, FirstName, MiddleName
 $full_name = "{$ln}, {$fn}{$middlePart}";
 
 // Step 2 inputs

@@ -575,7 +575,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const em = document.getElementById("email").value.trim();
 
         const middlePart = mn ? ` ${mn}` : "";
-        const fullName = `${ln}, ${fn}${middlePart}`;
+        const fullName = `${fn}${middlePart} ${ln}`;
 
         document.getElementById("summaryFullName").value = fullName;
         document.getElementById("summaryBirthdate").value = bd;

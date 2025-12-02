@@ -78,7 +78,14 @@ if ($res0) {
               ?>
                 <tr class="request-row" style="cursor:pointer;" data-id="<?php echo $row['account_ID'] ?>" data-full='<?php echo json_encode($row, JSON_HEX_TAG) ?>'>
                   <td><?php echo $row['account_ID'] ?></td>
-                  <td><?php echo htmlspecialchars($row['full_name']) ?></td>
+                  <td><?php 
+                    // Convert "Lastname, Firstname, Middlename" to "Firstname Middlename Lastname"
+                    $nameParts = array_map('trim', explode(',', $row['full_name']));
+                    $displayName = isset($nameParts[1]) ? $nameParts[1] : '';
+                    if (isset($nameParts[2])) $displayName .= ' ' . $nameParts[2];
+                    $displayName .= ' ' . ($nameParts[0] ?? '');
+                    echo htmlspecialchars(trim($displayName));
+                  ?></td>
                   <td><?php echo $fmt ?></td>
                   <td>
                     <div class="d-flex gap-1">
@@ -298,7 +305,13 @@ if ($res0) {
                     <span class="material-icons text-success" style="font-size: 24px;">person</span>
                   </div>
                   <div>
-                    <h6 class="mb-0 fw-bold text-dark">${dataObj.full_name}</h6>
+                    <h6 class="mb-0 fw-bold text-dark">${(() => {
+                      const nameParts = dataObj.full_name.split(',').map(s => s.trim());
+                      let displayName = nameParts[1] || '';
+                      if (nameParts[2]) displayName += ' ' + nameParts[2];
+                      displayName += ' ' + (nameParts[0] || '');
+                      return displayName.trim();
+                    })()}</h6>
                     <small class="text-muted" style="font-size: 0.8rem;">
                       <span class="material-icons align-middle" style="font-size: 14px;">location_on</span>${dataObj.purok} | 
                       <span class="material-icons align-middle" style="font-size: 14px;">tag</span>${dataObj.account_ID}
@@ -317,26 +330,18 @@ if ($res0) {
           html += `
           <div class="card border-0 shadow-sm mb-3">
             <div class="card-body p-3">
-              <h6 class="fw-bold text-success mb-2" style="font-size: 0.9rem;">
-                <span class="material-icons align-middle me-1" style="font-size: 18px;">badge</span>Personal Information
-              </h6>
+              <h6 class="fw-bold text-success mb-2" style="font-size: 0.9rem;">Personal Information</h6>
               <div class="row g-2">
                 <div class="col-md-6">
-                  <div class="d-flex align-items-start">
-                    <span class="material-icons text-muted me-2" style="font-size: 18px;">cake</span>
-                    <div>
-                      <small class="text-muted d-block" style="font-size: 0.75rem;">Date of Birth</small>
-                      <span class="fw-semibold" style="font-size: 0.85rem;">${dataObj.birthdate}</span>
-                    </div>
+                  <div>
+                    <small class="text-muted d-block" style="font-size: 0.75rem;">Date of Birth</small>
+                    <span class="fw-semibold" style="font-size: 0.85rem;">${dataObj.birthdate}</span>
                   </div>
                 </div>
                 <div class="col-md-6">
-                  <div class="d-flex align-items-start">
-                    <span class="material-icons text-muted me-2" style="font-size: 18px;">home</span>
-                    <div>
-                      <small class="text-muted d-block" style="font-size: 0.75rem;">Purok</small>
-                      <span class="fw-semibold" style="font-size: 0.85rem;">${dataObj.purok}</span>
-                    </div>
+                  <div>
+                    <small class="text-muted d-block" style="font-size: 0.75rem;">Purok</small>
+                    <span class="fw-semibold" style="font-size: 0.85rem;">${dataObj.purok}</span>
                   </div>
                 </div>
               </div>
@@ -348,9 +353,7 @@ if ($res0) {
           html += `
           <div class="card border-0 shadow-sm mb-3">
             <div class="card-body p-3">
-              <h6 class="fw-bold text-success mb-2" style="font-size: 0.9rem;">
-                <span class="material-icons align-middle me-1" style="font-size: 18px;">credit_card</span>Identification Documents
-              </h6>
+              <h6 class="fw-bold text-success mb-2" style="font-size: 0.9rem;">Identification Documents</h6>
               <div class="row g-2">
           `;
 
@@ -358,9 +361,7 @@ if ($res0) {
             html += `
                 <div class="col-md-6">
                   <div class="position-relative">
-                    <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">
-                      <span class="material-icons align-middle" style="font-size: 14px;">credit_card</span> Front ID
-                    </small>
+                    <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">Front ID</small>
                     <div class="border rounded overflow-hidden bg-light position-relative" style="height: 160px;">
                       <img src="frontID/${dataObj.front_ID}" 
                           class="img-fluid w-100 h-100 object-fit-cover id-preview" 
@@ -382,9 +383,7 @@ if ($res0) {
             html += `
                 <div class="col-md-6">
                   <div class="position-relative">
-                    <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">
-                      <span class="material-icons align-middle" style="font-size: 14px;">credit_card</span> Back ID
-                    </small>
+                    <small class="text-muted d-block mb-1" style="font-size: 0.75rem;">Back ID</small>
                     <div class="border rounded overflow-hidden bg-light position-relative" style="height: 160px;">
                       <img src="backID/${dataObj.back_ID}" 
                           class="img-fluid w-100 h-100 object-fit-cover id-preview" 
@@ -412,17 +411,10 @@ if ($res0) {
           html += `
           <div class="card border-0 shadow-sm">
             <div class="card-body p-3">
-              <h6 class="fw-bold text-success mb-2" style="font-size: 0.9rem;">
-                <span class="material-icons align-middle me-1" style="font-size: 18px;">history</span>Account Timeline
-              </h6>
-              <div class="d-flex align-items-start">
-                <div class="bg-success bg-opacity-10 rounded-circle p-2 me-2" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
-                  <span class="material-icons text-success" style="font-size: 16px;">add_circle</span>
-                </div>
-                <div>
-                  <small class="text-muted d-block" style="font-size: 0.75rem;">Account Created</small>
-                  <span class="fw-semibold" style="font-size: 0.85rem;">${dataObj.time_creation}</span>
-                </div>
+              <h6 class="fw-bold text-success mb-2" style="font-size: 0.9rem;">Account Timeline</h6>
+              <div>
+                <small class="text-muted d-block" style="font-size: 0.75rem;">Account Created</small>
+                <span class="fw-semibold" style="font-size: 0.85rem;">${dataObj.time_creation}</span>
               </div>
             </div>
           </div>
@@ -573,9 +565,13 @@ if ($res0) {
                 // Account ID
                 const td1 = document.createElement('td');
                 td1.textContent = row.account_ID;
-                // Name
+                // Name - Convert "Lastname, Firstname, Middlename" to "Firstname Middlename Lastname"
                 const td2 = document.createElement('td');
-                td2.textContent = row.full_name;
+                const nameParts = row.full_name.split(',').map(s => s.trim());
+                let displayName = nameParts[1] || '';
+                if (nameParts[2]) displayName += ' ' + nameParts[2];
+                displayName += ' ' + (nameParts[0] || '');
+                td2.textContent = displayName.trim();
                 // Date
                 const td3 = document.createElement('td');
                 const dtField = (currentView==='pending') ? row.time_creation : row.time_declined;

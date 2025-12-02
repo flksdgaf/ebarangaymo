@@ -5,15 +5,60 @@ if (!isset($_SESSION['auth'])||!$_SESSION['auth']) {
     header("Location:index.php"); 
     exit;
 }
-// Fetch initial pending for server-render
-$sql0 = "SELECT * FROM pending_accounts ORDER BY time_creation DESC";
-$res0 = $conn->query($sql0);
+
+// Determine which view we're on
+$currentView = isset($_GET['view']) && $_GET['view'] === 'declined' ? 'declined' : 'pending';
+
+// Pagination setup
+$limit = 8;
+$page_num = max((int)($_GET['page_num'] ?? 1), 1);
+$offset = ($page_num - 1) * $limit;
+
+// Determine table and order
+if ($currentView === 'pending') {
+    $tableName = 'pending_accounts';
+    $orderBy = 'time_creation DESC';
+} else {
+    $tableName = 'declined_accounts';
+    $orderBy = 'time_declined DESC';
+}
+
+// Get total count
+$countSQL = "SELECT COUNT(*) AS total FROM `{$tableName}`";
+$countStmt = $conn->prepare($countSQL);
+$countStmt->execute();
+$totalRows = $countStmt->get_result()->fetch_assoc()['total'] ?? 0;
+$countStmt->close();
+
+$totalPages = (int)ceil($totalRows / $limit);
+if ($totalPages < 1) $totalPages = 1;
+if ($page_num > $totalPages) $page_num = $totalPages;
+$offset = ($page_num - 1) * $limit;
+
+// Fetch initial data with pagination
+$sql0 = "SELECT * FROM `{$tableName}` ORDER BY {$orderBy} LIMIT ? OFFSET ?";
+$stmt0 = $conn->prepare($sql0);
+$stmt0->bind_param('ii', $limit, $offset);
+$stmt0->execute();
+$res0 = $stmt0->get_result();
 $initial = [];
 if ($res0) {
     while ($r = $res0->fetch_assoc()) {
         $initial[] = $r;
     }
 }
+$stmt0->close();
+
+// Build base query string for pagination
+$qs = $_GET;
+unset($qs['page_num']);
+$baseQS = http_build_query($qs);
+if ($baseQS) $baseQS .= '&';
+
+// Display counters
+$shownCount = count($initial);
+$startDisplay = $totalRows > 0 ? ($offset + 1) : 0;
+$endDisplay = $offset + $shownCount;
 ?>
 
 <title>eBarangay Mo | Account Verifications</title>
@@ -59,22 +104,29 @@ if ($res0) {
           </ul>
         </div>
       </div>
-      <div class="table-responsive admin-table"> <!--style="height:500px;overflow-y:auto; -->
+      <div class="table-responsive admin-table" style="height:500px;overflow-y:auto;"> <!--style="height:500px;overflow-y:auto; -->
         <table class="table mb-0 align-middle text-start" id="requestsTable">
           <thead class="table-light">
             <tr>
               <th class="text-nowrap">Account ID</th>
               <th class="text-nowrap">Name</th>
-              <th class="text-nowrap">Date - Time Created</th>
+              <th class="text-nowrap"><?= $currentView === 'pending' ? 'Date - Time Created' : 'Date - Time Declined' ?></th>
+              <?php if ($currentView === 'declined'): ?>
+                <th class="text-nowrap">Reason</th>
+              <?php endif; ?>
               <th class="text-nowrap">Action</th>
             </tr>
           </thead>
           <tbody id="requestsTbody">
             <?php if (empty($initial)): ?>
-              <tr><td colspan="7" class="text-center">No pending requests</td></tr>
+              <tr><td colspan="<?= $currentView === 'declined' ? 5 : 4 ?>" class="text-center">
+                <?= $currentView === 'pending' ? 'No pending requests' : 'No declined accounts' ?>
+              </td></tr>
             <?php else: ?>
               <?php foreach ($initial as $row):
-                $fmt = date("F d, Y - h:i A", strtotime($row['time_creation']));
+                // Use the appropriate time field based on current view
+                $timeField = $currentView === 'pending' ? 'time_creation' : 'time_declined';
+                $fmt = date("F d, Y - h:i A", strtotime($row[$timeField]));
               ?>
                 <tr class="request-row" style="cursor:pointer;" data-id="<?php echo $row['account_ID'] ?>" data-full='<?php echo json_encode($row, JSON_HEX_TAG) ?>'>
                   <td><?php echo $row['account_ID'] ?></td>
@@ -87,7 +139,11 @@ if ($res0) {
                     echo htmlspecialchars(trim($displayName));
                   ?></td>
                   <td><?php echo $fmt ?></td>
+                  <?php if ($currentView === 'declined'): ?>
+                    <td><?php echo htmlspecialchars($row['reason'] ?? ''); ?></td>
+                  <?php endif; ?>
                   <td>
+                    <?php if ($currentView === 'pending'): ?>
                     <div class="d-flex gap-1">
                       <form method="POST" action="functions/approve_account.php" class="d-inline approve-form">
                         <input type="hidden" name="account_ID" value="<?php echo $row['account_ID'] ?>">
@@ -98,6 +154,13 @@ if ($res0) {
                       </form>
                       <button class="btn btn-sm btn-danger decline-btn" style="min-width:90px;" data-account-id="<?php echo $row['account_ID'] ?>">Decline</button>
                     </div>
+                    <?php else: ?>
+                      <!-- Delete permanently form for declined view -->
+                      <form method="POST" action="functions/delete_declined_account.php" class="d-inline">
+                        <input type="hidden" name="account_ID" value="<?php echo $row['account_ID'] ?>">
+                        <button type="button" class="btn btn-sm btn-danger btn-delete-declined" style="min-width:170px;">Delete Permanently</button>
+                      </form>
+                    <?php endif; ?>
                   </td>
                 </tr>
               <?php endforeach; ?>
@@ -105,6 +168,53 @@ if ($res0) {
           </tbody>
         </table>
       </div>
+
+      <!-- Pagination -->
+      <?php if ($totalPages > 1): ?>
+        <nav class="mt-3">
+          <ul class="pagination justify-content-center pagination-sm">
+            <!-- Prev Button -->
+            <li class="page-item <?= $page_num <= 1 ? 'disabled' : '' ?>">
+              <a class="page-link" href="?<?= $baseQS ?>page_num=<?= $page_num - 1 ?>">Previous</a>
+            </li>
+
+            <?php
+            $range = 2;
+            $dots = false;
+            for ($i = 1; $i <= $totalPages; $i++) {
+              if ($i == 1 || $i == $totalPages || ($i >= $page_num - $range && $i <= $page_num + $range)) {
+                $active = $i == $page_num ? 'active' : '';
+                $query = $baseQS . "page_num=$i";
+                echo "<li class='page-item {$active}'><a class='page-link' href='?{$query}'>$i</a></li>";
+                $dots = true;
+              } elseif ($dots) {
+                echo "<li class='page-item disabled'><span class='page-link'>…</span></li>";
+                $dots = false;
+              }
+            }
+            ?>
+
+            <!-- Next Button -->
+            <li class="page-item <?= $page_num >= $totalPages ? 'disabled' : '' ?>">
+              <a class="page-link" href="?<?= $baseQS ?>page_num=<?= $page_num + 1 ?>">Next</a>
+            </li>
+          </ul>
+        </nav>
+      <?php endif; ?>
+
+      <!-- Item counter -->
+      <div class="position-absolute end-0 bottom-0 pe-3 pb-2 text-muted user-select-none pointer-events-none">
+        <small class="d-block fs-6">
+          <?php if ($totalRows > 0): ?>
+            <span class="text-muted small">
+              Showing <strong><?= $startDisplay ?></strong>–<strong><?= $endDisplay ?></strong> of <strong><?= $totalRows ?></strong> Accounts
+            </span>
+          <?php else: ?>
+            <span class="text-muted small">No Accounts Found</span>
+          <?php endif; ?>
+        </small>
+      </div>
+
     </div>
   </div>
 </div>
@@ -528,127 +638,24 @@ if ($res0) {
       }
     }
 
-    let currentView = 'pending'; // track state
-    // Handle dropdown clicks
+    // Get current view from URL or PHP
+    let currentView = '<?= $currentView ?>';
+    // Update dropdown button text on page load
+    dropdownBtn.textContent = currentView === 'declined' ? 'Declined Accounts' : 'Current Pending Accounts';
+    // Handle dropdown clicks with pagination
     dropdownItems.forEach(item => {
       item.addEventListener('click', () => {
         const view = item.getAttribute('data-view');
         if (view === currentView) return;
-        // update label
+        
+        // Update button label
         dropdownBtn.textContent = item.textContent;
-        // fetch JSON
-        fetch('functions/account_request_type.php?view=' + view)
-          .then(res => res.json())
-          .then(obj => {
-            currentView = obj.view;
-            // rebuild header
-            rebuildHeader(currentView);
-            // rebuild body
-            tbody.innerHTML = '';
-            const arr = obj.data;
-            if (!arr.length) {
-              const tr = document.createElement('tr');
-              const td = document.createElement('td');
-              td.colSpan = (currentView==='pending') ? 4 : 5;
-              td.classList.add('text-center');
-              td.textContent = currentView==='pending' ? 'No pending requests' : 'No declined accounts';
-              tr.appendChild(td);
-              tbody.appendChild(tr);
-            } else {
-              arr.forEach(row => {
-                const tr = document.createElement('tr');
-                tr.className='request-row';
-                tr.style.cursor='pointer';
-                tr.dataset.id = row.account_ID;
-                tr.setAttribute('data-full', JSON.stringify(row));
-                
-                // Account ID
-                const td1 = document.createElement('td');
-                td1.textContent = row.account_ID;
-                // Name - Convert "Lastname, Firstname, Middlename" to "Firstname Middlename Lastname"
-                const td2 = document.createElement('td');
-                const nameParts = row.full_name.split(',').map(s => s.trim());
-                let displayName = nameParts[1] || '';
-                if (nameParts[2]) displayName += ' ' + nameParts[2];
-                displayName += ' ' + (nameParts[0] || '');
-                td2.textContent = displayName.trim();
-                // Date
-                const td3 = document.createElement('td');
-                const dtField = (currentView==='pending') ? row.time_creation : row.time_declined;
-                td3.textContent = formatDateTime(dtField);
-                tr.append(td1, td2, td3);
-
-                if (currentView === 'declined') {
-                  const tdReason = document.createElement('td');
-                  tdReason.textContent = row.reason || '';
-                  tr.append(tdReason);
-                }
-
-                // Action cell
-                const tdAction = document.createElement('td');
-                if (currentView==='pending') {
-                  const container = document.createElement('div');
-                  container.className = 'd-flex gap-1';
-
-                  // Approve form
-                  const formA = document.createElement('form');
-                  formA.method='POST'; formA.action='functions/approve_account.php';
-                  formA.className='approve-form';
-                  ['account_ID','name','purok','redirectTo'].forEach(key => {
-                    const inp = document.createElement('input');
-                    inp.type='hidden'; inp.name=key;
-                    if (key==='account_ID') inp.value=row.account_ID;
-                    else if (key==='name') inp.value=row.full_name;
-                    else if (key==='purok') inp.value=row.purok;
-                    else if (key==='redirectTo') inp.value='admin';
-                    formA.appendChild(inp);
-                  });
-
-                  // Approve button
-                  const btnA = document.createElement('button');
-                  btnA.type = 'submit';
-                  btnA.className = 'btn btn-sm btn-success';
-                  btnA.style.minWidth = '90px';
-                  btnA.textContent = 'Approve';
-                  formA.appendChild(btnA);
-                  container.appendChild(formA);
-
-                  // Decline button
-                  const btnD = document.createElement('button');
-                  btnD.type = 'button';
-                  btnD.className = 'btn btn-sm btn-danger decline-btn';
-                  btnD.style.minWidth = '90px';
-                  btnD.dataset.accountId = row.account_ID;
-                  btnD.textContent = 'Decline';
-                  container.appendChild(btnD);
-                  tdAction.appendChild(container);
-
-                } else {
-                  // Delete permanently form
-                  const formDel = document.createElement('form');
-                  formDel.method = 'POST';
-                  formDel.action = 'functions/delete_declined_account.php';
-                  formDel.className = 'd-inline';
-                  const inp = document.createElement('input');
-                  inp.type = 'hidden';
-                  inp.name = 'account_ID';
-                  inp.value = row.account_ID;
-                  formDel.appendChild(inp);
-                  const btnDel = document.createElement('button');
-                  btnDel.type = 'button';
-                  btnDel.className = 'btn btn-sm btn-danger btn-delete-declined';
-                  btnDel.style.minWidth = '170px';
-                  btnDel.textContent = 'Delete Permanently';
-                  formDel.appendChild(btnDel);
-                  tdAction.appendChild(formDel);
-                }
-                tr.append(tdAction);
-                tbody.appendChild(tr);
-              });
-            }
-            // rebind events on new rows
-            bindRowEvents();
-          }).catch(err => console.error(err));
+        
+        // Redirect with pagination reset
+        const url = new URL(window.location.href);
+        url.searchParams.set('view', view);
+        url.searchParams.set('page_num', '1');
+        window.location.href = url;
       });
     });
 

@@ -76,6 +76,87 @@ switch($requestType) {
         exit();
     }
 
+    // 3.5) Check for existing Barangay ID requests by NAME and BIRTHDATE
+    // This prevents creating duplicate IDs for the same person
+    // NEW APPLICATION: Block if person (by name + birthdate) already has a Released Barangay ID
+    // RENEWAL: Require that person has an existing Released ID that's eligible for renewal
+
+    if ($transactionType === 'New Application') {
+        // Check if this person (by full name AND birthdate) already has a Released Barangay ID
+        $checkStmt = $conn->prepare("
+            SELECT transaction_id, valid_until 
+            FROM barangay_id_requests 
+            WHERE full_name = ? 
+            AND birth_date = ?
+            AND document_status = 'Released' 
+            LIMIT 1
+        ");
+        $checkStmt->bind_param('ss', $fullName, $birthDate);
+        $checkStmt->execute();
+        $checkResult = $checkStmt->get_result();
+        
+        if ($checkResult->num_rows > 0) {
+            $existingID = $checkResult->fetch_assoc();
+            $checkStmt->close();
+            
+            // Person already has a released ID - cannot create new application
+            $_SESSION['process_new_request_errors'] = [
+                'A Barangay ID already exists for ' . $fullName . ' (ID: ' . $existingID['transaction_id'] . '). ' .
+                'Please use Renewal instead if the ID is expiring soon.'
+            ];
+            header("Location: ../{$redirectBase}?page={$redirectPage}&error=duplicate");
+            exit();
+        }
+        $checkStmt->close();
+        
+    } elseif ($transactionType === 'Renewal') {
+        // Check if this person has a Released Barangay ID and if it's eligible for renewal
+        $checkStmt = $conn->prepare("
+            SELECT transaction_id, valid_until 
+            FROM barangay_id_requests 
+            WHERE full_name = ? 
+            AND birth_date = ?
+            AND document_status = 'Released' 
+            ORDER BY valid_until DESC 
+            LIMIT 1
+        ");
+        $checkStmt->bind_param('ss', $fullName, $birthDate);
+        $checkStmt->execute();
+        $checkResult = $checkStmt->get_result();
+        
+        if ($checkResult->num_rows === 0) {
+            $checkStmt->close();
+            
+            // No existing released ID found for this person - cannot renew
+            $_SESSION['process_new_request_errors'] = [
+                'No existing Barangay ID found for ' . $fullName . '. Please create a New Application instead.'
+            ];
+            header("Location: ../{$redirectBase}?page={$redirectPage}&error=no_existing_id");
+            exit();
+        }
+        
+        $existingID = $checkResult->fetch_assoc();
+        $checkStmt->close();
+        
+        // Check if ID is eligible for renewal (within 60 days of expiration or already expired)
+        $validUntil = $existingID['valid_until'];
+        $expiryDate = new DateTime($validUntil);
+        $today = new DateTime();
+        $daysUntilExpiry = $today->diff($expiryDate)->days;
+        $isExpired = $today > $expiryDate;
+        
+        // Allow renewal only if: ID expired OR expiring within 60 days
+        if (!$isExpired && $daysUntilExpiry > 60) {
+            $_SESSION['process_new_request_errors'] = [
+                'The Barangay ID for ' . $fullName . ' is not yet eligible for renewal. ' .
+                'Renewals are allowed 60 days before expiration. ' .
+                'ID expires on: ' . date('F j, Y', strtotime($validUntil))
+            ];
+            header("Location: ../{$redirectBase}?page={$redirectPage}&error=not_eligible");
+            exit();
+        }
+    }
+
     // 2) Handle file upload
     $formalPicName = null;
     // For renewal: use existing photo if no new photo uploaded
@@ -134,10 +215,13 @@ switch($requestType) {
     // 4) Insert into barangay_id_requests
     $conn->begin_transaction();
     try {
+        // Calculate valid_until date (1 year from today)
+        $validUntil = date('Y-m-d', strtotime('+1 year'));
+
         $sql = "INSERT INTO barangay_id_requests 
           (account_id, transaction_id, transaction_type, full_name, purok, birth_date, birth_place, civil_status, religion, 
           height, weight, emergency_contact_person, emergency_contact_address, valid_id_number, formal_picture, claim_date, payment_method, 
-          document_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULLIF(?, ''),NULLIF(?, ''),?,?)";
+          document_status, valid_until) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULLIF(?, ''),NULLIF(?, ''),?,?,?)";
 
         $ins = $conn->prepare($sql);
         if (!$ins) {
@@ -147,9 +231,10 @@ switch($requestType) {
         $heightVal = $height !== null ? $height : null;
         $weightVal = $weight !== null ? $weight : null;
 
-        $ins->bind_param('issssssssddsssssss',$userId,$transactionId,$transactionType,$fullName,$purok,$birthDate,$birthPlace,
+        $ins->bind_param('issssssssddssssssss',
+          $userId,$transactionId,$transactionType,$fullName,$purok,$birthDate,$birthPlace,
           $civilStatus,$religion,$heightVal,$weightVal,$contactPerson,$contactAddress,$idNumber,$formalPicName,$claimDate,$paymentMethod,
-          $documentStatus
+          $documentStatus,$validUntil
         );
 
         if (!$ins->execute()) {
@@ -270,18 +355,27 @@ switch($requestType) {
     break;
 
   case 'Good Moral':
-    // 1) Collect posted fields
+    // 1) Collect posted fields & assemble full name
     $fn = trim($_POST['good_moral_first_name'] ?? '');
     $mn = trim($_POST['good_moral_middle_name'] ?? '');
     $ln = trim($_POST['good_moral_last_name'] ?? '');
-    $middlePart = $mn ? " {$mn}" : '';
+
+    // Convert to proper title case (First Letter Uppercase, rest lowercase)
+    $fn = ucwords(strtolower($fn));
+    $mn = $mn ? ucwords(strtolower($mn)) : '';
+    $ln = ucwords(strtolower($ln));
+
+    // Format: "Lastname, Firstname, Middlename" (comma separating all parts)
+    $middlePart = $mn ? ", {$mn}" : '';
     $fullName = "{$ln}, {$fn}{$middlePart}";
 
     $civilStatus = $_POST['good_moral_civil_status'] ?? '';
     $sex = $_POST['good_moral_sex'] ?? '';
     $age = (int)($_POST['good_moral_age'] ?? 0);
     $purok = $_POST['good_moral_purok'] ?? '';
+
     $purpose = trim($_POST['good_moral_purpose'] ?? '');
+    $purpose = ucfirst(strtolower($purpose)); // First letter capital, rest lowercase
     $paymentMethod = 'Over-the-Counter';
     $documentStatus = 'For Verification';
 
@@ -331,7 +425,14 @@ switch($requestType) {
     $fn = trim($_POST['guardianship_first_name'] ?? '');
     $mn = trim($_POST['guardianship_middle_name'] ?? '');
     $ln = trim($_POST['guardianship_last_name'] ?? '');
-    $middlePart = $mn ? " {$mn}" : '';
+
+    // Convert to proper title case (First Letter Uppercase, rest lowercase)
+    $fn = ucwords(strtolower($fn));
+    $mn = $mn ? ucwords(strtolower($mn)) : '';
+    $ln = ucwords(strtolower($ln));
+
+    // Format: "Lastname, Firstname, Middlename" (comma separating all parts)
+    $middlePart = $mn ? ", {$mn}" : '';
     $fullName = "{$ln}, {$fn}{$middlePart}";
 
     $civilStatus = $_POST['guardianship_civil_status'] ?? '';
@@ -340,25 +441,30 @@ switch($requestType) {
 
     // Collect children data (now an array like Solo Parent)
     $childrenData = $_POST['guardianship_children'] ?? [];
-    
+
     // Build comma-separated string for child_name
     $childNames = [];
     $childRelationships = [];
-    
+
     foreach ($childrenData as $child) {
         if (!empty($child['name'])) {
-            $childNames[] = trim($child['name']);
-            $childRelationships[] = !empty($child['relationship']) ? trim($child['relationship']) : '';
+            // Apply title case to child names
+            $childNames[] = ucwords(strtolower(trim($child['name'])));
+            
+            // Apply title case to relationships
+            $relationship = !empty($child['relationship']) ? trim($child['relationship']) : '';
+            $childRelationships[] = $relationship ? ucwords(strtolower($relationship)) : '';
         }
     }
-    
+
     // Format: "Child1, Child2, Child3"
     $childName = implode(', ', $childNames);
-    
+
     // Format: "Relationship1, Relationship2, Relationship3" (keep same format for backward compatibility)
     $childRelationship = implode(', ', $childRelationships);
 
     $purpose = trim($_POST['guardianship_purpose'] ?? '');
+    $purpose = ucfirst(strtolower($purpose)); // First letter capital, rest lowercase
     $paymentMethod = 'Over-the-Counter';
     $documentStatus = 'For Verification';
 
@@ -408,17 +514,23 @@ switch($requestType) {
     $fn = trim($_POST['indigency_first_name'] ?? '');
     $mn = trim($_POST['indigency_middle_name'] ?? '');
     $ln = trim($_POST['indigency_last_name'] ?? '');
-    $middlePart = $mn ? " {$mn}" : '';
+
+    // Convert to proper title case (First Letter Uppercase, rest lowercase)
+    $fn = ucwords(strtolower($fn));
+    $mn = $mn ? ucwords(strtolower($mn)) : '';
+    $ln = ucwords(strtolower($ln));
+
+    // Format: "Lastname, Firstname, Middlename" (comma separating all parts)
+    $middlePart = $mn ? ", {$mn}" : '';
     $fullName = "{$ln}, {$fn}{$middlePart}";
-    // $fullName = trim($_POST['full_name'] ?? '');
 
     // 2) Other form inputs
     $civilStatus = $_POST['indigency_civil_status'] ?? '';
     $age = (int) ($_POST['indigency_age'] ?? 0);
-    // $barangay = $_POST['barangay'] ?? '';
     $purok = $_POST['indigency_purok'] ?? '';
-    // $subdivision = trim($_POST['subdivision'] ?? '');
+
     $purpose = trim($_POST['indigency_purpose'] ?? '');
+    $purpose = ucfirst(strtolower($purpose)); // First letter capital, rest lowercase
     // $documentStatus = 'Processing';
     $documentStatus = 'For Verification';
 
@@ -468,18 +580,24 @@ switch($requestType) {
     $fn = trim($_POST['residency_first_name'] ?? '');
     $mn = trim($_POST['residency_middle_name'] ?? '');
     $ln = trim($_POST['residency_last_name'] ?? '');
-    $middlePart = $mn ? " {$mn}" : '';
+
+    // Convert to proper title case (First Letter Uppercase, rest lowercase)
+    $fn = ucwords(strtolower($fn));
+    $mn = $mn ? ucwords(strtolower($mn)) : '';
+    $ln = ucwords(strtolower($ln));
+
+    // Format: "Lastname, Firstname, Middlename" (comma separating all parts)
+    $middlePart = $mn ? ", {$mn}" : '';
     $fullName = "{$ln}, {$fn}{$middlePart}";
-    // $fullName = trim($_POST['full_name'] ?? '');
 
     // 2) Other form inputs
     $civilStatus = $_POST['residency_civil_status'] ?? '';
     $age = (int) ($_POST['residency_age'] ?? 0);
-    // $barangay = $_POST['barangay'] ?? '';
     $purok = $_POST['residency_purok'] ?? '';
-    // $subdivision = trim($_POST['subdivision'] ?? '');
     $yearsResiding = (int) ($_POST['residency_residing_years'] ?? 0);
+
     $purpose = trim($_POST['residency_purpose'] ?? '');
+    $purpose = ucfirst(strtolower($purpose)); // First letter capital, rest lowercase
     $paymentMethod = 'Over-the-Counter';
     // $documentStatus = 'Processing';
     $documentStatus = 'For Verification';
@@ -531,7 +649,14 @@ switch($requestType) {
     $fn = trim($_POST['solo_parent_first_name'] ?? '');
     $mn = trim($_POST['solo_parent_middle_name'] ?? '');
     $ln = trim($_POST['solo_parent_last_name'] ?? '');
-    $middlePart = $mn ? " {$mn}" : '';
+
+    // Convert to proper title case (First Letter Uppercase, rest lowercase)
+    $fn = ucwords(strtolower($fn));
+    $mn = $mn ? ucwords(strtolower($mn)) : '';
+    $ln = ucwords(strtolower($ln));
+
+    // Format: "Lastname, Firstname, Middlename" (comma separating all parts)
+    $middlePart = $mn ? ", {$mn}" : '';
     $fullName = "{$ln}, {$fn}{$middlePart}";
 
     // 2) Other form inputs
@@ -543,11 +668,20 @@ switch($requestType) {
     
     // 3) Collect children data (now an array)
     $childrenData = $_POST['children'] ?? [];
-    
+
+    // Apply title case to children names
+    foreach ($childrenData as &$child) {
+        if (!empty($child['name'])) {
+            $child['name'] = ucwords(strtolower(trim($child['name'])));
+        }
+    }
+    unset($child); // Break reference
+
     // Build JSON string for children
     $childrenJson = json_encode($childrenData);
-    
+
     $purpose = trim($_POST['solo_parent_purpose'] ?? '');
+    $purpose = ucfirst(strtolower($purpose)); // First letter capital, rest lowercase
     $paymentMethod = 'Over-the-Counter';
     $documentStatus = 'For Verification';
 
@@ -613,22 +747,43 @@ switch($requestType) {
     $fn = trim($_POST['clearance_first_name'] ?? '');
     $mn = trim($_POST['clearance_middle_name'] ?? '');
     $ln = trim($_POST['clearance_last_name'] ?? '');
-    $middlePart = $mn ? " {$mn}" : '';
+
+    // Convert to proper title case (First Letter Uppercase, rest lowercase)
+    $fn = ucwords(strtolower($fn));
+    $mn = $mn ? ucwords(strtolower($mn)) : '';
+    $ln = ucwords(strtolower($ln));
+
+    // Format: "Lastname, Firstname, Middlename" (comma separating all parts)
+    $middlePart = $mn ? ", {$mn}" : '';
     $fullName = "{$ln}, {$fn}{$middlePart}";
 
     // 2) Other form inputs
     $street = trim($_POST['clearance_street'] ?? '');
+    $street = ucwords(strtolower($street)); // Title case
+
     $purok = $_POST['clearance_purok'] ?? '';
-    $barangay = $_POST['clearance_barangay'] ?? 'MAGANG';
-    $municipality = $_POST['clearance_municipality'] ?? 'DAET';
-    $province = $_POST['clearance_province'] ?? 'CAMARINES NORTE';
+
+    $barangay = trim($_POST['clearance_barangay'] ?? 'MAGANG');
+    $barangay = ucwords(strtolower($barangay)); // Keep barangay in UPPERCASE
+
+    $municipality = trim($_POST['clearance_municipality'] ?? 'DAET');
+    $municipality = ucwords(strtolower($municipality)); // Keep municipality in UPPERCASE
+
+    $province = trim($_POST['clearance_province'] ?? 'CAMARINES NORTE');
+    $province = ucwords(strtolower($province)); // Keep province in UPPERCASE
+
     $birthDate = $_POST['clearance_birthdate'] ?? '';
     $age = (int)($_POST['clearance_age'] ?? 0);
+
     $birthPlace = trim($_POST['clearance_birthplace'] ?? '');
+    $birthPlace = ucwords(strtolower($birthPlace)); // Title case
+
     $maritalStatus = $_POST['clearance_marital_status'] ?? '';
     $ctcNumber = trim($_POST['clearance_ctc_number'] ?? '');
     $ctcNumber = $ctcNumber ? (int)$ctcNumber : null;
+
     $purpose = trim($_POST['clearance_purpose'] ?? '');
+    $purpose = ucfirst(strtolower($purpose)); // First letter capital, rest lowercase
     $paymentMethod = 'Over-the-Counter';
     $documentStatus = 'For Verification';
 
@@ -697,19 +852,37 @@ switch($requestType) {
     $fn = trim($_POST['business_first_name'] ?? '');
     $mn = trim($_POST['business_middle_name'] ?? '');
     $ln = trim($_POST['business_last_name'] ?? '');
-    $middlePart = $mn ? " {$mn}" : '';
+
+    // Convert to proper title case (First Letter Uppercase, rest lowercase)
+    $fn = ucwords(strtolower($fn));
+    $mn = $mn ? ucwords(strtolower($mn)) : '';
+    $ln = ucwords(strtolower($ln));
+
+    // Format: "Lastname, Firstname, Middlename" (comma separating all parts)
+    $middlePart = $mn ? ", {$mn}" : '';
     $fullName = "{$ln}, {$fn}{$middlePart}";
 
     // 2) Other form inputs
     $purok = $_POST['business_purok'] ?? '';
-    $barangay = $_POST['business_barangay'] ?? '';
-    $municipality = $_POST['business_municipality'] ?? '';
-    $province = $_POST['business_province'] ?? '';
+
+    $barangay = trim($_POST['business_barangay'] ?? '');
+
+    $municipality = trim($_POST['business_municipality'] ?? '');
+
+    $province = trim($_POST['business_province'] ?? '');
+
     $age = (int)($_POST['business_age'] ?? 0);
     $maritalStatus = $_POST['business_marital_status'] ?? '';
+
     $businessName = trim($_POST['business_name'] ?? '');
+    $businessName = ucwords(strtolower($businessName)); // Title case for business name
+
     $businessType = trim($_POST['business_type'] ?? '');
+    $businessType = ucwords(strtolower($businessType)); // Title case for business type
+
     $businessAddress = trim($_POST['business_address'] ?? '');
+    $businessAddress = ucwords(strtolower($businessAddress)); // Title case for address
+
     $ctcNumber = trim($_POST['business_ctc_number'] ?? '');
     $ctcNumber = $ctcNumber ? (int)$ctcNumber : 0;
     $paymentMethod = 'Over-the-Counter';
@@ -780,8 +953,15 @@ switch($requestType) {
     $fn = trim($_POST['first_time_job_seeker_first_name'] ?? '');
     $mn = trim($_POST['first_time_job_seeker_middle_name'] ?? '');
     $ln = trim($_POST['first_time_job_seeker_last_name'] ?? '');
-    $middlePart = $mn ? " {$mn}" : '';
-    $fullName = "{$ln}, {$fn}{$middlePart} "; // Note: different format for job seeker based on DB
+
+    // Convert to proper title case (First Letter Uppercase, rest lowercase)
+    $fn = ucwords(strtolower($fn));
+    $mn = $mn ? ucwords(strtolower($mn)) : '';
+    $ln = ucwords(strtolower($ln));
+
+    // Format: "Lastname, Firstname, Middlename" (comma separating all parts)
+    $middlePart = $mn ? ", {$mn}" : '';
+    $fullName = "{$ln}, {$fn}{$middlePart}";
 
     // 2) Other form inputs
     $age = (int)($_POST['first_time_job_seeker_age'] ?? 0);

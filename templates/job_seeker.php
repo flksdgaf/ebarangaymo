@@ -50,12 +50,22 @@ $purok         = $data['purok'] ?? '';
 $createdAt     = $data['created_at'] ?? '';
 $issuedDate    = date('Y-m-d');
 
-// Helper to reformat name from "Last, First Middle" to "First Middle Last"
+// Helper to reformat name from "Last, First, Middle" to "First Middle Last"
 function reformatName($name) {
-    $parts = explode(',', $name);
-    if (count($parts) === 2) {
-        return trim($parts[1]) . ' ' . trim($parts[0]);
+    // Split by comma and trim whitespace
+    $parts = array_map('trim', explode(',', $name));
+    
+    if (count($parts) >= 3) {
+        // Format: "Lastname, Firstname, Middlename"
+        // Return: "Firstname Middlename Lastname"
+        return $parts[1] . ' ' . $parts[2] . ' ' . $parts[0];
+    } elseif (count($parts) === 2) {
+        // Format: "Lastname, Firstname" (no middle name)
+        // Return: "Firstname Lastname"
+        return $parts[1] . ' ' . $parts[0];
     }
+    
+    // Fallback: return as-is
     return $name;
 }
 

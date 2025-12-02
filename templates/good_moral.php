@@ -55,12 +55,22 @@ $amount        = $data['amount'] ?? '';
 $createdAt     = $data['created_at'] ?? '';
 $issuedDate    = date('Y-m-d');
 
-// Helper to reformat name from "Last, First Middle" to "First Middle Last"
+// Helper to reformat name from "Last, First, Middle" to "First Middle Last"
 function reformatName($name) {
-    $parts = explode(',', $name);
-    if (count($parts) === 2) {
-        return trim($parts[1]) . ' ' . trim($parts[0]);
+    // Split by comma and trim whitespace
+    $parts = array_map('trim', explode(',', $name));
+    
+    if (count($parts) >= 3) {
+        // Format: "Lastname, Firstname, Middlename"
+        // Return: "Firstname Middlename Lastname"
+        return $parts[1] . ' ' . $parts[2] . ' ' . $parts[0];
+    } elseif (count($parts) === 2) {
+        // Format: "Lastname, Firstname" (no middle name)
+        // Return: "Firstname Lastname"
+        return $parts[1] . ' ' . $parts[0];
     }
+    
+    // Fallback: return as-is
     return $name;
 }
 
@@ -211,18 +221,23 @@ if ($download || $print) {
           This certifies further that the above-named person is known to me of
           <span><strong>GOOD MORAL CHARACTER</strong></span> and that
           <strong>
-            <?= strtolower($sex) === 'male'
+            <?= strtoupper(strtolower($sex) === 'male'
                 ? 'he'
                 : (strtolower($sex) === 'female'
                     ? 'she'
-                    : 'he/she') ?>
-            has no derogatory record
+                    : 'he/she')) ?>
+            HAS NO DEROGATORY RECORD
           </strong> on file in this Barangay.
         </p>
 
         <p>
-          This certification is issued upon request of the above-named person for
-          <span><strong><?= htmlspecialchars(strtoupper($purpose)) ?></strong></span> purposes.
+          <?php if (!empty($purpose)): ?>
+            This certification is issued upon request of the above-named person for
+            <span><strong><?= htmlspecialchars(strtoupper($purpose)) ?></strong></span> purposes.
+          <?php else: ?>
+            This certification is issued upon request of the above-named person for
+            <strong>WHATEVER PURPOSES IT MAY SERVE</strong>.
+          <?php endif; ?>
         </p>
 
         <p>
@@ -353,18 +368,23 @@ if ($download || $print) {
         This certifies further that the above-named person is known to me of
         <span><strong>GOOD MORAL CHARACTER</strong></span> and that
         <strong>
-          <?= strtolower($sex) === 'male'
+          <?= strtoupper(strtolower($sex) === 'male'
               ? 'he'
               : (strtolower($sex) === 'female'
                   ? 'she'
-                  : 'he/she') ?>
-          has no derogatory record
+                  : 'he/she')) ?>
+          HAS NO DEROGATORY RECORD
         </strong> on file in this Barangay.
       </p>
 
       <p>
-        This certification is issued upon request of the above-named person for
-        <span><strong><?= htmlspecialchars(strtoupper($purpose)) ?></strong></span> purposes.
+        <?php if (!empty($purpose)): ?>
+          This certification is issued upon request of the above-named person for
+          <span><strong><?= htmlspecialchars(strtoupper($purpose)) ?></strong></span> purposes.
+        <?php else: ?>
+          This certification is issued upon request of the above-named person for
+          <strong>WHATEVER PURPOSES IT MAY SERVE</strong>.
+        <?php endif; ?>
       </p>
 
       <p>

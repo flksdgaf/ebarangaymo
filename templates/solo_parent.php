@@ -11,12 +11,22 @@ $brgyLogo = realpath(__DIR__ . '/../images/magang_logo.png');
 $srcGov   = 'data:image/png;base64,' . base64_encode(file_get_contents($govLogo));
 $srcBrgy  = 'data:image/png;base64,' . base64_encode(file_get_contents($brgyLogo));
 
-// Helper to reformat name from "Last, First Middle" to "First Middle Last"
+// Helper to reformat name from "Last, First, Middle" to "First Middle Last"
 function reformatName($name) {
-    $parts = explode(',', $name);
-    if (count($parts) === 2) {
-        return trim($parts[1]) . ' ' . trim($parts[0]);
+    // Split by comma and trim whitespace
+    $parts = array_map('trim', explode(',', $name));
+    
+    if (count($parts) >= 3) {
+        // Format: "Lastname, Firstname, Middlename"
+        // Return: "Firstname Middlename Lastname"
+        return $parts[1] . ' ' . $parts[2] . ' ' . $parts[0];
+    } elseif (count($parts) === 2) {
+        // Format: "Lastname, Firstname" (no middle name)
+        // Return: "Firstname Lastname"
+        return $parts[1] . ' ' . $parts[0];
     }
+    
+    // Fallback: return as-is
     return $name;
 }
 
@@ -283,7 +293,9 @@ if ($download || $print) {
 
         <p>
           This is to certify that <strong><?= htmlspecialchars(strtoupper($fullNameFormatted)) ?></strong>, 
-          <strong><?= htmlspecialchars($residentAge) ?></strong> years old, SINGLE, <!-- <= strtoupper($civilStatus === 'widowed' ? 'WIDOW' : $civilStatus) > -->
+          <strong><?= htmlspecialchars($residentAge) ?></strong> years old, 
+          <strong><?= htmlspecialchars(strtoupper($civilStatus)) ?></strong>, 
+          <!-- <strong><= strtoupper($civilStatus === 'widowed' ? 'WIDOW' : $civilStatus) ?></strong>, -->
           is a resident of <?= htmlspecialchars($purok) ?>, Magang, Daet, Camarines Norte.
         </p>
 
@@ -293,8 +305,12 @@ if ($download || $print) {
         </p>
 
         <p>
-          Issued this <strong><?= formatWithSuffix($issuedDate) ?></strong> day of <?= date('F, Y', strtotime($issuedDate)) ?> at Barangay Magang, Daet, Camarines Norte for 
-          <strong><?= htmlspecialchars(strtoupper($purpose)) ?></strong> purposes.
+          Issued this <strong><?= formatWithSuffix($issuedDate) ?></strong> day of <?= date('F, Y', strtotime($issuedDate)) ?> at Barangay Magang, Daet, Camarines Norte
+          <?php if (!empty($purpose)): ?>
+            for <strong><?= htmlspecialchars(strtoupper($purpose)) ?></strong> purposes.
+          <?php else: ?>
+            for <strong>WHATEVER PURPOSES IT MAY SERVE</strong>.
+          <?php endif; ?>
         </p>
       </div>
 
@@ -407,7 +423,9 @@ if ($download || $print) {
 
       <p>
         This is to certify that <strong><?= htmlspecialchars(strtoupper($fullNameFormatted)) ?></strong>, 
-        <strong><?= htmlspecialchars($residentAge) ?></strong> years old, SINGLE, <!-- <= strtoupper($civilStatus === 'widowed' ? 'WIDOW' : $civilStatus) > -->
+        <strong><?= htmlspecialchars($residentAge) ?></strong> years old, 
+        <strong><?= htmlspecialchars(strtoupper($civilStatus)) ?></strong>, 
+        <!-- <strong><= strtoupper($civilStatus === 'widowed' ? 'WIDOW' : $civilStatus) ?></strong>, -->
         is a resident of <?= htmlspecialchars($purok) ?>, Magang, Daet, Camarines Norte.
       </p>
 
@@ -417,8 +435,12 @@ if ($download || $print) {
       </p>
 
       <p>
-        Issued this <strong><?= formatWithSuffix($issuedDate) ?></strong> day of <?= date('F, Y', strtotime($issuedDate)) ?> at Barangay Magang, Daet, Camarines Norte for 
-        <strong><?= htmlspecialchars(strtoupper($purpose)) ?></strong> purposes.
+        Issued this <strong><?= formatWithSuffix($issuedDate) ?></strong> day of <?= date('F, Y', strtotime($issuedDate)) ?> at Barangay Magang, Daet, Camarines Norte
+        <?php if (!empty($purpose)): ?>
+          for <strong><?= htmlspecialchars(strtoupper($purpose)) ?></strong> purposes.
+        <?php else: ?>
+          for <strong>WHATEVER PURPOSES IT MAY SERVE</strong>.
+        <?php endif; ?>
       </p>
     </div>
 

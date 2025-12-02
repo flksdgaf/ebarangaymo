@@ -312,20 +312,6 @@ $result = $st->get_result();
     </div>
   <?php endif; ?>
 
-  <!-- <php if (isset($_GET['updated_request_id'])): ?>
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-      Document Request record <strong><= htmlspecialchars($_GET['updated_request_id']) ?></strong> updated successfully!
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-  <php endif; ?> -->
-
-  <!-- <php if (isset($_GET['nochange']) && $_GET['nochange'] == 1): ?>
-    <div class="alert alert-warning alert-dismissible fade show" role="alert">
-      <strong>No changes detected.</strong> No fields were updated.
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-  <php endif; ?> -->
-
   <?php if (! empty($_GET['rejected_id'])): ?>
     <div class="alert alert-danger alert-dismissible fade show" role="alert" id="rejectSuccessAlert">
       Request <strong><?= htmlspecialchars($_GET['rejected_id']) ?></strong> has been <strong>rejected</strong>.
@@ -337,6 +323,30 @@ $result = $st->get_result();
     <div class="alert alert-success alert-dismissible fade show" role="alert">
        Payment for <strong><?= htmlspecialchars($id) ?></strong> recorded successfully!
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <?php endif; ?>
+
+  <?php if (isset($_SESSION['process_new_request_errors'])): ?>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <?php foreach ($_SESSION['process_new_request_errors'] as $error): ?>
+        <div><?= htmlspecialchars($error) ?></div>
+      <?php endforeach; ?>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <?php unset($_SESSION['process_new_request_errors']); ?>
+  <?php endif; ?>
+
+  <?php if (!empty($_GET['edit_no_change'])): ?>
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+      No changes were made to request <strong><?= htmlspecialchars($_GET['edit_no_change']) ?></strong>.
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <?php endif; ?>
+
+  <?php if (!empty($_GET['edit_success'])): ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      Request <strong><?= htmlspecialchars($_GET['edit_success']) ?></strong> has been updated successfully!
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
   <?php endif; ?>
 
@@ -762,7 +772,7 @@ $result = $st->get_result();
                 </div>
                 <div class="col-12 col-md-2">
                   <label class="form-label fw-bold">Age <span class="text-danger">*</span></label>
-                  <input name="clearance_age" id="clearance_age" type="number" min="0" class="form-control form-control-sm" required>
+                  <input name="clearance_age" id="clearance_age" type="number" min="0" class="form-control form-control-sm" readonly style="background-color: #e9ecef;" required>
                 </div>
                 <div class="col-12 col-md-6">
                   <label class="form-label fw-bold">Birth Place <span class="text-danger">*</span></label>
@@ -786,8 +796,8 @@ $result = $st->get_result();
                   <input name="clearance_ctc_number" type="text" class="form-control form-control-sm" placeholder="CTC No.">
                 </div>
                 <div class="col-12 col-md-4">
-                  <label class="form-label fw-bold">Purpose <span class="text-danger">*</span></label>
-                  <input name="clearance_purpose" type="text" class="form-control form-control-sm" placeholder="e.g., Employment, Travel" required>
+                  <label class="form-label fw-bold">Purpose <small class="fw-normal">(optional)</small></label>
+                  <input name="clearance_purpose" type="text" class="form-control form-control-sm" placeholder="Leave blank for 'whatever purpose it may serve'">
                 </div>
 
                 <!-- Formal Picture -->
@@ -1167,8 +1177,8 @@ $result = $st->get_result();
 
                 <!-- Purpose -->
                 <div class="col-12">
-                  <label class="form-label fw-bold">Purpose <span class="text-danger">*</span></label>
-                  <textarea name="good_moral_purpose" class="form-control form-control-sm" rows="2" placeholder="State the purpose of Good Moral" required></textarea>
+                  <label class="form-label fw-bold">Purpose <small class="fw-normal">(optional)</small></label>
+                  <textarea name="good_moral_purpose" class="form-control form-control-sm" rows="2" placeholder="Leave blank for 'whatever purpose it may serve'"></textarea>
                 </div>
               </div>
             </template> 
@@ -1258,8 +1268,8 @@ $result = $st->get_result();
 
                 <!-- Row 3: Purpose -->
                 <div class="col-12">
-                  <label class="form-label fw-bold">Purpose <span class="text-danger">*</span></label>
-                  <textarea name="guardianship_purpose" class="form-control form-control-sm" rows="2" placeholder="State the purpose of guardianship" required></textarea>
+                  <label class="form-label fw-bold">Purpose <small class="fw-normal">(optional)</small></label>
+                  <textarea name="guardianship_purpose" class="form-control form-control-sm" rows="2" placeholder="Leave blank for 'whatever purpose it may serve'"></textarea>
                 </div>
               </div>
             </template>
@@ -1321,8 +1331,8 @@ $result = $st->get_result();
 
                 <!-- Row 4: Purpose -->
                 <div class="col-12">
-                  <label class="form-label fw-bold">Purpose <span class="text-danger">*</span></label>
-                  <textarea name="indigency_purpose" class="form-control form-control-sm" rows="2" placeholder="State the purpose of indigency" required></textarea>
+                  <label class="form-label fw-bold">Purpose <small class="fw-normal">(optional)</small></label>
+                  <textarea name="indigency_purpose" class="form-control form-control-sm" rows="2" placeholder="Leave blank for 'whatever purpose it may serve'"></textarea>
                 </div>
               </div>
             </template>
@@ -1389,8 +1399,8 @@ $result = $st->get_result();
 
                 <!-- Row 4: Purpose -->
                 <div class="col-12">
-                  <label class="form-label fw-bold">Purpose <span class="text-danger">*</span></label>
-                  <textarea name="residency_purpose" class="form-control form-control-sm" rows="2" placeholder="State the purpose of residency" required></textarea>
+                  <label class="form-label fw-bold">Purpose <small class="fw-normal">(optional)</small></label>
+                  <textarea name="residency_purpose" class="form-control form-control-sm" rows="2" placeholder="Leave blank for 'whatever purpose it may serve'"></textarea>
                 </div>
               </div>
             </template>
@@ -1505,8 +1515,8 @@ $result = $st->get_result();
 
                 <!-- Purpose -->
                 <div class="col-12">
-                  <label class="form-label fw-bold">Purpose <span class="text-danger">*</span></label>
-                  <textarea name="solo_parent_purpose" class="form-control form-control-sm" rows="2" placeholder="State the purpose of solo parent" required></textarea>
+                  <label class="form-label fw-bold">Purpose <small class="fw-normal">(optional)</small></label>
+                  <textarea name="solo_parent_purpose" class="form-control form-control-sm" rows="2" placeholder="Leave blank for 'whatever purpose it may serve'"></textarea>
                 </div>
               </div>
             </template>
@@ -2110,6 +2120,28 @@ $conn->close();
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+  // Auto-calculate age for Barangay Clearance
+  document.addEventListener('change', (e) => {
+    if (e.target && e.target.id === 'clearance_birthdate') {
+      const birthdate = e.target.value;
+      const ageField = document.getElementById('clearance_age');
+      
+      if (birthdate && ageField) {
+        const birthDate = new Date(birthdate);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        
+        // Adjust age if birthday hasn't occurred this year yet
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        
+        ageField.value = age;
+      }
+    }
+  });
+
   let originalData = {};
   // Search 
   const searchForm = document.getElementById('searchForm');
@@ -2408,6 +2440,401 @@ document.addEventListener('DOMContentLoaded', () => {
     // finally show modal
     const vm = new bootstrap.Modal(document.getElementById('viewRequestModal'));
     vm.show();
+  }
+
+  // ========== EDIT FUNCTIONALITY ==========
+  // Edit button click handler
+  document.addEventListener('click', async (evt) => {
+    const editBtn = evt.target.closest('.request-btn-edit');
+    if (!editBtn) return;
+    
+    const row = editBtn.closest('tr');
+    if (!row) return;
+    
+    const tid = row.dataset.id;
+    if (!tid) return;
+    
+    try {
+      const res = await fetch(`functions/get_request.php?transaction_id=${encodeURIComponent(tid)}`, { 
+        credentials: 'same-origin' 
+      });
+      
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+      const json = await res.json();
+      if (!json.success) throw new Error(json.message || 'No data');
+      
+      populateEditModal(json.data || {});
+    } catch (err) {
+      alert('Failed to load request details: ' + (err.message || err));
+    }
+  });
+
+  // Handle religion "Other" option for Barangay ID in EDIT modal
+  document.addEventListener('change', (e) => {
+    if (e.target && e.target.name === 'barangay_id_religion') {
+      const religionSelect = e.target;
+      const editDynamicFields = document.getElementById('editDynamicFields');
+      
+      if (editDynamicFields) {
+        const religionOtherContainer = editDynamicFields.querySelector('#bid_religion_other_container');
+        const religionOtherInput = editDynamicFields.querySelector('#bid_religion_other');
+        
+        if (religionOtherContainer && religionOtherInput) {
+          if (religionSelect.value === 'Other') {
+            religionOtherContainer.classList.remove('d-none');
+            religionOtherInput.required = true;
+          } else {
+            religionOtherContainer.classList.add('d-none');
+            religionOtherInput.required = false;
+            religionOtherInput.value = '';
+          }
+        }
+      }
+    }
+  });
+
+  // Populate edit modal with existing data
+  function populateEditModal(data) {
+    const editModal = document.getElementById('editRequestModal');
+    const editForm = document.getElementById('editRequestForm');
+    const dynamicFields = document.getElementById('editDynamicFields');
+    
+    // Set transaction ID and request type
+    document.getElementById('editTransactionId').value = data.transaction_id || '';
+    document.getElementById('editRequestType').value = data.request_type || '';
+    
+    // Update modal title
+    document.getElementById('editRequestModalLabel').textContent = `Edit ${data.request_type} Request`;
+    
+    // Clear previous fields
+    dynamicFields.innerHTML = '';
+    
+    // Get the appropriate template
+    const requestType = data.request_type || '';
+    const tpl = document.getElementById('tpl-' + requestType);
+    
+    if (!tpl) {
+      dynamicFields.innerHTML = '<div class="col-12 text-muted">No template found for this request type.</div>';
+      new bootstrap.Modal(editModal).show();
+      return;
+    }
+    
+    // Clone template
+    dynamicFields.appendChild(tpl.content.cloneNode(true));
+    
+    // Parse full name from "Lastname, Firstname, Middlename" format
+    const fullName = data.full_name || '';
+    const nameParts = fullName.split(',').map(p => p.trim());
+    let lastName = '', firstName = '', middleName = '';
+    
+    if (nameParts.length >= 3) {
+      lastName = nameParts[0];
+      firstName = nameParts[1];
+      middleName = nameParts[2];
+    } else if (nameParts.length === 2) {
+      lastName = nameParts[0];
+      firstName = nameParts[1];
+    } else {
+      firstName = fullName;
+    }
+    
+    // Wait for DOM to update after cloning template, then populate fields
+    setTimeout(() => {
+      // Populate fields based on request type
+      switch(requestType) {
+        case 'Barangay ID':
+          setValueInEdit('bid_first_name', firstName);
+          setValueInEdit('bid_middle_name', middleName);
+          setValueInEdit('bid_last_name', lastName);
+          setValueInEdit('bid_purok', data.purok);
+          setValueInEdit('bid_dob', data.birth_date);
+          setValueInEdit('bid_birth_place', data.birth_place);
+          setValueInEdit('bid_civil_status', data.civil_status);
+          
+          // Handle religion
+          const religionSelect = dynamicFields.querySelector('#bid_religion');
+          const religionOtherContainer = dynamicFields.querySelector('#bid_religion_other_container');
+          const religionOtherInput = dynamicFields.querySelector('#bid_religion_other');
+          const commonReligions = ['Roman Catholic', 'Islam', 'Iglesia ni Cristo', 'Evangelical', 'Baptist', 'Seventh-day Adventist'];
+          
+          if (religionSelect && commonReligions.includes(data.religion)) {
+            religionSelect.value = data.religion;
+          } else if (religionSelect && data.religion) {
+            religionSelect.value = 'Other';
+            if (religionOtherContainer) religionOtherContainer.classList.remove('d-none');
+            if (religionOtherInput) religionOtherInput.value = data.religion;
+          }
+          
+          setValueInEdit('bid_height', data.height);
+          setValueInEdit('bid_weight', data.weight);
+          setValueInEdit('bid_emergency_contact', data.emergency_contact_person);
+          setValueInEdit('bid_emergency_address', data.emergency_contact_address);
+          setValueInEdit('bid_id_number', data.valid_id_number);
+          
+          // Show current photo if exists
+          if (data.formal_picture) {
+            const photoNameDiv = dynamicFields.querySelector('#currentPhotoName');
+            if (photoNameDiv) {
+              photoNameDiv.textContent = `Current photo: ${data.formal_picture}`;
+              photoNameDiv.classList.remove('d-none');
+            }
+            
+            // Store existing photo path
+            const existingPhotoInput = dynamicFields.querySelector('#bid_existing_photo');
+            if (existingPhotoInput) {
+              existingPhotoInput.value = data.formal_picture;
+            }
+          }
+          
+          // Initialize camera for edit modal
+          initBarangayIDCamera();
+          break;
+          
+        case 'Barangay Clearance':
+          setValueInEdit('clearance_first_name', firstName);
+          setValueInEdit('clearance_middle_name', middleName);
+          setValueInEdit('clearance_last_name', lastName);
+          setValueInEdit('clearance_street', data.street);
+          setValueInEdit('clearance_purok', data.purok);
+          setValueInEdit('clearance_barangay', data.barangay);
+          setValueInEdit('clearance_municipality', data.municipality);
+          setValueInEdit('clearance_province', data.province);
+          setValueInEdit('clearance_birthdate', data.birth_date);
+          setValueInEdit('clearance_age', data.age);
+          setValueInEdit('clearance_birthplace', data.birth_place);
+          setValueInEdit('clearance_marital_status', data.marital_status);
+          setValueInEdit('clearance_ctc_number', data.ctc_number);
+          setValueInEdit('clearance_purpose', data.purpose);
+          
+          // Show current photo
+          if (data.picture) {
+            const photoContainer = dynamicFields.querySelector('.col-12:last-child');
+            if (photoContainer) {
+              const photoNameDiv = document.createElement('div');
+              photoNameDiv.className = 'form-text text-muted mt-2';
+              photoNameDiv.textContent = `Current photo: ${data.picture}`;
+              photoContainer.appendChild(photoNameDiv);
+            }
+          }
+          
+          initClearanceCamera();
+          break;
+          
+        case 'Business Clearance':
+          setValueInEdit('business_first_name', firstName);
+          setValueInEdit('business_middle_name', middleName);
+          setValueInEdit('business_last_name', lastName);
+          setValueInEdit('business_purok', data.purok);
+          setValueInEdit('business_barangay', data.barangay);
+          setValueInEdit('business_municipality', data.municipality);
+          setValueInEdit('business_province', data.province);
+          setValueInEdit('business_age', data.age);
+          setValueInEdit('business_marital_status', data.marital_status);
+          setValueInEdit('business_name', data.business_name);
+          setValueInEdit('business_type', data.business_type);
+          setValueInEdit('business_address', data.address);
+          setValueInEdit('business_ctc_number', data.ctc_number);
+          
+          // Show current photo
+          if (data.picture) {
+            const photoContainer = dynamicFields.querySelector('.col-12:last-child');
+            if (photoContainer) {
+              const photoNameDiv = document.createElement('div');
+              photoNameDiv.className = 'form-text text-muted mt-2';
+              photoNameDiv.textContent = `Current photo: ${data.picture}`;
+              photoContainer.appendChild(photoNameDiv);
+            }
+          }
+          
+          initBusinessCamera();
+          break;
+          
+        case 'First Time Job Seeker':
+          setValueInEdit('first_time_job_seeker_first_name', firstName);
+          setValueInEdit('first_time_job_seeker_middle_name', middleName);
+          setValueInEdit('first_time_job_seeker_last_name', lastName);
+          setValueInEdit('first_time_job_seeker_age', data.age);
+          setValueInEdit('first_time_job_seeker_sex', data.sex);
+          setValueInEdit('first_time_job_seeker_civil_status', data.civil_status);
+          setValueInEdit('first_time_job_seeker_purok', data.purok);
+          break;
+          
+        case 'Good Moral':
+          setValueInEdit('good_moral_first_name', firstName);
+          setValueInEdit('good_moral_middle_name', middleName);
+          setValueInEdit('good_moral_last_name', lastName);
+          setValueInEdit('good_moral_civil_status', data.civil_status);
+          setValueInEdit('good_moral_sex', data.sex);
+          setValueInEdit('good_moral_age', data.age);
+          setValueInEdit('good_moral_purok', data.purok);
+          setValueInEdit('good_moral_purpose', data.purpose);
+          break;
+          
+        case 'Guardianship':
+          setValueInEdit('guardianship_first_name', firstName);
+          setValueInEdit('guardianship_middle_name', middleName);
+          setValueInEdit('guardianship_last_name', lastName);
+          setValueInEdit('guardianship_civil_status', data.civil_status);
+          setValueInEdit('guardianship_age', data.age);
+          setValueInEdit('guardianship_purok', data.purok);
+          setValueInEdit('guardianship_purpose', data.purpose);
+          
+          // Populate children data
+          if (data.child_name) {
+            const childNames = data.child_name.split(',').map(n => n.trim());
+            const childRelationships = (data.child_relationship || '').split(',').map(r => r.trim());
+            const container = dynamicFields.querySelector('#guardianshipChildrenContainer');
+            
+            if (container) {
+              container.innerHTML = ''; // Clear default child
+              
+              childNames.forEach((name, idx) => {
+                const childEntry = document.createElement('div');
+                childEntry.className = 'guardianship-child-entry border rounded p-3 mb-3 position-relative';
+                childEntry.dataset.childIndex = idx;
+                childEntry.innerHTML = `
+                  ${idx > 0 ? `<button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2 remove-guardianship-child-btn" style="z-index:10;">
+                    <span class="material-symbols-outlined" style="font-size:14px;">close</span>
+                  </button>` : ''}
+                  <div class="row gy-2">
+                    <div class="col-12 col-md-6">
+                      <label class="form-label fw-bold">Child's Full Name <span class="text-danger">*</span></label>
+                      <input name="guardianship_children[${idx}][name]" type="text" class="form-control form-control-sm" value="${name}" required>
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <label class="form-label fw-bold">Relationship to Guardian <small class="fw-normal">(optional)</small></label>
+                      <input name="guardianship_children[${idx}][relationship]" type="text" class="form-control form-control-sm" value="${childRelationships[idx] || ''}" placeholder="e.g., Son, Daughter, Nephew, Niece">
+                    </div>
+                  </div>
+                `;
+                container.appendChild(childEntry);
+              });
+              
+              guardianshipChildCounter = childNames.length;
+            }
+          }
+          break;
+          
+        case 'Indigency':
+          setValueInEdit('indigency_first_name', firstName);
+          setValueInEdit('indigency_middle_name', middleName);
+          setValueInEdit('indigency_last_name', lastName);
+          setValueInEdit('indigency_civil_status', data.civil_status);
+          setValueInEdit('indigency_age', data.age);
+          setValueInEdit('indigency_purok', data.purok);
+          setValueInEdit('indigency_purpose', data.purpose);
+          break;
+          
+        case 'Residency':
+          setValueInEdit('residency_first_name', firstName);
+          setValueInEdit('residency_middle_name', middleName);
+          setValueInEdit('residency_last_name', lastName);
+          setValueInEdit('residency_civil_status', data.civil_status);
+          setValueInEdit('residency_age', data.age);
+          setValueInEdit('residency_purok', data.purok);
+          setValueInEdit('residency_residing_years', data.residing_years);
+          setValueInEdit('residency_purpose', data.purpose);
+          break;
+          
+        case 'Solo Parent':
+          setValueInEdit('solo_parent_first_name', firstName);
+          setValueInEdit('solo_parent_middle_name', middleName);
+          setValueInEdit('solo_parent_last_name', lastName);
+          setValueInEdit('solo_parent_civil_status', data.civil_status);
+          setValueInEdit('solo_parent_age', data.age);
+          setValueInEdit('solo_parent_sex', data.sex);
+          setValueInEdit('solo_parent_purok', data.purok);
+          setValueInEdit('solo_parent_years_solo_parent', data.years_solo_parent);
+          setValueInEdit('solo_parent_purpose', data.purpose);
+          
+          // Populate children data
+          if (data.children_data) {
+            let childrenArray = [];
+            try {
+              childrenArray = JSON.parse(data.children_data);
+            } catch (e) {
+              console.error('Failed to parse children data:', e);
+            }
+            
+            const container = dynamicFields.querySelector('#childrenContainer');
+            if (container && Array.isArray(childrenArray)) {
+              container.innerHTML = ''; // Clear default child
+              
+              childrenArray.forEach((child, idx) => {
+                const childEntry = document.createElement('div');
+                childEntry.className = 'child-entry border rounded p-3 mb-3 position-relative';
+                childEntry.dataset.childIndex = idx;
+                
+                const today = new Date().toISOString().split('T')[0];
+                
+                childEntry.innerHTML = `
+                  ${idx > 0 ? `<button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2 remove-child-btn" style="z-index:10;">
+                    <span class="material-symbols-outlined" style="font-size:14px;">close</span>
+                  </button>` : ''}
+                  <div class="row gy-2">
+                    <div class="col-12 col-md-4">
+                      <label class="form-label fw-bold">Child's Full Name <span class="text-danger">*</span></label>
+                      <input name="children[${idx}][name]" type="text" class="form-control form-control-sm" value="${child.name || ''}" required>
+                    </div>
+                    <div class="col-12 col-md-2">
+                      <label class="form-label fw-bold">Sex <span class="text-danger">*</span></label>
+                      <select name="children[${idx}][sex]" class="form-select form-select-sm" required>
+                        <option value="">Select…</option>
+                        <option ${child.sex === 'Male' ? 'selected' : ''}>Male</option>
+                        <option ${child.sex === 'Female' ? 'selected' : ''}>Female</option>
+                      </select>
+                    </div>
+                    <div class="col-12 col-md-3">
+                      <label class="form-label fw-bold">Birthdate <span class="text-danger">*</span></label>
+                      <input name="children[${idx}][birthdate]" type="date" class="form-control form-control-sm child-birthdate" value="${child.birthdate || ''}" max="${today}" required>
+                    </div>
+                    <div class="col-12 col-md-3">
+                      <label class="form-label fw-bold">Age</label>
+                      <input name="children[${idx}][age_display]" type="text" class="form-control form-control-sm child-age-display" value="${child.age_display || child.age || ''}" readonly style="background-color: #e9ecef;">
+                      <input name="children[${idx}][age]" type="hidden" class="child-age-value" value="${child.age || ''}">
+                    </div>
+                  </div>
+                `;
+                container.appendChild(childEntry);
+              });
+              
+              childCounter = childrenArray.length;
+            }
+          }
+          break;
+      }
+    }, 50); // Short delay to ensure DOM is ready
+    
+    // Show modal
+    new bootstrap.Modal(editModal).show();
+  }
+
+  // Helper function to set input/select values in edit modal (searches within dynamicFields)
+  function setValueInEdit(fieldName, value) {
+    const dynamicFields = document.getElementById('editDynamicFields');
+    if (!dynamicFields) return;
+    
+    // Try to find by name attribute first (more reliable)
+    let el = dynamicFields.querySelector(`[name="${fieldName}"]`);
+    
+    // If not found by name, try by ID
+    if (!el) {
+      el = dynamicFields.querySelector(`#${fieldName}`);
+    }
+    
+    if (el) {
+      el.value = value || '';
+    } else {
+      console.warn(`Field not found: ${fieldName}`);
+    }
+  }
+
+  // Helper function to set input/select values
+  function setValue(id, value) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.value = value || '';
+    }
   }
 
   document.addEventListener('click', async (evt) => {
@@ -2724,31 +3151,34 @@ document.addEventListener('DOMContentLoaded', () => {
       if (isRenewal) {
         searchContainer.style.display = 'block';
         
-        // Make fields readonly with inline styles
+        // Make fields LOOK readonly with inline styles (but keep them enabled for submission)
         editableFields.forEach(fieldId => {
           const field = document.getElementById(fieldId);
           if (field) {
-            field.readOnly = true;
+            field.readOnly = true; // Keep readonly (still submits)
             field.style.backgroundColor = '#e9ecef';
             field.style.cursor = 'not-allowed';
+            field.style.pointerEvents = 'none'; // Prevent clicking/editing
           }
         });
         
-        // Make religion select disabled with inline styles
+        // Make religion select LOOK disabled (but keep enabled for submission)
         const religionSelect = document.getElementById('bid_religion');
         if (religionSelect) {
-          religionSelect.disabled = true;
+          // DON'T disable it, just style it
           religionSelect.style.backgroundColor = '#e9ecef';
           religionSelect.style.cursor = 'not-allowed';
+          religionSelect.style.pointerEvents = 'none'; // Prevent interaction
         }
 
         // Also handle the "Other" container
         const religionOtherContainer = document.getElementById('bid_religion_other_container');
         const religionOtherInput = document.getElementById('bid_religion_other');
         if (religionOtherContainer && religionOtherInput) {
-          religionOtherInput.readOnly = true;
+          religionOtherInput.readOnly = true; // Keep readonly (still submits)
           religionOtherInput.style.backgroundColor = '#e9ecef';
           religionOtherInput.style.cursor = 'not-allowed';
+          religionOtherInput.style.pointerEvents = 'none'; // Prevent interaction
         }
       } else {
         searchContainer.style.display = 'none';
@@ -2757,22 +3187,24 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('renewalTransactionId').value = '';
         clearBarangayIDFields();
         
-        // Make fields editable and remove inline styles
+        // Make fields editable and remove ALL inline styles (including pointer-events)
         editableFields.forEach(fieldId => {
           const field = document.getElementById(fieldId);
           if (field) {
             field.readOnly = false;
             field.style.backgroundColor = '';
             field.style.cursor = '';
+            field.style.pointerEvents = ''; // IMPORTANT: Remove pointer-events
           }
         });
         
-        // Make religion select enabled and remove inline styles
+        // Make religion select enabled and remove ALL inline styles
         const religionSelect = document.getElementById('bid_religion');
         if (religionSelect) {
           religionSelect.disabled = false;
           religionSelect.style.backgroundColor = '';
           religionSelect.style.cursor = '';
+          religionSelect.style.pointerEvents = ''; // IMPORTANT: Remove pointer-events
         }
         
         // ALSO RE-ENABLE the "Other" religion input field
@@ -2782,6 +3214,7 @@ document.addEventListener('DOMContentLoaded', () => {
           religionOtherInput.readOnly = false;
           religionOtherInput.style.backgroundColor = '';
           religionOtherInput.style.cursor = '';
+          religionOtherInput.style.pointerEvents = ''; // IMPORTANT: Remove pointer-events
         }
       }
     }
@@ -3040,7 +3473,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 const item = document.createElement('button');
                 item.type = 'button';
                 item.className = 'list-group-item list-group-item-action';
-                item.textContent = `${record.full_name} - ${record.transaction_id}`;
+                
+                // Format display name from "Lastname, Firstname, Middlename" to "Firstname Middlename Lastname"
+                const formatDisplayName = (fullName) => {
+                  const parts = fullName.split(',').map(p => p.trim());
+                  if (parts.length >= 3) {
+                    return `${parts[1]} ${parts[2]} ${parts[0]}`;
+                  } else if (parts.length === 2) {
+                    return `${parts[1]} ${parts[0]}`;
+                  }
+                  return fullName;
+                };
+                
+                item.textContent = `${formatDisplayName(record.full_name)} - ${record.transaction_id}`;
                 item.onclick = () => populateBarangayIDFields(record);
                 resultsContainer.appendChild(item);
               });
@@ -3054,18 +3499,23 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function populateBarangayIDFields(record) {
-    // Parse the full name
-    const nameParts = record.full_name.split(',');
+    // Parse the full name from "Lastname, Firstname, Middlename" format
+    const nameParts = record.full_name.split(',').map(part => part.trim());
     let lastName = '', firstName = '', middleName = '';
     
-    if (nameParts.length >= 2) {
-      lastName = nameParts[0].trim();
-      const firstMiddlePart = nameParts[1].trim();
-      
-      // Split first and middle name
-      const firstMiddleArr = firstMiddlePart.split(' ');
-      firstName = firstMiddleArr[0] || '';
-      middleName = firstMiddleArr.slice(1).join(' ') || '';
+    if (nameParts.length >= 3) {
+      // Format: "Lastname, Firstname, Middlename"
+      lastName = nameParts[0];
+      firstName = nameParts[1];
+      middleName = nameParts[2];
+    } else if (nameParts.length === 2) {
+      // Format: "Lastname, Firstname" (no middle name)
+      lastName = nameParts[0];
+      firstName = nameParts[1];
+      middleName = '';
+    } else {
+      // Fallback: treat entire string as name
+      firstName = record.full_name;
     }
     
     // Populate fields

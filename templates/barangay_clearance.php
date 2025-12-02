@@ -49,9 +49,10 @@ function reformatName($name) {
 }
 
 // Helper to split full name into parts
+// Expected format: "Lastname, Firstname, Middlename" or "Lastname, Firstname"
 function splitFullName($fullName) {
-    $formatted = reformatName($fullName);
-    $parts = explode(' ', trim($formatted));
+    // Split by comma
+    $parts = array_map('trim', explode(',', $fullName));
     
     $result = [
         'first' => '',
@@ -60,13 +61,17 @@ function splitFullName($fullName) {
     ];
     
     if (count($parts) >= 3) {
-        $result['first'] = $parts[0];
-        $result['middle'] = $parts[1];
-        $result['last'] = implode(' ', array_slice($parts, 2));
+        // Format: "Lastname, Firstname, Middlename"
+        $result['last'] = $parts[0];
+        $result['first'] = $parts[1];
+        $result['middle'] = $parts[2];
     } elseif (count($parts) === 2) {
-        $result['first'] = $parts[0];
-        $result['last'] = $parts[1];
+        // Format: "Lastname, Firstname" (no middle name)
+        $result['last'] = $parts[0];
+        $result['first'] = $parts[1];
+        $result['middle'] = '';
     } else {
+        // Fallback: treat entire string as first name
         $result['first'] = $parts[0] ?? '';
     }
     
@@ -292,7 +297,7 @@ if ($download || $print) {
           </div>
           <div class="info-row">
             <span class="label">PUROK:</span>
-            <?= htmlspecialchars($purok) ?>
+            <?= strtoupper(htmlspecialchars($purok)) ?>
           </div>
           <div class="info-row">
             <span class="label">BARANGAY:</span>
@@ -363,10 +368,17 @@ if ($download || $print) {
       </div>
 
       <div class="purpose-section">
-        THIS CERTIFICATION IS ISSUED FOR THE PURPOSE OF:<br>
-        <div style="margin-left: 100px; margin-top: 10px;">
-          <strong><?= strtoupper(htmlspecialchars($purpose)) ?></strong>
-        </div>
+        <?php if (!empty($purpose)): ?>
+          THIS CERTIFICATION IS ISSUED FOR THE PURPOSE OF:<br>
+          <div style="margin-left: 100px; margin-top: 10px;">
+            <strong><?= strtoupper(htmlspecialchars($purpose)) ?></strong>
+          </div>
+        <?php else: ?>
+          THIS CERTIFICATION IS ISSUED FOR: <br>
+          <div style="margin-left: 0; margin-top: 10px;">
+            <strong>WHATEVER PURPOSES IT MAY SERVE</strong>.
+          </div>
+        <?php endif; ?>
       </div>
 
       <div class="validity-section">
@@ -557,7 +569,7 @@ if ($download || $print) {
         </div>
         <div class="info-row">
           <span class="label">PUROK:</span>
-          <?= htmlspecialchars($purok) ?>
+          <?= strtoupper(htmlspecialchars($purok)) ?>
         </div>
         <div class="info-row">
           <span class="label">BARANGAY:</span>
@@ -628,10 +640,17 @@ if ($download || $print) {
     </div>
 
     <div class="purpose-section">
-      THIS CERTIFICATION IS ISSUED FOR THE PURPOSE OF:</><br>
-      <div style="margin-left: 100px; margin-top: 10px;">
-        <strong><?= strtoupper(htmlspecialchars($purpose)) ?></strong>
-      </div>
+      <?php if (!empty($purpose)): ?>
+        THIS CERTIFICATION IS ISSUED FOR THE PURPOSE OF:<br>
+        <div style="margin-left: 100px; margin-top: 10px;">
+          <strong><?= strtoupper(htmlspecialchars($purpose)) ?></strong>
+        </div>
+      <?php else: ?>
+        THIS CERTIFICATION IS ISSUED FOR: <br>
+        <div style="margin-left: 0; margin-top: 10px;">
+          <strong>WHATEVER PURPOSES IT MAY SERVE</strong>.
+        </div>
+      <?php endif; ?>
     </div>
 
     <div class="validity-section">

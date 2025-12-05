@@ -96,7 +96,7 @@ $menuItems = [
     'label' => 'Collection',
     'icon' => 'receipt', // material icon name; change to preferred icon if you want
     'href' => 'adminCollections.php',
-    'roles' => ['Brgy Treasurer','Brgy Bookkeeper'] // limited access as requested
+    'roles' => ['Brgy Treasurer'] // limited access as requested 'Brgy Bookkeeper'
   ],
   [
     'id' => 'adminTransactions',

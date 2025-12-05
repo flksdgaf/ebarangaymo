@@ -655,7 +655,24 @@ document.addEventListener("DOMContentLoaded", function () {
         const validID = get('validIDNumber');
 
         document.getElementById('summarytransactionType') && (document.getElementById('summarytransactionType').textContent = txType);
-        document.getElementById('summaryFullName') && (document.getElementById('summaryFullName').textContent = fullname);
+        // Convert "Lastname, Firstname, Middlename" to "Firstname Middlename Lastname" for display
+        if (document.getElementById('summaryFullName')) {
+            const nameParts = fullname.split(',').map(part => part.trim());
+            let displayName;
+            
+            if (nameParts.length === 3) {
+                // Has middlename: "Lastname, Firstname, Middlename"
+                displayName = nameParts[1] + ' ' + nameParts[2] + ' ' + nameParts[0];
+            } else if (nameParts.length === 2) {
+                // No middlename: "Lastname, Firstname"
+                displayName = nameParts[1] + ' ' + nameParts[0];
+            } else {
+                // Fallback: keep original
+                displayName = fullname;
+            }
+            
+            document.getElementById('summaryFullName').textContent = displayName;
+        }
         document.getElementById('summaryPurok') && (document.getElementById('summaryPurok').textContent = purok);
         document.getElementById('summaryHeight') && (document.getElementById('summaryHeight').textContent = height);
         document.getElementById('summaryWeight') && (document.getElementById('summaryWeight').textContent = weight);
@@ -728,7 +745,28 @@ document.addEventListener("DOMContentLoaded", function () {
             el.textContent = src.value || src.textContent || '';
         };
         setIfEmpty('summarytransactionType', '#transactiontype');
-        setIfEmpty('summaryFullName', '#fullname');
+        // setIfEmpty('summaryFullName', '#fullname');
+        // Custom handling for full name to convert format for display
+        if (document.getElementById('summaryFullName')) {
+            const summaryEl = document.getElementById('summaryFullName');
+            if (!summaryEl.textContent || summaryEl.textContent.trim() === '') {
+                const fnInput = document.getElementById('fullname');
+                if (fnInput && fnInput.value) {
+                    const nameParts = fnInput.value.split(',').map(part => part.trim());
+                    let displayName;
+                    
+                    if (nameParts.length === 3) {
+                        displayName = nameParts[1] + ' ' + nameParts[2] + ' ' + nameParts[0];
+                    } else if (nameParts.length === 2) {
+                        displayName = nameParts[1] + ' ' + nameParts[0];
+                    } else {
+                        displayName = fnInput.value;
+                    }
+                    
+                    summaryEl.textContent = displayName;
+                }
+            }
+        }
         setIfEmpty('summaryPurok', '#purok');
         setIfEmpty('summaryHeight', '#height');
         setIfEmpty('summaryWeight', '#weight');

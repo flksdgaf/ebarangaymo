@@ -475,7 +475,20 @@ document.addEventListener("DOMContentLoaded", function () {
             else el.textContent = val;
         };
 
-        const fullname = get('fullname');
+        // Convert "Lastname, Firstname, Middlename" to "Firstname Middlename Lastname" for display
+        const fullnameRaw = get('fullname');
+        let fullname = fullnameRaw;
+        if (fullnameRaw) {
+            const nameParts = fullnameRaw.split(',').map(part => part.trim());
+            
+            if (nameParts.length === 3) {
+                // Has middlename: "Lastname, Firstname, Middlename"
+                fullname = nameParts[1] + ' ' + nameParts[2] + ' ' + nameParts[0];
+            } else if (nameParts.length === 2) {
+                // No middlename: "Lastname, Firstname"
+                fullname = nameParts[1] + ' ' + nameParts[0];
+            }
+        }
         const street = get('street');
         const purok = get('purok');
         const age = get('age');

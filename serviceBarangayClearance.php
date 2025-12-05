@@ -37,7 +37,24 @@ if ($stmt) {
     $res = $stmt->get_result();
     if ($res && $res->num_rows === 1) {
         $r = $res->fetch_assoc();
-        $fullName    = $r['full_name'] ?? '';
+        
+        // Store original DB format (for submission)
+        $fullName = $r['full_name'] ?? '';
+        
+        // Create display format "Firstname Middlename Lastname"
+        $nameParts = array_map('trim', explode(',', $fullName));
+        
+        if (count($nameParts) === 3) {
+            // Has middlename: "Lastname, Firstname, Middlename"
+            $fullNameDisplay = $nameParts[1] . ' ' . $nameParts[2] . ' ' . $nameParts[0];
+        } elseif (count($nameParts) === 2) {
+            // No middlename: "Lastname, Firstname"
+            $fullNameDisplay = $nameParts[1] . ' ' . $nameParts[0];
+        } else {
+            // Fallback: keep original if format unexpected
+            $fullNameDisplay = $fullName;
+        }
+        
         $birthdate   = $r['birthdate'] ?? '';
         $civilstatus = $r['civil_status'] ?? '';
         $userPurok   = $r['purok'] ?? '';
@@ -329,12 +346,12 @@ unset($_SESSION['payment_success'], $_SESSION['payment_error'], $_SESSION['payme
                 <div class="row mb-3">
                     <label class="col-md-4 text-start fw-bold">Full Name</label>
                     <div class="col-md-8">
-                        <input type="text" id="fullname" name="fullname_display" disabled
+                        <input type="text" id="fullname_display" name="fullname_display" disabled
                             class="form-control custom-input"
-                            value="<?php echo htmlspecialchars($fullName); ?>"
+                            value="<?php echo htmlspecialchars($fullNameDisplay ?? $fullName); ?>"
                             placeholder="First Middle Surname">
-                        <!-- Hidden input to submit the value -->
-                        <input type="hidden" name="fullname" value="<?php echo htmlspecialchars($fullName); ?>">
+                        <!-- Hidden input to submit the value in original DB format -->
+                        <input type="hidden" id="fullname" name="fullname" value="<?php echo htmlspecialchars($fullName); ?>">
                     </div>
                 </div>
 

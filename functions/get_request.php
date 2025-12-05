@@ -35,7 +35,19 @@ $map = [
     'guardianship_requests' => 'guardianship_requests',
     'indigency_requests' => 'indigency_requests',
     'residency_requests' => 'residency_requests',
-    'solo_parent_requests' => 'solo_parent_requests'
+    'solo_parent_requests' => 'solo_parent_requests',
+    
+    // ADD THESE MAPPINGS for request_type values
+    'first time job seeker' => 'job_seeker_requests',
+    'barangay id' => 'barangay_id_requests',
+    'barangay clearance' => 'barangay_clearance_requests',
+    'business clearance' => 'business_clearance_requests',
+    'business permit' => 'business_permit_requests',
+    'good moral' => 'good_moral_requests',
+    'guardianship' => 'guardianship_requests',
+    'indigency' => 'indigency_requests',
+    'residency' => 'residency_requests',
+    'solo parent' => 'solo_parent_requests'
 ];
 
 // Try to normalize request_type from the view row

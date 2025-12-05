@@ -91,13 +91,13 @@ $menuItems = [
   //   'roles' => ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad'] //,'Brgy Treasurer'
   // ],
 
-  [
-    'id' => 'adminCollections',
-    'label' => 'Collection',
-    'icon' => 'receipt', // material icon name; change to preferred icon if you want
-    'href' => 'adminCollections.php',
-    'roles' => ['Brgy Treasurer'] // limited access as requested 'Brgy Bookkeeper'
-  ],
+  // [
+  //   'id' => 'adminCollections',
+  //   'label' => 'Collection',
+  //   'icon' => 'receipt', // material icon name; change to preferred icon if you want
+  //   'href' => 'adminCollections.php',
+  //   'roles' => ['Brgy Treasurer'] // limited access as requested 'Brgy Bookkeeper'
+  // ],
   [
     'id' => 'adminTransactions',
     'label' => 'Generate Reports',

@@ -647,7 +647,20 @@ document.addEventListener("DOMContentLoaded", function () {
     function populateSummary() {
         const get = id => (document.getElementById(id) ? document.getElementById(id).value : '');
 
-        const fullName = get('full_name');
+        // Convert "Lastname, Firstname, Middlename" to "Firstname Middlename Lastname" for display
+        const fullNameRaw = get('full_name');
+        let fullName = fullNameRaw;
+        if (fullNameRaw) {
+            const nameParts = fullNameRaw.split(',').map(part => part.trim());
+            
+            if (nameParts.length === 3) {
+                // Has middlename: "Lastname, Firstname, Middlename"
+                fullName = nameParts[1] + ' ' + nameParts[2] + ' ' + nameParts[0];
+            } else if (nameParts.length === 2) {
+                // No middlename: "Lastname, Firstname"
+                fullName = nameParts[1] + ' ' + nameParts[0];
+            }
+        }
         const purok = get('purok');
         const age = get('age');
         const marital = get('maritalstatus');

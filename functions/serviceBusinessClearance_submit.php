@@ -55,53 +55,47 @@ if (empty($province)) $province = 'Camarines Norte';
 $errors = [];
 
 // Determine name parts and DB full_name format
-// If user provided visible full_name (First Middle Surname), parse it to components and then build DB-style "LAST, FIRST MIDDLE".
-// Otherwise fallback to posted firstname/lastname/middlename (legacy).
-$firstName = $postedFirstName;
-$middleName = $postedMiddleName;
-$lastName = $postedLastName;
-$dbFullName = '';
+// The hidden input 'full_name' already contains the DB format "Lastname, Firstname, Middlename"
+// So we should just use it directly without parsing!
+$dbFullName = isset($_POST['full_name']) ? trim($_POST['full_name']) : '';
 
-// If visible full_name present, parse it
-if ($postedFullName !== '') {
-    // split on whitespace
-    $parts = preg_split('/\s+/', $postedFullName, -1, PREG_SPLIT_NO_EMPTY);
-    if (count($parts) === 1) {
-        // single token: treat as first name (no last name)
-        $firstName = $parts[0];
-        $middleName = '';
-        $lastName = '';
-    } else {
-        // last token is surname, first token is first name, middle tokens are middle name(s)
-        $firstName = $parts[0];
-        $lastName = $parts[count($parts) - 1];
-        if (count($parts) > 2) {
-            $middleName = implode(' ', array_slice($parts, 1, count($parts) - 2));
-        } else {
+// If for some reason full_name is empty, fall back to parsing the display name or legacy fields
+if ($dbFullName === '') {
+    $firstName = $postedFirstName;
+    $middleName = $postedMiddleName;
+    $lastName = $postedLastName;
+    
+    // If visible full_name present, parse it (display format: "First Middle Last")
+    if ($postedFullName !== '') {
+        // split on whitespace
+        $parts = preg_split('/\s+/', $postedFullName, -1, PREG_SPLIT_NO_EMPTY);
+        if (count($parts) === 1) {
+            // single token: treat as first name (no last name)
+            $firstName = $parts[0];
             $middleName = '';
-        }
-    }
-    // Build DB expected "LAST, FIRST MIDDLE" when possible
-    if ($lastName !== '') {
-        $dbFullName = $lastName . ', ' . $firstName . ($middleName !== '' ? ' ' . $middleName : '');
-    } else {
-        // No last name present — keep "FIRST MIDDLE" as fallback
-        $dbFullName = $firstName . ($middleName !== '' ? ' ' . $middleName : '');
-    }
-} else {
-    // No visible full_name: attempt legacy firstname/lastname fields
-    if ($lastName !== '' || $firstName !== '') {
-        $dbFullName = trim($lastName);
-        if ($firstName !== '') {
-            if ($dbFullName !== '') $dbFullName .= ', ';
-            $dbFullName .= $firstName . ($middleName !== '' ? ' ' . $middleName : '');
+            $lastName = '';
         } else {
-            // only last name provided
-            $dbFullName = $lastName ?: $firstName ?: '';
+            // last token is surname, first token is first name, middle tokens are middle name(s)
+            $firstName = $parts[0];
+            $lastName = $parts[count($parts) - 1];
+            if (count($parts) > 2) {
+                $middleName = implode(' ', array_slice($parts, 1, count($parts) - 2));
+            } else {
+                $middleName = '';
+            }
+        }
+    }
+    
+    // Build DB expected "LAST, FIRST, MIDDLE" format (with commas between all parts)
+    if ($lastName !== '') {
+        if ($middleName !== '') {
+            $dbFullName = $lastName . ', ' . $firstName . ', ' . $middleName;
+        } else {
+            $dbFullName = $lastName . ', ' . $firstName;
         }
     } else {
-        // nothing provided: will be caught by validation below
-        $dbFullName = '';
+        // No last name present – keep "FIRST MIDDLE" as fallback
+        $dbFullName = $firstName . ($middleName !== '' ? ' ' . $middleName : '');
     }
 }
 

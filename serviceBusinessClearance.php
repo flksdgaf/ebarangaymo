@@ -40,7 +40,24 @@ if ($stmt) {
     $res = $stmt->get_result();
     if ($res && $res->num_rows === 1) {
         $r = $res->fetch_assoc();
-        $fullName    = $r['full_name'] ?? '';
+        
+        // Store original DB format (for submission)
+        $fullName = $r['full_name'] ?? '';
+        
+        // Create display format "Firstname Middlename Lastname"
+        $nameParts = array_map('trim', explode(',', $fullName));
+        
+        if (count($nameParts) === 3) {
+            // Has middlename: "Lastname, Firstname, Middlename"
+            $fullNameDisplay = $nameParts[1] . ' ' . $nameParts[2] . ' ' . $nameParts[0];
+        } elseif (count($nameParts) === 2) {
+            // No middlename: "Lastname, Firstname"
+            $fullNameDisplay = $nameParts[1] . ' ' . $nameParts[0];
+        } else {
+            // Fallback: keep original if format unexpected
+            $fullNameDisplay = $fullName;
+        }
+        
         $birthdate   = $r['birthdate'] ?? '';
         $civilstatus = $r['civil_status'] ?? '';
         $userPurok   = $r['purok'] ?? '';
@@ -51,24 +68,20 @@ if ($stmt) {
 // parse full name into parts (we keep parts for hidden inputs to preserve compatibility)
 $lastName = $firstName = $middleName = '';
 if ($fullName) {
-    if (strpos($fullName, ',') !== false) {
-        $parts = explode(',', $fullName, 2);
-        $lastName = trim($parts[0]);
-        $rest = trim($parts[1] ?? '');
-        $restParts = preg_split('/\s+/', $rest, -1, PREG_SPLIT_NO_EMPTY);
-        if (count($restParts) > 0) {
-            $firstName = array_shift($restParts);
-            $middleName = implode(' ', $restParts);
-        }
+    $nameParts = array_map('trim', explode(',', $fullName));
+    if (count($nameParts) === 3) {
+        // "Lastname, Firstname, Middlename"
+        $lastName = $nameParts[0];
+        $firstName = $nameParts[1];
+        $middleName = $nameParts[2];
+    } elseif (count($nameParts) === 2) {
+        // "Lastname, Firstname"
+        $lastName = $nameParts[0];
+        $firstName = $nameParts[1];
+        $middleName = '';
     } else {
-        $parts = preg_split('/\s+/', $fullName, -1, PREG_SPLIT_NO_EMPTY);
-        if (count($parts) === 1) {
-            $firstName = $parts[0];
-        } else {
-            $lastName = array_pop($parts);
-            $firstName = array_shift($parts);
-            $middleName = implode(' ', $parts);
-        }
+        // Fallback: single name token
+        $firstName = $fullName;
     }
 }
 
@@ -85,19 +98,19 @@ if ($transactionId) {
             $existingRequest = $res->fetch_assoc();
             $chosenPayment = $existingRequest['payment_method'] ?? null;
 
-            // if DB has components, override parsed pieces
-            if (!empty($existingRequest['first_name'])) {
-                $firstName = $existingRequest['first_name'];
-            }
-            if (!empty($existingRequest['middle_name'])) {
-                $middleName = $existingRequest['middle_name'];
-            }
-            if (!empty($existingRequest['last_name'])) {
-                $lastName = $existingRequest['last_name'];
-            }
-            // If DB already saved full_name, we will display it directly
+            // If DB already saved full_name, use it and create display version
             if (!empty($existingRequest['full_name'])) {
                 $fullName = $existingRequest['full_name'];
+                
+                // Create display format for existing request
+                $nameParts = array_map('trim', explode(',', $fullName));
+                if (count($nameParts) === 3) {
+                    $fullNameDisplay = $nameParts[1] . ' ' . $nameParts[2] . ' ' . $nameParts[0];
+                } elseif (count($nameParts) === 2) {
+                    $fullNameDisplay = $nameParts[1] . ' ' . $nameParts[0];
+                } else {
+                    $fullNameDisplay = $fullName;
+                }
             }
         }
         $stmt->close();
@@ -116,17 +129,17 @@ if (!empty($birthdate) && $birthdate !== '0000-00-00') {
     }
 }
 
-// build a display-friendly full name (First Middle Last) preferring existingRequest->full_name when present
-$displayFullName = '';
-if (!empty($existingRequest['full_name'])) {
-    $displayFullName = $existingRequest['full_name'];
-} elseif (!empty($fullName)) {
-    // If we already parsed/prefilled $fullName from purok table, try to construct First Middle Last
-    $constructed = trim(implode(' ', array_filter([$firstName, $middleName, $lastName])));
-    $displayFullName = $constructed ?: $fullName;
-} else {
-    $displayFullName = trim(implode(' ', array_filter([$firstName, $middleName, $lastName])));
-}
+// // build a display-friendly full name (First Middle Last) preferring existingRequest->full_name when present
+// $displayFullName = '';
+// if (!empty($existingRequest['full_name'])) {
+//     $displayFullName = $existingRequest['full_name'];
+// } elseif (!empty($fullName)) {
+//     // If we already parsed/prefilled $fullName from purok table, try to construct First Middle Last
+//     $constructed = trim(implode(' ', array_filter([$firstName, $middleName, $lastName])));
+//     $displayFullName = $constructed ?: $fullName;
+// } else {
+//     $displayFullName = trim(implode(' ', array_filter([$firstName, $middleName, $lastName])));
+// }
 
 // Defaults (kept but not used as visible inputs anymore)
 $defaultBarangay = 'Magang';
@@ -463,11 +476,13 @@ unset($_SESSION['payment_success'], $_SESSION['payment_error'], $_SESSION['payme
                 <div class="row mb-3">
                     <label class="col-md-4 text-start fw-bold">Full Name</label>
                     <div class="col-md-8">
-                        <input type="text" id="full_name" name="full_name" disabled
+                        <input type="text" id="full_name_display" name="full_name_display" disabled
                             class="form-control custom-input"
                             required
                             readonly
-                            value="<?php echo htmlspecialchars($displayFullName); ?>">
+                            value="<?php echo htmlspecialchars($fullNameDisplay ?? $fullName); ?>">
+                        <!-- Hidden input to submit the value in original DB format -->
+                        <input type="hidden" id="full_name" name="full_name" value="<?php echo htmlspecialchars($fullName); ?>">
                     </div>
                 </div>
 

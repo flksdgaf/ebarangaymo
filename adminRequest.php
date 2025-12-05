@@ -407,7 +407,7 @@ $result = $st->get_result();
       <?php endif; ?>
     <?php endif; ?>
     <!-- Add this as a new tab option for Captain/Secretary/Bookkeeper -->
-    <?php if (in_array($currentRole, ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper'], true)): ?>
+    <?php if (in_array($currentRole, ['Brgy Captain','Brgy Secretary','Brgy Bookkeeper','Brgy Kagawad'], true)): ?>
       <li class="nav-item">
         <a href="?<?= http_build_query(array_merge($_GET, ['request_source'=>'Document Records','request_page'=>1])) ?>"
           class="nav-link <?= $processing_type==='Document Records' ? 'active' : '' ?>">

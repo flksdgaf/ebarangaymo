@@ -12,31 +12,60 @@ $userId = (int)$_SESSION['loggedInUserID'];
 // 2) COLLECT + SANITIZE
 $tid = trim($_POST['transaction_id'] ?? '');
 
-// client name
-$cf = trim($_POST['client_first_name'] ?? '');
-$cm = trim($_POST['client_middle_name'] ?? '');
-$cl = trim($_POST['client_last_name'] ?? '');
-$cs = trim($_POST['client_suffix'] ?? '');
-$clientName = "{$cl}" . ($cs ? " {$cs}" : '') . ", {$cf}" . ($cm ? " {$cm}" : '');
-$clientAddress = trim($_POST['client_address'] ?? '');
+// Handle multiple clients
+$clients = $_POST['clients'] ?? [];
+$clientNames = [];
+$clientAddresses = [];
 
-// respondent
-$hasResp = isset($_POST['has_respondent']);
-$respondentName = '';
-$respondentAddress = '';
-if ($hasResp && trim($_POST['respondent_first_name'] ?? '') !== '') {
-    $rf = trim($_POST['respondent_first_name']);
-    $rm = trim($_POST['respondent_middle_name'] ?? '');
-    $rl = trim($_POST['respondent_last_name']);
-    $rs = trim($_POST['respondent_suffix'] ?? '');
-    $respondentName = "{$rl}" . ($rs ? " {$rs}" : '') . ", {$rf}" . ($rm ? " {$rm}" : '');
-    $respondentAddress = trim($_POST['respondent_address'] ?? '');
+foreach ($clients as $client) {
+    $cf = ucwords(strtolower(trim($client['first_name'] ?? '')));
+    $cm = trim($client['middle_name'] ?? '') ? ucwords(strtolower(trim($client['middle_name'] ?? ''))) : '';
+    $cl = ucwords(strtolower(trim($client['last_name'] ?? '')));
+    $cs = ucwords(strtolower(trim($client['suffix'] ?? '')));
+    
+    if ($cf && $cl) { // Only process if at least first and last name exist
+        $middlePart = $cm ? ", {$cm}" : '';
+        $suffixPart = $cs ? " {$cs}" : '';
+        $clientNames[] = "{$cl}{$suffixPart}, {$cf}{$middlePart}";
+        $clientAddresses[] = ucwords(strtolower(trim($client['address'] ?? '')));
+    }
 }
 
+// Join multiple clients with " | " (pipe separator)
+$clientName = !empty($clientNames) ? implode(' | ', $clientNames) : '';
+$clientAddress = !empty($clientAddresses) ? implode(' | ', $clientAddresses) : '';
+
+// Handle multiple respondents
+$respondents = $_POST['respondents'] ?? [];
+$respondentNames = [];
+$respondentAddresses = [];
+
+foreach ($respondents as $respondent) {
+    $rf = ucwords(strtolower(trim($respondent['first_name'] ?? '')));
+    $rm = trim($respondent['middle_name'] ?? '') ? ucwords(strtolower(trim($respondent['middle_name'] ?? ''))) : '';
+    $rl = ucwords(strtolower(trim($respondent['last_name'] ?? '')));
+    $rs = ucwords(strtolower(trim($respondent['suffix'] ?? '')));
+    
+    if ($rf && $rl) { // Only process if at least first and last name exist
+        $rMiddle = $rm ? ", {$rm}" : '';
+        $rSuffix = $rs ? " {$rs}" : '';
+        $respondentNames[] = "{$rl}{$rSuffix}, {$rf}{$rMiddle}";
+        $respondentAddresses[] = ucwords(strtolower(trim($respondent['address'] ?? '')));
+    }
+}
+
+// Join multiple respondents with " | " (pipe separator), or set to NULL if none
+$respondentName = !empty($respondentNames) ? implode(' | ', $respondentNames) : null;
+$respondentAddress = !empty($respondentAddresses) ? implode(' | ', $respondentAddresses) : null;
+
 // incident
-$incidentType = trim($_POST['incident_type'] ?? '');
+$incidentType = ucwords(strtolower(trim($_POST['incident_type'] ?? '')));
+// Capitalize first letter of each sentence in description
 $incidentDesc = trim($_POST['incident_description'] ?? '');
-$incidentPlace = trim($_POST['incident_place'] ?? '');
+$incidentDesc = preg_replace_callback('/([.!?]\s+)([a-z])/', function($matches) {
+    return $matches[1] . strtoupper($matches[2]);
+}, ucfirst(strtolower($incidentDesc)));
+$incidentPlace = ucwords(strtolower(trim($_POST['incident_place'] ?? '')));
 $incidentDate = $_POST['incident_date'] ?? '';
 $incidentTime  = $_POST['incident_time'] ?? '';
 
@@ -51,6 +80,8 @@ $sets = [
   "account_id = ?",
   "client_name = ?",
   "client_address = ?",
+  "respondent_name = ?",
+  "respondent_address = ?",
   "incident_type = ?",
   "incident_description = ?",
   "incident_place = ?",
@@ -62,6 +93,8 @@ $params  = [
   &$userId,
   &$clientName,
   &$clientAddress,
+  &$respondentName,
+  &$respondentAddress,
   &$incidentType,
   &$incidentDesc,
   &$incidentPlace,
@@ -69,24 +102,7 @@ $params  = [
   &$incidentTime,
 ];
 
-$types = 'isssssss';
-
-// only if has respondent do we update those two:
-if ($hasResp) {
-  $sets[] = "respondent_name = ?";
-  $types .= 's';
-  $params[] = &$respondentName;
-
-  $sets[] = "respondent_address = ?";
-  $types .= 's';
-  $params[] = &$respondentAddress;
-
-} else {
-  // user has unchecked “has respondent” → force those columns to NULL
-  $sets[] = "respondent_name = NULL";
-  $sets[] = "respondent_address = NULL";
-  // no extra bind types or params here
-}
+$types = 'isssssssss';
 
 // always end with WHERE:
 $sql = "UPDATE blotter_records SET " . implode(",\n ", $sets) . " WHERE transaction_id = ?";

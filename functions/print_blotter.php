@@ -58,10 +58,20 @@ if (!$data) die('Record not found');
 
 // Helpers
 function reformatName($name) {
-  // "Last, First Middle" -> "First Middle Last"
-  $parts = explode(',', $name);
-  return count($parts) === 2 ? trim($parts[1]) . ' ' . trim($parts[0]) : $name;
+  // "Last, First, Middle" -> "First Middle Last"
+  $parts = array_map('trim', explode(',', $name));
+  
+  if (count($parts) === 3) {
+    // Format: Lastname, Firstname, Middlename
+    return $parts[1] . ' ' . $parts[2] . ' ' . $parts[0];
+  } elseif (count($parts) === 2) {
+    // Format: Lastname, Firstname (no middle name)
+    return $parts[1] . ' ' . $parts[0];
+  }
+  
+  return $name;
 }
+
 function extractLastName($name) {
   $parts = explode(',', $name);
   return trim($parts[0] ?? '');
@@ -92,9 +102,9 @@ $respondentLast = extractLastName($data['respondent_name']);
 $respondentAddress = $data['respondent_address'];
 $incidentDescription = $data['incident_description'];
 
-// Parse multiple clients (separated by "at")
-$clientNameArray = explode(' at ', $data['client_name']);
-$clientAddressArray = explode('; ', $data['client_address']);
+// Parse multiple clients (separated by " | ")
+$clientNameArray = explode(' | ', $data['client_name']);
+$clientAddressArray = explode(' | ', $data['client_address']);
 
 // Format clients with their addresses inline
 $clientsFormatted = [];
@@ -293,11 +303,13 @@ if ($download || $print) {
     <strong><?= str_replace(' at ', '</strong> at <strong>', htmlspecialchars($clientNamesForSignature)) ?></strong>.
   </p>
 
-  <!-- Signatory Section -->
-  <div class="signatory">
-    <div class="signatory-name"><?= htmlspecialchars($captainName) ?></div>
-    <div class="signatory-title">Punong Barangay</div>
-  </div>
+  <?php if ($includeHeader): ?>
+    <!-- Signatory Section -->
+    <div class="signatory">
+      <div class="signatory-name"><?= htmlspecialchars($captainName) ?></div>
+      <div class="signatory-title">Punong Barangay</div>
+    </div>
+  <?php endif; ?>
 </body>
 </html>
   <?php
@@ -421,11 +433,13 @@ if ($download || $print) {
     </p>
   
 
-    <!-- Signatory Section -->
-    <div class="signatory">
-      <div class="signatory-name"><?= htmlspecialchars($captainName) ?></div>
-      <div class="signatory-title">Punong Barangay</div>
-    </div>
+    <?php if ($includeHeader): ?>
+      <!-- Signatory Section -->
+      <div class="signatory">
+        <div class="signatory-name"><?= htmlspecialchars($captainName) ?></div>
+        <div class="signatory-title">Punong Barangay</div>
+      </div>
+    <?php endif; ?>
   </div>
 </body>
 </html>

@@ -16,22 +16,22 @@ $clientNames = [];
 $clientAddresses = [];
 
 foreach ($clients as $client) {
-    $cf = trim($client['first_name'] ?? '');
-    $cm = trim($client['middle_name'] ?? '');
-    $cl = trim($client['last_name'] ?? '');
-    $cs = trim($client['suffix'] ?? '');
+    $cf = ucwords(strtolower(trim($client['first_name'] ?? '')));
+    $cm = trim($client['middle_name'] ?? '') ? ucwords(strtolower(trim($client['middle_name'] ?? ''))) : '';
+    $cl = ucwords(strtolower(trim($client['last_name'] ?? '')));
+    $cs = ucwords(strtolower(trim($client['suffix'] ?? '')));
     
     if ($cf && $cl) { // Only process if at least first and last name exist
-        $middlePart = $cm ? " {$cm}" : '';
+        $middlePart = $cm ? ", {$cm}" : '';
         $suffixPart = $cs ? " {$cs}" : '';
         $clientNames[] = "{$cl}{$suffixPart}, {$cf}{$middlePart}";
-        $clientAddresses[] = trim($client['address'] ?? '');
+        $clientAddresses[] = ucwords(strtolower(trim($client['address'] ?? '')));
     }
 }
 
-// Join multiple clients with "at"
-$clientName = implode(' at ', $clientNames);
-$clientAddress = implode('; ', $clientAddresses);
+// Join multiple clients with " | " (pipe separator)
+$clientName = implode(' | ', $clientNames);
+$clientAddress = implode(' | ', $clientAddresses);
 
 // Handle multiple respondents
 $respondents = $_POST['respondents'] ?? [];
@@ -39,27 +39,31 @@ $respondentNames = [];
 $respondentAddresses = [];
 
 foreach ($respondents as $respondent) {
-    $rf = trim($respondent['first_name'] ?? '');
-    $rm = trim($respondent['middle_name'] ?? '');
-    $rl = trim($respondent['last_name'] ?? '');
-    $rs = trim($respondent['suffix'] ?? '');
+    $rf = ucwords(strtolower(trim($respondent['first_name'] ?? '')));
+    $rm = trim($respondent['middle_name'] ?? '') ? ucwords(strtolower(trim($respondent['middle_name'] ?? ''))) : '';
+    $rl = ucwords(strtolower(trim($respondent['last_name'] ?? '')));
+    $rs = ucwords(strtolower(trim($respondent['suffix'] ?? '')));
     
     if ($rf && $rl) { // Only process if at least first and last name exist
-        $rMiddle = $rm ? " {$rm}" : '';
+        $rMiddle = $rm ? ", {$rm}" : '';
         $rSuffix = $rs ? " {$rs}" : '';
         $respondentNames[] = "{$rl}{$rSuffix}, {$rf}{$rMiddle}";
-        $respondentAddresses[] = trim($respondent['address'] ?? '');
+        $respondentAddresses[] = ucwords(strtolower(trim($respondent['address'] ?? '')));
     }
 }
 
-// Join multiple respondents, or set to NULL if none
-$respondentName = !empty($respondentNames) ? implode(' at ', $respondentNames) : null;
-$respondentAddress = !empty($respondentAddresses) ? implode('; ', $respondentAddresses) : null;
+// Join multiple respondents with " | " (pipe separator), or set to NULL if none
+$respondentName = !empty($respondentNames) ? implode(' | ', $respondentNames) : null;
+$respondentAddress = !empty($respondentAddresses) ? implode(' | ', $respondentAddresses) : null;
 
 // Incident details
-$incidentType = trim($_POST['incident_type'] ?? '');
+$incidentType = ucwords(strtolower(trim($_POST['incident_type'] ?? '')));
+// Capitalize first letter of each sentence in description
 $incidentDesc = trim($_POST['incident_description'] ?? '');
-$incidentPlace = trim($_POST['incident_place'] ?? '');
+$incidentDesc = preg_replace_callback('/([.!?]\s+)([a-z])/', function($matches) {
+    return $matches[1] . strtoupper($matches[2]);
+}, ucfirst(strtolower($incidentDesc)));
+$incidentPlace = ucwords(strtolower(trim($_POST['incident_place'] ?? '')));
 $incidentDate = $_POST['incident_date'] ?? null;
 $incidentTime = $_POST['incident_time'] ?? null;
 

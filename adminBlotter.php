@@ -1,5 +1,57 @@
 <?php
 require 'functions/dbconn.php';
+
+// Helper function to reformat name from "Lastname, Firstname, Middlename" to "Firstname Middlename Lastname"
+function reformatNameForDisplay($name) {
+    if (empty($name) || $name === '—' || $name === '-') {
+        return $name;
+    }
+    
+    // Check if there are multiple people separated by " | "
+    if (strpos($name, ' | ') !== false) {
+        $people = explode(' | ', $name);
+        $formattedPeople = [];
+        
+        foreach ($people as $person) {
+            $formattedPeople[] = reformatSingleName(trim($person));
+        }
+        
+        // Format based on count
+        $count = count($formattedPeople);
+        if ($count === 1) {
+            return $formattedPeople[0];
+        } elseif ($count === 2) {
+            return $formattedPeople[0] . ' at ' . $formattedPeople[1];
+        } else {
+            // More than 2: "1, 2, at 3"
+            $lastPerson = array_pop($formattedPeople);
+            return implode(', ', $formattedPeople) . ', at ' . $lastPerson;
+        }
+    }
+    
+    return reformatSingleName($name);
+}
+
+function reformatSingleName($name) {
+    if (empty($name)) {
+        return $name;
+    }
+    
+    // Split by comma
+    $parts = array_map('trim', explode(',', $name));
+    
+    if (count($parts) === 3) {
+        // Format: Lastname, Firstname, Middlename
+        return $parts[1] . ' ' . $parts[2] . ' ' . $parts[0];
+    } elseif (count($parts) === 2) {
+        // Format: Lastname, Firstname (no middle name)
+        return $parts[1] . ' ' . $parts[0];
+    }
+    
+    // Return as-is if format doesn't match
+    return $name;
+}
+
 $userId = (int)$_SESSION['loggedInUserID'];
 $currentRole = $_SESSION['loggedInUserRole'] ?? '';
 $newTid = $_GET['transaction_id'] ?? '';
@@ -232,22 +284,22 @@ $stmt->close();
                           <small class="fw-bold text-muted">Client #1</small>
                         </div>
                         <div class="row g-2">
-                          <div class="col-md-3">
+                          <div class="col-md-4">
                             <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">First Name</label>
                             <input name="clients[0][first_name]" type="text" class="form-control form-control-sm" required>
                           </div>
-                          <div class="col-md-3">
+                          <div class="col-md-4">
                             <label class="form-label mb-1" style="font-size:0.85rem;">Middle Name <small class="text-muted">(optional)</small></label>
                             <input name="clients[0][middle_name]" type="text" class="form-control form-control-sm">
                           </div>
-                          <div class="col-md-3">
+                          <div class="col-md-4">
                             <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">Last Name</label>
                             <input name="clients[0][last_name]" type="text" class="form-control form-control-sm" required>
                           </div>
-                          <div class="col-md-3">
+                          <!-- <div class="col-md-3">
                             <label class="form-label mb-1" style="font-size:0.85rem;">Suffix <small class="text-muted">(optional)</small></label>
                             <input name="clients[0][suffix]" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
-                          </div>
+                          </div> -->
                           <div class="col-12">
                             <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">Address</label>
                             <input name="clients[0][address]" type="text" class="form-control form-control-sm" required>
@@ -275,22 +327,22 @@ $stmt->close();
                           <small class="fw-bold text-muted">Respondent #1</small>
                         </div>
                         <div class="row g-2">
-                          <div class="col-md-3">
+                          <div class="col-md-4">
                             <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">First Name</label>
                             <input name="respondents[0][first_name]" type="text" class="form-control form-control-sm" required>
                           </div>
-                          <div class="col-md-3">
+                          <div class="col-md-4">
                             <label class="form-label mb-1" style="font-size:0.85rem;">Middle Name <small class="text-muted">(optional)</small></label>
                             <input name="respondents[0][middle_name]" type="text" class="form-control form-control-sm">
                           </div>
-                          <div class="col-md-3">
+                          <div class="col-md-4">
                             <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">Last Name</label>
                             <input name="respondents[0][last_name]" type="text" class="form-control form-control-sm" required>
                           </div>
-                          <div class="col-md-3">
+                          <!-- <div class="col-md-3">
                             <label class="form-label mb-1" style="font-size:0.85rem;">Suffix <small class="text-muted">(optional)</small></label>
                             <input name="respondents[0][suffix]" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
-                          </div>
+                          </div> -->
                           <div class="col-12">
                             <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">Address</label>
                             <input name="respondents[0][address]" type="text" class="form-control form-control-sm" required>
@@ -344,107 +396,127 @@ $stmt->close();
 
       <!-- Edit Blotter Modal -->
       <div class="modal fade" id="editBlotterModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="editBlotterModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width:90vw;">
+        <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable" style="max-width:90vw; max-height:90vh;">
           <div class="modal-content">
             <div class="modal-header text-white" style="background-color: #13411F;">
               <h5 class="modal-title" id="editBlotterModalLabel">Edit Blotter Record</h5>
               <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="editBlotterForm" method="POST" action="functions/process_edit_blotter.php">
-              <div class="modal-body">
+              <div class="modal-body" style="max-height: calc(90vh - 180px); overflow-y: auto;">
                 <input type="hidden" name="transaction_id" id="edit_transaction_id" value="">
                 <input type="hidden" name="account_id" value="<?= $userId ?>">
+                
+                <!-- Client Information Section -->
+                <div class="card mb-3">
+                  <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+                    <h6 class="mb-0 fw-bold" style="color: #13411F;">Client Information</h6>
+                    <button type="button" id="editMoreClientsBtn" class="btn btn-outline-success btn-sm">
+                      <span class="material-symbols-outlined me-1" style="font-size:0.9rem; vertical-align:middle;">add</span>
+                      Add Client
+                    </button>
+                  </div>
+                  <div class="card-body p-2">
+                    <div id="editClientsContainer">
+                      <!-- First client (always present) -->
+                      <div class="client-entry border rounded p-2 mb-2" data-client-index="0">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                          <small class="fw-bold text-muted">Client #1</small>
+                        </div>
+                        <div class="row g-2">
+                          <div class="col-md-4">
+                            <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">First Name</label>
+                            <input name="clients[0][first_name]" type="text" class="form-control form-control-sm" required>
+                          </div>
+                          <div class="col-md-4">
+                            <label class="form-label mb-1" style="font-size:0.85rem;">Middle Name <small class="text-muted">(optional)</small></label>
+                            <input name="clients[0][middle_name]" type="text" class="form-control form-control-sm">
+                          </div>
+                          <div class="col-md-4">
+                            <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">Last Name</label>
+                            <input name="clients[0][last_name]" type="text" class="form-control form-control-sm" required>
+                          </div>
+                          <div class="col-12">
+                            <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">Address</label>
+                            <input name="clients[0][address]" type="text" class="form-control form-control-sm" required>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-                <div class="row gy-2">
-                  <!-- Client Details -->
-                  <div class="col-12">
-                    <h6 class="fw-bold fs-5" style="color: #13411F;">Client Details</h6>
-                    <hr class="my-2">
+                <!-- Respondent Information Section -->
+                <div class="card mb-3">
+                  <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+                    <h6 class="mb-0 fw-bold" style="color: #13411F;">Respondent Information</h6>
+                    <button type="button" id="editMoreRespondentsBtn" class="btn btn-outline-success btn-sm">
+                      <span class="material-symbols-outlined me-1" style="font-size:0.9rem; vertical-align:middle;">add</span>
+                      Add Respondent
+                    </button>
                   </div>
-                  <div class="col-12 col-md-3">
-                    <label class="form-label fw-bold">First Name</label>
-                    <input name="client_first_name" id="edit_client_first_name" type="text" class="form-control form-control-sm" required>
+                  <div class="card-body p-2">
+                    <div id="editRespondentsContainer">
+                      <!-- First respondent (always present) -->
+                      <div class="respondent-entry border rounded p-2 mb-2" data-respondent-index="0">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                          <small class="fw-bold text-muted">Respondent #1</small>
+                        </div>
+                        <div class="row g-2">
+                          <div class="col-md-4">
+                            <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">First Name</label>
+                            <input name="respondents[0][first_name]" type="text" class="form-control form-control-sm" required>
+                          </div>
+                          <div class="col-md-4">
+                            <label class="form-label mb-1" style="font-size:0.85rem;">Middle Name <small class="text-muted">(optional)</small></label>
+                            <input name="respondents[0][middle_name]" type="text" class="form-control form-control-sm">
+                          </div>
+                          <div class="col-md-4">
+                            <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">Last Name</label>
+                            <input name="respondents[0][last_name]" type="text" class="form-control form-control-sm" required>
+                          </div>
+                          <div class="col-12">
+                            <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">Address</label>
+                            <input name="respondents[0][address]" type="text" class="form-control form-control-sm" required>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div class="col-12 col-md-3">
-                    <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
-                    <input name="client_middle_name" id="edit_client_middle_name" type="text" class="form-control form-control-sm">
-                  </div>
-                  <div class="col-12 col-md-3">
-                    <label class="form-label fw-bold">Last Name</label>
-                    <input name="client_last_name" id="edit_client_last_name" type="text" class="form-control form-control-sm" required>
-                  </div>
-                  <div class="col-12 col-md-3">
-                    <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
-                    <input name="client_suffix" id="edit_client_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <label class="form-label fw-bold">Client Address</label>
-                    <input name="client_address" id="edit_client_address" type="text" class="form-control form-control-sm" required>
-                  </div>
+                </div>
 
-                  <!-- Respondent Details Header + Toggle -->
-                  <div class="col-12 mt-3 d-flex align-items-center">
-                    <div class="form-check d-inline-block">
-                      <input class="form-check-input" type="checkbox" id="edit_hasRespondentCheck" name="has_respondent" checked>
-                      <label class="form-check-label" for="edit_hasRespondentCheck"></label>
+                <!-- Incident Details Section -->
+                <div class="card">
+                  <div class="card-header bg-light py-2">
+                    <h6 class="mb-0 fw-bold" style="color: #13411F;">Incident Details</h6>
+                  </div>
+                  <div class="card-body p-3">
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <label class="form-label fw-bold">Complaint / Incident Type</label>
+                        <input name="incident_type" id="edit_incident_type" type="text" class="form-control form-control-sm" required>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label fw-bold">Incident Place</label>
+                        <input name="incident_place" id="edit_incident_place" type="text" class="form-control form-control-sm" required>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label fw-bold">Date Occurred</label>
+                        <input name="incident_date" id="edit_incident_date" type="date" class="form-control form-control-sm" required>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label fw-bold">Time Occurred</label>
+                        <input name="incident_time" id="edit_incident_time" type="time" class="form-control form-control-sm" required>
+                      </div>
+                      <div class="col-12">
+                        <label class="form-label fw-bold">Incident Description</label>
+                        <textarea name="incident_description" id="edit_incident_description" class="form-control form-control-sm" rows="4" required></textarea>
+                      </div>
                     </div>
-                    <h6 class="fw-bold mb-0 fs-5" style="color: #13411F;">Respondent Details</h6>
-                  </div>
-                  <div class="col-12"><hr class="my-2"></div>
-
-                  <!-- Respondent Fields -->
-                  <div id="edit_respondentSection" class="row gy-2 col-12">
-                    <div class="col-12 col-md-3">
-                      <label class="form-label fw-bold">First Name</label>
-                      <input name="respondent_first_name" id="edit_respondent_first_name" type="text" class="form-control form-control-sm" required>
-                    </div>
-                    <div class="col-12 col-md-3">
-                      <label class="form-label fw-bold">Middle Name <small class="fw-normal">(optional)</small></label>
-                      <input name="respondent_middle_name" id="edit_respondent_middle_name" type="text" class="form-control form-control-sm">
-                    </div>
-                    <div class="col-12 col-md-3">
-                      <label class="form-label fw-bold">Last Name</label>
-                      <input name="respondent_last_name" id="edit_respondent_last_name" type="text" class="form-control form-control-sm" required>
-                    </div>
-                    <div class="col-12 col-md-3">
-                      <label class="form-label fw-bold">Suffix <small class="fw-normal">(optional)</small></label>
-                      <input name="respondent_suffix" id="edit_respondent_suffix" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
-                      
-                    </div>
-                    <div class="col-12 col-md-6">
-                      <label class="form-label fw-bold">Respondent Address</label>
-                      <input name="respondent_address" id="edit_respondent_address" type="text" class="form-control form-control-sm" required>
-                    </div>
-                  </div>
-
-                  <!-- Complaint Details -->
-                  <div class="col-12 mt-3">
-                    <h6 class="fw-bold fs-5" style="color: #13411F;">Complaint Details</h6>
-                    <hr class="my-2">
-                  </div>
-                  <div class="col-12 col-md-6 me-1">
-                    <label class="form-label fw-bold">Complaint / Incident Type</label>
-                    <input name="incident_type" id="edit_incident_type" type="text" class="form-control form-control-sm" required>
-                  </div>
-                  <div class="col-12 col-md-6">
-                    <label class="form-label fw-bold">Incident Place</label>
-                    <input name="incident_place" id="edit_incident_place" type="text" class="form-control form-control-sm" required>
-                  </div>
-                  <div class="col-12 col-md-3">
-                    <label class="form-label fw-bold">Date Occurred</label>
-                    <input name="incident_date" id="edit_incident_date" type="date" class="form-control form-control-sm" required>
-                  </div>
-                  <div class="col-12 col-md-3">
-                    <label class="form-label fw-bold">Time Occurred</label>
-                    <input name="incident_time" id="edit_incident_time" type="time" class="form-control form-control-sm" required>
-                  </div>
-                  <div class="col-12">
-                    <label class="form-label fw-bold">Incident Description</label>
-                    <textarea name="incident_description" id="edit_incident_description" class="form-control form-control-sm" rows="3" required></textarea>
                   </div>
                 </div>
               </div>
-
+              
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="submit" class="btn btn-success">Save Changes</button>
@@ -538,16 +610,19 @@ $stmt->close();
             ?>
               <tr 
                 data-id="<?= $tid ?>"
+                data-client-name="<?= htmlspecialchars($row['client_name'], ENT_QUOTES) ?>"
                 data-client-address="<?= htmlspecialchars($row['client_address'], ENT_QUOTES) ?>"
+                data-respondent-name="<?= htmlspecialchars($row['respondent_name'] ?: '', ENT_QUOTES) ?>"
                 data-respondent-address="<?= htmlspecialchars($row['respondent_name'] ? $row['respondent_address'] : '', ENT_QUOTES) ?>"
+                data-incident-type="<?= htmlspecialchars($row['incident_type'], ENT_QUOTES) ?>"
                 data-incident-date="<?= $row['incident_date'] ?>"
                 data-incident-time="<?= $row['incident_time'] ?>"
                 data-incident-place="<?= htmlspecialchars($row['incident_place'], ENT_QUOTES) ?>"
                 data-incident-desc="<?= htmlspecialchars($row['incident_description'], ENT_QUOTES) ?>"
               >
                 <td><?= $tid ?></td>
-                <td><?= htmlspecialchars($row['client_name']) ?></td>
-                <td><?= htmlspecialchars($row['respondent_name'] ?: '—') ?></td>
+                <td><?= htmlspecialchars(reformatNameForDisplay($row['client_name'])) ?></td>
+                <td><?= htmlspecialchars($row['respondent_name'] ? reformatNameForDisplay($row['respondent_name']) : '—') ?></td>
                 <td><?= htmlspecialchars($row['incident_type']) ?></td>
                 <td>
                   <?= htmlspecialchars($row['formatted_date']) ?>
@@ -651,7 +726,7 @@ document.addEventListener('DOMContentLoaded', () => {
     blotterForm.reset();
     
     // Remove all additional client entries (keep only the first one)
-    const allClientEntries = document.querySelectorAll('.client-entry');
+    const allClientEntries = document.querySelectorAll('#clientsContainer .client-entry');
     allClientEntries.forEach((entry, index) => {
       if (index > 0) { // Keep the first one (index 0)
         entry.remove();
@@ -661,7 +736,7 @@ document.addEventListener('DOMContentLoaded', () => {
     clientCount = 1;
 
     // Remove all additional respondent entries (keep only the first one)
-    const allRespondentEntries = document.querySelectorAll('.respondent-entry');
+    const allRespondentEntries = document.querySelectorAll('#respondentsContainer .respondent-entry');
     allRespondentEntries.forEach((entry, index) => {
       if (index > 0) { // Keep the first one (index 0)
         entry.remove();
@@ -692,21 +767,17 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
       
       <div class="row g-2">
-        <div class="col-md-3">
+        <div class="col-md-4">
           <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">First Name</label>
           <input name="respondents[${index}][first_name]" type="text" class="form-control form-control-sm" required>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
           <label class="form-label mb-1" style="font-size:0.85rem;">Middle Name <small class="text-muted">(optional)</small></label>
           <input name="respondents[${index}][middle_name]" type="text" class="form-control form-control-sm">
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
           <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">Last Name</label>
           <input name="respondents[${index}][last_name]" type="text" class="form-control form-control-sm" required>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label mb-1" style="font-size:0.85rem;">Suffix <small class="text-muted">(optional)</small></label>
-          <input name="respondents[${index}][suffix]" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
         </div>
         <div class="col-12">
           <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">Address</label>
@@ -758,21 +829,17 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
       
       <div class="row g-2">
-        <div class="col-md-3">
+        <div class="col-md-4">
           <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">First Name</label>
           <input name="clients[${index}][first_name]" type="text" class="form-control form-control-sm" required>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
           <label class="form-label mb-1" style="font-size:0.85rem;">Middle Name <small class="text-muted">(optional)</small></label>
           <input name="clients[${index}][middle_name]" type="text" class="form-control form-control-sm">
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
           <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">Last Name</label>
           <input name="clients[${index}][last_name]" type="text" class="form-control form-control-sm" required>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label mb-1" style="font-size:0.85rem;">Suffix <small class="text-muted">(optional)</small></label>
-          <input name="clients[${index}][suffix]" type="text" class="form-control form-control-sm" placeholder="Jr., Sr., III…">
         </div>
         <div class="col-12">
           <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">Address</label>
@@ -809,33 +876,284 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Modal reset functionality
-  blotterModalEl.addEventListener('hidden.bs.modal', () => {
-    blotterForm.reset();
-    
-    // Remove all additional client entries (keep only the first one)
-    const allClientEntries = document.querySelectorAll('.client-entry');
-    allClientEntries.forEach((entry, index) => {
-      if (index > 0) { // Keep the first one (index 0)
-        entry.remove();
-      }
-    });
-    
-    clientCount = 1;
-  });
+// EDIT-BLOTTER modal wiring
+const editModalEl = document.getElementById('editBlotterModal');
+const editModal = new bootstrap.Modal(editModalEl);
+const editClientsContainer = document.getElementById('editClientsContainer');
+const editRespondentsContainer = document.getElementById('editRespondentsContainer');
+const editMoreClientsBtn = document.getElementById('editMoreClientsBtn');
+const editMoreRespondentsBtn = document.getElementById('editMoreRespondentsBtn');
 
-  // EDIT-BLOTTER modal wiring
-  const editModalEl = document.getElementById('editBlotterModal');
-  const editModal = new bootstrap.Modal(editModalEl);
-  const editRespCheck = document.getElementById('edit_hasRespondentCheck');
-  const editRespSection = document.getElementById('edit_respondentSection');
-  function edit_toggleRespondent() {
-    const show = editRespCheck.checked;
-    editRespSection.style.display = show ? '' : 'none';
-    editRespSection.querySelectorAll('input, textarea').forEach(el => el.disabled = !show);
-  }
-  editRespCheck.addEventListener('change', edit_toggleRespondent);
-  edit_toggleRespondent();
+let editClientCount = 1;
+let editRespondentCount = 1;
+
+// Function to create a new client entry for edit modal
+function createEditClientEntry(index) {
+  const clientEntry = document.createElement('div');
+  clientEntry.className = 'client-entry border rounded p-2 mb-2';
+  clientEntry.setAttribute('data-client-index', index);
+  
+  clientEntry.innerHTML = `
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <small class="fw-bold text-muted">Client #${index + 1}</small>
+      <button type="button" class="btn btn-sm btn-outline-danger remove-edit-client-btn" style="padding: 0.1rem 0.3rem; font-size: 0.75rem;">
+        <span class="material-symbols-outlined" style="font-size: 14px;">close</span>
+      </button>
+    </div>
+    
+    <div class="row g-2">
+      <div class="col-md-4">
+        <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">First Name</label>
+        <input name="clients[${index}][first_name]" type="text" class="form-control form-control-sm" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label mb-1" style="font-size:0.85rem;">Middle Name <small class="text-muted">(optional)</small></label>
+        <input name="clients[${index}][middle_name]" type="text" class="form-control form-control-sm">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">Last Name</label>
+        <input name="clients[${index}][last_name]" type="text" class="form-control form-control-sm" required>
+      </div>
+      <div class="col-12">
+        <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">Address</label>
+        <input name="clients[${index}][address]" type="text" class="form-control form-control-sm" required>
+      </div>
+    </div>
+  `;
+  
+  return clientEntry;
+}
+
+// Function to create a new respondent entry for edit modal
+function createEditRespondentEntry(index) {
+  const respondentEntry = document.createElement('div');
+  respondentEntry.className = 'respondent-entry border rounded p-2 mb-2';
+  respondentEntry.setAttribute('data-respondent-index', index);
+  
+  respondentEntry.innerHTML = `
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <small class="fw-bold text-muted">Respondent #${index + 1}</small>
+      <button type="button" class="btn btn-sm btn-outline-danger remove-edit-respondent-btn" style="padding: 0.1rem 0.3rem; font-size: 0.75rem;">
+        <span class="material-symbols-outlined" style="font-size: 14px;">close</span>
+      </button>
+    </div>
+    
+    <div class="row g-2">
+      <div class="col-md-4">
+        <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">First Name</label>
+        <input name="respondents[${index}][first_name]" type="text" class="form-control form-control-sm" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label mb-1" style="font-size:0.85rem;">Middle Name <small class="text-muted">(optional)</small></label>
+        <input name="respondents[${index}][middle_name]" type="text" class="form-control form-control-sm">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">Last Name</label>
+        <input name="respondents[${index}][last_name]" type="text" class="form-control form-control-sm" required>
+      </div>
+      <div class="col-12">
+        <label class="form-label fw-bold mb-1" style="font-size:0.85rem;">Address</label>
+        <input name="respondents[${index}][address]" type="text" class="form-control form-control-sm" required>
+      </div>
+    </div>
+  `;
+  
+  return respondentEntry;
+}
+
+// Add more clients in edit modal
+editMoreClientsBtn.addEventListener('click', () => {
+  const newClientEntry = createEditClientEntry(editClientCount);
+  editClientsContainer.appendChild(newClientEntry);
+  
+  const removeBtn = newClientEntry.querySelector('.remove-edit-client-btn');
+  removeBtn.addEventListener('click', () => {
+    newClientEntry.remove();
+    updateEditClientNumbers();
+  });
+  
+  editClientCount++;
+});
+
+// Add more respondents in edit modal
+editMoreRespondentsBtn.addEventListener('click', () => {
+  const newRespondentEntry = createEditRespondentEntry(editRespondentCount);
+  editRespondentsContainer.appendChild(newRespondentEntry);
+  
+  const removeBtn = newRespondentEntry.querySelector('.remove-edit-respondent-btn');
+  removeBtn.addEventListener('click', () => {
+    newRespondentEntry.remove();
+    updateEditRespondentNumbers();
+  });
+  
+  editRespondentCount++;
+});
+
+// Function to update client numbers in edit modal
+function updateEditClientNumbers() {
+  const clientEntries = document.querySelectorAll('#editClientsContainer .client-entry');
+  clientEntries.forEach((entry, index) => {
+    const header = entry.querySelector('small');
+    header.textContent = `Client #${index + 1}`;
+    entry.setAttribute('data-client-index', index);
+  });
+}
+
+// Function to update respondent numbers in edit modal
+function updateEditRespondentNumbers() {
+  const respondentEntries = document.querySelectorAll('#editRespondentsContainer .respondent-entry');
+  respondentEntries.forEach((entry, index) => {
+    const header = entry.querySelector('small');
+    header.textContent = `Respondent #${index + 1}`;
+    entry.setAttribute('data-respondent-index', index);
+  });
+}
+
+// Reset edit modal when closed
+editModalEl.addEventListener('hidden.bs.modal', () => {
+  const editForm = document.getElementById('editBlotterForm');
+  editForm.reset();
+  
+  // Remove all additional client entries (keep only the first one)
+  const allEditClientEntries = document.querySelectorAll('#editClientsContainer .client-entry');
+  allEditClientEntries.forEach((entry, index) => {
+    if (index > 0) {
+      entry.remove();
+    }
+  });
+  editClientCount = 1;
+  
+  // Remove all additional respondent entries (keep only the first one)
+  const allEditRespondentEntries = document.querySelectorAll('#editRespondentsContainer .respondent-entry');
+  allEditRespondentEntries.forEach((entry, index) => {
+    if (index > 0) {
+      entry.remove();
+    }
+  });
+  editRespondentCount = 1;
+});
+
+  // EDIT-BLOTTER button click handler
+  document.querySelectorAll('.blotter-edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const row = btn.closest('tr');
+      const tid = row.dataset.id;
+      
+      // Helper function to parse "Lastname, Firstname, Middlename" format
+      function parseNameFromDB(dbName) {
+        if (!dbName || dbName === '—' || dbName === '-' || dbName === '') {
+          return { first: '', middle: '', last: '' };
+        }
+        
+        const parts = dbName.split(',').map(p => p.trim());
+        
+        if (parts.length === 3) {
+          // Format: "Lastname, Firstname, Middlename"
+          return { first: parts[1], middle: parts[2], last: parts[0] };
+        } else if (parts.length === 2) {
+          // Format: "Lastname, Firstname"
+          return { first: parts[1], middle: '', last: parts[0] };
+        }
+        
+        return { first: '', middle: '', last: dbName };
+      }
+      
+      // Populate transaction ID
+      document.getElementById('edit_transaction_id').value = tid;
+      
+      // Parse MULTIPLE clients (split by " | ")
+      const clientNames = (row.dataset.clientName || '').split(' | ').filter(n => n.trim());
+      const clientAddresses = (row.dataset.clientAddress || '').split(' | ').filter(a => a.trim());
+      
+      // Clear existing client entries except the first one
+      const allEditClientEntries = document.querySelectorAll('#editClientsContainer .client-entry');
+      allEditClientEntries.forEach((entry, index) => {
+        if (index > 0) entry.remove();
+      });
+      editClientCount = 1;
+      
+      // Populate first client
+      if (clientNames.length > 0) {
+        const firstClientEntry = editClientsContainer.querySelector('.client-entry');
+        const clientParts = parseNameFromDB(clientNames[0]);
+        firstClientEntry.querySelector('input[name="clients[0][first_name]"]').value = clientParts.first;
+        firstClientEntry.querySelector('input[name="clients[0][middle_name]"]').value = clientParts.middle;
+        firstClientEntry.querySelector('input[name="clients[0][last_name]"]').value = clientParts.last;
+        firstClientEntry.querySelector('input[name="clients[0][address]"]').value = clientAddresses[0] || '';
+      }
+      
+      // Add additional clients if any
+      for (let i = 1; i < clientNames.length; i++) {
+        const newClientEntry = createEditClientEntry(editClientCount);
+        editClientsContainer.appendChild(newClientEntry);
+        
+        const clientParts = parseNameFromDB(clientNames[i]);
+        newClientEntry.querySelector(`input[name="clients[${editClientCount}][first_name]"]`).value = clientParts.first;
+        newClientEntry.querySelector(`input[name="clients[${editClientCount}][middle_name]"]`).value = clientParts.middle;
+        newClientEntry.querySelector(`input[name="clients[${editClientCount}][last_name]"]`).value = clientParts.last;
+        newClientEntry.querySelector(`input[name="clients[${editClientCount}][address]"]`).value = clientAddresses[i] || '';
+        
+        const removeBtn = newClientEntry.querySelector('.remove-edit-client-btn');
+        removeBtn.addEventListener('click', () => {
+          newClientEntry.remove();
+          updateEditClientNumbers();
+        });
+        
+        editClientCount++;
+      }
+      
+      // Parse MULTIPLE respondents (split by " | ")
+      const respondentNames = (row.dataset.respondentName || '').split(' | ').filter(n => n.trim());
+      const respondentAddresses = (row.dataset.respondentAddress || '').split(' | ').filter(a => a.trim());
+      
+      // Clear existing respondent entries except the first one
+      const allEditRespondentEntries = document.querySelectorAll('#editRespondentsContainer .respondent-entry');
+      allEditRespondentEntries.forEach((entry, index) => {
+        if (index > 0) entry.remove();
+      });
+      editRespondentCount = 1;
+      
+      // Populate first respondent
+      if (respondentNames.length > 0) {
+        const firstRespondentEntry = editRespondentsContainer.querySelector('.respondent-entry');
+        const respondentParts = parseNameFromDB(respondentNames[0]);
+        firstRespondentEntry.querySelector('input[name="respondents[0][first_name]"]').value = respondentParts.first;
+        firstRespondentEntry.querySelector('input[name="respondents[0][middle_name]"]').value = respondentParts.middle;
+        firstRespondentEntry.querySelector('input[name="respondents[0][last_name]"]').value = respondentParts.last;
+        firstRespondentEntry.querySelector('input[name="respondents[0][address]"]').value = respondentAddresses[0] || '';
+      }
+      
+      // Add additional respondents if any
+      for (let i = 1; i < respondentNames.length; i++) {
+        const newRespondentEntry = createEditRespondentEntry(editRespondentCount);
+        editRespondentsContainer.appendChild(newRespondentEntry);
+        
+        const respondentParts = parseNameFromDB(respondentNames[i]);
+        newRespondentEntry.querySelector(`input[name="respondents[${editRespondentCount}][first_name]"]`).value = respondentParts.first;
+        newRespondentEntry.querySelector(`input[name="respondents[${editRespondentCount}][middle_name]"]`).value = respondentParts.middle;
+        newRespondentEntry.querySelector(`input[name="respondents[${editRespondentCount}][last_name]"]`).value = respondentParts.last;
+        newRespondentEntry.querySelector(`input[name="respondents[${editRespondentCount}][address]"]`).value = respondentAddresses[i] || '';
+        
+        const removeBtn = newRespondentEntry.querySelector('.remove-edit-respondent-btn');
+        removeBtn.addEventListener('click', () => {
+          newRespondentEntry.remove();
+          updateEditRespondentNumbers();
+        });
+        
+        editRespondentCount++;
+      }
+      
+      // Populate incident fields
+      document.getElementById('edit_incident_type').value = row.dataset.incidentType || '';
+      document.getElementById('edit_incident_place').value = row.dataset.incidentPlace || '';
+      document.getElementById('edit_incident_date').value = row.dataset.incidentDate || '';
+      document.getElementById('edit_incident_time').value = row.dataset.incidentTime || '';
+      document.getElementById('edit_incident_description').value = row.dataset.incidentDesc || '';
+      
+      // Show modal
+      editModal.show();
+    });
+  });
 
   // DELETE-BLOTTER modal wiring
   const deleteModal = new bootstrap.Modal(document.getElementById('deleteBlotterModal'));

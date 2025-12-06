@@ -41,8 +41,8 @@ try {
   $stmt->close();
   
   // Update equipment availability based on status changes
-  if ($old_status !== 'Returned' && $new_status === 'Returned') {
-    // Returning equipment - increase available_qty
+  // Reject from Pending: Return the reserved quantity back to available
+  if ($old_status === 'Pending' && $new_status === 'Rejected') {
     $stmt = $conn->prepare("UPDATE equipment_list SET available_qty = available_qty + ? WHERE equipment_sn = ?");
     $stmt->bind_param('is', $qty, $equipment_sn);
     
@@ -50,15 +50,20 @@ try {
       throw new Exception('Failed to update equipment availability: ' . $stmt->error);
     }
     $stmt->close();
-  } elseif ($old_status === 'Returned' && $new_status !== 'Returned') {
-    // Un-returning equipment - decrease available_qty
-    $stmt = $conn->prepare("UPDATE equipment_list SET available_qty = available_qty - ? WHERE equipment_sn = ?");
+  }
+  // Return from Borrowed: Increase available_qty
+  elseif ($old_status === 'Borrowed' && $new_status === 'Returned') {
+    $stmt = $conn->prepare("UPDATE equipment_list SET available_qty = available_qty + ? WHERE equipment_sn = ?");
     $stmt->bind_param('is', $qty, $equipment_sn);
     
     if (!$stmt->execute()) {
       throw new Exception('Failed to update equipment availability: ' . $stmt->error);
     }
     $stmt->close();
+  }
+  // Borrow from Pending: Quantity already deducted when request was created, no change needed
+  elseif ($old_status === 'Pending' && $new_status === 'Borrowed') {
+    // No change to available_qty - it was already deducted when the borrow request was created
   }
   
   // Get the new available_qty
@@ -69,6 +74,33 @@ try {
   $equipment = $result->fetch_assoc();
   $new_available_qty = $equipment ? (int)$equipment['available_qty'] : 0;
   $stmt->close();
+  
+  // Activity logging
+  session_start();
+  $admin_roles = ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper', 'Brgy Kagawad', 'Brgy Treasurer'];
+  if (isset($_SESSION['loggedInUserRole']) && in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
+    // Get transaction_id and resident_name for better logging
+    $stmt = $conn->prepare("SELECT transaction_id, resident_name FROM borrow_requests WHERE id = ?");
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $borrowDetails = $result->fetch_assoc();
+    $stmt->close();
+    
+    $logStmt = $conn->prepare("INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description) VALUES (?,?,?,?,?,?)");
+    if ($logStmt && $borrowDetails) {
+      $admin_id = (int)$_SESSION['loggedInUserID'];
+      $roleName = $_SESSION['loggedInUserRole'];
+      $action = 'UPDATE';
+      $table_name = 'borrow_requests';
+      $record_id = $borrowDetails['transaction_id'];
+      $description = 'Updated Borrow Status: ' . $borrowDetails['resident_name'] . ' - ' . $old_status . ' → ' . $new_status;
+      
+      $logStmt->bind_param('isssss', $admin_id, $roleName, $action, $table_name, $record_id, $description);
+      $logStmt->execute();
+      $logStmt->close();
+    }
+  }
   
   // Commit transaction
   $conn->commit();

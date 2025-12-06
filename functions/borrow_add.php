@@ -24,11 +24,11 @@ function buildFullName($first, $middle, $last) {
     $middle = trim($middle);
     $last = trim($last);
     
-    // Build name: "Last, First Middle" format
+    // Build name: "Last, First, Middle" format (two commas)
     $name = $last . ', ' . $first;
     
     if ($middle !== '') {
-        $name .= ' ' . $middle;
+        $name .= ', ' . $middle; // Changed from ' ' to ', '
     }
     
     return $name;
@@ -170,6 +170,28 @@ try {
     }
 
     $ins->close();
+
+    // Activity logging
+    $admin_roles = ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper', 'Brgy Kagawad', 'Brgy Treasurer'];
+    if (isset($_SESSION['loggedInUserRole']) && in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
+        $logStmt = $conn->prepare("INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description) VALUES (?,?,?,?,?,?)");
+        if ($logStmt) {
+            $admin_id = (int)$_SESSION['loggedInUserID'];
+            $roleName = $_SESSION['loggedInUserRole'];
+            $action = 'CREATE';
+            $table_name = 'borrow_requests';
+            $record_id = $transactionId;
+            $description = 'Created Borrow Request: ' . $resident . ' (' . $transactionId . ')';
+            
+            if (!$logStmt->bind_param('isssss', $admin_id, $roleName, $action, $table_name, $record_id, $description)) {
+                throw new Exception("Bind activity log failed: " . $logStmt->error);
+            }
+            if (!$logStmt->execute()) {
+                throw new Exception("Execute activity log failed: " . $logStmt->error);
+            }
+            $logStmt->close();
+        }
+    }
     
     // Commit transaction
     $conn->commit();

@@ -486,10 +486,10 @@ if (!$brStmt) {
                   <td><?= (int)$eq['total_qty'] ?></td>
                   <?php if ($currentRole !== 'Brgy Kagawad'): ?>
                     <td>
-                      <button class="btn btn-sm btn-primary me-1 edit-equipment-btn" data-id="<?= $eq['id'] ?>" data-name="<?= htmlspecialchars($eq['name'], ENT_QUOTES) ?>" data-desc="<?= htmlspecialchars($eq['description'], ENT_QUOTES) ?>" data-total="<?= (int)$eq['total_qty'] ?>">
+                      <button class="btn btn-sm btn-primary me-1 edit-equipment-btn" data-esn="<?= htmlspecialchars($eq['equipment_sn'], ENT_QUOTES) ?>" data-name="<?= htmlspecialchars($eq['name'], ENT_QUOTES) ?>" data-desc="<?= htmlspecialchars($eq['description'], ENT_QUOTES) ?>" data-total="<?= (int)$eq['total_qty'] ?>">
                         <span class="material-symbols-outlined" style="font-size:13px">stylus</span>
                       </button>
-                      <button class="btn btn-sm btn-danger delete-equipment-btn" data-id="<?= $eq['id'] ?>" data-name="<?= htmlspecialchars($eq['name'], ENT_QUOTES) ?>">
+                      <button class="btn btn-sm btn-danger delete-equipment-btn" data-esn="<?= htmlspecialchars($eq['equipment_sn'], ENT_QUOTES) ?>" data-name="<?= htmlspecialchars($eq['name'], ENT_QUOTES) ?>">
                         <span class="material-symbols-outlined" style="font-size:13px">delete</span>
                       </button>
                     </td>
@@ -651,7 +651,7 @@ if (!$brStmt) {
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <input type="hidden" name="id" id="edit-id">
+          <input type="hidden" name="equipment_sn" id="edit-esn">
 
           <div class="mb-3">
             <label for="edit-name" class="form-label">Equipment Name</label>
@@ -691,7 +691,7 @@ if (!$brStmt) {
             <p id="confirmDeleteText" class="mb-0 fs-6">
               Are you sure you want to delete this equipment? This action cannot be undone.
             </p>
-            <input type="hidden" name="id" id="delete-id" value="">
+            <input type="hidden" name="equipment_sn" id="delete-esn" value="">
           </div>
 
           <div class="modal-footer">
@@ -716,7 +716,7 @@ if (!$brStmt) {
           <div class="row gy-3">
             <!-- First Name -->
             <div class="col-md-4">
-              <label for="borrow-first-name" class="form-label">First Name</label>
+              <label for="borrow-first-name" class="form-label">First Name <span class="text-danger">*</span></label>
               <input type="text" id="borrow-first-name" name="first_name" class="form-control" required>
             </div>
 
@@ -728,20 +728,22 @@ if (!$brStmt) {
 
             <!-- Last Name -->
             <div class="col-md-4">
-              <label for="borrow-last-name" class="form-label">Last Name</label>
+              <label for="borrow-last-name" class="form-label">Last Name <span class="text-danger">*</span></label>
               <input type="text" id="borrow-last-name" name="last_name" class="form-control" required>
             </div>
 
             <!-- Equipment Dropdown -->
             <div class="col-md-6">
-              <label class="form-label">Equipment</label>
+              <label class="form-label">Equipment <span class="text-danger">*</span></label>
               <select id="borrowedEquipment" name="equipment_sn" class="form-select" required>
                 <option value="">Select equipment...</option>
                 <?php foreach ($allEquipments as $eq): ?>
-                  <option value="<?= htmlspecialchars($eq['equipment_sn'], ENT_QUOTES) ?>" 
-                          data-avail="<?= (int)$eq['available_qty'] ?>">
-                    <?= htmlspecialchars($eq['name']) ?>
-                  </option>
+                  <?php if ((int)$eq['available_qty'] > 0): ?>
+                    <option value="<?= htmlspecialchars($eq['equipment_sn'], ENT_QUOTES) ?>" 
+                            data-avail="<?= (int)$eq['available_qty'] ?>">
+                      <?= htmlspecialchars($eq['name']) ?>
+                    </option>
+                  <?php endif; ?>
                 <?php endforeach; ?>
               </select>
 
@@ -752,22 +754,22 @@ if (!$brStmt) {
             </div>
 
             <div class="col-md-6">
-              <label for="borrow-qty" class="form-label">Quantity</label>
+              <label for="borrow-qty" class="form-label">Quantity <span class="text-danger">*</span></label>
               <input type="number" id="borrow-qty" name="qty" class="form-control" min="1" placeholder="" required>
             </div>
 
             <div class="col-md-6">
-              <label for="borrow-location" class="form-label">Location</label>
+              <label for="borrow-location" class="form-label">Location <span class="text-danger">*</span></label>
               <input type="text" id="borrow-location" name="location" class="form-control" placeholder="Office / Home / Event Venue" required>
             </div>
 
             <div class="col-md-6">
-              <label for="borrow-used-for" class="form-label">Used For</label>
+              <label for="borrow-used-for" class="form-label">Used For <span class="text-danger">*</span></label>
               <input type="text" id="borrow-used-for" name="used_for" class="form-control" placeholder="e.g., Presentation, Workshop" required>
             </div>
 
             <div class="col-md-6">
-              <label for="borrow-pudo" class="form-label">Pick-Up / Drop-Off</label>
+              <label for="borrow-pudo" class="form-label">Pick-Up / Drop-Off <span class="text-danger">*</span></label>
               <select id="borrow-pudo" name="pudo" class="form-select" required>
                 <option value="">Choose…</option>
                 <option value="Pick Up">Pick Up</option>
@@ -778,12 +780,12 @@ if (!$brStmt) {
             <!-- Borrow date range -->
             <?php $today = date('Y-m-d'); ?>
             <div class="col-md-3">
-              <label for="borrow-date-from" class="form-label">Borrow From</label>
+              <label for="borrow-date-from" class="form-label">Borrow From <span class="text-danger">*</span></label>
               <input type="date" id="borrow-date-from" name="borrow_date_from" class="form-control" value="<?= htmlspecialchars($today, ENT_QUOTES) ?>" min="<?= htmlspecialchars($today, ENT_QUOTES) ?>" required>
             </div>
 
             <div class="col-md-3">
-              <label for="borrow-date-to" class="form-label">Borrow To</label>
+              <label for="borrow-date-to" class="form-label">Borrow To <span class="text-danger">*</span></label>
               <input type="date" id="borrow-date-to" name="borrow_date_to" class="form-control" value="<?= htmlspecialchars($today, ENT_QUOTES) ?>" min="<?= htmlspecialchars($today, ENT_QUOTES) ?>" required>
             </div>
 
@@ -821,10 +823,7 @@ if (!$brStmt) {
               <label class="form-label fw-bold">Status</label>
               <?php if ($currentRole !== 'Brgy Kagawad'): ?>
                 <select id="editStatus" class="form-select form-select-sm">
-                  <option value="Pending">Pending</option>
-                  <option value="Borrowed">Borrowed</option>
-                  <option value="Returned">Returned</option>
-                  <option value="Rejected">Rejected</option>
+                  <!-- Options will be dynamically populated by JavaScript based on current status -->
                 </select>
               <?php else: ?>
                 <input type="text" class="form-control form-control-sm" id="editStatusReadonly" disabled>
@@ -1059,14 +1058,14 @@ if (!$brStmt) {
     // ── Delete Equipment ───────────────────────────
     document.querySelectorAll('.delete-equipment-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        const id = btn.dataset.id;
+        const esn = btn.dataset.esn;
         const name = btn.dataset.name;
 
         // Update confirmation text
-        document.getElementById('confirmDeleteText').textContent = `Are you sure you want to delete “${name}” from the equipment list? This action cannot be undone.`;
+        document.getElementById('confirmDeleteText').textContent = `Are you sure you want to delete "${name}" from the equipment list? This action cannot be undone.`;
 
         // Set hidden input value & form action
-        document.getElementById('delete-id').value = id;
+        document.getElementById('delete-esn').value = esn;
         document.getElementById('confirmDeleteForm').action = 'functions/equipment_delete.php';
 
         // Show modal
@@ -1077,12 +1076,12 @@ if (!$brStmt) {
 
     document.querySelectorAll('.edit-equipment-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        const id = btn.dataset.id;
+        const esn = btn.dataset.esn;
         const name = btn.dataset.name;
         const desc = btn.dataset.desc;
         const total = btn.dataset.total;
 
-        document.getElementById('edit-id').value = id;
+        document.getElementById('edit-esn').value = esn;
         document.getElementById('edit-name').value = name;
         document.getElementById('edit-desc').value = desc;
         document.getElementById('edit-total').value = total;
@@ -1782,16 +1781,41 @@ if (!$brStmt) {
 
               document.getElementById('editPudo').value = event.pudo || '—';
 
-              // Set current status - handle both dropdown and readonly
+              // Set current status and configure dropdown options based on status
               const currentStatus = event.status || 'Pending';
               const statusSelect = document.getElementById('editStatus');
               const statusReadonly = document.getElementById('editStatusReadonly');
 
               if (statusSelect) {
-                statusSelect.value = currentStatus;
+                // Clear existing options and enable dropdown
+                statusSelect.innerHTML = '';
+                statusSelect.disabled = false;
+                
+                // Add options based on current status
+                if (currentStatus === 'Pending') {
+                  // Pending can change to: Borrowed or Reject (no Pending option shown)
+                  statusSelect.innerHTML = `
+                    <option value="">Select status...</option>
+                    <option value="Borrowed">Borrowed</option>
+                    <option value="Rejected">Reject</option>
+                  `;
+                  statusSelect.value = ''; // No pre-selected value
+                } else if (currentStatus === 'Borrowed') {
+                  // Borrowed can only change to: Returned
+                  statusSelect.innerHTML = `
+                    <option value="">Select status...</option>
+                    <option value="Returned">Returned</option>
+                  `;
+                  statusSelect.value = '';
+                } else {
+                  // Returned and Rejected cannot be changed
+                  statusSelect.innerHTML = `<option value="${currentStatus}">${currentStatus === 'Rejected' ? 'Reject' : currentStatus}</option>`;
+                  statusSelect.disabled = true;
+                }
               }
+
               if (statusReadonly) {
-                statusReadonly.value = currentStatus;
+                statusReadonly.value = currentStatus === 'Rejected' ? 'Reject' : currentStatus;
               }
               
               // Show edit modal
@@ -1894,16 +1918,41 @@ if (!$brStmt) {
 
                 document.getElementById('editPudo').value = eventData.pudo || '—';
 
-                // Set current status - handle both dropdown and readonly
+                // Set current status and configure dropdown options based on status
                 const currentStatus = eventData.status || 'Pending';
                 const statusSelect = document.getElementById('editStatus');
                 const statusReadonly = document.getElementById('editStatusReadonly');
 
                 if (statusSelect) {
-                  statusSelect.value = currentStatus;
+                  // Clear existing options and enable dropdown
+                  statusSelect.innerHTML = '';
+                  statusSelect.disabled = false;
+                  
+                  // Add options based on current status
+                  if (currentStatus === 'Pending') {
+                    // Pending can change to: Borrowed or Reject (no Pending option shown)
+                    statusSelect.innerHTML = `
+                      <option value="">Select status...</option>
+                      <option value="Borrowed">Borrowed</option>
+                      <option value="Rejected">Reject</option>
+                    `;
+                    statusSelect.value = ''; // No pre-selected value
+                  } else if (currentStatus === 'Borrowed') {
+                    // Borrowed can only change to: Returned
+                    statusSelect.innerHTML = `
+                      <option value="">Select status...</option>
+                      <option value="Returned">Returned</option>
+                    `;
+                    statusSelect.value = '';
+                  } else {
+                    // Returned and Rejected cannot be changed
+                    statusSelect.innerHTML = `<option value="${currentStatus}">${currentStatus === 'Rejected' ? 'Reject' : currentStatus}</option>`;
+                    statusSelect.disabled = true;
+                  }
                 }
+
                 if (statusReadonly) {
-                  statusReadonly.value = currentStatus;
+                  statusReadonly.value = currentStatus === 'Rejected' ? 'Reject' : currentStatus;
                 }
                 
                 // Show edit modal
@@ -1951,17 +2000,42 @@ if (!$brStmt) {
           
           document.getElementById('editPudo').value = event.pudo || '—';
           
-          // Set current status
+          // Set current status and configure dropdown options based on status
           const currentStatus = event.status || 'Pending';
           const statusSelect = document.getElementById('editStatus');
           const statusReadonly = document.getElementById('editStatusReadonly');
-          
+
           if (statusSelect) {
-            statusSelect.value = currentStatus;
+            // Clear existing options and enable dropdown
+            statusSelect.innerHTML = '';
+            statusSelect.disabled = false;
+            
+            // Add options based on current status
+            if (currentStatus === 'Pending') {
+              // Pending can change to: Borrowed or Reject (no Pending option shown)
+              statusSelect.innerHTML = `
+                <option value="">Select status...</option>
+                <option value="Borrowed">Borrowed</option>
+                <option value="Rejected">Reject</option>
+              `;
+              statusSelect.value = ''; // No pre-selected value
+            } else if (currentStatus === 'Borrowed') {
+              // Borrowed can only change to: Returned
+              statusSelect.innerHTML = `
+                <option value="">Select status...</option>
+                <option value="Returned">Returned</option>
+              `;
+              statusSelect.value = '';
+            } else {
+              // Returned and Rejected cannot be changed
+              statusSelect.innerHTML = `<option value="${currentStatus}">${currentStatus === 'Rejected' ? 'Reject' : currentStatus}</option>`;
+              statusSelect.disabled = true;
+            }
           }
+
           if (statusReadonly) {
-            statusReadonly.value = currentStatus;
-          }
+            statusReadonly.value = currentStatus === 'Rejected' ? 'Reject' : currentStatus;
+}
           
           // Show modal
           const modal = new bootstrap.Modal(document.getElementById('editBorrowModal'));

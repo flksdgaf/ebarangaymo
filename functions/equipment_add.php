@@ -23,6 +23,25 @@ $stmt->bind_param('sssii', $equipmentSn, $name, $desc, $total, $avail);
 $stmt->execute();
 $stmt->close();
 
+// Activity logging
+session_start();
+$admin_roles = ['Brgy Captain', 'Brgy Secretary', 'Brgy Bookkeeper', 'Brgy Kagawad', 'Brgy Treasurer'];
+if (isset($_SESSION['loggedInUserRole']) && in_array($_SESSION['loggedInUserRole'], $admin_roles, true)) {
+    $logStmt = $conn->prepare("INSERT INTO activity_logs (admin_id, role, action, table_name, record_id, description) VALUES (?,?,?,?,?,?)");
+    if ($logStmt) {
+        $admin_id = (int)$_SESSION['loggedInUserID'];
+        $roleName = $_SESSION['loggedInUserRole'];
+        $action = 'CREATE';
+        $table_name = 'equipment_list';
+        $record_id = $equipmentSn;
+        $description = 'Created Equipment: ' . $name . ' (' . $equipmentSn . ')';
+        
+        $logStmt->bind_param('isssss', $admin_id, $roleName, $action, $table_name, $record_id, $description);
+        $logStmt->execute();
+        $logStmt->close();
+    }
+}
+
 // 3) Redirect back
 // header('Location: ../adminPanel.php?page=adminEquipmentBorrowing');
 header('Location: ../adminPanel.php?page=adminEquipmentBorrowing&added=' . urlencode($equipmentSn));

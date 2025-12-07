@@ -572,36 +572,6 @@ if ($queryString) {
         </div>
     </div>
     
-    <!-- Chart Section -->
-    <!-- <div class="row g-4 mb-4">
-        <div class="col-12">
-            <div class="card shadow-sm p-4">
-                <div class="mb-3">
-                    <h6 class="text-success mb-0" style="font-size: 1.1rem; font-weight: 600;">Payment Methods Distribution</h6>
-                    <small class="text-muted">Total ORs created by payment method</small>
-                </div>
-                
-                <canvas id="paymentMethodsChart" style="height: 300px;"></canvas> -->
-                
-                <!-- Legend -->
-                <!-- <div class="d-flex justify-content-center mt-3" style="gap: 2rem;">
-                    <div class="d-flex align-items-center">
-                        <div style="width: 12px; height: 12px; background-color: #28a745; border-radius: 2px; margin-right: 8px;"></div>
-                        <small class="text-muted">GCash</small>
-                    </div>
-                    <div class="d-flex align-items-center">
-                        <div style="width: 12px; height: 12px; background-color: #20c997; border-radius: 2px; margin-right: 8px;"></div>
-                        <small class="text-muted">Payment Device</small>
-                    </div>
-                    <div class="d-flex align-items-center">
-                        <div style="width: 12px; height: 12px; background-color: #343a40; border-radius: 2px; margin-right: 8px;"></div>
-                        <small class="text-muted">Over-the-Counter</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div> -->
-    
     <!-- Pending ORs Table -->
     <div class="row g-4">
         <div class="col-12">
@@ -667,52 +637,84 @@ if ($queryString) {
     $firstDayWeek = date('w', $firstDay); // 0 = Sunday, 1 = Monday, etc.
     $daysInMonth = date('t', $firstDay);
     
-    // Fetch actual meetings from katarungang_pambarangay_records
+    // Fetch actual meetings from barangay_complaints
     $meetings = [];
 
     // Query to get all scheduled meetings for the current month/year
     $meetingsQuery = "
         SELECT 
-            kpr.transaction_id,
-            kpr.schedule_punong_barangay,
-            kpr.schedule_unang_patawag,
-            kpr.schedule_ikalawang_patawag,
-            kpr.schedule_ikatlong_patawag,
-            kpr.complaint_stage,
-            cr.complainant_name,
-            cr.respondent_name
-        FROM katarungang_pambarangay_records kpr
-        LEFT JOIN complaint_records cr ON kpr.transaction_id = cr.transaction_id
+            bc.transaction_id,
+            bc.case_no,
+            bc.schedule_pb_first,
+            bc.schedule_pb_second,
+            bc.schedule_pb_third,
+            bc.schedule_unang_patawag,
+            bc.schedule_ikalawang_patawag,
+            bc.schedule_ikatlong_patawag,
+            bc.complaint_stage,
+            bc.complainant_name,
+            bc.respondent_name
+        FROM barangay_complaints bc
         WHERE (
-            (YEAR(kpr.schedule_punong_barangay) = {$currentYear} AND MONTH(kpr.schedule_punong_barangay) = {$currentMonth})
-            OR (YEAR(kpr.schedule_unang_patawag) = {$currentYear} AND MONTH(kpr.schedule_unang_patawag) = {$currentMonth})
-            OR (YEAR(kpr.schedule_ikalawang_patawag) = {$currentYear} AND MONTH(kpr.schedule_ikalawang_patawag) = {$currentMonth})
-            OR (YEAR(kpr.schedule_ikatlong_patawag) = {$currentYear} AND MONTH(kpr.schedule_ikatlong_patawag) = {$currentMonth})
+            (YEAR(bc.schedule_pb_first) = {$currentYear} AND MONTH(bc.schedule_pb_first) = {$currentMonth})
+            OR (YEAR(bc.schedule_pb_second) = {$currentYear} AND MONTH(bc.schedule_pb_second) = {$currentMonth})
+            OR (YEAR(bc.schedule_pb_third) = {$currentYear} AND MONTH(bc.schedule_pb_third) = {$currentMonth})
+            OR (YEAR(bc.schedule_unang_patawag) = {$currentYear} AND MONTH(bc.schedule_unang_patawag) = {$currentMonth})
+            OR (YEAR(bc.schedule_ikalawang_patawag) = {$currentYear} AND MONTH(bc.schedule_ikalawang_patawag) = {$currentMonth})
+            OR (YEAR(bc.schedule_ikatlong_patawag) = {$currentYear} AND MONTH(bc.schedule_ikatlong_patawag) = {$currentMonth})
         )
-        ORDER BY kpr.created_at DESC
+        ORDER BY bc.created_at DESC
     ";
 
     $meetingsResult = $conn->query($meetingsQuery);
 
     if ($meetingsResult && $meetingsResult->num_rows > 0) {
         while ($row = $meetingsResult->fetch_assoc()) {
-            // Extract last names
+            // Extract last names for cleaner display
             $complainantParts = explode(',', $row['complainant_name']);
             $complainantLastName = trim($complainantParts[0]);
             
             $respondentParts = explode(',', $row['respondent_name']);
             $respondentLastName = trim($respondentParts[0]);
             
-            $title = $row['transaction_id'] . ': ' . $complainantLastName . ' vs ' . $respondentLastName;
+            // Use case_no if available, otherwise transaction_id
+            $caseLabel = $row['case_no'] ? $row['case_no'] : $row['transaction_id'];
+            $title = $caseLabel . ': ' . $complainantLastName . ' vs ' . $respondentLastName;
             
-            // Add Punong Barangay meeting
-            if ($row['schedule_punong_barangay']) {
-                $date = date('Y-m-d', strtotime($row['schedule_punong_barangay']));
-                $time = date('g:i A', strtotime($row['schedule_punong_barangay']));
+            // Add Punong Barangay 1st meeting
+            if ($row['schedule_pb_first']) {
+                $date = date('Y-m-d', strtotime($row['schedule_pb_first']));
+                $time = date('g:i A', strtotime($row['schedule_pb_first']));
                 $meetings[$date][] = [
                     'time' => $time,
                     'title' => $title,
-                    'type' => 'punong_barangay',
+                    'type' => 'pb_first',
+                    'status' => 'scheduled',
+                    'transaction_id' => $row['transaction_id']
+                ];
+            }
+            
+            // Add Punong Barangay 2nd meeting
+            if ($row['schedule_pb_second']) {
+                $date = date('Y-m-d', strtotime($row['schedule_pb_second']));
+                $time = date('g:i A', strtotime($row['schedule_pb_second']));
+                $meetings[$date][] = [
+                    'time' => $time,
+                    'title' => $title,
+                    'type' => 'pb_second',
+                    'status' => 'scheduled',
+                    'transaction_id' => $row['transaction_id']
+                ];
+            }
+            
+            // Add Punong Barangay 3rd meeting
+            if ($row['schedule_pb_third']) {
+                $date = date('Y-m-d', strtotime($row['schedule_pb_third']));
+                $time = date('g:i A', strtotime($row['schedule_pb_third']));
+                $meetings[$date][] = [
+                    'time' => $time,
+                    'title' => $title,
+                    'type' => 'pb_third',
                     'status' => 'scheduled',
                     'transaction_id' => $row['transaction_id']
                 ];
@@ -800,7 +802,7 @@ if ($queryString) {
                 </div>
                 
                 <!-- Calendar Grid -->
-                <div class="table-responsive">
+                <div class="table-responsive" style="max-height: 495px; overflow-y: auto;">
                     <table class="table table-bordered" style="table-layout: fixed;">
                         <thead>
                             <tr style="height: 40px;">
@@ -848,30 +850,67 @@ if ($queryString) {
                                             <?php if ($hasMeetings): ?>
                                                 <div style="font-size: 0.75rem;">
                                                     <?php foreach (array_slice($meetings[$currentDate], 0, 3) as $meeting): ?>
-                                                        <div class="mb-1">
-                                                            <?php if ($meeting['type'] === 'punong_barangay'): ?>
-                                                                <div class="badge bg-warning text-dark text-start p-1" style="font-size: 0.65rem; line-height: 1.2; white-space: normal; word-wrap: break-word;">
-                                                                    Punong Barangay
+                                                        <div class="mb-1 position-relative meeting-badge-container">
+                                                            <?php if ($meeting['type'] === 'pb_first'): ?>
+                                                                <div class="badge bg-warning text-dark text-start p-1 meeting-badge" 
+                                                                    style="font-size: 0.65rem; line-height: 1.2; white-space: normal; word-wrap: break-word; cursor: pointer;"
+                                                                    data-bs-toggle="tooltip" 
+                                                                    data-bs-placement="top" 
+                                                                    data-bs-html="true"
+                                                                    title="<strong>PB 1st Meeting</strong><br><?= htmlspecialchars($meeting['title']) ?><br><?= htmlspecialchars($meeting['time']) ?>">
+                                                                    PB 1st
+                                                                </div>
+                                                            <?php elseif ($meeting['type'] === 'pb_second'): ?>
+                                                                <div class="badge bg-warning text-dark text-start p-1 meeting-badge" 
+                                                                    style="font-size: 0.65rem; line-height: 1.2; white-space: normal; word-wrap: break-word; cursor: pointer;"
+                                                                    data-bs-toggle="tooltip" 
+                                                                    data-bs-placement="top" 
+                                                                    data-bs-html="true"
+                                                                    title="<strong>PB 2nd Meeting</strong><br><?= htmlspecialchars($meeting['title']) ?><br><?= htmlspecialchars($meeting['time']) ?>">
+                                                                    PB 2nd
+                                                                </div>
+                                                            <?php elseif ($meeting['type'] === 'pb_third'): ?>
+                                                                <div class="badge bg-warning text-dark text-start p-1 meeting-badge" 
+                                                                    style="font-size: 0.65rem; line-height: 1.2; white-space: normal; word-wrap: break-word; cursor: pointer;"
+                                                                    data-bs-toggle="tooltip" 
+                                                                    data-bs-placement="top" 
+                                                                    data-bs-html="true"
+                                                                    title="<strong>PB 3rd Meeting</strong><br><?= htmlspecialchars($meeting['title']) ?><br><?= htmlspecialchars($meeting['time']) ?>">
+                                                                    PB 3rd
                                                                 </div>
                                                             <?php elseif ($meeting['type'] === 'unang_patawag'): ?>
-                                                                <div class="badge bg-success text-white text-start p-1" style="font-size: 0.65rem; line-height: 1.2; white-space: normal; word-wrap: break-word;">
+                                                                <div class="badge bg-success text-white text-start p-1 meeting-badge" 
+                                                                    style="font-size: 0.65rem; line-height: 1.2; white-space: normal; word-wrap: break-word; cursor: pointer;"
+                                                                    data-bs-toggle="tooltip" 
+                                                                    data-bs-placement="top" 
+                                                                    data-bs-html="true"
+                                                                    title="<strong>Unang Patawag</strong><br><?= htmlspecialchars($meeting['title']) ?><br><?= htmlspecialchars($meeting['time']) ?>">
                                                                     Unang Patawag
                                                                 </div>
                                                             <?php elseif ($meeting['type'] === 'ikalawang_patawag'): ?>
-                                                                <div class="badge bg-primary text-white text-start p-1" style="font-size: 0.65rem; line-height: 1.2; white-space: normal; word-wrap: break-word;">
+                                                                <div class="badge bg-primary text-white text-start p-1 meeting-badge" 
+                                                                    style="font-size: 0.65rem; line-height: 1.2; white-space: normal; word-wrap: break-word; cursor: pointer;"
+                                                                    data-bs-toggle="tooltip" 
+                                                                    data-bs-placement="top" 
+                                                                    data-bs-html="true"
+                                                                    title="<strong>Ikalawang Patawag</strong><br><?= htmlspecialchars($meeting['title']) ?><br><?= htmlspecialchars($meeting['time']) ?>">
                                                                     Ikalawang Patawag
                                                                 </div>
                                                             <?php elseif ($meeting['type'] === 'ikatlong_patawag'): ?>
-                                                                <div class="badge bg-dark text-white text-start p-1" style="font-size: 0.65rem; line-height: 1.2; white-space: normal; word-wrap: break-word;">
+                                                                <div class="badge bg-danger text-white text-start p-1 meeting-badge" 
+                                                                    style="font-size: 0.65rem; line-height: 1.2; white-space: normal; word-wrap: break-word; cursor: pointer;"
+                                                                    data-bs-toggle="tooltip" 
+                                                                    data-bs-placement="top" 
+                                                                    data-bs-html="true"
+                                                                    title="<strong>Ikatlong Patawag</strong><br><?= htmlspecialchars($meeting['title']) ?><br><?= htmlspecialchars($meeting['time']) ?>">
                                                                     Ikatlong Patawag
-                                                                </div>
-                                                            <?php else: ?>
-                                                                <div class="badge bg-secondary text-white text-start p-1" style="font-size: 0.65rem; line-height: 1.2; white-space: normal; word-wrap: break-word;">
-                                                                    General Meeting
                                                                 </div>
                                                             <?php endif; ?>
                                                         </div>
                                                     <?php endforeach; ?>
+                                                    <?php if (count($meetings[$currentDate]) > 3): ?>
+                                                        <small class="text-muted">+<?= count($meetings[$currentDate]) - 3 ?> more</small>
+                                                    <?php endif; ?>
                                                 </div>
                                             <?php endif; ?>
                                         <?php endif; ?>
@@ -898,47 +937,108 @@ if ($queryString) {
                         <small class="text-muted">Ikalawang Patawag</small>
                     </div>
                     <div class="d-flex align-items-center">
-                        <div class="badge bg-dark me-2">●</div>
+                        <div class="badge bg-danger me-2">●</div>
                         <small class="text-muted">Ikatlong Patawag</small>
                     </div>
                 </div>
             </div>
         </div>
         
-        <!-- Today's Schedule Sidebar -->
+        <!-- This Week's Schedule Sidebar -->
         <div class="col-md-4">
             <?php
-            $todayMeetings = $meetings[$today] ?? [];
-            $sidebarDate = date('F j, Y');
-            $sidebarDay = strtoupper(date('D'));
+            // Get current week's date range (Monday to Sunday)
+            $currentDayOfWeek = date('N'); // 1 (Monday) to 7 (Sunday)
+            $mondayThisWeek = date('Y-m-d', strtotime('-' . ($currentDayOfWeek - 1) . ' days'));
+            $sundayThisWeek = date('Y-m-d', strtotime('+' . (7 - $currentDayOfWeek) . ' days'));
+            
+            // Collect all meetings for this week
+            $weeklyMeetings = [];
+            for ($i = 0; $i < 7; $i++) {
+                $checkDate = date('Y-m-d', strtotime($mondayThisWeek . ' +' . $i . ' days'));
+                if (isset($meetings[$checkDate])) {
+                    foreach ($meetings[$checkDate] as $meeting) {
+                        $meeting['date'] = $checkDate;
+                        $meeting['day_name'] = date('l', strtotime($checkDate));
+                        $meeting['day_number'] = date('j', strtotime($checkDate));
+                        $meeting['month_name'] = date('M', strtotime($checkDate));
+                        $weeklyMeetings[] = $meeting;
+                    }
+                }
+            }
+            
+            // Sort by date and time
+            usort($weeklyMeetings, function($a, $b) {
+                $dateCompare = strcmp($a['date'], $b['date']);
+                if ($dateCompare !== 0) return $dateCompare;
+                return strtotime($a['time']) - strtotime($b['time']);
+            });
+            
+            $weekRange = date('M j', strtotime($mondayThisWeek)) . ' - ' . date('M j, Y', strtotime($sundayThisWeek));
             ?>
             
             <div class="card shadow-sm p-4">
                 <div class="text-center mb-4">
-                    <h6 class="text-muted mb-1"><?= $sidebarDate ?></h6>
-                    <h5 class="fw-bold"><?= $sidebarDay ?></h5>
+                    <h6 class="text-muted mb-1">This Week's Schedule</h6>
+                    <h5 class="fw-bold"><?= $weekRange ?></h5>
                 </div>
                 
-                <div class="schedule-list">
-                    <?php if (!empty($todayMeetings)): ?>
-                        <?php foreach ($todayMeetings as $meeting): ?>
-                            <div class="d-flex align-items-start mb-3">
-                                <div class="badge bg-success rounded-circle me-3 mt-1" style="width: 12px; height: 12px;"></div>
+                <div class="schedule-list" style="max-height: 450px; overflow-y: auto;">
+                    <?php if (!empty($weeklyMeetings)): ?>
+                        <?php 
+                        $lastDate = null;
+                        foreach ($weeklyMeetings as $meeting): 
+                            $isToday = $meeting['date'] === $today;
+                            $showDateHeader = $lastDate !== $meeting['date'];
+                            $lastDate = $meeting['date'];
+                        ?>
+                            <?php if ($showDateHeader): ?>
+                                <!-- Date Header -->
+                                <div class="mb-2 mt-3 pb-2 border-bottom">
+                                    <div class="d-flex align-items-center">
+                                        <span class="fw-bold <?= $isToday ? 'text-success' : 'text-dark' ?>" style="font-size: 0.875rem;">
+                                            <?= $meeting['day_name'] ?>
+                                            <?= $isToday ? '<span class="badge bg-success ms-2" style="font-size: 0.6rem;">TODAY</span>' : '' ?>
+                                        </span>
+                                        <span class="text-muted ms-auto" style="font-size: 0.75rem;">
+                                            <?= $meeting['month_name'] ?> <?= $meeting['day_number'] ?>
+                                        </span>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                            
+                            <!-- Meeting Item -->
+                            <div class="d-flex align-items-start mb-3 <?= $isToday ? 'bg-light rounded p-2' : '' ?>">
+                                <div class="me-3 mt-1" style="min-width: 8px;">
+                                    <?php
+                                    $badgeColor = match($meeting['type']) {
+                                        'pb_first', 'pb_second', 'pb_third' => 'bg-warning',
+                                        'unang_patawag' => 'bg-success',
+                                        'ikalawang_patawag' => 'bg-primary',
+                                        'ikatlong_patawag' => 'bg-danger',
+                                        default => 'bg-secondary'
+                                    };
+                                    ?>
+                                    <div class="badge <?= $badgeColor ?> rounded-circle" style="width: 8px; height: 8px; padding: 0;"></div>
+                                </div>
                                 <div class="flex-grow-1">
-                                    <div class="fw-bold text-tertiary" style="font-size: 0.875rem;">
+                                    <div class="fw-bold" style="font-size: 0.875rem;">
                                         <?= htmlspecialchars($meeting['time']) ?>
                                     </div>
                                     <div style="font-size: 0.875rem;">
                                         <?= htmlspecialchars($meeting['title']) ?>
                                     </div>
-                                    <small class="text-muted">
+                                    <small class="text-muted" style="font-size: 0.75rem;">
                                         <?php 
-                                        switch($meeting['type']) {
-                                            case 'punong_barangay': echo 'Punong Barangay'; break;
-                                            case 'unang_patawag': echo 'Unang Patawag'; break;
-                                            case 'ikalawang_patawag': echo 'Ikalawang Patawag'; break;
-                                            case 'ikatlong_patawag': echo 'Ikatlong Patawag'; break;
-                                        }
+                                        echo match($meeting['type']) {
+                                            'pb_first' => 'Punong Barangay - 1st',
+                                            'pb_second' => 'Punong Barangay - 2nd',
+                                            'pb_third' => 'Punong Barangay - 3rd',
+                                            'unang_patawag' => 'Unang Patawag',
+                                            'ikalawang_patawag' => 'Ikalawang Patawag',
+                                            'ikatlong_patawag' => 'Ikatlong Patawag',
+                                            default => 'Meeting'
+                                        };
                                         ?>
                                     </small>
                                 </div>
@@ -947,14 +1047,16 @@ if ($queryString) {
                     <?php else: ?>
                         <div class="text-center text-muted py-5">
                             <span class="material-symbols-outlined fs-2 mb-2 d-block">event_available</span>
-                            <p>No meetings scheduled for today</p>
+                            <p>No meetings scheduled this week</p>
                         </div>
                     <?php endif; ?>
                 </div>
                 
-                <?php if (!empty($todayMeetings) && count($todayMeetings) > 3): ?>
-                    <div class="text-center mt-3">
-                        <button class="btn btn-sm btn-outline-success">View All</button>
+                <?php if (!empty($weeklyMeetings)): ?>
+                    <div class="mt-3 pt-3 border-top text-center">
+                        <small class="text-muted">
+                            <strong><?= count($weeklyMeetings) ?></strong> meeting<?= count($weeklyMeetings) !== 1 ? 's' : '' ?> this week
+                        </small>
                     </div>
                 <?php endif; ?>
             </div>
@@ -966,6 +1068,62 @@ if ($queryString) {
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+  // Initialize Bootstrap tooltips for Lupon calendar
+  const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+  const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl, {
+    trigger: 'hover',
+    container: 'body'
+  }));
+
+  // AUTO-REFRESH FOR LUPON CALENDAR (Every 60 seconds)
+  <?php if ($currentRole === 'Lupon Tagapamayapa'): ?>
+  let lastMeetingsData = <?= json_encode($meetings) ?>;
+  let refreshInterval = null;
+  
+  function checkForUpdates() {
+    const currentMonth = <?= $currentMonth ?>;
+    const currentYear = <?= $currentYear ?>;
+    
+    fetch(`functions/get_lupon_meetings.php?month=${currentMonth}&year=${currentYear}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Compare with last known data
+          const newDataString = JSON.stringify(data.meetings);
+          const oldDataString = JSON.stringify(lastMeetingsData);
+          
+          if (newDataString !== oldDataString) {
+            // Data has changed - reload the page
+            console.log('New meeting scheduled detected - refreshing...');
+            window.location.reload();
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Error checking for updates:', error);
+      });
+  }
+  
+  // Check every 60 seconds (you can adjust this)
+  refreshInterval = setInterval(checkForUpdates, 30000);
+  
+  // // Optional: Add visual indicator that auto-refresh is active
+  // const calendarHeader = document.querySelector('.card.shadow-sm.p-4 h5.text-success');
+  // if (calendarHeader) {
+  //   const indicator = document.createElement('span');
+  //   indicator.className = 'badge bg-success ms-2';
+  //   indicator.style.fontSize = '0.6rem';
+  //   indicator.innerHTML = '<span class="spinner-border spinner-border-sm me-1" style="width: 0.6rem; height: 0.6rem;"></span>Auto-refresh';
+  //   indicator.title = 'Calendar updates automatically every 60 seconds';
+  //   calendarHeader.appendChild(indicator);
+  // }
+  
+  // Cleanup on page unload
+  window.addEventListener('beforeunload', () => {
+    if (refreshInterval) clearInterval(refreshInterval);
+  });
+  <?php endif; ?>
+
   // Search/clear logic (for Core Admin)
   const form = document.getElementById('searchForm');
   const input = document.getElementById('searchInput');

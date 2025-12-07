@@ -2048,7 +2048,13 @@ $result = $st->get_result();
                               <span class="material-symbols-outlined" style="font-size: 13px;">receipt</span>
                             </button>
                           <?php elseif (in_array($payMethod, ['GCash','Brgy Payment Device'], true)): ?>
-                            <?php if ($payStatus === 'Paid'): ?>
+                            <?php 
+                              // Check if payment status is Paid OR starts with "Refund"
+                              $isPaid = ($payStatus === 'Paid');
+                              $isRefund = (stripos($payStatus, 'Refund') === 0);
+                              $showButton = $isPaid || $isRefund;
+                            ?>
+                            <?php if ($showButton): ?>
                               <button type="button" class="btn btn-sm btn-info request-record-btn"
                                       data-id="<?= htmlspecialchars($row['transaction_id']) ?>"
                                       data-payment-method="<?= htmlspecialchars($payMethod) ?>"

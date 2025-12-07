@@ -457,8 +457,8 @@ if ($queryString) {
     <?php
     // Get current date ranges
     $today = date('Y-m-d');
-    $monthStart = date('Y-m-01');
-    $monthEnd = date('Y-m-t');
+    // $monthStart = date('Y-m-01');
+    // $monthEnd = date('Y-m-t');
     
     // TODAY'S COLLECTION
     $todayCollection = 0;
@@ -472,17 +472,17 @@ if ($queryString) {
         $todayCollection = $todayResult->fetch_assoc()['total'];
     }
     
-    // THIS MONTH'S COLLECTION
-    $monthCollection = 0;
-    $monthQuery = "
-        SELECT COALESCE(SUM(amount_paid), 0) as total 
-        FROM official_receipt_records 
-        WHERE DATE(issued_date) BETWEEN '{$monthStart}' AND '{$monthEnd}'
-    ";
-    $monthResult = $conn->query($monthQuery);
-    if ($monthResult) {
-        $monthCollection = $monthResult->fetch_assoc()['total'];
-    }
+    // // THIS MONTH'S COLLECTION
+    // $monthCollection = 0;
+    // $monthQuery = "
+    //     SELECT COALESCE(SUM(amount_paid), 0) as total 
+    //     FROM official_receipt_records 
+    //     WHERE DATE(issued_date) BETWEEN '{$monthStart}' AND '{$monthEnd}'
+    // ";
+    // $monthResult = $conn->query($monthQuery);
+    // if ($monthResult) {
+    //     $monthCollection = $monthResult->fetch_assoc()['total'];
+    // }
     
     // TOTAL COLLECTIONS (ALL TIME)
     $totalCollection = 0;
@@ -525,10 +525,10 @@ if ($queryString) {
     
     // Get pending ORs for table (exclude Indigency and First Time Job Seeker)
     $pendingORsResult = $conn->query("
-        SELECT v.transaction_id, v.full_name, v.request_type, v.payment_method, v.payment_status, v.amount 
+        SELECT v.transaction_id, v.full_name, v.request_type
         FROM view_dashboard v
-        WHERE v.payment_status = 'Paid' 
-        AND v.document_status = 'Processing'
+        WHERE (v.payment_status = 'Pending' OR v.payment_status = 'Paid')
+        AND (v.document_status = 'Processing' OR v.document_status = 'Pending')
         AND v.request_type NOT IN ('Indigency', 'First Time Job Seeker')
         AND v.transaction_id NOT IN (SELECT transaction_id FROM official_receipt_records)
         ORDER BY v.created_at DESC 
@@ -555,13 +555,13 @@ if ($queryString) {
             </div>
         </div>
         
-        <div class="col-md-3 col-sm-6">
+        <!-- <div class="col-md-3 col-sm-6">
             <div class="card shadow-sm text-center p-3">
                 <span class="material-symbols-outlined fs-2 text-success">calendar_month</span>
-                <h2 class="fw-bold">₱<?= number_format($monthCollection, 2) ?></h2>
+                <h2 class="fw-bold">₱<= number_format($monthCollection, 2) ?></h2>
                 <p class="text-muted">This Month</p>
             </div>
-        </div>
+        </div> -->
         
         <div class="col-md-3 col-sm-6">
             <div class="card shadow-sm text-center p-3">
@@ -578,7 +578,7 @@ if ($queryString) {
             <div class="card shadow-sm p-4">
                 <div class="mb-3">
                     <h6 class="text-success mb-0" style="font-size: 1.1rem; font-weight: 600;">Pending ORs</h6>
-                    <small class="text-muted">Paid requests awaiting official receipt</small>
+                    <small class="text-muted">Requests awaiting official receipt</small>
                 </div>
                 
                 <div class="table-responsive">
@@ -588,24 +588,20 @@ if ($queryString) {
                                 <th class="text-muted" style="font-size: 0.875rem; font-weight: 500;">Transaction No.</th>
                                 <th class="text-muted" style="font-size: 0.875rem; font-weight: 500;">Name</th>
                                 <th class="text-muted" style="font-size: 0.875rem; font-weight: 500;">Request</th>
-                                <th class="text-muted" style="font-size: 0.875rem; font-weight: 500;">Payment Method</th>
-                                <th class="text-muted" style="font-size: 0.875rem; font-weight: 500;">Amount</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if ($pendingORsResult && $pendingORsResult->num_rows > 0): ?>
-                                <?php while ($row = $pendingORsResult->fetch_assoc()): ?>
-                                    <tr>
-                                        <td style="font-size: 0.875rem;"><?= htmlspecialchars($row['transaction_id']) ?></td>
-                                        <td style="font-size: 0.875rem;"><?= htmlspecialchars($row['full_name']) ?></td>
-                                        <td style="font-size: 0.875rem;"><?= htmlspecialchars($row['request_type']) ?></td>
-                                        <td style="font-size: 0.875rem;"><?= htmlspecialchars($row['payment_method']) ?></td>
-                                        <td style="font-size: 0.875rem;">₱<?= number_format($row['amount'], 2) ?></td>
-                                    </tr>
-                                <?php endwhile; ?>
+                              <?php while ($row = $pendingORsResult->fetch_assoc()): ?>
+                                <tr>
+                                    <td style="font-size: 0.875rem;"><?= htmlspecialchars($row['transaction_id']) ?></td>
+                                    <td style="font-size: 0.875rem;"><?= htmlspecialchars($row['full_name']) ?></td>
+                                    <td style="font-size: 0.875rem;"><?= htmlspecialchars($row['request_type']) ?></td>
+                                </tr>
+                              <?php endwhile; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="5" class="text-center text-muted" style="padding: 2rem;">No pending ORs found</td>
+                                  <td colspan="3" class="text-center text-muted" style="padding: 2rem;">No pending ORs found</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
@@ -1121,6 +1117,34 @@ document.addEventListener('DOMContentLoaded', () => {
   // Cleanup on page unload
   window.addEventListener('beforeunload', () => {
     if (refreshInterval) clearInterval(refreshInterval);
+  });
+  <?php endif; ?>
+
+  // AUTO-REFRESH FOR TREASURER'S PENDING ORs (Every 30 seconds)
+  <?php if ($currentRole === 'Brgy Treasurer'): ?>
+  let lastPendingORsCount = <?= $pendingORsResult ? $pendingORsResult->num_rows : 0 ?>;
+  let treasurerRefreshInterval = null;
+  
+  function checkForPendingORsUpdates() {
+    fetch('functions/get_pending_ors_count.php')
+      .then(response => response.json())
+      .then(data => {
+        if (data.success && data.count !== lastPendingORsCount) {
+          console.log('Pending ORs updated - refreshing...');
+          window.location.reload();
+        }
+      })
+      .catch(error => {
+        console.error('Error checking for pending ORs updates:', error);
+      });
+  }
+  
+  // Check every 30 seconds
+  treasurerRefreshInterval = setInterval(checkForPendingORsUpdates, 30000);
+  
+  // Cleanup on page unload
+  window.addEventListener('beforeunload', () => {
+    if (treasurerRefreshInterval) clearInterval(treasurerRefreshInterval);
   });
   <?php endif; ?>
 

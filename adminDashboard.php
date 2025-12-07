@@ -1148,6 +1148,46 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   <?php endif; ?>
 
+  // AUTO-REFRESH FOR CORE ADMIN'S REQUESTS THIS WEEK TABLE (Every 30 seconds)
+  <?php if ($isCoreAdmin): ?>
+  let lastRequestsCount = <?= $total ?>;
+  let coreAdminRefreshInterval = null;
+  
+  function checkForRequestsUpdates() {
+    // Get current filters from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const filters = {
+      request_type: urlParams.get('request_type') || '',
+      payment_status: urlParams.get('payment_status') || '',
+      document_status: urlParams.get('document_status') || '',
+      search: urlParams.get('search') || ''
+    };
+    
+    // Build query string
+    const queryString = new URLSearchParams(filters).toString();
+    
+    fetch(`functions/get_requests_count.php?${queryString}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success && data.count !== lastRequestsCount) {
+          console.log('Requests updated - refreshing...');
+          window.location.reload();
+        }
+      })
+      .catch(error => {
+        console.error('Error checking for requests updates:', error);
+      });
+  }
+  
+  // Check every 30 seconds
+  coreAdminRefreshInterval = setInterval(checkForRequestsUpdates, 30000);
+  
+  // Cleanup on page unload
+  window.addEventListener('beforeunload', () => {
+    if (coreAdminRefreshInterval) clearInterval(coreAdminRefreshInterval);
+  });
+  <?php endif; ?>
+
   // Search/clear logic (for Core Admin)
   const form = document.getElementById('searchForm');
   const input = document.getElementById('searchInput');
